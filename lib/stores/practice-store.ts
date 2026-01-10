@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { MusicalNote } from "@/lib/musical-note"
 import { PitchDetector } from "@/lib/pitch-detector"
+import { useAnalyticsStore } from "./analytics-store"
 
 type PracticeState =
   | "IDLE"
@@ -96,7 +97,15 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   start: async () => {
+    // Start analytics session
     const { state, currentExercise } = get()
+    if (currentExercise) {
+      useAnalyticsStore.getState().startSession(
+        currentExercise.id,
+        currentExercise.name,
+        'practice'
+      )
+    }
 
     if (!currentExercise) {
       set({ state: "ERROR", error: "No exercise loaded" })
@@ -146,6 +155,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   stop: () => {
+    // End analytics session if active
+    useAnalyticsStore.getState().endSession()
     const { mediaStream, audioContext } = get()
 
     if (mediaStream) {
@@ -199,7 +210,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   updateDetectedPitch: (pitch: number, confidence: number, rms: number) => {
-    const { state, currentExercise, currentNoteIndex, noteStartTime, requiredHoldTime } = get()
+    const { state, currentExercise, currentNoteIndex, noteStartTime, requiredHoldTime, centsOff } = get()
 
     if (!["PRACTICING", "NOTE_DETECTED", "VALIDATING"].includes(state)) {
       return
@@ -237,6 +248,17 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const isCorrectNote = detectedNote.matchesTarget(targetNoteObj)
       const centsDeviation = detectedNote.centsDeviation
       const isInTune = Math.abs(centsDeviation) < 25
+
+      // Record note attempt
+      if (currentExercise && centsOff !== null) {
+        const targetNote = currentExercise.notes[currentNoteIndex]
+        useAnalyticsStore.getState().recordNoteAttempt(
+          currentNoteIndex,
+          targetNote.pitch,
+          centsDeviation,
+          isInTune
+        )
+      }
 
       if (isCorrectNote && isInTune) {
         const now = Date.now()
@@ -293,7 +315,15 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   advanceToNextNote: () => {
-    const { currentExercise, currentNoteIndex } = get()
+    // Record note completion time
+    const { currentExercise, currentNoteIndex, noteStartTime } = get()
+    if (noteStartTime) {
+      const timeToComplete = Date.now() - noteStartTime
+      useAnalyticsStore.getState().recordNoteCompletion(
+        currentNoteIndex,
+        timeToComplete
+      )
+    }
 
     if (!currentExercise) return
 
@@ -314,6 +344,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   completeExercise: () => {
+    // End analytics session
+    useAnalyticsStore.getState().endSession()
+
     set({
       state: "EXERCISE_COMPLETE",
       noteStartTime: null,
