@@ -5,12 +5,13 @@ import { useTunerStore } from "@/lib/stores/tuner-store"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Mic, MicOff, AlertCircle } from "lucide-react"
-import { TunerDisplay } from "@/components/tuner-display"
+import { ViolinFingerboard } from "@/components/ui/violin-fingerboard"
 
 export function TunerMode() {
   const {
     state,
     error,
+    currentPitch,
     currentNote,
     centsDeviation,
     confidence,
@@ -103,7 +104,12 @@ export function TunerMode() {
 
           {(state === "READY" || state === "LISTENING" || state === "DETECTED") && (
             <div className="space-y-6">
-              <TunerDisplay note={currentNote} cents={centsDeviation} confidence={confidence} />
+              <ViolinFingerboard
+                targetNote={currentNote}
+                detectedPitch={currentPitch}
+                centsDeviation={centsDeviation}
+                isInTune={confidence > 0.85 && Math.abs(centsDeviation || 0) <= 10}
+              />
 
               <div className="flex justify-center gap-2">
                 <Button onClick={reset} variant="outline" className="gap-2 bg-transparent">

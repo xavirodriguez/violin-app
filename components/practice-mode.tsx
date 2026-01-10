@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Play, Square, RotateCcw, Trophy, AlertCircle } from "lucide-react"
 import { SheetMusic } from "@/components/sheet-music"
 import { PracticeFeedback } from "@/components/practice-feedback"
+import { ViolinFingerboard } from "@/components/ui/violin-fingerboard"
 
 export function PracticeMode() {
   const {
@@ -159,18 +160,28 @@ export function PracticeMode() {
 
         {/* Practice Feedback */}
         {["PRACTICING", "NOTE_DETECTED", "VALIDATING", "NOTE_COMPLETED"].includes(state) && currentNote && (
-          <Card className="p-6">
-            <PracticeFeedback
-              targetNote={currentNote.pitch}
-              detectedPitch={detectedPitch}
-              confidence={confidence}
-              isInTune={isInTune}
-              centsOff={centsOff}
-              holdDuration={holdDuration}
-              requiredHoldTime={requiredHoldTime}
-              state={state}
-            />
-          </Card>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <PracticeFeedback
+                targetNote={currentNote.pitch}
+                detectedPitch={detectedPitch}
+                confidence={confidence}
+                isInTune={isInTune}
+                centsOff={centsOff}
+                holdDuration={holdDuration}
+                requiredHoldTime={requiredHoldTime}
+                state={state}
+              />
+            </Card>
+            <Card className="p-6">
+              <ViolinFingerboard
+                targetNote={currentNote.pitch}
+                detectedPitch={detectedPitch}
+                centsDeviation={centsOff}
+                isInTune={isInTune}
+              />
+            </Card>
+          </div>
         )}
 
         {/* Completion */}
