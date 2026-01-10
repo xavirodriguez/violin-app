@@ -6,15 +6,17 @@ import { useOSMD } from "@/hooks/useOSMD"
 interface SheetMusicProps {
   musicXML: string
   currentNoteIndex: number
+  completedNotes: boolean[]
   state: string
 }
 
-export function SheetMusic({ musicXML, currentNoteIndex, state }: SheetMusicProps) {
+export function SheetMusic({ musicXML, currentNoteIndex, completedNotes, state }: SheetMusicProps) {
   const sheetMusicContainerRef = useRef<HTMLDivElement>(null)
   const { isReady } = useOSMD({
     musicXML,
     container: sheetMusicContainerRef.current,
     currentNoteIndex,
+    completedNotes,
   })
 
   return (

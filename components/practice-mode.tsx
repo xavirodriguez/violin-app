@@ -15,6 +15,7 @@ export function PracticeMode() {
     error,
     currentExercise,
     currentNoteIndex,
+    completedNotes,
     detectedPitch,
     confidence,
     isInTune,
@@ -31,13 +32,17 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const animationFrameRef = useRef<number>()
+  const loadedRef = useRef(false)
 
   // Load exercise on mount
   useEffect(() => {
-    if (state === "IDLE") {
+    // In React 18's Strict Mode, this effect runs twice. Use a ref to ensure
+    // the exercise is loaded only once on the initial mount.
+    if (!loadedRef.current) {
       loadExercise(G_MAJOR_SCALE_EXERCISE)
+      loadedRef.current = true
     }
-  }, [state, loadExercise])
+  }, [loadExercise])
 
   // Audio analysis loop
   useEffect(() => {
@@ -146,6 +151,7 @@ export function PracticeMode() {
             <SheetMusic
               musicXML={currentExercise.musicXML}
               currentNoteIndex={currentNoteIndex}
+              completedNotes={completedNotes}
               state={state}
             />
           </Card>

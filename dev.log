@@ -13,19 +13,11 @@ You can learn more, including how to opt-out if you'd not like to participate in
 https://nextjs.org/telemetry
 
  ⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 5.0.2
-
-   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-
-	- include was updated to add '.next/dev/types/**/*.ts'
-
-   The following mandatory changes were made to your tsconfig.json:
-
-	- jsx was set to react-jsx (next.js uses the React automatic runtime)
-
- ✓ Ready in 1326ms
+ ✓ Ready in 654ms
  ○ Compiling / ...
- GET / 200 in 7.0s (compile: 6.2s, render: 866ms)
- GET / 200 in 78ms (compile: 6ms, render: 73ms)
- GET / 200 in 57ms (compile: 4ms, render: 53ms)
- GET / 200 in 68ms (compile: 3ms, render: 64ms)
+ GET / 200 in 7.2s (compile: 5.7s, render: 1517ms)
+ GET / 200 in 100ms (compile: 7ms, render: 93ms)
+ GET / 200 in 347ms (compile: 75ms, render: 272ms)
+ GET / 200 in 300ms (compile: 73ms, render: 228ms)
+ GET / 200 in 81ms (compile: 5ms, render: 75ms)
+ GET / 200 in 320ms (compile: 73ms, render: 247ms)
