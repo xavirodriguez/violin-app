@@ -130,3 +130,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom OSMD Cursor Styling */
+.osmd-cursor {
+  background-color: oklch(from var(--primary) l c h / 0.3) !important;
+  outline: 2px solid var(--primary) !important;
+}
+
+[data-state="VALIDATING"] .osmd-cursor {
+  background-color: oklch(0.8 0.18 85 / 0.4) !important;
+  outline: 2px solid oklch(0.8 0.18 85) !important;
+}
+
+[data-state="NOTE_COMPLETED"] .osmd-cursor {
+  background-color: oklch(0.85 0.18 145 / 0.4) !important;
+  outline: 2px solid oklch(0.85 0.18 145) !important;
+}

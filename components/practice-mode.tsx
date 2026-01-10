@@ -141,10 +141,13 @@ export function PracticeMode() {
           </div>
         </Card>
 
-        {/* Sheet Music - removed musicXML prop */}
         {currentExercise && state !== "IDLE" && (
           <Card className="p-6">
-            <SheetMusic currentNoteIndex={currentNoteIndex} state={state} />
+            <SheetMusic
+              musicXML={currentExercise.musicXML}
+              currentNoteIndex={currentNoteIndex}
+              state={state}
+            />
           </Card>
         )}
 
