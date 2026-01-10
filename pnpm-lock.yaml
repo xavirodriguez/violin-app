@@ -113,6 +113,9 @@ importers:
       embla-carousel-react:
         specifier: 8.5.1
         version: 8.5.1(react@19.2.0)
+      eslint:
+        specifier: latest
+        version: 9.39.2(jiti@2.6.1)
       immer:
         specifier: latest
         version: 11.1.3
