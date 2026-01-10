@@ -10,8 +10,20 @@ export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
   const isInTune = cents !== null && Math.abs(cents) < 10
   const isClose = cents !== null && Math.abs(cents) < 25
 
+  const getStatusText = () => {
+    if (!note || cents === null) return "Play a note"
+    if (isInTune) return `${note}, In Tune`
+    if (isClose) return `${note}, ${cents > 0 ? "A bit sharp" : "A bit flat"}`
+    return `${note}, ${cents > 0 ? "Too sharp" : "Too flat"}`
+  }
+
+
   return (
     <div className="space-y-6">
+      {/* Screen-reader only live region */}
+      <div role="status" className="sr-only" aria-live="polite">
+        {getStatusText()}
+      </div>
       {/* Detected Note */}
       <div className="text-center">
         {note ? (
@@ -22,6 +34,7 @@ export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
                 className={`text-2xl font-semibold ${
                   isInTune ? "text-green-500" : isClose ? "text-yellow-500" : "text-red-500"
                 }`}
+                aria-hidden="true"
               >
                 {cents > 0 ? "+" : ""}
                 {cents.toFixed(1)}¢
@@ -38,7 +51,7 @@ export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
       </div>
 
       {/* Visual Tuner Meter */}
-      <div className="relative">
+      <div className="relative" aria-hidden="true">
         <div className="h-12 bg-muted rounded-lg overflow-hidden relative">
           {/* Color zones */}
           <div className="absolute inset-0 flex">
@@ -76,7 +89,7 @@ export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
 
       {/* Status Text */}
       {note && cents !== null && (
-        <div className="text-center">
+        <div className="text-center" aria-hidden="true">
           {isInTune && <div className="text-lg font-semibold text-green-500">✓ In Tune</div>}
           {!isInTune && isClose && (
             <div className="text-lg font-semibold text-yellow-500">{cents > 0 ? "↑ A bit sharp" : "↓ A bit flat"}</div>
