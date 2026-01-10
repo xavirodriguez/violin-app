@@ -7,9 +7,10 @@ interface UseOSMDProps {
   musicXML: string
   container: HTMLDivElement | null
   currentNoteIndex: number
+  completedNotes: boolean[]
 }
 
-export function useOSMD({ musicXML, container, currentNoteIndex }: UseOSMDProps) {
+export function useOSMD({ musicXML, container, currentNoteIndex, completedNotes }: UseOSMDProps) {
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
   const cursorRef = useRef<Cursor | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -32,7 +33,9 @@ export function useOSMD({ musicXML, container, currentNoteIndex }: UseOSMDProps)
     osmd
       .load(musicXML)
       .then(() => {
-        osmd.render()
+        return osmd.render()
+      })
+      .then(() => {
         setIsReady(true)
         osmd.cursor.show()
       })
@@ -61,6 +64,36 @@ export function useOSMD({ musicXML, container, currentNoteIndex }: UseOSMDProps)
       cursor.next()
     }
   }, [currentNoteIndex, isReady])
+
+  // Apply styles to notes
+  useEffect(() => {
+    if (!isReady || !osmdRef.current) return
+
+    const osmd = osmdRef.current
+
+    // This is a way to get all the graphical notes from OSMD.
+    // It's a bit of a workaround, but it's the most reliable method.
+    const notes = osmd.graphic.measureList.flatMap((measure) =>
+      measure.staffEntries.flatMap((entry) =>
+        entry.graphicalVoiceEntries.flatMap((voice) =>
+          voice.notes.map((note) => note.getSVGElement())
+        )
+      )
+    )
+
+    notes.forEach((noteEl, index) => {
+      if (!noteEl) return
+
+      // Clear existing classes
+      noteEl.classList.remove("note-current", "note-completed")
+
+      if (completedNotes[index]) {
+        noteEl.classList.add("note-completed")
+      } else if (index === currentNoteIndex) {
+        noteEl.classList.add("note-current")
+      }
+    })
+  }, [currentNoteIndex, completedNotes, isReady])
 
   return { isReady }
 }
