@@ -17,7 +17,7 @@ interface PracticeFeedbackProps {
 export function PracticeFeedback({
   targetNote,
   detectedPitch,
-  confidence,
+  _confidence,
   isInTune,
   centsOff,
   holdDuration,
@@ -29,7 +29,7 @@ export function PracticeFeedback({
   if (detectedPitch && detectedPitch > 0) {
     try {
       detectedNote = MusicalNote.fromFrequency(detectedPitch)
-    } catch (err) {
+    } catch (_err) {
       // Invalid frequency
     }
   }

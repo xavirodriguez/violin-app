@@ -279,7 +279,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           holdDuration: 0,
         })
       }
-    } catch (err) {
+    } catch (_err) {
       set({
         state: "PRACTICING",
         noteStartTime: null,

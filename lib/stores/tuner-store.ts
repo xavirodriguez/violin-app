@@ -76,8 +76,8 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         detector,
         error: null,
       })
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Microphone access denied"
+    } catch (_err) {
+      const errorMessage = _err instanceof Error ? _err.message : "Microphone access denied"
       set({
         state: "ERROR",
         error: errorMessage,
@@ -134,7 +134,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
           centsDeviation: note.centsDeviation,
           confidence,
         })
-      } catch (err) {
+      } catch (_err) {
         // Invalid frequency, just update state
         set({
           state: "READY",
