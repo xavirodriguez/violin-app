@@ -3,11 +3,12 @@
 import { useState } from "react"
 import { TunerMode } from "@/components/tuner-mode"
 import { PracticeMode } from "@/components/practice-mode"
-import { Music, Target } from "lucide-react"
+import { AnalyticsDashboard } from "@/components/analytics-dashboard"
+import { Music, Target, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Home() {
-  const [mode, setMode] = useState<"tuner" | "practice">("tuner")
+  const [mode, setMode] = useState<"tuner" | "practice" | "dashboard">("tuner")
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -38,13 +39,25 @@ export default function Home() {
                 <Music className="w-4 h-4" />
                 Practice
               </Button>
+              <Button
+                variant={mode === "dashboard" ? "default" : "outline"}
+                onClick={() => setMode("dashboard")}
+                className="gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">{mode === "tuner" ? <TunerMode /> : <PracticeMode />}</main>
+      <main className="flex-1">
+        {mode === "tuner" && <TunerMode />}
+        {mode === "practice" && <PracticeMode />}
+        {mode === "dashboard" && <AnalyticsDashboard />}
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-border py-4 text-center text-sm text-muted-foreground">
