@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Play, Square, RotateCcw, Trophy, AlertCircle } from "lucide-react"
 import { SheetMusic } from "@/components/sheet-music"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { PracticeFeedback } from "@/components/practice-feedback"
 import { ViolinFingerboard } from "@/components/ui/violin-fingerboard"
 
@@ -149,12 +150,13 @@ export function PracticeMode() {
 
         {currentExercise && state !== "IDLE" && (
           <Card className="p-6">
-            <SheetMusic
-              musicXML={currentExercise.musicXML}
-              currentNoteIndex={currentNoteIndex}
-              completedNotes={completedNotes}
-              state={state}
-            />
+            <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
+              <SheetMusic
+                musicXML={currentExercise.musicXML}
+                currentNoteIndex={currentNoteIndex}
+                completedNotes={completedNotes}
+              />
+            </ErrorBoundary>
           </Card>
         )}
 
