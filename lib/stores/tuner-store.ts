@@ -18,12 +18,19 @@ interface TunerStore {
   analyser: AnalyserNode | null
   mediaStream: MediaStream | null
   detector: PitchDetector | null
+  gainNode: GainNode | null
+  devices: MediaDeviceInfo[]
+  deviceId: string | null
+  sensitivity: number
 
   // Actions
   initialize: () => Promise<void>
   retry: () => Promise<void>
   reset: () => void
   updatePitch: (pitch: number, confidence: number) => void
+  loadDevices: () => Promise<void>
+  setDeviceId: (deviceId: string) => void
+  setSensitivity: (sensitivity: number) => void
 }
 
 export const useTunerStore = create<TunerStore>((set, get) => ({
@@ -38,9 +45,13 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   analyser: null,
   mediaStream: null,
   detector: null,
+  gainNode: null,
+  devices: [],
+  deviceId: null,
+  sensitivity: 50,
 
   initialize: async () => {
-    const currentState = get().state
+    const { state: currentState, deviceId, sensitivity } = get()
 
     if (currentState !== "IDLE" && currentState !== "ERROR") {
       console.warn(`Cannot initialize from state: ${currentState}`)
@@ -52,6 +63,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
@@ -64,7 +76,12 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       analyser.smoothingTimeConstant = 0
 
       const source = context.createMediaStreamSource(stream)
-      source.connect(analyser)
+      const gainNode = context.createGain()
+      // Sensitivity to gain conversion: 50 -> 1, 100 -> 2, 0 -> 0
+      gainNode.gain.value = sensitivity / 50
+
+      source.connect(gainNode)
+      gainNode.connect(analyser)
 
       const detector = new PitchDetector(context.sampleRate)
 
@@ -74,6 +91,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         analyser,
         mediaStream: stream,
         detector,
+        gainNode,
         error: null,
       })
     } catch (_err) {
@@ -91,10 +109,13 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   },
 
   reset: () => {
-    const { mediaStream, audioContext } = get()
+    const { mediaStream, audioContext, gainNode } = get()
 
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop())
+    }
+    if (gainNode) {
+      gainNode.disconnect()
     }
     if (audioContext && audioContext.state !== "closed") {
       audioContext.close()
@@ -111,6 +132,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       analyser: null,
       mediaStream: null,
       detector: null,
+      gainNode: null,
     })
   },
 
@@ -126,7 +148,6 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     if (hasSignal) {
       try {
         const note = MusicalNote.fromFrequency(pitch)
-
         set({
           state: "DETECTED",
           currentPitch: pitch,
@@ -135,7 +156,6 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
           confidence,
         })
       } catch (_err) {
-        // Invalid frequency, just update state
         set({
           state: "READY",
           currentPitch: null,
@@ -152,6 +172,34 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         centsDeviation: null,
         confidence: 0,
       })
+    }
+  },
+
+  loadDevices: async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const audioDevices = devices.filter((device) => device.kind === "audioinput")
+      set({ devices: audioDevices })
+    } catch (err) {
+      console.error("Error loading audio devices:", err)
+    }
+  },
+
+  setDeviceId: (deviceId: string) => {
+    set({ deviceId })
+    // Re-initialize to apply the new device
+    const { state, reset, initialize } = get()
+    if (state !== "IDLE" && state !== "ERROR") {
+      reset()
+      initialize()
+    }
+  },
+
+  setSensitivity: (sensitivity: number) => {
+    const { gainNode } = get()
+    set({ sensitivity })
+    if (gainNode) {
+      gainNode.gain.value = sensitivity / 50
     }
   },
 }))
