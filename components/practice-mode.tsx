@@ -117,7 +117,7 @@ export function PracticeMode() {
               {state === "INITIALIZING" && (
                 <Button disabled size="lg">
                   <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Initializing...
+                  Awaiting microphone...
                 </Button>
               )}
 
