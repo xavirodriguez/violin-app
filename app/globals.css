@@ -146,3 +146,16 @@
   background-color: oklch(0.85 0.18 145 / 0.4) !important;
   outline: 2px solid oklch(0.85 0.18 145) !important;
 }
+
+/* Interactive Note Styling */
+.note-current path {
+  fill: oklch(0.8 0.18 85) !important;
+  stroke: oklch(0.8 0.18 85) !important;
+  filter: drop-shadow(0 0 5px oklch(0.8 0.18 85 / 0.8));
+}
+
+.note-completed path {
+  fill: oklch(0.85 0.18 145) !important;
+  stroke: oklch(0.85 0.18 145) !important;
+  opacity: 0.7;
+}

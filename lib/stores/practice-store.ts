@@ -34,6 +34,7 @@ interface PracticeStore {
   // Exercise data
   currentExercise: Exercise | null
   currentNoteIndex: number
+  completedNotes: boolean[]
 
   // Detection data
   detectedPitch: number | null
@@ -68,6 +69,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   error: null,
   currentExercise: null,
   currentNoteIndex: 0,
+  completedNotes: [],
   detectedPitch: null,
   confidence: 0,
   isInTune: false,
@@ -92,6 +94,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       state: "LOADED",
       currentExercise: exercise,
       currentNoteIndex: 0,
+      completedNotes: new Array(exercise.notes.length).fill(false),
       error: null,
     })
   },
@@ -145,6 +148,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         mediaStream: stream,
         detector,
         currentNoteIndex: 0,
+        completedNotes: new Array(currentExercise.notes.length).fill(false),
         noteStartTime: null,
         holdDuration: 0,
       })
@@ -196,6 +200,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       error: null,
       currentExercise: null,
       currentNoteIndex: 0,
+      completedNotes: [],
       detectedPitch: null,
       confidence: 0,
       isInTune: false,
@@ -316,7 +321,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   advanceToNextNote: () => {
     // Record note completion time
-    const { currentExercise, currentNoteIndex, noteStartTime } = get()
+    const { currentExercise, currentNoteIndex, noteStartTime, completedNotes } = get()
     if (noteStartTime) {
       const timeToComplete = Date.now() - noteStartTime
       useAnalyticsStore.getState().recordNoteCompletion(
@@ -327,10 +332,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     if (!currentExercise) return
 
+    const newCompletedNotes = [...completedNotes]
+    newCompletedNotes[currentNoteIndex] = true
+
     if (currentNoteIndex < currentExercise.notes.length - 1) {
       set({
         state: "PRACTICING",
         currentNoteIndex: currentNoteIndex + 1,
+        completedNotes: newCompletedNotes,
         noteStartTime: null,
         holdDuration: 0,
         detectedPitch: null,
@@ -339,6 +348,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         centsOff: null,
       })
     } else {
+      set({ completedNotes: newCompletedNotes })
       get().completeExercise()
     }
   },
