@@ -1,18 +1,18 @@
-import { create } from "zustand"
-import { MusicalNote } from "@/lib/musical-note"
-import { PitchDetector } from "@/lib/pitch-detector"
-import { useAnalyticsStore } from "./analytics-store"
+import { create } from 'zustand'
+import { MusicalNote } from '@/lib/musical-note'
+import { PitchDetector } from '@/lib/pitch-detector'
+import { useAnalyticsStore } from './analytics-store'
 
 type PracticeState =
-  | "IDLE"
-  | "LOADED"
-  | "INITIALIZING"
-  | "PRACTICING"
-  | "NOTE_DETECTED"
-  | "VALIDATING"
-  | "NOTE_COMPLETED"
-  | "EXERCISE_COMPLETE"
-  | "ERROR"
+  | 'IDLE'
+  | 'LOADED'
+  | 'INITIALIZING'
+  | 'PRACTICING'
+  | 'NOTE_DETECTED'
+  | 'VALIDATING'
+  | 'NOTE_COMPLETED'
+  | 'EXERCISE_COMPLETE'
+  | 'ERROR'
 
 interface Note {
   pitch: string
@@ -65,7 +65,7 @@ interface PracticeStore {
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
   // Initial state
-  state: "IDLE",
+  state: 'IDLE',
   error: null,
   currentExercise: null,
   currentNoteIndex: 0,
@@ -85,13 +85,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   loadExercise: (exercise) => {
     const { state } = get()
 
-    if (state !== "IDLE" && state !== "EXERCISE_COMPLETE") {
+    if (state !== 'IDLE' && state !== 'EXERCISE_COMPLETE') {
       console.warn(`Cannot load exercise from state: ${state}`)
       return
     }
 
     set({
-      state: "LOADED",
+      state: 'LOADED',
       currentExercise: exercise,
       currentNoteIndex: 0,
       completedNotes: new Array(exercise.notes.length).fill(false),
@@ -103,24 +103,22 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     // Start analytics session
     const { state, currentExercise } = get()
     if (currentExercise) {
-      useAnalyticsStore.getState().startSession(
-        currentExercise.id,
-        currentExercise.name,
-        'practice'
-      )
+      useAnalyticsStore
+        .getState()
+        .startSession(currentExercise.id, currentExercise.name, 'practice')
     }
 
     if (!currentExercise) {
-      set({ state: "ERROR", error: "No exercise loaded" })
+      set({ state: 'ERROR', error: 'No exercise loaded' })
       return
     }
 
-    if (state !== "LOADED" && state !== "EXERCISE_COMPLETE") {
+    if (state !== 'LOADED' && state !== 'EXERCISE_COMPLETE') {
       console.warn(`Cannot start from state: ${state}`)
       return
     }
 
-    set({ state: "INITIALIZING" })
+    set({ state: 'INITIALIZING' })
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -142,7 +140,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const detector = new PitchDetector(context.sampleRate)
 
       set({
-        state: "PRACTICING",
+        state: 'PRACTICING',
         audioContext: context,
         analyser,
         mediaStream: stream,
@@ -153,8 +151,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         holdDuration: 0,
       })
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Audio initialization failed"
-      set({ state: "ERROR", error: errorMessage })
+      const errorMessage = err instanceof Error ? err.message : 'Audio initialization failed'
+      set({ state: 'ERROR', error: errorMessage })
     }
   },
 
@@ -166,12 +164,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop())
     }
-    if (audioContext && audioContext.state !== "closed") {
+    if (audioContext && audioContext.state !== 'closed') {
       audioContext.close()
     }
 
     set({
-      state: "LOADED",
+      state: 'LOADED',
       audioContext: null,
       analyser: null,
       mediaStream: null,
@@ -191,12 +189,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop())
     }
-    if (audioContext && audioContext.state !== "closed") {
+    if (audioContext && audioContext.state !== 'closed') {
       audioContext.close()
     }
 
     set({
-      state: "IDLE",
+      state: 'IDLE',
       error: null,
       currentExercise: null,
       currentNoteIndex: 0,
@@ -215,9 +213,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   updateDetectedPitch: (pitch: number, confidence: number, rms: number) => {
-    const { state, currentExercise, currentNoteIndex, noteStartTime, requiredHoldTime, centsOff } = get()
+    const { state, currentExercise, currentNoteIndex, noteStartTime, requiredHoldTime, centsOff } =
+      get()
 
-    if (!["PRACTICING", "NOTE_DETECTED", "VALIDATING"].includes(state)) {
+    if (!['PRACTICING', 'NOTE_DETECTED', 'VALIDATING'].includes(state)) {
       return
     }
 
@@ -232,7 +231,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     if (!hasSignal) {
       set({
-        state: "PRACTICING",
+        state: 'PRACTICING',
         noteStartTime: null,
         holdDuration: 0,
         detectedPitch: null,
@@ -246,8 +245,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     try {
       const detectedNote = MusicalNote.fromFrequency(pitch)
       const targetNoteObj = MusicalNote.fromNoteName(
-        targetPitchName.replace(/\d/, ""),
-        Number.parseInt(targetPitchName.match(/\d/)?.[0] || "4"),
+        targetPitchName.replace(/\d/, ''),
+        Number.parseInt(targetPitchName.match(/\d/)?.[0] || '4'),
       )
 
       const isCorrectNote = detectedNote.matchesTarget(targetNoteObj)
@@ -257,12 +256,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       // Record note attempt
       if (currentExercise && centsOff !== null) {
         const targetNote = currentExercise.notes[currentNoteIndex]
-        useAnalyticsStore.getState().recordNoteAttempt(
-          currentNoteIndex,
-          targetNote.pitch,
-          centsDeviation,
-          isInTune
-        )
+        useAnalyticsStore
+          .getState()
+          .recordNoteAttempt(currentNoteIndex, targetNote.pitch, centsDeviation, isInTune)
       }
 
       if (isCorrectNote && isInTune) {
@@ -272,7 +268,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
         if (holdTime >= requiredHoldTime) {
           set({
-            state: "NOTE_COMPLETED",
+            state: 'NOTE_COMPLETED',
             detectedPitch: pitch,
             confidence,
             isInTune: true,
@@ -286,7 +282,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           }, 200)
         } else {
           set({
-            state: "VALIDATING",
+            state: 'VALIDATING',
             detectedPitch: pitch,
             confidence,
             isInTune: true,
@@ -297,7 +293,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         }
       } else {
         set({
-          state: isCorrectNote ? "NOTE_DETECTED" : "PRACTICING",
+          state: isCorrectNote ? 'NOTE_DETECTED' : 'PRACTICING',
           detectedPitch: pitch,
           confidence,
           isInTune: false,
@@ -308,7 +304,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       }
     } catch (_err) {
       set({
-        state: "PRACTICING",
+        state: 'PRACTICING',
         noteStartTime: null,
         holdDuration: 0,
         detectedPitch: null,
@@ -324,10 +320,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     const { currentExercise, currentNoteIndex, noteStartTime, completedNotes } = get()
     if (noteStartTime) {
       const timeToComplete = Date.now() - noteStartTime
-      useAnalyticsStore.getState().recordNoteCompletion(
-        currentNoteIndex,
-        timeToComplete
-      )
+      useAnalyticsStore.getState().recordNoteCompletion(currentNoteIndex, timeToComplete)
     }
 
     if (!currentExercise) return
@@ -337,7 +330,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     if (currentNoteIndex < currentExercise.notes.length - 1) {
       set({
-        state: "PRACTICING",
+        state: 'PRACTICING',
         currentNoteIndex: currentNoteIndex + 1,
         completedNotes: newCompletedNotes,
         noteStartTime: null,
@@ -358,7 +351,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     useAnalyticsStore.getState().endSession()
 
     set({
-      state: "EXERCISE_COMPLETE",
+      state: 'EXERCISE_COMPLETE',
       noteStartTime: null,
       holdDuration: 0,
     })

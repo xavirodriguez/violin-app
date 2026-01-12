@@ -1,8 +1,8 @@
-import { create } from "zustand"
-import { MusicalNote } from "@/lib/musical-note"
-import { PitchDetector } from "@/lib/pitch-detector"
+import { create } from 'zustand'
+import { MusicalNote } from '@/lib/musical-note'
+import { PitchDetector } from '@/lib/pitch-detector'
 
-type TunerState = "IDLE" | "INITIALIZING" | "READY" | "LISTENING" | "DETECTED" | "ERROR"
+type TunerState = 'IDLE' | 'INITIALIZING' | 'READY' | 'LISTENING' | 'DETECTED' | 'ERROR'
 
 interface TunerStore {
   // State
@@ -35,7 +35,7 @@ interface TunerStore {
 
 export const useTunerStore = create<TunerStore>((set, get) => ({
   // Initial state
-  state: "IDLE",
+  state: 'IDLE',
   error: null,
   currentPitch: null,
   currentNote: null,
@@ -53,12 +53,12 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   initialize: async () => {
     const { state: currentState, deviceId, sensitivity } = get()
 
-    if (currentState !== "IDLE" && currentState !== "ERROR") {
+    if (currentState !== 'IDLE' && currentState !== 'ERROR') {
       console.warn(`Cannot initialize from state: ${currentState}`)
       return
     }
 
-    set({ state: "INITIALIZING", error: null })
+    set({ state: 'INITIALIZING', error: null })
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -86,7 +86,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       const detector = new PitchDetector(context.sampleRate)
 
       set({
-        state: "READY",
+        state: 'READY',
         audioContext: context,
         analyser,
         mediaStream: stream,
@@ -95,9 +95,9 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         error: null,
       })
     } catch (_err) {
-      const errorMessage = _err instanceof Error ? _err.message : "Microphone access denied"
+      const errorMessage = _err instanceof Error ? _err.message : 'Microphone access denied'
       set({
-        state: "ERROR",
+        state: 'ERROR',
         error: errorMessage,
       })
     }
@@ -117,12 +117,12 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     if (gainNode) {
       gainNode.disconnect()
     }
-    if (audioContext && audioContext.state !== "closed") {
+    if (audioContext && audioContext.state !== 'closed') {
       audioContext.close()
     }
 
     set({
-      state: "IDLE",
+      state: 'IDLE',
       error: null,
       currentPitch: null,
       currentNote: null,
@@ -139,7 +139,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   updatePitch: (pitch: number, confidence: number) => {
     const { state } = get()
 
-    if (state !== "LISTENING" && state !== "DETECTED" && state !== "READY") {
+    if (state !== 'LISTENING' && state !== 'DETECTED' && state !== 'READY') {
       return
     }
 
@@ -149,7 +149,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       try {
         const note = MusicalNote.fromFrequency(pitch)
         set({
-          state: "DETECTED",
+          state: 'DETECTED',
           currentPitch: pitch,
           currentNote: note.getFullName(),
           centsDeviation: note.centsDeviation,
@@ -157,7 +157,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         })
       } catch (_err) {
         set({
-          state: "READY",
+          state: 'READY',
           currentPitch: null,
           currentNote: null,
           centsDeviation: null,
@@ -166,7 +166,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       }
     } else {
       set({
-        state: "READY",
+        state: 'READY',
         currentPitch: null,
         currentNote: null,
         centsDeviation: null,
@@ -178,10 +178,10 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   loadDevices: async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
-      const audioDevices = devices.filter((device) => device.kind === "audioinput")
+      const audioDevices = devices.filter((device) => device.kind === 'audioinput')
       set({ devices: audioDevices })
     } catch (err) {
-      console.error("Error loading audio devices:", err)
+      console.error('Error loading audio devices:', err)
     }
   },
 
@@ -189,7 +189,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     set({ deviceId })
     // Re-initialize to apply the new device
     const { state, reset, initialize } = get()
-    if (state !== "IDLE" && state !== "ERROR") {
+    if (state !== 'IDLE' && state !== 'ERROR') {
       reset()
       initialize()
     }

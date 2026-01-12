@@ -79,7 +79,6 @@ interface Achievement {
   unlockedAt: Date
 }
 
-
 interface AnalyticsStore {
   // Current session
   currentSession: PracticeSession | null
@@ -91,7 +90,12 @@ interface AnalyticsStore {
   // Actions
   startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
   endSession: () => void
-  recordNoteAttempt: (noteIndex: number, targetPitch: string, cents: number, wasInTune: boolean) => void
+  recordNoteAttempt: (
+    noteIndex: number,
+    targetPitch: string,
+    cents: number,
+    wasInTune: boolean,
+  ) => void
   recordNoteCompletion: (noteIndex: number, timeToComplete: number) => void
 
   // Queries
@@ -117,7 +121,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         rhythmSkill: 0,
         overallSkill: 0,
         achievements: [],
-        exerciseStats: {}
+        exerciseStats: {},
       },
 
       startSession: (exerciseId, exerciseName, mode) => {
@@ -133,7 +137,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           notesCompleted: 0,
           accuracy: 0,
           averageCents: 0,
-          noteResults: []
+          noteResults: [],
         }
 
         set({ currentSession: session })
@@ -150,7 +154,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const completedSession: PracticeSession = {
           ...currentSession,
           endTime,
-          duration
+          duration,
         }
 
         // Update sessions
@@ -160,7 +164,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const newProgress = {
           ...progress,
           totalPracticeSessions: progress.totalPracticeSessions + 1,
-          totalPracticeTime: progress.totalPracticeTime + duration
+          totalPracticeTime: progress.totalPracticeTime + duration,
         }
 
         // Update exercise stats
@@ -172,12 +176,14 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           timesCompleted: (existingStats?.timesCompleted || 0) + 1,
           bestAccuracy: Math.max(existingStats?.bestAccuracy || 0, completedSession.accuracy),
           averageAccuracy: existingStats
-            ? (existingStats.averageAccuracy * existingStats.timesCompleted + completedSession.accuracy) / (existingStats.timesCompleted + 1)
+            ? (existingStats.averageAccuracy * existingStats.timesCompleted +
+                completedSession.accuracy) /
+              (existingStats.timesCompleted + 1)
             : completedSession.accuracy,
           fastestCompletion: existingStats
             ? Math.min(existingStats.fastestCompletion, duration)
             : duration,
-          lastPracticed: endTime
+          lastPracticed: endTime,
         }
 
         // Update streak
@@ -197,7 +203,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         newProgress.intonationSkill = calculateIntonationSkill(newSessions)
         // placeholder for rhythm skill
         newProgress.rhythmSkill = newProgress.rhythmSkill || 0
-        newProgress.overallSkill = Math.round((newProgress.intonationSkill + newProgress.rhythmSkill) / 2)
+        newProgress.overallSkill = Math.round(
+          (newProgress.intonationSkill + newProgress.rhythmSkill) / 2,
+        )
 
         // Check for new achievements
         const newAchievements = checkAchievements(newProgress, completedSession)
@@ -206,19 +214,19 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         set({
           currentSession: null,
           sessions: newSessions.slice(0, 100), // Keep last 100 sessions
-          progress: newProgress
+          progress: newProgress,
         })
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
-        set(state => {
+        set((state) => {
           if (!state.currentSession) return state
 
           const session = { ...state.currentSession }
           session.notesAttempted++
 
           // Find or create note result
-          let noteResult = session.noteResults.find(nr => nr.noteIndex === noteIndex)
+          let noteResult = session.noteResults.find((nr) => nr.noteIndex === noteIndex)
           if (!noteResult) {
             noteResult = {
               noteIndex,
@@ -226,22 +234,26 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
               attempts: 0,
               timeToComplete: 0,
               averageCents: 0,
-              wasInTune: false
+              wasInTune: false,
             }
             session.noteResults.push(noteResult)
           }
 
           // Update attempts and average cents
           noteResult.attempts++
-          noteResult.averageCents = ((noteResult.averageCents * (noteResult.attempts - 1)) + cents) / noteResult.attempts
+          noteResult.averageCents =
+            (noteResult.averageCents * (noteResult.attempts - 1) + cents) / noteResult.attempts
           noteResult.wasInTune = wasInTune
 
           // Recalculate session accuracy
-          const inTuneNotes = session.noteResults.filter(nr => nr.wasInTune).length
+          const inTuneNotes = session.noteResults.filter((nr) => nr.wasInTune).length
           session.accuracy = (inTuneNotes / session.noteResults.length) * 100
 
           // Recalculate average cents
-          const totalCents = session.noteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
+          const totalCents = session.noteResults.reduce(
+            (sum, nr) => sum + Math.abs(nr.averageCents),
+            0,
+          )
           session.averageCents = totalCents / session.noteResults.length
 
           return { currentSession: session }
@@ -249,13 +261,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       recordNoteCompletion: (noteIndex, timeToComplete) => {
-        set(state => {
+        set((state) => {
           if (!state.currentSession) return state
 
           const session = { ...state.currentSession }
           session.notesCompleted++
 
-          const noteResult = session.noteResults.find(nr => nr.noteIndex === noteIndex)
+          const noteResult = session.noteResults.find((nr) => nr.noteIndex === noteIndex)
           if (noteResult) {
             noteResult.timeToComplete = timeToComplete
           }
@@ -268,9 +280,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const cutoff = new Date()
         cutoff.setDate(cutoff.getDate() - days)
 
-        return get().sessions.filter(session =>
-          new Date(session.endTime) >= cutoff
-        )
+        return get().sessions.filter((session) => new Date(session.endTime) >= cutoff)
       },
 
       getExerciseStats: (exerciseId) => {
@@ -279,36 +289,37 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       getTodayStats: () => {
         const today = new Date().setHours(0, 0, 0, 0)
-        const todaySessions = get().sessions.filter(session => {
+        const todaySessions = get().sessions.filter((session) => {
           const sessionDate = new Date(session.endTime).setHours(0, 0, 0, 0)
           return sessionDate === today
         })
 
         const duration = todaySessions.reduce((sum, s) => sum + s.duration, 0)
-        const avgAccuracy = todaySessions.length > 0
-          ? todaySessions.reduce((sum, s) => sum + s.accuracy, 0) / todaySessions.length
-          : 0
+        const avgAccuracy =
+          todaySessions.length > 0
+            ? todaySessions.reduce((sum, s) => sum + s.accuracy, 0) / todaySessions.length
+            : 0
 
         return {
           duration,
           accuracy: avgAccuracy,
-          sessionsCount: todaySessions.length
+          sessionsCount: todaySessions.length,
         }
       },
 
       getStreakInfo: () => {
         const { currentStreak, longestStreak } = get().progress
         return { current: currentStreak, longest: longestStreak }
-      }
+      },
     }),
     {
       name: 'violin-analytics',
       partialize: (state) => ({
         sessions: state.sessions,
-        progress: state.progress
-      })
-    }
-  )
+        progress: state.progress,
+      }),
+    },
+  ),
 )
 
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
@@ -319,9 +330,8 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
   const avgAccuracy = recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length
 
   // Weight recent sessions more heavily
-  const trend = recentSessions.length >= 5
-    ? (recentSessions[0].accuracy - recentSessions[4].accuracy)
-    : 0
+  const trend =
+    recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
 
   return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
 }
@@ -330,36 +340,37 @@ function checkAchievements(progress: UserProgress, session: PracticeSession): Ac
   const achievements: Achievement[] = []
 
   // First Perfect Scale
-  if (session.accuracy === 100 && !progress.achievements.find(a => a.id === 'first-perfect')) {
+  if (session.accuracy === 100 && !progress.achievements.find((a) => a.id === 'first-perfect')) {
     achievements.push({
       id: 'first-perfect',
       name: 'First Perfect Scale',
       description: 'Completed a scale with 100% accuracy!',
       icon: '🎯',
-      unlockedAt: new Date()
+      unlockedAt: new Date(),
     })
   }
 
   // 7-Day Streak
-  if (progress.currentStreak === 7 && !progress.achievements.find(a => a.id === 'week-streak')) {
+  if (progress.currentStreak === 7 && !progress.achievements.find((a) => a.id === 'week-streak')) {
     achievements.push({
       id: 'week-streak',
       name: '7-Day Streak',
       description: 'Practiced for 7 days in a row!',
       icon: '🔥',
-      unlockedAt: new Date()
+      unlockedAt: new Date(),
     })
   }
 
   // 100 Notes Mastered
-  const totalNotesCompleted = progress.sessions.reduce((sum, s) => sum + s.notesCompleted, 0) + session.notesCompleted
-  if (totalNotesCompleted >= 100 && !progress.achievements.find(a => a.id === '100-notes')) {
+  const totalNotesCompleted =
+    progress.sessions.reduce((sum, s) => sum + s.notesCompleted, 0) + session.notesCompleted
+  if (totalNotesCompleted >= 100 && !progress.achievements.find((a) => a.id === '100-notes')) {
     achievements.push({
       id: '100-notes',
       name: '100 Notes Mastered',
       description: 'Successfully played 100 notes in tune!',
       icon: '📈',
-      unlockedAt: new Date()
+      unlockedAt: new Date(),
     })
   }
 

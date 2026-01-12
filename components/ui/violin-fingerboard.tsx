@@ -22,41 +22,41 @@ const STRINGS: ViolinString[] = [
   { name: 'E', openPitch: 'E5', color: '#E8DCC8' },
   { name: 'A', openPitch: 'A4', color: '#D4B896' },
   { name: 'D', openPitch: 'D4', color: '#C8A882' },
-  { name: 'G', openPitch: 'G3', color: '#B89870' }
+  { name: 'G', openPitch: 'G3', color: '#B89870' },
 ]
 
 // Position mapping (simplified - first position only for v1)
 const FINGER_POSITIONS: Record<string, FingerPosition> = {
   // G String (G3)
-  'G3': { string: 'G', finger: 0, position: 1, pitch: 'G3', cents: 0, fretDistance: 0 },
-  'A3': { string: 'G', finger: 1, position: 1, pitch: 'A3', cents: 0, fretDistance: 45 },
-  'B3': { string: 'G', finger: 2, position: 1, pitch: 'B3', cents: 0, fretDistance: 90 },
-  'C4': { string: 'G', finger: 3, position: 1, pitch: 'C4', cents: 0, fretDistance: 120 },
+  G3: { string: 'G', finger: 0, position: 1, pitch: 'G3', cents: 0, fretDistance: 0 },
+  A3: { string: 'G', finger: 1, position: 1, pitch: 'A3', cents: 0, fretDistance: 45 },
+  B3: { string: 'G', finger: 2, position: 1, pitch: 'B3', cents: 0, fretDistance: 90 },
+  C4: { string: 'G', finger: 3, position: 1, pitch: 'C4', cents: 0, fretDistance: 120 },
 
   // D String (D4)
-  'D4': { string: 'D', finger: 0, position: 1, pitch: 'D4', cents: 0, fretDistance: 0 },
-  'E4': { string: 'D', finger: 1, position: 1, pitch: 'E4', cents: 0, fretDistance: 45 },
+  D4: { string: 'D', finger: 0, position: 1, pitch: 'D4', cents: 0, fretDistance: 0 },
+  E4: { string: 'D', finger: 1, position: 1, pitch: 'E4', cents: 0, fretDistance: 45 },
   'F#4': { string: 'D', finger: 2, position: 1, pitch: 'F#4', cents: 0, fretDistance: 85 },
-  'G4': { string: 'D', finger: 3, position: 1, pitch: 'G4', cents: 0, fretDistance: 120 },
+  G4: { string: 'D', finger: 3, position: 1, pitch: 'G4', cents: 0, fretDistance: 120 },
 
   // A String (A4)
-  'A4': { string: 'A', finger: 0, position: 1, pitch: 'A4', cents: 0, fretDistance: 0 },
-  'B4': { string: 'A', finger: 1, position: 1, pitch: 'B4', cents: 0, fretDistance: 45 },
+  A4: { string: 'A', finger: 0, position: 1, pitch: 'A4', cents: 0, fretDistance: 0 },
+  B4: { string: 'A', finger: 1, position: 1, pitch: 'B4', cents: 0, fretDistance: 45 },
   'C#5': { string: 'A', finger: 2, position: 1, pitch: 'C#5', cents: 0, fretDistance: 85 },
-  'D5': { string: 'A', finger: 3, position: 1, pitch: 'D5', cents: 0, fretDistance: 120 },
+  D5: { string: 'A', finger: 3, position: 1, pitch: 'D5', cents: 0, fretDistance: 120 },
 
   // E String (E5)
-  'E5': { string: 'E', finger: 0, position: 1, pitch: 'E5', cents: 0, fretDistance: 0 },
+  E5: { string: 'E', finger: 0, position: 1, pitch: 'E5', cents: 0, fretDistance: 0 },
   'F#5': { string: 'E', finger: 1, position: 1, pitch: 'F#5', cents: 0, fretDistance: 45 },
   'G#5': { string: 'E', finger: 2, position: 1, pitch: 'G#5', cents: 0, fretDistance: 85 },
-  'A5': { string: 'E', finger: 3, position: 1, pitch: 'A5', cents: 0, fretDistance: 120 }
+  A5: { string: 'E', finger: 3, position: 1, pitch: 'A5', cents: 0, fretDistance: 120 },
 }
 
 export function ViolinFingerboard({
   targetNote,
   detectedPitch,
   centsDeviation,
-  isInTune
+  isInTune,
 }: {
   targetNote: string | null // e.g., "A4"
   detectedPitch: number | null // Hz
@@ -97,7 +97,7 @@ export function ViolinFingerboard({
           centsDeviation || 0,
           isInTune,
           canvas.width,
-          canvas.height
+          canvas.height,
         )
       }
     }
@@ -105,36 +105,22 @@ export function ViolinFingerboard({
 
   return (
     <div className="violin-fingerboard">
-      <canvas
-        ref={canvasRef}
-        width={400}
-        height={300}
-        className="fingerboard-canvas"
-      />
+      <canvas ref={canvasRef} width={400} height={300} className="fingerboard-canvas" />
 
       {/* Pitch accuracy indicator */}
       {centsDeviation !== null && (
-        <PitchAccuracyIndicator
-          cents={centsDeviation}
-          isInTune={isInTune}
-        />
+        <PitchAccuracyIndicator cents={centsDeviation} isInTune={isInTune} />
       )}
 
       {/* Finger placement guide */}
       {targetNote && FINGER_POSITIONS[targetNote] && (
-        <FingerPlacementGuide
-          position={FINGER_POSITIONS[targetNote]}
-        />
+        <FingerPlacementGuide position={FINGER_POSITIONS[targetNote]} />
       )}
     </div>
   )
 }
 
-function drawFingerboard(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number
-) {
+function drawFingerboard(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const nutX = 50
   const bridgeX = width - 50
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
@@ -168,7 +154,7 @@ function drawFingerboard(
   // Draw position markers (1st, 3rd positions)
   const positions = [
     { pos: 1, distance: 80 },
-    { pos: 3, distance: 200 }
+    { pos: 3, distance: 200 },
   ]
 
   positions.forEach(({ pos, distance }) => {
@@ -192,10 +178,10 @@ function drawTargetPosition(
   ctx: CanvasRenderingContext2D,
   position: FingerPosition,
   width: number,
-  height: number
+  height: number,
 ) {
   const nutX = 50
-  const stringIndex = STRINGS.findIndex(s => s.name === position.string)
+  const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
   const y = 50 + stringIndex * stringSpacing
   const x = nutX + position.fretDistance
@@ -228,10 +214,10 @@ function drawDetectedPosition(
   centsDeviation: number,
   isInTune: boolean,
   width: number,
-  height: number
+  height: number,
 ) {
   const nutX = 50
-  const stringIndex = STRINGS.findIndex(s => s.name === position.string)
+  const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
   const y = 50 + stringIndex * stringSpacing
 
@@ -272,20 +258,14 @@ function drawDetectedPosition(
 }
 
 function frequencyToNote(frequency: number): string {
-    if (frequency <= 0) {
-        return ''
-    }
-    const note = MusicalNote.fromFrequency(frequency)
-    return note.getFullName()
+  if (frequency <= 0) {
+    return ''
+  }
+  const note = MusicalNote.fromFrequency(frequency)
+  return note.getFullName()
 }
 
-export function PitchAccuracyIndicator({
-  cents,
-  isInTune
-}: {
-  cents: number
-  isInTune: boolean
-}) {
+export function PitchAccuracyIndicator({ cents, isInTune }: { cents: number; isInTune: boolean }) {
   // Normalize cents to -50 to +50 range for display
   const normalizedCents = Math.max(-50, Math.min(50, cents))
   const percentage = ((normalizedCents + 50) / 100) * 100
@@ -306,7 +286,10 @@ export function PitchAccuracyIndicator({
             style={{ left: `${percentage}%` }}
           >
             <div className="indicator-dot" />
-            <div className="indicator-label">{cents > 0 ? '+' : ''}{cents.toFixed(0)}¢</div>
+            <div className="indicator-label">
+              {cents > 0 ? '+' : ''}
+              {cents.toFixed(0)}¢
+            </div>
           </div>
         </div>
 
@@ -334,11 +317,7 @@ function getTuningAdvice(cents: number): string {
   return 'Almost there!'
 }
 
-export function FingerPlacementGuide({
-  position
-}: {
-  position: FingerPosition
-}) {
+export function FingerPlacementGuide({ position }: { position: FingerPosition }) {
   const fingerNames = ['Open', 'Index (1st)', 'Middle (2nd)', 'Ring (3rd)', 'Pinky (4th)']
 
   return (
@@ -360,7 +339,9 @@ export function FingerPlacementGuide({
         </div>
         <div className="info-row">
           <span className="label">Position:</span>
-          <span className="value">{position.position === 1 ? '1st Position' : `${position.position}rd Position`}</span>
+          <span className="value">
+            {position.position === 1 ? '1st Position' : `${position.position}rd Position`}
+          </span>
         </div>
         {position.fretDistance > 0 && (
           <div className="info-row">

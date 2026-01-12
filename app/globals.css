@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -82,8 +82,8 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -137,12 +137,12 @@
   outline: 2px solid var(--primary) !important;
 }
 
-[data-state="VALIDATING"] .osmd-cursor {
+[data-state='VALIDATING'] .osmd-cursor {
   background-color: oklch(0.8 0.18 85 / 0.4) !important;
   outline: 2px solid oklch(0.8 0.18 85) !important;
 }
 
-[data-state="NOTE_COMPLETED"] .osmd-cursor {
+[data-state='NOTE_COMPLETED'] .osmd-cursor {
   background-color: oklch(0.85 0.18 145 / 0.4) !important;
   outline: 2px solid oklch(0.85 0.18 145) !important;
 }
@@ -187,7 +187,7 @@
 .slider-track {
   position: relative;
   height: 40px;
-  background: linear-gradient(to right, #F87171, #FBBF24, #4ADE80, #FBBF24, #F87171);
+  background: linear-gradient(to right, #f87171, #fbbf24, #4ade80, #fbbf24, #f87171);
   border-radius: 20px;
   overflow: visible;
 }
@@ -219,12 +219,12 @@
 }
 
 .position-indicator.in-tune .indicator-dot {
-  border-color: #16A34A;
+  border-color: #16a34a;
   animation: pulse 1s infinite;
 }
 
 .position-indicator.out-of-tune .indicator-dot {
-  border-color: #DC2626;
+  border-color: #dc2626;
 }
 
 .indicator-label {
@@ -259,12 +259,12 @@
 
 .status.in-tune {
   background: rgba(74, 222, 128, 0.2);
-  color: #16A34A;
+  color: #16a34a;
 }
 
 .status.out-of-tune {
   background: rgba(248, 113, 113, 0.2);
-  color: #DC2626;
+  color: #dc2626;
 }
 
 .finger-guide {
@@ -293,7 +293,7 @@
 }
 
 .info-row .value {
-  color: #D4A574;
+  color: #d4a574;
   font-weight: 600;
   font-size: 14px;
 }
@@ -305,7 +305,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
   }
   50% {

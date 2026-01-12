@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
-import { useEffect } from "react"
-import { useOSMDSafe } from "@/hooks/use-osmd-safe"
-import { OpenSheetMusicDisplay } from "opensheetmusicdisplay"
+import { useEffect } from 'react'
+import { useOSMDSafe } from '@/hooks/use-osmd-safe'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 
 interface SheetMusicProps {
   musicXML: string
@@ -13,7 +13,7 @@ interface SheetMusicProps {
 function highlightNote(
   osmd: OpenSheetMusicDisplay,
   currentNoteIndex: number,
-  completedNotes: boolean[]
+  completedNotes: boolean[],
 ) {
   const notes = osmd.graphic.measureList
     .filter((m) => m?.staffEntries)
@@ -27,11 +27,11 @@ function highlightNote(
 
   notes.forEach((noteEl, index) => {
     if (!noteEl) return
-    noteEl.classList.remove("note-current", "note-completed")
+    noteEl.classList.remove('note-current', 'note-completed')
     if (completedNotes[index]) {
-      noteEl.classList.add("note-completed")
+      noteEl.classList.add('note-completed')
     } else if (index === currentNoteIndex) {
-      noteEl.classList.add("note-current")
+      noteEl.classList.add('note-current')
     }
   })
 }
@@ -46,14 +46,14 @@ export function SheetMusic({ musicXML, currentNoteIndex, completedNotes }: Sheet
       try {
         highlightNote(osmd, -1, completedNotes) // Pass -1 to avoid highlighting a "current" note
       } catch (err) {
-        console.error("[SheetMusic] Highlighting error:", err)
+        console.error('[SheetMusic] Highlighting error:', err)
       }
     }
   }, [isReady, osmd, completedNotes])
 
   if (error) {
     return (
-      <div className="relative w-full min-h-[200px] bg-white rounded-lg shadow-md flex items-center justify-center">
+      <div className="relative flex min-h-[200px] w-full items-center justify-center rounded-lg bg-white shadow-md">
         <div className="text-red-500">
           <p>Failed to load sheet music</p>
           <p className="text-sm text-gray-500">{error}</p>
@@ -63,18 +63,18 @@ export function SheetMusic({ musicXML, currentNoteIndex, completedNotes }: Sheet
   }
 
   return (
-    <div className="relative w-full min-h-[200px] bg-white rounded-lg shadow-md">
+    <div className="relative min-h-[200px] w-full rounded-lg bg-white shadow-md">
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
             <span className="text-muted-foreground">Loading Sheet Music...</span>
           </div>
         </div>
       )}
       <div
         ref={containerRef}
-        className={`sheet-music transition-opacity duration-500 ${isReady ? "opacity-100" : "opacity-0"}`}
+        className={`sheet-music transition-opacity duration-500 ${isReady ? 'opacity-100' : 'opacity-0'}`}
       />
     </div>
   )

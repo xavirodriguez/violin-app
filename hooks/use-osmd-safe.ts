@@ -30,7 +30,7 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
         await instance.render()
 
         // Wait for next tick to ensure DOM is updated
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
 
         if (
           instance.graphic &&
@@ -52,7 +52,6 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
         } else {
           throw new Error('OSMD graphic not properly initialized')
         }
-
       } catch (err) {
         console.error('[OSMD] Initialization error:', err)
         if (isMounted) {
@@ -85,6 +84,6 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
     osmd,
     isReady,
     error,
-    containerRef
+    containerRef,
   }
 }
