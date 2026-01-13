@@ -3,7 +3,7 @@
  * Part of the Music domain - understands musical theory and notation.
  */
 
-const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
@@ -110,9 +110,9 @@ export class MusicalNote {
   /**
    * Returns the tuning status as a string.
    */
-  getTuningStatus(toleranceCents = 10): "in-tune" | "sharp" | "flat" {
-    if (this.isInTune(toleranceCents)) return "in-tune"
-    return this.isSharp() ? "sharp" : "flat"
+  getTuningStatus(toleranceCents = 10): 'in-tune' | 'sharp' | 'flat' {
+    if (this.isInTune(toleranceCents)) return 'in-tune'
+    return this.isSharp() ? 'sharp' : 'flat'
   }
 
   /**
@@ -133,14 +133,17 @@ export class MusicalNote {
    * Compares two notes for equality.
    */
   equals(other: MusicalNote): boolean {
-    return this.midiNumber === other.midiNumber && Math.abs(this.centsDeviation - other.centsDeviation) < 0.01
+    return (
+      this.midiNumber === other.midiNumber &&
+      Math.abs(this.centsDeviation - other.centsDeviation) < 0.01
+    )
   }
 
   /**
    * String representation for debugging.
    */
   toString(): string {
-    const sign = this.centsDeviation >= 0 ? "+" : ""
+    const sign = this.centsDeviation >= 0 ? '+' : ''
     return `${this.getFullName()} (${sign}${this.centsDeviation.toFixed(1)}¢)`
   }
 }

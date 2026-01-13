@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
-import { useEffect, useRef } from "react"
-import { useTunerStore } from "@/lib/stores/tuner-store"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Mic, MicOff, AlertCircle } from "lucide-react"
-import { ViolinFingerboard } from "@/components/ui/violin-fingerboard"
+import { useEffect, useRef } from 'react'
+import { useTunerStore } from '@/lib/stores/tuner-store'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Mic, MicOff, AlertCircle } from 'lucide-react'
+import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 
 export function TunerMode() {
   const {
@@ -27,7 +27,7 @@ export function TunerMode() {
 
   // Audio analysis loop
   useEffect(() => {
-    if (!analyser || !detector || state === "IDLE" || state === "ERROR") {
+    if (!analyser || !detector || state === 'IDLE' || state === 'ERROR') {
       return
     }
 
@@ -53,44 +53,46 @@ export function TunerMode() {
   }, [analyser, detector, state, updatePitch])
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="space-y-6">
         {/* Title */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-2">Violin Tuner</h2>
+          <h2 className="text-foreground mb-2 text-3xl font-bold">Violin Tuner</h2>
           <p className="text-muted-foreground">Play a note on your violin to see its pitch</p>
         </div>
 
         {/* Tuner Display */}
         <Card className="p-8">
-          {state === "IDLE" && (
-            <div className="text-center space-y-4">
-              <Mic className="w-16 h-16 mx-auto text-muted-foreground" />
+          {state === 'IDLE' && (
+            <div className="space-y-4 text-center">
+              <Mic className="text-muted-foreground mx-auto h-16 w-16" />
               <div>
-                <h3 className="text-xl font-semibold mb-2">Ready to tune?</h3>
-                <p className="text-muted-foreground mb-4">Grant microphone access to start tuning your violin</p>
+                <h3 className="mb-2 text-xl font-semibold">Ready to tune?</h3>
+                <p className="text-muted-foreground mb-4">
+                  Grant microphone access to start tuning your violin
+                </p>
                 <Button onClick={initialize} size="lg" className="gap-2">
-                  <Mic className="w-4 h-4" />
+                  <Mic className="h-4 w-4" />
                   Start Tuner
                 </Button>
               </div>
             </div>
           )}
 
-          {state === "INITIALIZING" && (
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          {state === 'INITIALIZING' && (
+            <div className="space-y-4 text-center">
+              <div className="border-primary mx-auto h-16 w-16 animate-spin rounded-full border-4 border-t-transparent" />
               <p className="text-muted-foreground">Initializing microphone...</p>
             </div>
           )}
 
-          {state === "ERROR" && (
-            <div className="text-center space-y-4">
-              <AlertCircle className="w-16 h-16 mx-auto text-destructive" />
+          {state === 'ERROR' && (
+            <div className="space-y-4 text-center">
+              <AlertCircle className="text-destructive mx-auto h-16 w-16" />
               <div>
-                <h3 className="text-xl font-semibold mb-2 text-destructive">Microphone Error</h3>
+                <h3 className="text-destructive mb-2 text-xl font-semibold">Microphone Error</h3>
                 <p className="text-muted-foreground mb-4">{error}</p>
-                <div className="flex gap-2 justify-center">
+                <div className="flex justify-center gap-2">
                   <Button onClick={retry} variant="default">
                     Retry
                   </Button>
@@ -102,7 +104,7 @@ export function TunerMode() {
             </div>
           )}
 
-          {(state === "READY" || state === "LISTENING" || state === "DETECTED") && (
+          {(state === 'READY' || state === 'LISTENING' || state === 'DETECTED') && (
             <div className="space-y-6">
               <ViolinFingerboard
                 targetNote={currentNote}
@@ -113,7 +115,7 @@ export function TunerMode() {
 
               <div className="flex justify-center gap-2">
                 <Button onClick={reset} variant="outline" className="gap-2 bg-transparent">
-                  <MicOff className="w-4 h-4" />
+                  <MicOff className="h-4 w-4" />
                   Stop Tuner
                 </Button>
               </div>

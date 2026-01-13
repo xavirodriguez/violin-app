@@ -16,17 +16,17 @@ export interface Exercise {
 }
 
 export const G_MAJOR_SCALE_EXERCISE: Exercise = {
-  id: "g-major-scale",
-  name: "G Major Scale",
+  id: 'g-major-scale',
+  name: 'G Major Scale',
   notes: [
-    { pitch: "G4", duration: "quarter", measure: 1 },
-    { pitch: "A4", duration: "quarter", measure: 1 },
-    { pitch: "B4", duration: "quarter", measure: 1 },
-    { pitch: "C5", duration: "quarter", measure: 1 },
-    { pitch: "D5", duration: "quarter", measure: 2 },
-    { pitch: "E5", duration: "quarter", measure: 2 },
-    { pitch: "F#5", duration: "quarter", measure: 2 },
-    { pitch: "G5", duration: "quarter", measure: 2 },
+    { pitch: 'G4', duration: 'quarter', measure: 1 },
+    { pitch: 'A4', duration: 'quarter', measure: 1 },
+    { pitch: 'B4', duration: 'quarter', measure: 1 },
+    { pitch: 'C5', duration: 'quarter', measure: 1 },
+    { pitch: 'D5', duration: 'quarter', measure: 2 },
+    { pitch: 'E5', duration: 'quarter', measure: 2 },
+    { pitch: 'F#5', duration: 'quarter', measure: 2 },
+    { pitch: 'G5', duration: 'quarter', measure: 2 },
   ],
   musicXML: `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1">

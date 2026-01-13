@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
-import { FC, useEffect } from "react"
-import { useTunerStore } from "@/lib/stores/tuner-store"
-import { Button } from "@/components/ui/button"
+import { FC, useEffect } from 'react'
+import { useTunerStore } from '@/lib/stores/tuner-store'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Label } from "@/components/ui/label"
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 
 interface SettingsDialogProps {
   isOpen: boolean
@@ -22,14 +28,8 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
-  const {
-    devices,
-    deviceId,
-    sensitivity,
-    loadDevices,
-    setDeviceId,
-    setSensitivity,
-  } = useTunerStore()
+  const { devices, deviceId, sensitivity, loadDevices, setDeviceId, setSensitivity } =
+    useTunerStore()
 
   useEffect(() => {
     if (isOpen) {
@@ -39,7 +39,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-card border-border">
+      <DialogContent className="bg-card border-border sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-foreground">Audio Settings</DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -48,10 +48,10 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
         </DialogHeader>
         <div className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="mic-select" className="text-right text-foreground">
+            <Label htmlFor="mic-select" className="text-foreground text-right">
               Microphone
             </Label>
-            <Select onValueChange={setDeviceId} value={deviceId ?? ""}>
+            <Select onValueChange={setDeviceId} value={deviceId ?? ''}>
               <SelectTrigger id="mic-select" className="col-span-3">
                 <SelectValue placeholder="Select a device" />
               </SelectTrigger>
@@ -65,7 +65,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="sensitivity" className="text-right text-foreground">
+            <Label htmlFor="sensitivity" className="text-foreground text-right">
               Sensitivity
             </Label>
             <Slider
