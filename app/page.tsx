@@ -26,36 +26,57 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Mode Switcher */}
-                <div className="flex gap-2">
-                  <Button
-                    variant={mode === 'tuner' ? 'default' : 'outline'}
-                    onClick={() => setMode('tuner')}
-                    className="gap-2"
-                  >
-                    <Target className="h-4 w-4" />
-                    Tuner
-                  </Button>
-                  <Button
-                    variant={mode === 'practice' ? 'default' : 'outline'}
-                    onClick={() => setMode('practice')}
-                    className="gap-2"
-                  >
-                    <Music className="h-4 w-4" />
-                    Practice
-                  </Button>
-                  <Button
-                    variant={mode === 'dashboard' ? 'default' : 'outline'}
-                    onClick={() => setMode('dashboard')}
-                    className="gap-2"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Button>
-                </div>
-
-                {/* Settings Button */}
                 <TooltipProvider>
+                  {/* Mode Switcher */}
+                  <div className="flex gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={mode === 'tuner' ? 'default' : 'outline'}
+                          onClick={() => setMode('tuner')}
+                          className="gap-2"
+                        >
+                          <Target className="h-4 w-4" />
+                          Tuner
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Switch to Tuner Mode</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={mode === 'practice' ? 'default' : 'outline'}
+                          onClick={() => setMode('practice')}
+                          className="gap-2"
+                        >
+                          <Music className="h-4 w-4" />
+                          Practice
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Switch to Practice Mode</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={mode === 'dashboard' ? 'default' : 'outline'}
+                          onClick={() => setMode('dashboard')}
+                          className="gap-2"
+                        >
+                          <LayoutDashboard className="h-4 w-4" />
+                          Dashboard
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Switch to Analytics Dashboard</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+
+                  {/* Settings Button */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
