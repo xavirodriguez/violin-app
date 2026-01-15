@@ -7,6 +7,7 @@ import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import SettingsDialog from '@/components/settings-dialog'
 import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export default function Home() {
@@ -28,53 +29,22 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <TooltipProvider>
                   {/* Mode Switcher */}
-                  <div className="flex gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={mode === 'tuner' ? 'default' : 'outline'}
-                          onClick={() => setMode('tuner')}
-                          className="gap-2"
-                        >
-                          <Target className="h-4 w-4" />
-                          Tuner
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Switch to Tuner Mode</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={mode === 'practice' ? 'default' : 'outline'}
-                          onClick={() => setMode('practice')}
-                          className="gap-2"
-                        >
-                          <Music className="h-4 w-4" />
-                          Practice
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Switch to Practice Mode</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={mode === 'dashboard' ? 'default' : 'outline'}
-                          onClick={() => setMode('dashboard')}
-                          className="gap-2"
-                        >
-                          <LayoutDashboard className="h-4 w-4" />
-                          Dashboard
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Switch to Analytics Dashboard</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
+                  <Tabs value={mode} onValueChange={(value) => setMode(value as 'tuner' | 'practice' | 'dashboard')}>
+                    <TabsList>
+                      <TabsTrigger value="tuner" className="gap-2">
+                        <Target className="h-4 w-4" />
+                        Tuner
+                      </TabsTrigger>
+                      <TabsTrigger value="practice" className="gap-2">
+                        <Music className="h-4 w-4" />
+                        Practice
+                      </TabsTrigger>
+                      <TabsTrigger value="dashboard" className="gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
 
                   {/* Settings Button */}
                   <Tooltip>
