@@ -27,7 +27,7 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-2">
-                <TooltipProvider>
+                <TooltipProvider delayDuration={300}>
                   {/* Mode Switcher */}
                   <Tabs
                     value={mode}
