@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/lib/stores/practice-store'
-import { violinExercises, Exercise } from '@/lib/violin-exercises'
+import { allExercises } from '@/lib/exercises'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -48,13 +48,13 @@ export function PracticeMode() {
     // In React 18's Strict Mode, this effect runs twice. Use a ref to ensure
     // the exercise is loaded only once on the initial mount.
     if (!loadedRef.current) {
-      loadExercise(violinExercises[0])
+      loadExercise(allExercises[0])
       loadedRef.current = true
     }
   }, [loadExercise])
 
   const handleExerciseChange = (exerciseId: string) => {
-    const selectedExercise = violinExercises.find((ex) => ex.id === exerciseId)
+    const selectedExercise = allExercises.find((ex) => ex.id === exerciseId)
     if (selectedExercise) {
       loadExercise(selectedExercise)
     }
@@ -110,7 +110,7 @@ export function PracticeMode() {
               <SelectValue placeholder="Select an exercise" />
             </SelectTrigger>
             <SelectContent>
-              {violinExercises.map((exercise) => (
+              {allExercises.map((exercise) => (
                 <SelectItem key={exercise.id} value={exercise.id}>
                   {exercise.name}
                 </SelectItem>
