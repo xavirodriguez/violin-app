@@ -29,7 +29,10 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <TooltipProvider>
                   {/* Mode Switcher */}
-                  <Tabs value={mode} onValueChange={(value) => setMode(value as 'tuner' | 'practice' | 'dashboard')}>
+                  <Tabs
+                    value={mode}
+                    onValueChange={(value) => setMode(value as 'tuner' | 'practice' | 'dashboard')}
+                  >
                     <TabsList>
                       <TabsTrigger value="tuner" className="gap-2">
                         <Target className="h-4 w-4" />

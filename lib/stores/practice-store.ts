@@ -3,6 +3,8 @@ import { MusicalNote } from '@/lib/musical-note'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
 
+import type { Exercise } from '@/lib/exercises/types'
+
 type PracticeState =
   | 'IDLE'
   | 'LOADED'
@@ -13,18 +15,6 @@ type PracticeState =
   | 'NOTE_COMPLETED'
   | 'EXERCISE_COMPLETE'
   | 'ERROR'
-
-interface Note {
-  pitch: string
-  duration: string
-  measure: number
-}
-
-interface Exercise {
-  id: string
-  name: string
-  notes: Note[]
-}
 
 interface PracticeStore {
   // State
