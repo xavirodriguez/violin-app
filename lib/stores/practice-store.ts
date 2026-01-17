@@ -83,13 +83,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   detector: null,
 
   loadExercise: (exercise) => {
-    const { state } = get()
-
-    if (state !== 'IDLE' && state !== 'EXERCISE_COMPLETE') {
-      console.warn(`Cannot load exercise from state: ${state}`)
-      return
-    }
-
+    const { stop } = get()
+    stop()
     set({
       state: 'LOADED',
       currentExercise: exercise,

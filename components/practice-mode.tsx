@@ -2,9 +2,16 @@
 
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/lib/stores/practice-store'
-import { G_MAJOR_SCALE_EXERCISE } from '@/lib/music-data'
+import { violinExercises, Exercise } from '@/lib/violin-exercises'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Play, Square, RotateCcw, Trophy, AlertCircle } from 'lucide-react'
 import { SheetMusic } from '@/components/sheet-music'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -41,10 +48,17 @@ export function PracticeMode() {
     // In React 18's Strict Mode, this effect runs twice. Use a ref to ensure
     // the exercise is loaded only once on the initial mount.
     if (!loadedRef.current) {
-      loadExercise(G_MAJOR_SCALE_EXERCISE)
+      loadExercise(violinExercises[0])
       loadedRef.current = true
     }
   }, [loadExercise])
+
+  const handleExerciseChange = (exerciseId: string) => {
+    const selectedExercise = violinExercises.find((ex) => ex.id === exerciseId)
+    if (selectedExercise) {
+      loadExercise(selectedExercise)
+    }
+  }
 
   // Audio analysis loop
   useEffect(() => {
@@ -83,11 +97,27 @@ export function PracticeMode() {
       <div className="space-y-6">
         {/* Title */}
         <div className="text-center">
-          <h2 className="text-foreground mb-2 text-3xl font-bold">Practice G Major Scale</h2>
+          <h2 className="text-foreground mb-2 text-3xl font-bold">{currentExercise?.name}</h2>
           <p className="text-muted-foreground">
             Play each note in tune and hold for {requiredHoldTime}ms to advance
           </p>
         </div>
+
+        {/* Exercise Selection */}
+        <Card className="p-4">
+          <Select value={currentExercise?.id} onValueChange={handleExerciseChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an exercise" />
+            </SelectTrigger>
+            <SelectContent>
+              {violinExercises.map((exercise) => (
+                <SelectItem key={exercise.id} value={exercise.id}>
+                  {exercise.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Card>
 
         {/* Error State */}
         {state === 'ERROR' && (
@@ -157,6 +187,7 @@ export function PracticeMode() {
           <Card className="p-6">
             <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
               <SheetMusic
+                key={currentExercise.id}
                 musicXML={currentExercise.musicXML}
                 currentNoteIndex={currentNoteIndex}
                 completedNotes={completedNotes}
