@@ -27,30 +27,31 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
         })
 
         await instance.load(musicXML)
-        await instance.render()
+        instance.render() // This is synchronous, but graphic population might not be.
 
-        // Wait for next tick to ensure DOM is updated
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
+        // Defensively check for the presence of the graphic data.
         if (
-          instance.graphic &&
-          instance.graphic.measureList &&
-          instance.graphic.measureList.length > 0
+          !instance.graphic?.measureList ||
+          instance.graphic.measureList.length === 0
         ) {
-          const firstMeasure = instance.graphic.measureList[0]
-          if (firstMeasure && firstMeasure.staffEntries) {
-            if (isMounted) {
-              setOsmd(instance)
-              cursorRef.current = instance.cursor
-              setIsReady(true)
-              setError(null)
-              instance.cursor.show()
-            }
-          } else {
-            throw new Error('OSMD graphic initialized but staffEntries missing')
-          }
-        } else {
-          throw new Error('OSMD graphic not properly initialized')
+          // If not ready, wait a tick and check again as a fallback.
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        // Final check after the potential delay.
+        if (
+          !instance.graphic?.measureList ||
+          instance.graphic.measureList.length === 0
+        ) {
+          throw new Error('OSMD graphic initialized but staffEntries missing');
+        }
+
+        if (isMounted) {
+          setOsmd(instance)
+          cursorRef.current = instance.cursor
+          setIsReady(true)
+          setError(null)
+          instance.cursor.show()
         }
       } catch (err) {
         console.error('[OSMD] Initialization error:', err)
