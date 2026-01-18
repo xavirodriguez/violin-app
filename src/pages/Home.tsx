@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
