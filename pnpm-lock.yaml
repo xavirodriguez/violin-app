@@ -122,6 +122,9 @@ importers:
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      iter-tools:
+        specifier: ^7.5.4
+        version: 7.5.4
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.2.0)
@@ -1961,6 +1964,9 @@ packages:
   isexe@3.1.1:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
+
+  iter-tools@7.5.4:
+    resolution: {integrity: sha512-87ZdQS5L48py+tEw71VfvELwoc1aqWGO1l7mZrIG6wjWZ4/d/eXTpWalbBlPDwibfnxih47xhdP8Q1GFBGPPJg==}
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
@@ -4587,6 +4593,10 @@ snapshots:
 
   isexe@3.1.1:
     optional: true
+
+  iter-tools@7.5.4:
+    dependencies:
+      '@babel/runtime': 7.28.4
 
   jackspeak@3.4.3:
     dependencies:
