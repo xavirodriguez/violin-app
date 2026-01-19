@@ -17,6 +17,7 @@ import { SheetMusic } from '@/components/sheet-music'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
+import { pitchToString } from '@/lib/utils'
 
 export function PracticeMode() {
   const {
@@ -202,7 +203,7 @@ export function PracticeMode() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card className="p-6">
                 <PracticeFeedback
-                  targetNote={currentNote.pitch}
+                  targetNote={pitchToString(currentNote.pitch)}
                   detectedPitch={detectedPitch}
                   confidence={confidence}
                   isInTune={isInTune}
@@ -214,7 +215,7 @@ export function PracticeMode() {
               </Card>
               <Card className="p-6">
                 <ViolinFingerboard
-                  targetNote={currentNote.pitch}
+                  targetNote={pitchToString(currentNote.pitch)}
                   detectedPitch={detectedPitch}
                   centsDeviation={centsOff}
                   isInTune={isInTune}

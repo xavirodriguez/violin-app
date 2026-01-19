@@ -82,7 +82,7 @@ export function ViolinFingerboard({
     if (targetNote) {
       const targetPosition = FINGER_POSITIONS[targetNote]
       if (targetPosition) {
-        drawTargetPosition(ctx, targetPosition, canvas.width, canvas.height)
+        drawTargetPosition(ctx, targetPosition, canvas.height)
       }
     }
 
@@ -96,7 +96,6 @@ export function ViolinFingerboard({
           detectedPosition,
           centsDeviation || 0,
           isInTune,
-          canvas.width,
           canvas.height,
         )
       }
@@ -177,7 +176,6 @@ function drawFingerboard(ctx: CanvasRenderingContext2D, width: number, height: n
 function drawTargetPosition(
   ctx: CanvasRenderingContext2D,
   position: FingerPosition,
-  width: number,
   height: number,
 ) {
   const nutX = 50
@@ -213,7 +211,6 @@ function drawDetectedPosition(
   position: FingerPosition,
   centsDeviation: number,
   isInTune: boolean,
-  width: number,
   height: number,
 ) {
   const nutX = 50

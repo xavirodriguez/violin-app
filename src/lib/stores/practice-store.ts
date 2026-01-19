@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { MusicalNote } from '@/lib/musical-note'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
+import { pitchToString } from '@/lib/utils'
 
 import type { Exercise } from '@/lib/exercises/types'
 
@@ -229,9 +230,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     try {
       const detectedNote = MusicalNote.fromFrequency(pitch)
+      const targetNoteNameStr = pitchToString(targetPitchName) // Convert Pitch to string
       const targetNoteObj = MusicalNote.fromNoteName(
-        targetPitchName.replace(/\d/, ''),
-        Number.parseInt(targetPitchName.match(/\d/)?.[0] || '4'),
+        targetNoteNameStr.replace(/\d/, ''),
+        Number.parseInt(targetNoteNameStr.match(/\d/)?.[0] || '4'),
       )
 
       const isCorrectNote = detectedNote.matchesTarget(targetNoteObj)
@@ -243,7 +245,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         const targetNote = currentExercise.notes[currentNoteIndex]
         useAnalyticsStore
           .getState()
-          .recordNoteAttempt(currentNoteIndex, targetNote.pitch, centsDeviation, isInTune)
+          .recordNoteAttempt(
+            currentNoteIndex,
+            pitchToString(targetNote.pitch),
+            centsDeviation,
+            isInTune,
+          )
       }
 
       if (isCorrectNote && isInTune) {

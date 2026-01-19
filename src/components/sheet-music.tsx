@@ -15,17 +15,16 @@ function highlightNote(
   currentNoteIndex: number,
   completedNotes: boolean[],
 ) {
-  const notes = osmd.graphic.measureList
-    .filter((m) => m?.staffEntries)
-    .flatMap((m) => m.staffEntries)
-    .filter((e) => e?.graphicalVoiceEntries)
-    .flatMap((e) => e.graphicalVoiceEntries)
-    .filter((v) => v?.notes)
-    .flatMap((v) => v.notes)
-    .map((n) => n.getSVGElement())
+  const notes = osmd.GraphicSheet.MeasureList.filter((m: any) => m?.staffEntries)
+    .flatMap((m: any) => m.staffEntries)
+    .filter((e: any) => e?.graphicalVoiceEntries)
+    .flatMap((e: any) => e.graphicalVoiceEntries)
+    .filter((v: any) => v?.notes)
+    .flatMap((v: any) => v.notes)
+    .map((n: any) => n.getSVGElement())
     .filter(Boolean)
 
-  notes.forEach((noteEl, index) => {
+  notes.forEach((noteEl: any, index: any) => {
     if (!noteEl) return
     noteEl.classList.remove('note-current', 'note-completed')
     if (completedNotes[index]) {

@@ -17,7 +17,6 @@ interface PracticeFeedbackProps {
 export function PracticeFeedback({
   targetNote,
   detectedPitch,
-  _confidence,
   isInTune,
   centsOff,
   holdDuration,

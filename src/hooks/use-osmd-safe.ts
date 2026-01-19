@@ -33,12 +33,12 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
         await new Promise((resolve) => setTimeout(resolve, 100))
 
         if (
-          instance.graphic &&
-          instance.graphic.measureList &&
-          instance.graphic.measureList.length > 0
+          instance.GraphicSheet &&
+          instance.GraphicSheet.MeasureList &&
+          instance.GraphicSheet.MeasureList.length > 0
         ) {
-          const firstMeasure = instance.graphic.measureList[0]
-          if (firstMeasure && firstMeasure.staffEntries) {
+          const firstMeasure = instance.GraphicSheet.MeasureList[0]
+          if (firstMeasure && firstMeasure[0].staffEntries) {
             if (isMounted) {
               setOsmd(instance)
               cursorRef.current = instance.cursor

@@ -14,7 +14,7 @@ interface Exercise {
   notes: Note[]
 }
 
-interface PracticeSession {
+export interface PracticeSession {
   id: string
   startTime: Date
   endTime: Date
@@ -49,6 +49,7 @@ interface UserProgress {
   exercisesCompleted: Exercise['id'][]
   currentStreak: number // days
   longestStreak: number // days
+  sessions?: PracticeSession[]
 
   // Skill levels (0-100)
   intonationSkill: number
@@ -71,7 +72,7 @@ interface ExerciseStats {
   lastPracticed: Date
 }
 
-interface Achievement {
+export interface Achievement {
   id: string
   name: string
   description: string
@@ -363,7 +364,10 @@ function checkAchievements(progress: UserProgress, session: PracticeSession): Ac
 
   // 100 Notes Mastered
   const totalNotesCompleted =
-    progress.sessions.reduce((sum, s) => sum + s.notesCompleted, 0) + session.notesCompleted
+    (progress.sessions || []).reduce(
+      (sum: number, s: any) => sum + (s.notesCompleted || 0),
+      0,
+    ) + session.notesCompleted
   if (totalNotesCompleted >= 100 && !progress.achievements.find((a) => a.id === '100-notes')) {
     achievements.push({
       id: '100-notes',
