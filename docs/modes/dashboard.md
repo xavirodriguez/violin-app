@@ -1,53 +1,153 @@
-# Dashboard Mode
+# Analytics Dashboard Documentation
 
-The Dashboard Mode provides the user with insights into their practice history, progress over time, and achievements. All data is managed by the `useAnalyticsStore` and is persisted to the user's local storage.
+## Overview
 
-**Evidence:** `components/analytics-dashboard.tsx`, `lib/stores/analytics-store.ts`
+The Analytics Dashboard displays practice history, skill levels, streaks, and achievements. All data is stored client-side in localStorage via Zustand persist middleware.
 
-## Data Persistence
+## Data Models
 
-The `useAnalyticsStore` uses Zustand's `persist` middleware to save the `sessions` and `progress` state to local storage under the key `violin-analytics`. This ensures that the user's practice history is not lost between sessions.
+### PracticeSession [71](#0-70)
 
-## Session Recording
+| Field            | Type                  | Description                                    |
+| ---------------- | --------------------- | ---------------------------------------------- |
+| `id`             | string                | UUID generated at session start                |
+| `startTime`      | Date                  | When session started                           |
+| `endTime`        | Date                  | When session ended                             |
+| `duration`       | number                | Duration in seconds                            |
+| `exerciseId`     | string                | Which exercise was practiced                   |
+| `exerciseName`   | string                | Display name                                   |
+| `mode`           | 'tuner' \| 'practice' | Which mode (only 'practice' currently records) |
+| `notesAttempted` | number                | Total note detection attempts                  |
+| `notesCompleted` | number                | Notes successfully completed                   |
+| `accuracy`       | number                | Percentage (0-100)                             |
+| `averageCents`   | number                | Average absolute deviation in cents            |
+| `noteResults`    | NoteResult[]          | Per-note detailed results                      |
 
-A `PracticeSession` is recorded every time the user completes a practice exercise. The process is as follows:
+### NoteResult [72](#0-71)
 
-1.  **Start Session:** When the `start()` action is called in the `usePracticeStore`, it also calls `useAnalyticsStore.getState().startSession()`. This creates a new `currentSession` object with a start time and the exercise details.
-2.  **Record Attempts:** During the practice session, `usePracticeStore` calls `recordNoteAttempt` and `recordNoteCompletion` in the analytics store to track the user's performance on each note.
-3.  **End Session:** When the exercise is completed or stopped, `usePracticeStore` calls `useAnalyticsStore.getState().endSession()`. This calculates the final session metrics (duration, accuracy, etc.), updates the user's overall progress, and adds the completed session to the historical list of sessions.
+Tracks individual note performance within a session.
 
-## Key Metrics and Data
+### UserProgress [73](#0-72)
 
-The following key metrics are tracked and displayed on the dashboard:
+Aggregate statistics across all sessions:
 
-| Metric                  | Description                                                                     | Evidence                         |
-| :---------------------- | :------------------------------------------------------------------------------ | :------------------------------- |
-| **Total Practice Time** | The cumulative time the user has spent in practice sessions.                    | `progress.totalPracticeTime`     |
-| **Total Sessions**      | The total number of practice sessions completed.                                | `progress.totalPracticeSessions` |
-| **Accuracy**            | The percentage of notes played in tune during a session.                        | `session.accuracy`               |
-| **Intonation Skill**    | A calculated skill level (0-100) based on the accuracy of the last 10 sessions. | `calculateIntonationSkill()`     |
-| **Current Streak**      | The number of consecutive days the user has practiced.                          | `progress.currentStreak`         |
-| **Longest Streak**      | The user's all-time longest practice streak.                                    | `progress.longestStreak`         |
+- Total sessions count
+- Total practice time (seconds)
+- Completed exercise IDs
+- Streak tracking (current and longest)
+- Skill levels (0-100 scale)
+- Achievements unlocked
+- Per-exercise statistics
 
-## Streak Computation
+## Session Recording Flow
 
-The practice streak is updated at the end of each session. The logic is as follows:
+### 1. Session Start [74](#0-73)
 
-- If the last practice session was yesterday, the `currentStreak` is incremented.
-- If the last practice session was before yesterday, the `currentStreak` is reset to `1`.
-- If this is the first session, the `currentStreak` starts at `1`.
-- The `longestStreak` is updated whenever the `currentStreak` surpasses it.
+Creates a new session object with initial values. Called by PracticeStore when user starts practice.
 
-**Evidence:** `endSession` action in `lib/stores/analytics-store.ts`
+### 2. Note Attempt Recording [75](#0-74)
+
+**When recorded**: Every time pitch is detected for the target note (called by PracticeStore)
+
+**Updates**:
+
+- Increment `notesAttempted`
+- Create or update NoteResult for that note index
+- Recalculate `averageCents` (running average)
+- Recalculate `accuracy` (in-tune notes / total notes)
+
+### 3. Note Completion Recording [76](#0-75)
+
+**When recorded**: When note hold time requirement is met
+
+**Updates**:
+
+- Increment `notesCompleted`
+- Record `timeToComplete` for that note
+
+### 4. Session End [77](#0-76)
+
+**When called**: When exercise completes or user stops practice
+
+**Final calculations**:
+
+1. Calculate actual duration (endTime - startTime)
+2. Add completed session to sessions array
+3. Update total session count and time
+4. Update exercise-specific statistics
+5. Update streak (see Streak Computation below)
+6. Recalculate skill levels
+7. Check for new achievements
+8. Persist to localStorage
+
+**Session history limit**: [78](#0-77)
+
+Only the last 100 sessions are kept.
+
+## Metrics Calculation
+
+### Accuracy [79](#0-78)
+
+Formula: `(in-tune notes / total note results) × 100`
+
+A note is "in tune" if `wasInTune` is true (based on 25-cent threshold in practice mode).
+
+### Average Cents Deviation [80](#0-79)
+
+Formula: Sum of absolute average cents per note / number of notes
+
+Uses the per-note running average, not individual attempts.
+
+## Streak Computation [81](#0-80)
+
+**Streak logic**:
+
+1. Compare today's date (normalized to midnight) with last session's date
+2. **If last session was yesterday OR no sessions exist**: increment streak
+3. **If last session was today**: no change to streak
+4. **If last session was before yesterday**: reset streak to 1
+
+**Longest streak**: Updated whenever current streak exceeds it
+
+**UNKNOWN**: Whether multiple sessions in one day extend the streak
+**WHY IT MATTERS**: Could affect achievement unlocking
+**HOW TO CONFIRM**: Test by completing multiple sessions on the same day and checking streak
+
+## Skill Level Calculation
+
+### Intonation Skill [82](#0-81)
+
+**Formula**:
+
+1. Take average accuracy of last 10 sessions
+2. Calculate trend: recent session accuracy - 5th most recent session accuracy
+3. Skill = avgAccuracy + (trend × 0.5)
+4. Clamp to 0-100 range
+
+**Weighting**: Recent performance affects skill more due to trend factor.
+
+### Rhythm Skill [83](#0-82)
+
+Currently not implemented (remains at 0 or previous value).
+
+### Overall Skill [84](#0-83)
+
+Formula: `(intonationSkill + rhythmSkill) / 2`
+
+Rounded to nearest integer.
 
 ## Achievements
 
-The system includes a simple achievement system. After each session, the `checkAchievements` function runs to see if the user has unlocked any new achievements.
+Three achievements are implemented: [85](#0-84)
 
-| Achievement             | Condition                                          |
-| :---------------------- | :------------------------------------------------- |
-| **First Perfect Scale** | Complete an exercise with 100% accuracy.           |
-| **7-Day Streak**        | Achieve a 7-day practice streak.                   |
-| **100 Notes Mastered**  | Successfully play a cumulative total of 100 notes. |
+| Achievement ID  | Name                | Trigger                      | Icon |
+| --------------- | ------------------- | ---------------------------- | ---- |
+| `first-perfect` | First Perfect Scale | Accuracy = 100% in a session | 🎯   |
+| `week-streak`   | 7-Day Streak        | currentStreak reaches 7      | 🔥   |
+| `100-notes`     | 100 Notes Mastered  | Total notes completed ≥ 100  | 📈   |
 
-**Evidence:** `checkAchievements()` function in `lib/stores/analytics-store.ts`
+**Achievement checking**: [86](#0-85)
+
+Called at end of every session.
+
+**Duplicate prevention**: Each check verifies achievement doesn't already exist in `progress.achievements` array.

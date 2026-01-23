@@ -2,6 +2,7 @@
 
 import { MusicalNote } from '@/lib/musical-note'
 import { CheckCircle2, Circle, Music } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface PracticeFeedbackProps {
   targetNote: string
@@ -12,6 +13,28 @@ interface PracticeFeedbackProps {
   holdDuration: number
   requiredHoldTime: number
   state: string
+}
+
+function IntonationFeedback({ centsOff }: { centsOff: number }) {
+  if (centsOff > 10) {
+    return (
+      <div className="text-center">
+        <div className="text-lg font-semibold text-yellow-500">Too Sharp</div>
+        <div className="text-muted-foreground text-sm">
+          Move your finger down (toward the scroll)
+        </div>
+      </div>
+    )
+  }
+  if (centsOff < -10) {
+    return (
+      <div className="text-center">
+        <div className="text-lg font-semibold text-yellow-500">Too Flat</div>
+        <div className="text-muted-foreground text-sm">Move your finger up (toward the bridge)</div>
+      </div>
+    )
+  }
+  return null
 }
 
 export function PracticeFeedback({
@@ -55,10 +78,20 @@ export function PracticeFeedback({
               {detectedNote.getFullName()}
             </div>
             {centsOff !== null && (
-              <div className="text-muted-foreground text-lg">
-                {centsOff > 0 ? '+' : ''}
-                {centsOff.toFixed(1)}¢
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="text-muted-foreground text-lg">
+                      {centsOff > 0 ? '+' : ''}
+                      {centsOff.toFixed(1)}¢
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    A cent is 1/100th of a semitone. A deviation of less than ±10 cents is
+                    considered in tune.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </>
         ) : (
@@ -101,11 +134,8 @@ export function PracticeFeedback({
             <span>Listening...</span>
           </div>
         )}
-        {state === 'NOTE_DETECTED' && !isInTune && (
-          <div className="flex items-center gap-2 text-yellow-500">
-            <Circle className="h-5 w-5" />
-            <span>Adjust tuning</span>
-          </div>
+        {state === 'NOTE_DETECTED' && !isInTune && centsOff !== null && (
+          <IntonationFeedback centsOff={centsOff} />
         )}
         {state === 'VALIDATING' && (
           <div className="text-primary flex items-center gap-2">
