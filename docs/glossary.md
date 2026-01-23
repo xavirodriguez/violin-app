@@ -1,0 +1,12 @@
+# Glossary
+
+This glossary defines key musical and technical terms as they are used within the Violin Mentor application.
+
+| Term              | Definition                                                                                                                                                                  | Evidence                                                                                         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Cents**         | A logarithmic unit of measure for musical intervals. In this app, it represents the deviation from the exact pitch of the target note. A value of 0 is perfectly in tune.   | `MusicalNote.centsDeviation` in `lib/musical-note.ts`                                            |
+| **Confidence**    | A value from 0.0 to 1.0 indicating the pitch detector's confidence in the detected frequency. The app requires a confidence of > 0.85 to consider a note valid.             | `PitchDetector.detectPitch` in `lib/pitch-detector.ts`, `useTunerStore` & `usePracticeStore`     |
+| **Hold Duration** | The amount of time, in milliseconds, that a user must sustain a note within the required pitch tolerance for it to be marked as complete. The current requirement is 500ms. | `usePracticeStore.requiredHoldTime` in `lib/stores/practice-store.ts`                            |
+| **Hz (Hertz)**    | The unit of frequency. The pitch detector returns the fundamental frequency of the played note in Hz.                                                                       | `PitchDetectionResult.pitchHz` in `lib/pitch-detector.ts`                                        |
+| **Intonation**    | The accuracy of a musician's pitch. In this app, a note is considered "in-tune" if its cents deviation is within ±25 cents of the target pitch.                             | `usePracticeStore.updateDetectedPitch` in `lib/stores/practice-store.ts` (calculates `isInTune`) |
+| **RMS**           | Root Mean Square. A measure of the magnitude of the audio signal (volume). The app requires an RMS of > 0.01 to filter out silence and background noise.                    | `PitchDetector.calculateRMS` in `lib/pitch-detector.ts`, `usePracticeStore.updateDetectedPitch`  |

@@ -1,30 +1,45 @@
-# Violin app states
+# Violin Mentor
 
-_Automatically synced with your [v0.app](https://v0.app) deployments_
+Violin Mentor is a Next.js application designed to help users practice the violin. It provides real-time feedback on pitch and intonation through three distinct modes: a real-time Tuner, a guided Practice mode with sheet music, and an Analytics Dashboard to track progress.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/xavirodriguezs-projects/v0-violin-app-states-8q)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/mVQAEasYDhU)
+## Quickstart
 
-## Overview
+1.  **Install Dependencies:**
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+    ```bash
+    pnpm install
+    ```
 
-## Deployment
+2.  **Run the Development Server:**
 
-Your project is live at:
+    ```bash
+    pnpm dev
+    ```
 
-**[https://vercel.com/xavirodriguezs-projects/v0-violin-app-states-8q](https://vercel.com/xavirodriguezs-projects/v0-violin-app-states-8q)**
+3.  Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Build your app
+## Commands
 
-Continue building your app on:
+| Command             | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `pnpm dev`          | Starts the development server.                    |
+| `pnpm build`        | Builds the application for production.            |
+| `pnpm lint`         | Runs the linter to check for code quality issues. |
+| `pnpm lint:fix`     | Automatically fixes linting issues.               |
+| `pnpm format`       | Formats the code using Prettier.                  |
+| `pnpm format:check` | Checks for formatting issues without fixing them. |
 
-**[https://v0.app/chat/mVQAEasYDhU](https://v0.app/chat/mVQAEasYDhU)**
+## Repository Structure
 
-## How It Works
+A brief overview of the key directories in this project:
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- `app/`: The main entry point of the Next.js application, containing the layout and page structure.
+- `components/`: Contains the React components used to build the UI for each mode.
+- `docs/`: Contains all project documentation.
+- `hooks/`: Contains custom React hooks.
+- `lib/`: Core application logic, including:
+  - `exercises/`: Data for practice exercises.
+  - `stores/`: Zustand stores for state management (`tuner`, `practice`, `analytics`).
+  - `pitch-detector.ts`: The YIN algorithm implementation for pitch detection.
+- `public/`: Static assets, such as images and MusicXML files.
+- `styles/`: Global CSS styles.
