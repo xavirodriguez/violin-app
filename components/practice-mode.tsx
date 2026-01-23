@@ -17,41 +17,31 @@ import { SheetMusic } from '@/components/sheet-music'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
+import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 
 export function PracticeMode() {
   const {
-    state,
+    practiceState,
     error,
-    currentExercise,
     currentNoteIndex,
-    completedNotes,
-    detectedPitch,
-    confidence,
-    isInTune,
-    centsOff,
-    holdDuration,
-    requiredHoldTime,
-    analyser,
-    detector,
+    targetNote,
+    status,
     loadExercise,
     start,
     stop,
     reset,
-    updateDetectedPitch,
   } = usePracticeStore()
 
-  const animationFrameRef = useRef<number>()
   const loadedRef = useRef(false)
+  const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
-  // Load exercise on mount
+  // Load default exercise on mount
   useEffect(() => {
-    // In React 18's Strict Mode, this effect runs twice. Use a ref to ensure
-    // the exercise is loaded only once on the initial mount.
-    if (!loadedRef.current) {
+    if (!loadedRef.current && !practiceState) {
       loadExercise(allExercises[0])
       loadedRef.current = true
     }
-  }, [loadExercise])
+  }, [loadExercise, practiceState])
 
   const handleExerciseChange = (exerciseId: string) => {
     const selectedExercise = allExercises.find((ex) => ex.id === exerciseId)
@@ -60,52 +50,43 @@ export function PracticeMode() {
     }
   }
 
-  // Audio analysis loop
+  // OSMD Cursor Synchronization Effect
   useEffect(() => {
-    if (!analyser || !detector || !['PRACTICING', 'NOTE_DETECTED', 'VALIDATING'].includes(state)) {
-      return
+    if (status === 'listening' && currentNoteIndex === 0) {
+      osmdHook.resetCursor()
+    } else if (status === 'correct') {
+      osmdHook.advanceCursor()
     }
+  }, [status, currentNoteIndex, osmdHook.resetCursor, osmdHook.advanceCursor])
 
-    const buffer = new Float32Array(analyser.fftSize)
+  const totalNotes = practiceState?.exercise.notes.length || 0
+  const progress =
+    totalNotes > 0
+      ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100
+      : 0
+  const lastDetectedNote = practiceState?.history[practiceState.history.length - 1]
 
-    const analyze = () => {
-      analyser.getFloatTimeDomainData(buffer)
-
-      const result = detector.detectPitchWithValidation(buffer)
-      const rms = detector.calculateRMS(buffer)
-
-      updateDetectedPitch(result.pitchHz, result.confidence, rms)
-
-      animationFrameRef.current = requestAnimationFrame(analyze)
-    }
-
-    analyze()
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [analyser, detector, state, updateDetectedPitch])
-
-  const currentNote = currentExercise?.notes[currentNoteIndex]
-  const totalNotes = currentExercise?.notes.length || 0
-  const progress = totalNotes > 0 ? ((currentNoteIndex + 1) / totalNotes) * 100 : 0
+  // Construct the full target note name for display
+  const targetPitchName = targetNote
+    ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
+    : ''
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        {/* Title */}
         <div className="text-center">
-          <h2 className="text-foreground mb-2 text-3xl font-bold">{currentExercise?.name}</h2>
-          <p className="text-muted-foreground">
-            Play each note in tune and hold for {requiredHoldTime}ms to advance
-          </p>
+          <h2 className="text-foreground mb-2 text-3xl font-bold">
+            {practiceState?.exercise.name}
+          </h2>
+          <p className="text-muted-foreground">Play each note in tune to advance.</p>
         </div>
 
-        {/* Exercise Selection */}
         <Card className="p-4">
-          <Select value={currentExercise?.id} onValueChange={handleExerciseChange}>
+          <Select
+            value={practiceState?.exercise.id}
+            onValueChange={handleExerciseChange}
+            disabled={status !== 'idle'}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an exercise" />
             </SelectTrigger>
@@ -119,8 +100,7 @@ export function PracticeMode() {
           </Select>
         </Card>
 
-        {/* Error State */}
-        {state === 'ERROR' && (
+        {error && (
           <Card className="bg-destructive/10 border-destructive p-6">
             <div className="flex items-center gap-3">
               <AlertCircle className="text-destructive h-6 w-6" />
@@ -128,112 +108,82 @@ export function PracticeMode() {
                 <h3 className="text-destructive font-semibold">Error</h3>
                 <p className="text-muted-foreground text-sm">{error}</p>
               </div>
-              <Button onClick={reset} variant="outline">
-                Reset
-              </Button>
+              <Button onClick={reset} variant="outline">Reset</Button>
             </div>
           </Card>
         )}
 
-        {/* Controls */}
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {state === 'LOADED' && (
-                <Button onClick={start} size="lg" className="gap-2">
-                  <Play className="h-4 w-4" />
-                  Start Practice
+              {status === 'idle' && (
+                <Button onClick={start} size="lg" className="gap-2" disabled={!practiceState}>
+                  <Play className="h-4 w-4" /> Start Practice
                 </Button>
               )}
-
-              {state === 'INITIALIZING' && (
-                <Button disabled size="lg">
-                  <div className="border-primary-foreground mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                  Awaiting microphone...
-                </Button>
-              )}
-
-              {['PRACTICING', 'NOTE_DETECTED', 'VALIDATING', 'NOTE_COMPLETED'].includes(state) && (
+              {['listening', 'validating', 'correct'].includes(status) && (
                 <Button onClick={stop} size="lg" variant="destructive" className="gap-2">
-                  <Square className="h-4 w-4" />
-                  Stop
+                  <Square className="h-4 w-4" /> Stop
                 </Button>
               )}
-
-              {state === 'EXERCISE_COMPLETE' && (
-                <Button onClick={start} size="lg" className="gap-2">
-                  <RotateCcw className="h-4 w-4" />
-                  Practice Again
+              {status === 'completed' && (
+                <Button onClick={() => practiceState && loadExercise(practiceState.exercise)} size="lg" className="gap-2">
+                  <RotateCcw className="h-4 w-4" /> Practice Again
                 </Button>
               )}
             </div>
-
-            {/* Progress */}
-            <div className="flex items-center gap-4">
-              <div className="text-muted-foreground text-sm">
-                Note {currentNoteIndex + 1} of {totalNotes}
+            {practiceState && (
+              <div className="flex items-center gap-4">
+                <div className="text-muted-foreground text-sm">
+                  Note {Math.min(currentNoteIndex + 1, totalNotes)} of {totalNotes}
+                </div>
+                <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
+                  <div className="bg-primary h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
               </div>
-              <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
-                <div
-                  className="bg-primary h-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
+            )}
           </div>
         </Card>
 
-        {currentExercise && state !== 'IDLE' && (
+        {practiceState?.exercise.musicXML && (
           <Card className="p-6">
             <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
               <SheetMusic
-                key={currentExercise.id}
-                musicXML={currentExercise.musicXML}
-                currentNoteIndex={currentNoteIndex}
-                completedNotes={completedNotes}
+                containerRef={osmdHook.containerRef}
+                isReady={osmdHook.isReady}
+                error={osmdHook.error}
               />
             </ErrorBoundary>
           </Card>
         )}
 
-        {/* Practice Feedback */}
-        {['PRACTICING', 'NOTE_DETECTED', 'VALIDATING', 'NOTE_COMPLETED'].includes(state) &&
-          currentNote && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card className="p-6">
-                <PracticeFeedback
-                  targetNote={currentNote.pitch}
-                  detectedPitch={detectedPitch}
-                  confidence={confidence}
-                  isInTune={isInTune}
-                  centsOff={centsOff}
-                  holdDuration={holdDuration}
-                  requiredHoldTime={requiredHoldTime}
-                  state={state}
-                />
-              </Card>
-              <Card className="p-6">
-                <ViolinFingerboard
-                  targetNote={currentNote.pitch}
-                  detectedPitch={detectedPitch}
-                  centsDeviation={centsOff}
-                  isInTune={isInTune}
-                />
-              </Card>
-            </div>
-          )}
+        {['listening', 'validating', 'correct'].includes(status) && targetNote && (
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="p-6">
+              <PracticeFeedback
+                targetNote={targetPitchName}
+                detectedPitchName={lastDetectedNote?.pitch}
+                centsOff={lastDetectedNote?.cents}
+                status={status}
+              />
+            </Card>
+            <Card className="p-6">
+              <ViolinFingerboard
+                targetNote={targetPitchName}
+                detectedPitchName={lastDetectedNote?.pitch}
+                centsDeviation={lastDetectedNote?.cents}
+              />
+            </Card>
+          </div>
+        )}
 
-        {/* Completion */}
-        {state === 'EXERCISE_COMPLETE' && (
+        {status === 'completed' && (
           <Card className="bg-primary/10 p-8 text-center">
             <Trophy className="text-primary mx-auto mb-4 h-20 w-20" />
-            <h3 className="mb-2 text-2xl font-bold">🎉 Scale Complete!</h3>
-            <p className="text-muted-foreground mb-6">
-              Excellent work! You've successfully played the G Major scale.
-            </p>
-            <Button onClick={start} size="lg" className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Practice Again
+            <h3 className="mb-2 text-2xl font-bold">🎉 Exercise Complete!</h3>
+            <p className="text-muted-foreground mb-6">Excellent work!</p>
+            <Button onClick={() => practiceState && loadExercise(practiceState.exercise)} size="lg" className="gap-2">
+              <RotateCcw className="h-4 w-4" /> Practice Again
             </Button>
           </Card>
         )}

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { MusicalNote } from '@/lib/musical-note'
+import { MusicalNote } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
 
 type TunerState = 'IDLE' | 'INITIALIZING' | 'READY' | 'LISTENING' | 'DETECTED' | 'ERROR'
