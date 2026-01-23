@@ -1,39 +1,138 @@
-# Architecture
+# Violin Mentor Architecture
 
-This document provides a high-level overview of the Violin Mentor application's architecture.
+## High-Level Overview
 
-## System Context
+Violin Mentor is a client-side Next.js application with three distinct operational modes that share common audio infrastructure and state management.
 
-Violin Mentor is a client-side, single-page application (SPA) built with Next.js. It runs entirely in the user's browser and does not have a dedicated backend server. The application uses the browser's microphone to capture audio input for real-time pitch detection.
+### Mode Architecture
 
-## Components
+The application operates in exactly one mode at a time, controlled by local React state in the root page component. [1](#0-0)
 
-The application is structured into several key components:
+Mode switching is handled by a Radix UI tabs component that renders the appropriate mode component: [2](#0-1)
 
-- **`app/page.tsx`**: The main entry point of the application. It manages the active mode (Tuner, Practice, or Dashboard) and renders the appropriate component.
+### Component Hierarchy
 
-- **`components/tuner-mode.tsx`**: The UI for the Tuner feature, which provides real-time pitch detection and feedback. It relies on the `TunerDisplay` component to visualize the detected frequency.
+```mermaid
+graph TD
+    A["app/page.tsx<br/>(Root)"] --> B["TunerMode"]
+    A --> C["PracticeMode"]
+    A --> D["AnalyticsDashboard"]
+    A --> E["SettingsDialog"]
 
-- **`components/practice-mode.tsx`**: The UI for the Practice feature. It displays sheet music using the `SheetMusic` component and provides feedback on the user's playing.
+    B --> F["TunerStore"]
+    B --> G["PitchDetector"]
+    B --> H["ViolinFingerboard"]
 
-- **`components/analytics-dashboard.tsx`**: The UI for the Dashboard, which shows the user's progress and practice history.
+    C --> I["PracticeStore"]
+    C --> G
+    C --> J["SheetMusic"]
+    C --> K["PracticeFeedback"]
+    C --> H
 
-- **`lib/pitch-detector.ts`**: Contains the implementation of the YIN algorithm for pitch detection. This is the core of the real-time feedback system.
+    D --> L["AnalyticsStore"]
 
-- **`lib/stores/`**: Zustand stores are used to manage the application's state. There are separate stores for the tuner, practice mode, and analytics.
+    E --> F
+```
 
 ## Data Flow
 
-1.  **Audio Input**: The application requests microphone access from the user. Audio is captured using the browser's `AudioContext`.
+### Audio Pipeline
 
-2.  **Pitch Detection**: The raw audio data is passed to the `pitch-detector.ts` module, which processes it and returns the detected frequency.
+```mermaid
+graph LR
+    A["Microphone"] --> B["MediaStream"]
+    B --> C["AudioContext"]
+    C --> D["AnalyserNode"]
+    D --> E["Float32Array<br/>(time domain)"]
+    E --> F["PitchDetector<br/>(YIN algorithm)"]
+    F --> G["Store Update"]
+    G --> H["UI Feedback"]
+```
 
-3.  **State Update**: The detected frequency is used to update the `tuner-store` or `practice-store`, depending on the current mode.
+**Implementation locations**:
+- Audio initialization: [3](#0-2)
+- Pitch detection loop: [4](#0-3)
+- YIN algorithm: [5](#0-4)
 
-4.  **UI Render**: The UI components, subscribed to the Zustand stores, re-render to reflect the new state. For example, the `TunerDisplay` will update to show the new note and frequency.
+### State Management Flow
 
-5.  **Analytics**: Practice data, such as note accuracy and timing, is collected and stored in the `analytics-store`. This data is then displayed in the `AnalyticsDashboard`.
+```mermaid
+graph TD
+    A["User Action"] --> B["Component Event"]
+    B --> C["Zustand Store Action"]
+    C --> D["Store State Update"]
+    D --> E["React Re-render"]
+    E --> F["UI Update"]
 
-## External Services
+    G["Audio Loop<br/>(requestAnimationFrame)"] --> H["Pitch Detection"]
+    H --> C
+```
 
-The application does not rely on any external backend services for its core functionality. It is a self-contained client-side application. The only external dependency is the use of Vercel for deployment and analytics.
+The application uses three independent Zustand stores:
+- **TunerStore**: Manages tuner mode state and audio resources
+- **PracticeStore**: Manages practice sessions and exercise progression
+- **AnalyticsStore**: Persists session history and user progress [6](#0-5) [7](#0-6) [8](#0-7)
+
+### Cross-Store Interactions
+
+Only the **PracticeStore** interacts with the **AnalyticsStore**:
+
+1. Session start: [9](#0-8)
+2. Note attempts: [10](#0-9)
+3. Note completions: [11](#0-10)
+4. Session end: [12](#0-11)
+
+The **TunerStore** operates independently and does not record analytics.
+
+## Runtime Boundaries
+
+### Client-Side Only
+
+All audio processing and pitch detection occurs client-side. There are no server-side API endpoints for audio processing. [13](#0-12) [14](#0-13)
+
+### Audio Resource Management
+
+Each mode that requires audio (Tuner and Practice) manages its own audio resources:
+
+**Tuner Mode initialization**: [15](#0-14)
+
+**Practice Mode initialization**: [16](#0-15)
+
+**Critical invariant**: Audio resources (MediaStream, AudioContext) must be cleaned up when switching modes or on errors to prevent resource leaks.
+
+**Tuner cleanup**: [17](#0-16)
+
+**Practice cleanup**: [18](#0-17)
+
+## Mode Switching Behavior
+
+When switching between modes:
+1. Previous mode's component unmounts
+2. Audio resources are automatically cleaned up via store reset
+3. New mode's component mounts
+4. User must explicitly initialize audio (microphone permission required)
+
+**UNKNOWN**: Whether audio resources persist if user switches modes while audio is active
+**WHY IT MATTERS**: Could cause resource leaks or permission issues
+**HOW TO CONFIRM**: Test switching from Tuner (active) → Practice → back to Tuner
+
+## Exercise System
+
+Exercises are defined statically in TypeScript files and processed at build time: [19](#0-18)
+
+Categories:
+- Open Strings: [20](#0-19)
+- Scales: [21](#0-20)
+- Songs: [22](#0-21)
+
+MusicXML is generated from exercise data: [23](#0-22)
+
+## Analytics Persistence
+
+The AnalyticsStore uses Zustand's persist middleware to store session history and progress in browser localStorage: [24](#0-23)
+
+Persistence configuration: [25](#0-24)
+
+**Storage key**: `violin-analytics`
+**Persisted fields**: `sessions` (last 100), `progress`
+**Not persisted**: `currentSession` (session-only state)
