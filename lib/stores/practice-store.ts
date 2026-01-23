@@ -1,344 +1,210 @@
 import { create } from 'zustand'
-import { MusicalNote } from '@/lib/musical-note'
+import {
+  type PracticeState,
+  type PracticeEvent,
+  reducePracticeEvent,
+} from '@/lib/practice-core'
+import {
+  createRawPitchStream,
+  createPracticeEventPipeline,
+} from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
+import { allExercises } from '@/lib/exercises' // For default exercise
 
 import type { Exercise } from '@/lib/exercises/types'
 
-type PracticeState =
-  | 'IDLE'
-  | 'LOADED'
-  | 'INITIALIZING'
-  | 'PRACTICING'
-  | 'NOTE_DETECTED'
-  | 'VALIDATING'
-  | 'NOTE_COMPLETED'
-  | 'EXERCISE_COMPLETE'
-  | 'ERROR'
+// A flag to control the audio processing loop
+let isPracticing = false
 
 interface PracticeStore {
-  // State
-  state: PracticeState
+  // --- STATE ---
+  // The entire state from the pure functional core
+  practiceState: PracticeState | null
   error: string | null
 
-  // Exercise data
-  currentExercise: Exercise | null
+  // --- DERIVED STATE ---
+  // Convenience getters for the UI
   currentNoteIndex: number
-  completedNotes: boolean[]
+  targetNote: Exercise['notes'][0] | null
+  status: PracticeState['status']
 
-  // Detection data
-  detectedPitch: number | null
-  confidence: number
-  isInTune: boolean
-  centsOff: number | null
-
-  // Timing
-  noteStartTime: number | null
-  holdDuration: number
-  requiredHoldTime: number
-
-  // Audio resources
+  // --- AUDIO RESOURCES ---
+  // Managed by the store, but not part of the core logic state
   audioContext: AudioContext | null
   analyser: AnalyserNode | null
   mediaStream: MediaStream | null
   detector: PitchDetector | null
 
-  // Actions
+  // --- ACTIONS ---
   loadExercise: (exercise: Exercise) => void
   start: () => Promise<void>
   stop: () => void
   reset: () => void
-  updateDetectedPitch: (pitch: number, confidence: number, rms: number) => void
-  advanceToNextNote: () => void
-  completeExercise: () => void
 }
 
+const getInitialState = (exercise: Exercise): PracticeState => ({
+  status: 'idle',
+  exercise: exercise,
+  currentIndex: 0,
+  history: [],
+  validationStartTime: null,
+})
+
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
-  // Initial state
-  state: 'IDLE',
+  // --- INITIAL STATE ---
+  practiceState: null,
   error: null,
-  currentExercise: null,
-  currentNoteIndex: 0,
-  completedNotes: [],
-  detectedPitch: null,
-  confidence: 0,
-  isInTune: false,
-  centsOff: null,
-  noteStartTime: null,
-  holdDuration: 0,
-  requiredHoldTime: 500,
   audioContext: null,
   analyser: null,
   mediaStream: null,
   detector: null,
 
+  // --- DERIVED STATE GETTERS ---
+  get currentNoteIndex() {
+    return get().practiceState?.currentIndex ?? 0
+  },
+  get targetNote() {
+    const state = get().practiceState
+    if (!state) return null
+    return state.exercise.notes[state.currentIndex] ?? null
+  },
+  get status() {
+    return get().practiceState?.status ?? 'idle'
+  },
+
+  // --- ACTIONS ---
   loadExercise: (exercise) => {
-    const { stop } = get()
-    stop()
+    get().stop()
     set({
-      state: 'LOADED',
-      currentExercise: exercise,
-      currentNoteIndex: 0,
-      completedNotes: new Array(exercise.notes.length).fill(false),
+      practiceState: getInitialState(exercise),
       error: null,
     })
   },
 
   start: async () => {
+    const { practiceState } = get()
+    if (!practiceState) {
+      set({ error: 'No exercise loaded' })
+      return
+    }
+
+    // Prevent starting if already practicing
+    if (isPracticing) {
+      console.warn('Practice is already in progress.')
+      return
+    }
+    isPracticing = true
+
     // Start analytics session
-    const { state, currentExercise } = get()
-    if (currentExercise) {
-      useAnalyticsStore
-        .getState()
-        .startSession(currentExercise.id, currentExercise.name, 'practice')
-    }
-
-    if (!currentExercise) {
-      set({ state: 'ERROR', error: 'No exercise loaded' })
-      return
-    }
-
-    if (state !== 'LOADED' && state !== 'EXERCISE_COMPLETE') {
-      console.warn(`Cannot start from state: ${state}`)
-      return
-    }
-
-    set({ state: 'INITIALIZING' })
+    useAnalyticsStore
+      .getState()
+      .startSession(practiceState.exercise.id, practiceState.exercise.name, 'practice')
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      })
-
+      // --- 1. SETUP AUDIO HARDWARE & DISPATCH START EVENT ---
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const context = new AudioContext()
       const analyser = context.createAnalyser()
-      analyser.fftSize = 2048
-      analyser.smoothingTimeConstant = 0
-
       const source = context.createMediaStreamSource(stream)
       source.connect(analyser)
-
       const detector = new PitchDetector(context.sampleRate)
 
-      set({
-        state: 'PRACTICING',
-        audioContext: context,
+      set({ audioContext: context, analyser, mediaStream: stream, detector })
+
+      // Dispatch the START event to the reducer to transition state to 'listening'
+      const startEvent: PracticeEvent = { type: 'START' }
+      const initialPracticeState = get().practiceState!
+      const startedState = reducePracticeEvent(initialPracticeState, startEvent)
+      set({ practiceState: startedState })
+
+      // --- 2. CREATE THE EVENT PIPELINE ---
+      const rawPitchStream = createRawPitchStream(
         analyser,
-        mediaStream: stream,
         detector,
-        currentNoteIndex: 0,
-        completedNotes: new Array(currentExercise.notes.length).fill(false),
-        noteStartTime: null,
-        holdDuration: 0,
-      })
+        () => isPracticing,
+      )
+      const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream)
+
+      // --- 3. CONSUME THE PIPELINE ---
+      for await (const event of practiceEventPipeline) {
+        if (!isPracticing) break
+
+        const currentState = get().practiceState!
+        const newState = reducePracticeEvent(currentState, event)
+
+        // --- 4. UPDATE STATE & HANDLE SIDE EFFECTS ---
+        if (newState !== currentState) {
+          set({ practiceState: newState })
+
+          // Side Effect: Record analytics on state change
+          if (
+            newState.status === 'validating' &&
+            currentState.status === 'listening'
+          ) {
+            const target = currentState.exercise.notes[currentState.currentIndex]
+            // This is a rough approximation. Analytics would need richer events.
+            if (event.type === 'NOTE_DETECTED') {
+              useAnalyticsStore
+                .getState()
+                .recordNoteAttempt(
+                  currentState.currentIndex,
+                  target.pitch,
+                  event.payload.cents,
+                  true,
+                )
+            }
+          }
+
+          // Side Effect: If a note was just marked 'correct', immediately
+          // transition to 'listening' for the next note.
+          if (newState.status === 'correct') {
+            const finalState = { ...newState, status: 'listening' as const }
+            set({ practiceState: finalState })
+          }
+
+          // Side Effect: On exercise completion
+          if (newState.status === 'completed') {
+            get().stop() // Stop the loop and cleanup
+            useAnalyticsStore.getState().endSession()
+            break // Exit the loop
+          }
+        }
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Audio initialization failed'
-      set({ state: 'ERROR', error: errorMessage })
+      const errorMessage =
+        err instanceof Error ? err.message : 'Audio initialization failed'
+      set({ error: errorMessage })
+      isPracticing = false
     }
   },
 
   stop: () => {
-    // End analytics session if active
-    useAnalyticsStore.getState().endSession()
+    if (!isPracticing && !get().mediaStream) return // Nothing to stop
+
+    isPracticing = false
     const { mediaStream, audioContext } = get()
 
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop())
-    }
-    if (audioContext && audioContext.state !== 'closed') {
-      audioContext.close()
+    mediaStream?.getTracks().forEach((track) => track.stop())
+    audioContext?.close()
+
+    // Dispatch a STOP event to reset the state machine
+    const currentState = get().practiceState
+    if (currentState) {
+      const stoppedState = reducePracticeEvent(currentState, { type: 'STOP' })
+      set({ practiceState: stoppedState })
     }
 
     set({
-      state: 'LOADED',
       audioContext: null,
       analyser: null,
       mediaStream: null,
       detector: null,
-      noteStartTime: null,
-      holdDuration: 0,
-      detectedPitch: null,
-      confidence: 0,
-      isInTune: false,
-      centsOff: null,
     })
   },
 
   reset: () => {
-    const { mediaStream, audioContext } = get()
-
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop())
-    }
-    if (audioContext && audioContext.state !== 'closed') {
-      audioContext.close()
-    }
-
-    set({
-      state: 'IDLE',
-      error: null,
-      currentExercise: null,
-      currentNoteIndex: 0,
-      completedNotes: [],
-      detectedPitch: null,
-      confidence: 0,
-      isInTune: false,
-      centsOff: null,
-      noteStartTime: null,
-      holdDuration: 0,
-      audioContext: null,
-      analyser: null,
-      mediaStream: null,
-      detector: null,
-    })
-  },
-
-  updateDetectedPitch: (pitch: number, confidence: number, rms: number) => {
-    const { state, currentExercise, currentNoteIndex, noteStartTime, requiredHoldTime, centsOff } =
-      get()
-
-    if (!['PRACTICING', 'NOTE_DETECTED', 'VALIDATING'].includes(state)) {
-      return
-    }
-
-    if (!currentExercise || currentNoteIndex >= currentExercise.notes.length) {
-      return
-    }
-
-    const targetNote = currentExercise.notes[currentNoteIndex]
-    const targetPitchName = targetNote.pitch
-
-    const hasSignal = rms > 0.01 && confidence > 0.85
-
-    if (!hasSignal) {
-      set({
-        state: 'PRACTICING',
-        noteStartTime: null,
-        holdDuration: 0,
-        detectedPitch: null,
-        confidence: 0,
-        isInTune: false,
-        centsOff: null,
-      })
-      return
-    }
-
-    try {
-      const detectedNote = MusicalNote.fromFrequency(pitch)
-      const targetNoteObj = MusicalNote.fromNoteName(
-        targetPitchName.replace(/\d/, ''),
-        Number.parseInt(targetPitchName.match(/\d/)?.[0] || '4'),
-      )
-
-      const isCorrectNote = detectedNote.matchesTarget(targetNoteObj)
-      const centsDeviation = detectedNote.centsDeviation
-      const isInTune = Math.abs(centsDeviation) < 25
-
-      // Record note attempt
-      if (currentExercise && centsOff !== null) {
-        const targetNote = currentExercise.notes[currentNoteIndex]
-        useAnalyticsStore
-          .getState()
-          .recordNoteAttempt(currentNoteIndex, targetNote.pitch, centsDeviation, isInTune)
-      }
-
-      if (isCorrectNote && isInTune) {
-        const now = Date.now()
-        const startTime = noteStartTime || now
-        const holdTime = now - startTime
-
-        if (holdTime >= requiredHoldTime) {
-          set({
-            state: 'NOTE_COMPLETED',
-            detectedPitch: pitch,
-            confidence,
-            isInTune: true,
-            centsOff: centsDeviation,
-            noteStartTime: startTime,
-            holdDuration: holdTime,
-          })
-
-          setTimeout(() => {
-            get().advanceToNextNote()
-          }, 200)
-        } else {
-          set({
-            state: 'VALIDATING',
-            detectedPitch: pitch,
-            confidence,
-            isInTune: true,
-            centsOff: centsDeviation,
-            noteStartTime: startTime,
-            holdDuration: holdTime,
-          })
-        }
-      } else {
-        set({
-          state: isCorrectNote ? 'NOTE_DETECTED' : 'PRACTICING',
-          detectedPitch: pitch,
-          confidence,
-          isInTune: false,
-          centsOff: isCorrectNote ? centsDeviation : null,
-          noteStartTime: null,
-          holdDuration: 0,
-        })
-      }
-    } catch (_err) {
-      set({
-        state: 'PRACTICING',
-        noteStartTime: null,
-        holdDuration: 0,
-        detectedPitch: null,
-        confidence: 0,
-        isInTune: false,
-        centsOff: null,
-      })
-    }
-  },
-
-  advanceToNextNote: () => {
-    // Record note completion time
-    const { currentExercise, currentNoteIndex, noteStartTime, completedNotes } = get()
-    if (noteStartTime) {
-      const timeToComplete = Date.now() - noteStartTime
-      useAnalyticsStore.getState().recordNoteCompletion(currentNoteIndex, timeToComplete)
-    }
-
-    if (!currentExercise) return
-
-    const newCompletedNotes = [...completedNotes]
-    newCompletedNotes[currentNoteIndex] = true
-
-    if (currentNoteIndex < currentExercise.notes.length - 1) {
-      set({
-        state: 'PRACTICING',
-        currentNoteIndex: currentNoteIndex + 1,
-        completedNotes: newCompletedNotes,
-        noteStartTime: null,
-        holdDuration: 0,
-        detectedPitch: null,
-        confidence: 0,
-        isInTune: false,
-        centsOff: null,
-      })
-    } else {
-      set({ completedNotes: newCompletedNotes })
-      get().completeExercise()
-    }
-  },
-
-  completeExercise: () => {
-    // End analytics session
-    useAnalyticsStore.getState().endSession()
-
-    set({
-      state: 'EXERCISE_COMPLETE',
-      noteStartTime: null,
-      holdDuration: 0,
-    })
+    get().stop()
+    set({ practiceState: null, error: null })
   },
 }))

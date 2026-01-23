@@ -1,56 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useOSMDSafe } from '@/hooks/use-osmd-safe'
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
+import React from 'react'
 
 interface SheetMusicProps {
-  musicXML: string
-  currentNoteIndex: number
-  completedNotes: boolean[]
+  containerRef: React.RefObject<HTMLDivElement>
+  isReady: boolean
+  error: string | null
 }
 
-function highlightNote(
-  osmd: OpenSheetMusicDisplay,
-  currentNoteIndex: number,
-  completedNotes: boolean[],
-) {
-  const notes = osmd.graphic.measureList
-    .filter((m) => m?.staffEntries)
-    .flatMap((m) => m.staffEntries)
-    .filter((e) => e?.graphicalVoiceEntries)
-    .flatMap((e) => e.graphicalVoiceEntries)
-    .filter((v) => v?.notes)
-    .flatMap((v) => v.notes)
-    .map((n) => n.getSVGElement())
-    .filter(Boolean)
-
-  notes.forEach((noteEl, index) => {
-    if (!noteEl) return
-    noteEl.classList.remove('note-current', 'note-completed')
-    if (completedNotes[index]) {
-      noteEl.classList.add('note-completed')
-    } else if (index === currentNoteIndex) {
-      noteEl.classList.add('note-current')
-    }
-  })
-}
-
-export function SheetMusic({ musicXML, currentNoteIndex, completedNotes }: SheetMusicProps) {
-  const { osmd, isReady, error, containerRef } = useOSMDSafe(musicXML, currentNoteIndex)
-
-  useEffect(() => {
-    if (isReady && osmd) {
-      // The cursor is now managed by the hook. This effect is for highlighting
-      // completed notes, which is a separate concern.
-      try {
-        highlightNote(osmd, -1, completedNotes) // Pass -1 to avoid highlighting a "current" note
-      } catch (err) {
-        console.error('[SheetMusic] Highlighting error:', err)
-      }
-    }
-  }, [isReady, osmd, completedNotes])
-
+export function SheetMusic({ containerRef, isReady, error }: SheetMusicProps) {
   if (error) {
     return (
       <div className="relative flex min-h-[200px] w-full items-center justify-center rounded-lg bg-white shadow-md">

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { OpenSheetMusicDisplay, Cursor } from 'opensheetmusicdisplay'
 
-export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
+export function useOSMDSafe(musicXML: string) {
   const [osmd, setOsmd] = useState<OpenSheetMusicDisplay | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -15,7 +15,6 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
     if (initializedRef.current || !containerRef.current || !musicXML) return
 
     let instance: OpenSheetMusicDisplay | null = null
-    let isMounted = true
 
     async function initializeOSMD() {
       try {
@@ -26,6 +25,8 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
           followCursor: true,
           disableCursor: false,
         })
+        osmdRef.current = instance
+        setOsmd(instance)
 
         await instance.load(musicXML)
 
@@ -40,29 +41,14 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
         // Wait for next tick to ensure DOM is updated
         await new Promise((resolve) => setTimeout(resolve, 100))
 
-        if (
-          instance.graphic &&
-          instance.graphic.measureList &&
-          instance.graphic.measureList.length > 0
-        ) {
-          const firstMeasure = instance.graphic.measureList[0]
-          if (firstMeasure && firstMeasure.staffEntries) {
-            if (isMounted) {
-              setOsmd(instance)
-              cursorRef.current = instance.cursor
-              setIsReady(true)
-              setError(null)
-              instance.cursor.show()
-            }
-          } else {
-            throw new Error('OSMD graphic initialized but staffEntries missing')
-          }
-        } else {
-          throw new Error('OSMD graphic not properly initialized')
+        if (isMountedRef.current) {
+          instance.cursor.show()
+          setIsReady(true)
+          setError(null)
         }
       } catch (err) {
         console.error('[OSMD] Initialization error:', err)
-        if (isMounted) {
+        if (isMountedRef.current) {
           setError(err instanceof Error ? err.message : 'Failed to load sheet music')
           setIsReady(false)
         }
@@ -73,26 +59,32 @@ export function useOSMDSafe(musicXML: string, currentNoteIndex: number) {
     initializedRef.current = true
 
     return () => {
-      isMounted = false
-      instance?.clear()
+      osmdRef.current?.clear()
+      osmdRef.current = null
+      setOsmd(null)
+      setIsReady(false)
     }
   }, [musicXML])
 
-  // Update cursor position
-  useEffect(() => {
-    if (!isReady || !cursorRef.current) return
-
-    const cursor = cursorRef.current
-    cursor.reset()
-    for (let i = 0; i < currentNoteIndex; i++) {
-      cursor.next()
+  const resetCursor = useCallback(() => {
+    if (isReady && osmdRef.current) {
+      osmdRef.current.cursor.reset()
+      osmdRef.current.cursor.show()
     }
-  }, [currentNoteIndex, isReady])
+  }, [isReady])
+
+  const advanceCursor = useCallback(() => {
+    if (isReady && osmdRef.current) {
+      osmdRef.current.cursor.next()
+    }
+  }, [isReady])
 
   return {
     osmd,
     isReady,
     error,
     containerRef,
+    resetCursor,
+    advanceCursor,
   }
 }
