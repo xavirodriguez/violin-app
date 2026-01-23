@@ -10,66 +10,68 @@ The PracticeStore manages an 8-state machine: [46](#0-45)
 
 ### State Transitions
 
-| From State | Event | To State | Condition |
-|------------|-------|----------|-----------|
-| IDLE | `loadExercise()` | LOADED | Exercise loaded |
-| LOADED | `start()` | INITIALIZING | User starts |
-| LOADED | `loadExercise()` | LOADED | Switch exercise |
-| INITIALIZING | Success | PRACTICING | Mic access granted |
-| INITIALIZING | Error | ERROR | Mic access denied |
-| PRACTICING | Detect pitch | NOTE_DETECTED | Wrong note or out of tune |
-| PRACTICING | Detect in-tune | VALIDATING | Correct note, in tune |
-| PRACTICING | No signal | PRACTICING | Silence/noise |
-| NOTE_DETECTED | In-tune | VALIDATING | Now in tune |
-| NOTE_DETECTED | Out-of-tune | NOTE_DETECTED | Still wrong |
-| VALIDATING | Hold complete | NOTE_COMPLETED | Hold ≥ requiredHoldTime |
-| VALIDATING | Hold incomplete | VALIDATING | Still holding |
-| VALIDATING | Out-of-tune | PRACTICING | Lost pitch |
-| NOTE_COMPLETED | Auto-advance | PRACTICING | Next note (200ms delay) |
-| NOTE_COMPLETED | All done | EXERCISE_COMPLETE | Last note completed |
-| * | `stop()` | LOADED | User stops |
-| * | `reset()` | IDLE | Full reset |
+| From State     | Event            | To State          | Condition                 |
+| -------------- | ---------------- | ----------------- | ------------------------- |
+| IDLE           | `loadExercise()` | LOADED            | Exercise loaded           |
+| LOADED         | `start()`        | INITIALIZING      | User starts               |
+| LOADED         | `loadExercise()` | LOADED            | Switch exercise           |
+| INITIALIZING   | Success          | PRACTICING        | Mic access granted        |
+| INITIALIZING   | Error            | ERROR             | Mic access denied         |
+| PRACTICING     | Detect pitch     | NOTE_DETECTED     | Wrong note or out of tune |
+| PRACTICING     | Detect in-tune   | VALIDATING        | Correct note, in tune     |
+| PRACTICING     | No signal        | PRACTICING        | Silence/noise             |
+| NOTE_DETECTED  | In-tune          | VALIDATING        | Now in tune               |
+| NOTE_DETECTED  | Out-of-tune      | NOTE_DETECTED     | Still wrong               |
+| VALIDATING     | Hold complete    | NOTE_COMPLETED    | Hold ≥ requiredHoldTime   |
+| VALIDATING     | Hold incomplete  | VALIDATING        | Still holding             |
+| VALIDATING     | Out-of-tune      | PRACTICING        | Lost pitch                |
+| NOTE_COMPLETED | Auto-advance     | PRACTICING        | Next note (200ms delay)   |
+| NOTE_COMPLETED | All done         | EXERCISE_COMPLETE | Last note completed       |
+| \*             | `stop()`         | LOADED            | User stops                |
+| \*             | `reset()`        | IDLE              | Full reset                |
 
 ## Store Fields
 
 ### State Fields [47](#0-46)
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `state` | PracticeState | Current state machine state |
-| `error` | string \| null | Error message if state is ERROR |
-| `currentExercise` | Exercise \| null | Loaded exercise data |
-| `currentNoteIndex` | number | Index of target note (0-based) |
-| `completedNotes` | boolean[] | Which notes have been completed |
+| Field              | Type             | Purpose                         |
+| ------------------ | ---------------- | ------------------------------- |
+| `state`            | PracticeState    | Current state machine state     |
+| `error`            | string \| null   | Error message if state is ERROR |
+| `currentExercise`  | Exercise \| null | Loaded exercise data            |
+| `currentNoteIndex` | number           | Index of target note (0-based)  |
+| `completedNotes`   | boolean[]        | Which notes have been completed |
 
 ### Detection Fields [48](#0-47)
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `detectedPitch` | number \| null | Current frequency in Hz |
-| `confidence` | number | YIN algorithm confidence (0.0-1.0) |
-| `isInTune` | boolean | Whether detected pitch is in tune |
-| `centsOff` | number \| null | Cents deviation from target |
+| Field           | Type           | Purpose                            |
+| --------------- | -------------- | ---------------------------------- |
+| `detectedPitch` | number \| null | Current frequency in Hz            |
+| `confidence`    | number         | YIN algorithm confidence (0.0-1.0) |
+| `isInTune`      | boolean        | Whether detected pitch is in tune  |
+| `centsOff`      | number \| null | Cents deviation from target        |
 
 ### Timing Fields [49](#0-48)
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `noteStartTime` | number \| null | Timestamp when note first detected in tune |
-| `holdDuration` | number | Milliseconds held in tune |
-| `requiredHoldTime` | number | Milliseconds required (default: 500) |
+| Field              | Type           | Purpose                                    |
+| ------------------ | -------------- | ------------------------------------------ |
+| `noteStartTime`    | number \| null | Timestamp when note first detected in tune |
+| `holdDuration`     | number         | Milliseconds held in tune                  |
+| `requiredHoldTime` | number         | Milliseconds required (default: 500)       |
 
 ## Thresholds and Criteria
 
 ### Signal Detection [50](#0-49)
 
 A valid signal requires:
+
 - **RMS threshold**: > 0.01
 - **Confidence threshold**: > 0.85
 
 ### In-Tune Definition [51](#0-50)
 
 A note is considered "in tune" when:
+
 - **Cents deviation**: < 25 cents (absolute value)
 
 This is **more lenient** than tuner mode (which uses 10 cents).
@@ -83,6 +85,7 @@ User must maintain correct pitch and tuning for this duration to complete a note
 ### Note Completion Criteria [53](#0-52)
 
 A note is completed when:
+
 1. **Correct note detected** (MIDI number matches target)
 2. **In tune** (cents deviation < 25)
 3. **Held long enough** (duration ≥ requiredHoldTime)
@@ -96,6 +99,7 @@ Target note is extracted from exercise pitch string (e.g., "G4") and compared vi
 Similar to tuner mode, but with additional RMS calculation: [56](#0-55)
 
 **Loop steps**:
+
 1. Get time-domain audio data (2048 samples)
 2. Run pitch detection with validation
 3. Calculate RMS (for signal presence check)
@@ -107,6 +111,7 @@ Similar to tuner mode, but with additional RMS calculation: [56](#0-55)
 ## Exercise Loading [57](#0-56)
 
 **Loading behavior**:
+
 1. Stop any active audio (cleanup)
 2. Set state to LOADED
 3. Load exercise data
@@ -122,6 +127,7 @@ Similar to tuner mode, but with additional RMS calculation: [56](#0-55)
 After 200ms delay, the store advances to the next note.
 
 **Progression logic**:
+
 1. Record note completion time in analytics
 2. Mark current note as completed in completedNotes array
 3. If not last note: increment index, reset detection state
@@ -130,6 +136,7 @@ After 200ms delay, the store advances to the next note.
 ### Exercise Completion [60](#0-59)
 
 **Completion actions**:
+
 1. End analytics session
 2. Set state to EXERCISE_COMPLETE
 3. Reset timing fields
@@ -167,6 +174,7 @@ Called when exercise completes or user stops practice.
 Rendered via OpenSheetMusicDisplay (OSMD): [62](#0-61)
 
 Props:
+
 - `musicXML`: Generated MusicXML string
 - `currentNoteIndex`: Which note is active
 - `completedNotes`: Which notes are marked done
