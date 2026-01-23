@@ -1,70 +1,71 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { OpenSheetMusicDisplay, Cursor } from 'opensheetmusicdisplay'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 
 export function useOSMDSafe(musicXML: string) {
-  const [osmd, setOsmd] = useState<OpenSheetMusicDisplay | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const cursorRef = useRef<Cursor | null>(null)
-  const initializedRef = useRef(false) // Ref to prevent double initialization in Strict Mode
+  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
 
   useEffect(() => {
-    if (initializedRef.current || !containerRef.current || !musicXML) return
-
-    let instance: OpenSheetMusicDisplay | null = null
+    let isMounted = true
 
     async function initializeOSMD() {
+      if (!containerRef.current || !musicXML) return
+
+      // Always clear previous instance if musicXML changes
+      if (osmdRef.current) {
+        osmdRef.current.clear()
+      }
+
+      // 1. Create instance and associate with the container
+      const osmd = new OpenSheetMusicDisplay(containerRef.current, {
+        autoResize: true,
+        backend: 'svg',
+        drawTitle: false,
+        followCursor: true,
+        disableCursor: false,
+      })
+      osmdRef.current = osmd
+
       try {
-        instance = new OpenSheetMusicDisplay(containerRef.current!, {
-          autoResize: true,
-          backend: 'svg',
-          drawTitle: false,
-          followCursor: true,
-          disableCursor: false,
-        })
-        osmdRef.current = instance
-        setOsmd(instance)
+        // 2. Load the MusicXML
+        await osmd.load(musicXML)
 
-        await instance.load(musicXML)
+        // 3. Render the score
+        osmd.render()
 
-        // Defensive guard against race conditions in React StrictMode
-        if (!instance.IsReadyToRender) {
-          console.warn('[OSMD] Render skipped: instance not ready, likely due to Strict Mode.')
-          return
-        }
-
-        instance.render()
-
-        // Wait for next tick to ensure DOM is updated
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
-        if (isMountedRef.current) {
-          instance.cursor.show()
+        // 4. Show cursor and set ready state
+        if (isMounted) {
+          osmd.cursor.show()
           setIsReady(true)
           setError(null)
         }
       } catch (err) {
-        console.error('[OSMD] Initialization error:', err)
-        if (isMountedRef.current) {
-          setError(err instanceof Error ? err.message : 'Failed to load sheet music')
+        console.error('[OSMD] Error loading or rendering sheet music:', err)
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'An unknown error occurred.')
           setIsReady(false)
         }
       }
     }
 
     initializeOSMD()
-    initializedRef.current = true
 
     return () => {
-      osmdRef.current?.clear()
-      osmdRef.current = null
-      setOsmd(null)
-      setIsReady(false)
+      isMounted = false
+      // No need to clear here if we clear at the start of the effect
     }
   }, [musicXML])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      osmdRef.current?.clear()
+    }
+  }, [])
 
   const resetCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
@@ -80,7 +81,6 @@ export function useOSMDSafe(musicXML: string) {
   }, [isReady])
 
   return {
-    osmd,
     isReady,
     error,
     containerRef,
