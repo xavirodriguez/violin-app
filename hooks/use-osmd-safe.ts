@@ -8,18 +8,11 @@ export function useOSMDSafe(musicXML: string) {
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
-  const isMountedRef = useRef(true)
+  const cursorRef = useRef<Cursor | null>(null)
+  const initializedRef = useRef(false) // Ref to prevent double initialization in Strict Mode
 
   useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!containerRef.current || !musicXML || osmdRef.current) return
+    if (initializedRef.current || !containerRef.current || !musicXML) return
 
     let instance: OpenSheetMusicDisplay | null = null
 
@@ -36,7 +29,14 @@ export function useOSMDSafe(musicXML: string) {
         setOsmd(instance)
 
         await instance.load(musicXML)
-        await instance.render()
+
+        // Defensive guard against race conditions in React StrictMode
+        if (!instance.IsReadyToRender) {
+          console.warn('[OSMD] Render skipped: instance not ready, likely due to Strict Mode.')
+          return
+        }
+
+        instance.render()
 
         // Wait for next tick to ensure DOM is updated
         await new Promise((resolve) => setTimeout(resolve, 100))
@@ -56,6 +56,7 @@ export function useOSMDSafe(musicXML: string) {
     }
 
     initializeOSMD()
+    initializedRef.current = true
 
     return () => {
       osmdRef.current?.clear()

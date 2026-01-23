@@ -8,20 +8,20 @@ The Analytics Dashboard displays practice history, skill levels, streaks, and ac
 
 ### PracticeSession [71](#0-70)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | UUID generated at session start |
-| `startTime` | Date | When session started |
-| `endTime` | Date | When session ended |
-| `duration` | number | Duration in seconds |
-| `exerciseId` | string | Which exercise was practiced |
-| `exerciseName` | string | Display name |
-| `mode` | 'tuner' \| 'practice' | Which mode (only 'practice' currently records) |
-| `notesAttempted` | number | Total note detection attempts |
-| `notesCompleted` | number | Notes successfully completed |
-| `accuracy` | number | Percentage (0-100) |
-| `averageCents` | number | Average absolute deviation in cents |
-| `noteResults` | NoteResult[] | Per-note detailed results |
+| Field            | Type                  | Description                                    |
+| ---------------- | --------------------- | ---------------------------------------------- |
+| `id`             | string                | UUID generated at session start                |
+| `startTime`      | Date                  | When session started                           |
+| `endTime`        | Date                  | When session ended                             |
+| `duration`       | number                | Duration in seconds                            |
+| `exerciseId`     | string                | Which exercise was practiced                   |
+| `exerciseName`   | string                | Display name                                   |
+| `mode`           | 'tuner' \| 'practice' | Which mode (only 'practice' currently records) |
+| `notesAttempted` | number                | Total note detection attempts                  |
+| `notesCompleted` | number                | Notes successfully completed                   |
+| `accuracy`       | number                | Percentage (0-100)                             |
+| `averageCents`   | number                | Average absolute deviation in cents            |
+| `noteResults`    | NoteResult[]          | Per-note detailed results                      |
 
 ### NoteResult [72](#0-71)
 
@@ -30,6 +30,7 @@ Tracks individual note performance within a session.
 ### UserProgress [73](#0-72)
 
 Aggregate statistics across all sessions:
+
 - Total sessions count
 - Total practice time (seconds)
 - Completed exercise IDs
@@ -49,6 +50,7 @@ Creates a new session object with initial values. Called by PracticeStore when u
 **When recorded**: Every time pitch is detected for the target note (called by PracticeStore)
 
 **Updates**:
+
 - Increment `notesAttempted`
 - Create or update NoteResult for that note index
 - Recalculate `averageCents` (running average)
@@ -59,6 +61,7 @@ Creates a new session object with initial values. Called by PracticeStore when u
 **When recorded**: When note hold time requirement is met
 
 **Updates**:
+
 - Increment `notesCompleted`
 - Record `timeToComplete` for that note
 
@@ -67,6 +70,7 @@ Creates a new session object with initial values. Called by PracticeStore when u
 **When called**: When exercise completes or user stops practice
 
 **Final calculations**:
+
 1. Calculate actual duration (endTime - startTime)
 2. Add completed session to sessions array
 3. Update total session count and time
@@ -97,6 +101,7 @@ Uses the per-note running average, not individual attempts.
 ## Streak Computation [81](#0-80)
 
 **Streak logic**:
+
 1. Compare today's date (normalized to midnight) with last session's date
 2. **If last session was yesterday OR no sessions exist**: increment streak
 3. **If last session was today**: no change to streak
@@ -113,6 +118,7 @@ Uses the per-note running average, not individual attempts.
 ### Intonation Skill [82](#0-81)
 
 **Formula**:
+
 1. Take average accuracy of last 10 sessions
 2. Calculate trend: recent session accuracy - 5th most recent session accuracy
 3. Skill = avgAccuracy + (trend × 0.5)
@@ -134,11 +140,11 @@ Rounded to nearest integer.
 
 Three achievements are implemented: [85](#0-84)
 
-| Achievement ID | Name | Trigger | Icon |
-|---------------|------|---------|------|
-| `first-perfect` | First Perfect Scale | Accuracy = 100% in a session | 🎯 |
-| `week-streak` | 7-Day Streak | currentStreak reaches 7 | 🔥 |
-| `100-notes` | 100 Notes Mastered | Total notes completed ≥ 100 | 📈 |
+| Achievement ID  | Name                | Trigger                      | Icon |
+| --------------- | ------------------- | ---------------------------- | ---- |
+| `first-perfect` | First Perfect Scale | Accuracy = 100% in a session | 🎯   |
+| `week-streak`   | 7-Day Streak        | currentStreak reaches 7      | 🔥   |
+| `100-notes`     | 100 Notes Mastered  | Total notes completed ≥ 100  | 📈   |
 
 **Achievement checking**: [86](#0-85)
 

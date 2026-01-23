@@ -13,6 +13,7 @@ Violin Mentor helps violinists improve their intonation and practice skills thro
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+ and pnpm
 - Microphone access (browser will prompt for permission)
 
@@ -39,15 +40,15 @@ pnpm start
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start development server |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint checks |
-| `pnpm lint:fix` | Auto-fix ESLint issues |
-| `pnpm format` | Format code with Prettier |
-| `pnpm format:check` | Check code formatting |
+| Command             | Description               |
+| ------------------- | ------------------------- |
+| `pnpm dev`          | Start development server  |
+| `pnpm build`        | Build for production      |
+| `pnpm start`        | Start production server   |
+| `pnpm lint`         | Run ESLint checks         |
+| `pnpm lint:fix`     | Auto-fix ESLint issues    |
+| `pnpm format`       | Format code with Prettier |
+| `pnpm format:check` | Check code formatting     |
 
 **Note**: No test command is configured yet.
 
@@ -92,6 +93,7 @@ violin-app/
 **Problem**: "Microphone access denied" error
 
 **Solutions**:
+
 1. Check browser permissions (usually a camera icon in address bar)
 2. Ensure you're using HTTPS in production or localhost in development
 3. Try a different browser (Chrome/Edge recommended)
@@ -102,6 +104,7 @@ violin-app/
 **Problem**: Tuner/Practice mode not detecting any sound
 
 **Solutions**:
+
 1. Open Settings dialog (gear icon) and select correct microphone
 2. Increase sensitivity slider in Settings
 3. Play louder or closer to microphone
@@ -112,6 +115,7 @@ violin-app/
 **Problem**: Sheet music fails to render in Practice mode
 
 **Solutions**:
+
 1. Check browser console for errors
 2. Ensure OpenSheetMusicDisplay loaded correctly
 3. Try refreshing the page
@@ -119,6 +123,7 @@ violin-app/
 ## Documentation
 
 See `docs/` folder for detailed architecture and mode documentation:
+
 - `docs/architecture.md` - System architecture and data flow
 - `docs/modes/tuner.md` - Tuner mode details
 - `docs/modes/practice.md` - Practice mode details
