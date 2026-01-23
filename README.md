@@ -1,72 +1,132 @@
 # Violin Mentor
 
-Violin Mentor is a web-based application designed to help violinists of all levels improve their skills. It provides real-time feedback on intonation, interactive sheet music for practice, and analytics to track progress over time.
+An interactive violin training application with real-time pitch detection, guided practice exercises, and progress analytics.
 
-## Table of Contents
+## What is Violin Mentor?
 
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running Locally](#running-locally)
-- [Available Scripts](#available-scripts)
-- [Project Structure](#project-structure)
+Violin Mentor helps violinists improve their intonation and practice skills through three integrated modes:
 
-## Architecture
+1. **Tuner Mode**: Real-time pitch detection to tune your violin
+2. **Practice Mode**: Guided exercises with interactive sheet music and real-time feedback
+3. **Analytics Dashboard**: Track your progress, streaks, and achievements
 
-This project is a [Next.js](https://nextjs.org/) application built with [React](https://react.dev/) and [TypeScript](https://www.typescriptlang.org/).
-
-- **UI Framework**: [shadcn/ui](https://ui.shadcn.com/) components built on top of [Radix UI](https://www.radix-ui.com/) and styled with [Tailwind CSS](https://tailwindcss.com/).
-- **State Management**: [Zustand](https://github.com/pmndrs/zustand) is used for global state management, particularly for the tuner, practice, and analytics features.
-- **Sheet Music Rendering**: [OpenSheetMusicDisplay (OSMD)](https://github.com/opensheetmusicdisplay/opensheetmusicdisplay) is used to render MusicXML files as interactive sheet music.
-- **Pitch Detection**: Real-time pitch detection is implemented using the YIN algorithm in `lib/pitch-detector.ts` to provide feedback to the user.
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-
-- [Node.js](https://nodejs.org/) (version 22 or later recommended)
-- [pnpm](https://pnpm.io/)
+- Node.js 18+ and pnpm
+- Microphone access (browser will prompt for permission)
 
 ### Installation
 
-Clone the repository and install the dependencies:
-
 ```bash
-git clone <repository-url>
-cd <repository-name>
 pnpm install
 ```
 
-### Running Locally
-
-To start the development server:
+### Development
 
 ```bash
 pnpm dev
 ```
 
-The application will be available at `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Available Scripts
+### Build
 
-In the project directory, you can run:
+```bash
+pnpm build
+pnpm start
+```
 
-- `pnpm dev`: Runs the app in development mode.
-- `pnpm build`: Builds the app for production.
-- `pnpm start`: Starts the production server.
-- `pnpm lint`: Lints the source files.
-- `pnpm lint:fix`: Lints and automatically fixes problems.
-- `pnpm format`: Formats source files with Prettier.
-- `pnpm format:check`: Checks formatting without writing changes.
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server |
+| `pnpm build` | Build for production |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint checks |
+| `pnpm lint:fix` | Auto-fix ESLint issues |
+| `pnpm format` | Format code with Prettier |
+| `pnpm format:check` | Check code formatting |
+
+**Note**: No test command is configured yet.
+
+## Tech Stack
+
+- **Framework**: Next.js 16.0.10 (App Router) + React 19.2.0
+- **State Management**: Zustand
+- **Pitch Detection**: YIN algorithm (custom implementation)
+- **Sheet Music**: OpenSheetMusicDisplay
+- **UI Components**: Radix UI + Tailwind CSS
+- **Charts**: Recharts
 
 ## Project Structure
 
-A brief overview of the key directories:
+```
+violin-app/
+├── app/                    # Next.js app router
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Main page (mode switcher)
+├── components/            # React components
+│   ├── ui/               # Reusable UI components (Radix)
+│   ├── tuner-mode.tsx    # Tuner mode component
+│   ├── practice-mode.tsx # Practice mode component
+│   ├── analytics-dashboard.tsx
+│   ├── sheet-music.tsx
+│   └── practice-feedback.tsx
+├── lib/                   # Core logic
+│   ├── stores/           # Zustand stores
+│   │   ├── tuner-store.ts
+│   │   ├── practice-store.ts
+│   │   └── analytics-store.ts
+│   ├── exercises/        # Exercise definitions
+│   ├── pitch-detector.ts # YIN algorithm implementation
+│   └── musical-note.ts   # Musical note value object
+└── hooks/                # Custom React hooks
+```
 
-- `app/`: The main application entry point and routing structure for Next.js.
-- `components/`: Contains reusable React components, organized by feature.
-- `lib/`: Core application logic, including pitch detection (`pitch-detector.ts`), music theory (`musical-note.ts`), and state stores (`stores/`).
-- `hooks/`: Custom React hooks.
-- `public/`: Static assets, including MusicXML files for exercises.
-- `e2e/`: End-to-end tests written with Playwright.
+## Troubleshooting
+
+### Microphone Access Issues
+
+**Problem**: "Microphone access denied" error
+
+**Solutions**:
+1. Check browser permissions (usually a camera icon in address bar)
+2. Ensure you're using HTTPS in production or localhost in development
+3. Try a different browser (Chrome/Edge recommended)
+4. Check if another application is using the microphone
+
+### Audio Not Detecting
+
+**Problem**: Tuner/Practice mode not detecting any sound
+
+**Solutions**:
+1. Open Settings dialog (gear icon) and select correct microphone
+2. Increase sensitivity slider in Settings
+3. Play louder or closer to microphone
+4. Check system sound input levels
+
+### Sheet Music Not Displaying
+
+**Problem**: Sheet music fails to render in Practice mode
+
+**Solutions**:
+1. Check browser console for errors
+2. Ensure OpenSheetMusicDisplay loaded correctly
+3. Try refreshing the page
+
+## Documentation
+
+See `docs/` folder for detailed architecture and mode documentation:
+- `docs/architecture.md` - System architecture and data flow
+- `docs/modes/tuner.md` - Tuner mode details
+- `docs/modes/practice.md` - Practice mode details
+- `docs/modes/dashboard.md` - Analytics dashboard details
+- `docs/audio.md` - Audio pipeline documentation
+- `docs/state-management.md` - Zustand store details
+- `docs/glossary.md` - Musical and technical terms
+
+## License
+
+Built with v0
