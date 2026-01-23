@@ -44,6 +44,13 @@ export class PitchDetector {
    */
   private readonly YIN_THRESHOLD = 0.1
 
+  /**
+   * The default threshold for the Root Mean Square (RMS) calculation.
+   * This value is used to determine if there's enough signal to attempt pitch detection.
+   * An RMS value below this threshold is considered silence.
+   */
+  private readonly DEFAULT_RMS_THRESHOLD = 0.01
+
   constructor(sampleRate: number) {
     if (sampleRate <= 0) {
       throw new Error(`Invalid sample rate: ${sampleRate}. Must be > 0`)
@@ -174,14 +181,17 @@ export class PitchDetector {
   /**
    * Utility method to detect if there's enough signal to attempt pitch detection.
    */
-  hasSignal(buffer: Float32Array, threshold = 0.01): boolean {
+  hasSignal(buffer: Float32Array, threshold = this.DEFAULT_RMS_THRESHOLD): boolean {
     return this.calculateRMS(buffer) > threshold
   }
 
   /**
    * Advanced pitch detection with built-in signal validation.
    */
-  detectPitchWithValidation(buffer: Float32Array, rmsThreshold = 0.01): PitchDetectionResult {
+  detectPitchWithValidation(
+    buffer: Float32Array,
+    rmsThreshold = this.DEFAULT_RMS_THRESHOLD,
+  ): PitchDetectionResult {
     if (!this.hasSignal(buffer, rmsThreshold)) {
       return { pitchHz: 0, confidence: 0 }
     }
