@@ -6,22 +6,37 @@ import { XIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * El contenedor raíz para un cuadro de diálogo, basado en `Radix UI Dialog`.
+ */
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
+/**
+ * El botón o elemento que abre el cuadro de diálogo.
+ */
 function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
+/**
+ * Renderiza el contenido del diálogo en un portal, fuera de la jerarquía DOM principal.
+ */
 function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
+/**
+ * Un botón o elemento que cierra el cuadro de diálogo.
+ */
 function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
+/**
+ * El fondo semitransparente que se muestra detrás del cuadro de diálogo.
+ */
 function DialogOverlay({
   className,
   ...props
@@ -38,12 +53,16 @@ function DialogOverlay({
   )
 }
 
+/**
+ * El contenedor principal del contenido del cuadro de diálogo.
+ */
 function DialogContent({
   className,
   children,
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  /** Muestra u oculta el botón de cierre por defecto. */
   showCloseButton?: boolean
 }) {
   return (
@@ -72,6 +91,9 @@ function DialogContent({
   )
 }
 
+/**
+ * La cabecera del cuadro de diálogo, ideal para `DialogTitle` y `DialogDescription`.
+ */
 function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -82,6 +104,9 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * El pie de página del cuadro de diálogo, útil para botones de acción.
+ */
 function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -92,6 +117,9 @@ function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * El título del cuadro de diálogo, para ser usado dentro de `DialogHeader`.
+ */
 function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
@@ -102,6 +130,9 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
   )
 }
 
+/**
+ * La descripción del cuadro de diálogo, para ser usada dentro de `DialogHeader`.
+ */
 function DialogDescription({
   className,
   ...props

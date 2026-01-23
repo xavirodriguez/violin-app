@@ -1,6 +1,5 @@
 'use client'
 
-import { MusicalNote } from '@/lib/practice-core'
 import { CheckCircle2, Circle, Music } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 

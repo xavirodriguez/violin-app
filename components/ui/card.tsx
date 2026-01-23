@@ -2,6 +2,9 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * Un contenedor de contenido flexible para agrupar información relacionada.
+ */
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -15,6 +18,9 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * La sección de cabecera de un `Card`, ideal para `CardTitle` y `CardDescription`.
+ */
 function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -28,6 +34,9 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * El título de un `Card`, para ser usado dentro de `CardHeader`.
+ */
 function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -38,6 +47,9 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * La descripción de un `Card`, para ser usada dentro de `CardHeader`.
+ */
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -48,6 +60,9 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * Un contenedor para acciones (ej. un botón) dentro de `CardHeader`.
+ */
 function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -58,10 +73,16 @@ function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+/**
+ * La sección principal de contenido de un `Card`.
+ */
 function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
   return <div data-slot="card-content" className={cn('px-6', className)} {...props} />
 }
 
+/**
+ * La sección de pie de página de un `Card`.
+ */
 function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
