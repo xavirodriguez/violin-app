@@ -34,6 +34,11 @@ const buttonVariants = cva(
   },
 )
 
+/**
+ * Un componente de botón personalizable con variantes de estilo y tamaño.
+ * @remarks Se basa en `class-variance-authority` para gestionar las variantes
+ * y `Radix UI Slot` para permitir la composición con otros componentes.
+ */
 function Button({
   className,
   variant,

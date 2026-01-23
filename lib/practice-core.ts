@@ -12,6 +12,7 @@ import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+type NoteName = (typeof NOTE_NAMES)[number]
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
@@ -61,7 +62,7 @@ export class MusicalNote {
         sharpName = equivalent || name;
     }
 
-    const noteIndex = NOTE_NAMES.indexOf(sharpName as any)
+    const noteIndex = NOTE_NAMES.indexOf(sharpName as NoteName)
     if (noteIndex === -1) throw new Error(`Could not find note index for: ${sharpName}`)
 
     const midiNumber = (octave + 1) * 12 + noteIndex;

@@ -6,18 +6,30 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * El contenedor raíz para un menú de selección, basado en `Radix UI Select`.
+ */
 function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />
 }
 
+/**
+ * Agrupa opciones dentro de un `Select`.
+ */
 function SelectGroup({ ...props }: React.ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />
 }
 
+/**
+ * Muestra el valor seleccionado de un `Select` cuando está cerrado.
+ */
 function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
+/**
+ * El botón que abre y cierra el menú de selección.
+ */
 function SelectTrigger({
   className,
   size = 'default',
@@ -44,6 +56,9 @@ function SelectTrigger({
   )
 }
 
+/**
+ * El contenedor de las opciones del menú de selección.
+ */
 function SelectContent({
   className,
   children,
@@ -81,6 +96,9 @@ function SelectContent({
   )
 }
 
+/**
+ * Una etiqueta para un grupo de opciones de `Select`.
+ */
 function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
@@ -91,6 +109,9 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Select
   )
 }
 
+/**
+ * Una opción individual dentro de un `Select`.
+ */
 function SelectItem({
   className,
   children,
@@ -118,6 +139,9 @@ function SelectItem({
   )
 }
 
+/**
+ * Un separador visual para agrupar opciones en un `Select`.
+ */
 function SelectSeparator({
   className,
   ...props
@@ -131,6 +155,9 @@ function SelectSeparator({
   )
 }
 
+/**
+ * Un botón para desplazarse hacia arriba en la lista de opciones.
+ */
 function SelectScrollUpButton({
   className,
   ...props
@@ -146,6 +173,9 @@ function SelectScrollUpButton({
   )
 }
 
+/**
+ * Un botón para desplazarse hacia abajo en la lista de opciones.
+ */
 function SelectScrollDownButton({
   className,
   ...props

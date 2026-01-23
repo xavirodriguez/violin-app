@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { MusicalNote } from '@/lib/practice-core'
 
 // --- (Omitted for brevity: Interfaces and constants for fingerboard drawing) ---
 
@@ -30,7 +29,11 @@ interface ViolinFingerboardProps {
   centsDeviation?: number | null
 }
 
-
+/**
+ * Renderiza una representación visual del diapasón de un violín en un elemento `<canvas>`.
+ * @remarks Muestra la posición de la nota objetivo y la nota detectada para proporcionar
+ * retroalimentación visual sobre la posición de los dedos.
+ */
 export function ViolinFingerboard({
   targetNote,
   detectedPitchName,
@@ -71,7 +74,12 @@ export function ViolinFingerboard({
   )
 }
 
-// --- (Omitted for brevity: Drawing helper functions: drawFingerboard, drawTargetPosition, drawDetectedPosition) ---
+/**
+ * Dibuja el diapasón base del violín en el canvas.
+ * @param ctx - El contexto 2D del canvas.
+ * @param width - El ancho del canvas.
+ * @param height - La altura del canvas.
+ */
 function drawFingerboard(ctx, width, height) {
     const nutX = 50, bridgeX = width - 50;
     const stringSpacing = (height - 100) / (STRINGS.length - 1);
@@ -90,6 +98,13 @@ function drawFingerboard(ctx, width, height) {
     ctx.fillRect(nutX - 5, 30, 5, height - 60);
 }
 
+/**
+ * Dibuja el indicador para la nota objetivo en el diapasón.
+ * @param ctx - El contexto 2D del canvas.
+ * @param position - La información de la posición de la nota.
+ * @param width - El ancho del canvas.
+ * @param height - La altura del canvas.
+ */
 function drawTargetPosition(ctx, position, width, height) {
     const nutX = 50;
     const stringIndex = STRINGS.findIndex(s => s.name === position.string);
@@ -110,6 +125,15 @@ function drawTargetPosition(ctx, position, width, height) {
     ctx.fillText(position.finger === 0 ? 'O' : position.finger.toString(), x, y);
 }
 
+/**
+ * Dibuja el indicador para la nota detectada en el diapasón.
+ * @param ctx - El contexto 2D del canvas.
+ * @param position - La información de la posición de la nota.
+ * @param centsDeviation - La desviación en cents para ajustar la posición.
+ * @param isInTune - Si la nota está afinada, para colorear el indicador.
+ * @param width - El ancho del canvas.
+ * @param height - La altura del canvas.
+ */
 function drawDetectedPosition(ctx, position, centsDeviation, isInTune, width, height) {
     const nutX = 50;
     const stringIndex = STRINGS.findIndex(s => s.name === position.string);

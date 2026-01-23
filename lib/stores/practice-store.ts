@@ -10,7 +10,6 @@ import {
 } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
-import { allExercises } from '@/lib/exercises' // For default exercise
 
 import type { Exercise } from '@/lib/exercises/types'
 

@@ -5,6 +5,11 @@ import * as LabelPrimitive from '@radix-ui/react-label'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * Muestra una etiqueta accesible para elementos de formulario.
+ * @remarks Se basa en `Radix UI Label` para proporcionar una mejor accesibilidad y
+ * se integra con los estilos del sistema de diseño.
+ */
 function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
   return (
     <LabelPrimitive.Root

@@ -68,7 +68,7 @@ function toPracticeEvent(rawEvent: RawPitchEvent): PracticeEvent {
       confidence: rawEvent.confidence,
     }
     return { type: 'NOTE_DETECTED', payload: detectedNote }
-  } catch (error) {
+  } catch (_error) {
     return { type: 'NO_NOTE_DETECTED' }
   }
 }

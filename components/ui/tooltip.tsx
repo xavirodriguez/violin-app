@@ -5,6 +5,9 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * El proveedor que engloba la aplicación o una parte de ella para habilitar los tooltips.
+ */
 function TooltipProvider({
   delayDuration = 300,
   ...props
@@ -20,10 +23,16 @@ function TooltipProvider({
 
 const Tooltip = TooltipPrimitive.Root
 
+/**
+ * El elemento que activa el tooltip al pasar el ratón sobre él.
+ */
 function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
+/**
+ * El contenido del tooltip que se muestra al activarse.
+ */
 function TooltipContent({
   className,
   sideOffset = 0,

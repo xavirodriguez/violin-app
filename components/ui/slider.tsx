@@ -5,6 +5,11 @@ import * as SliderPrimitive from '@radix-ui/react-slider'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * Un control deslizante que permite al usuario seleccionar un valor de un rango.
+ * @remarks Se basa en `Radix UI Slider` para una mayor accesibilidad y se integra
+ * con el sistema de diseño para una apariencia consistente.
+ */
 function Slider({
   className,
   defaultValue,

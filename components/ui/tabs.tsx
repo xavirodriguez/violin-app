@@ -5,6 +5,9 @@ import * as TabsPrimitive from '@radix-ui/react-tabs'
 
 import { cn } from '@/lib/utils'
 
+/**
+ * El contenedor raíz para un conjunto de pestañas, basado en `Radix UI Tabs`.
+ */
 function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (
     <TabsPrimitive.Root
@@ -15,6 +18,9 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
   )
 }
 
+/**
+ * La lista que contiene los disparadores de las pestañas (`TabsTrigger`).
+ */
 function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
@@ -28,6 +34,9 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
   )
 }
 
+/**
+ * El botón que activa una pestaña para mostrar su contenido.
+ */
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
@@ -41,6 +50,9 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
   )
 }
 
+/**
+ * El contenedor para el contenido de una pestaña.
+ */
 function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
