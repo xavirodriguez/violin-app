@@ -50,6 +50,7 @@ graph LR
 ```
 
 **Implementation locations**:
+
 - Audio initialization: [3](#0-2)
 - Pitch detection loop: [4](#0-3)
 - YIN algorithm: [5](#0-4)
@@ -69,6 +70,7 @@ graph TD
 ```
 
 The application uses three independent Zustand stores:
+
 - **TunerStore**: Manages tuner mode state and audio resources
 - **PracticeStore**: Manages practice sessions and exercise progression
 - **AnalyticsStore**: Persists session history and user progress [6](#0-5) [7](#0-6) [8](#0-7)
@@ -107,6 +109,7 @@ Each mode that requires audio (Tuner and Practice) manages its own audio resourc
 ## Mode Switching Behavior
 
 When switching between modes:
+
 1. Previous mode's component unmounts
 2. Audio resources are automatically cleaned up via store reset
 3. New mode's component mounts
@@ -121,6 +124,7 @@ When switching between modes:
 Exercises are defined statically in TypeScript files and processed at build time: [19](#0-18)
 
 Categories:
+
 - Open Strings: [20](#0-19)
 - Scales: [21](#0-20)
 - Songs: [22](#0-21)
