@@ -7,8 +7,15 @@
  */
 
 import { pipe, map, filter } from 'iter-tools'
-import { MusicalNote, type PracticeEvent, type DetectedNote } from '@/lib/practice-core'
+import { asyncWindow } from '@iter-tools/async'
+import {
+  isMatch,
+  MusicalNote,
+  type PracticeEvent,
+  type DetectedNote,
+} from '@/lib/practice-core'
 import type { PitchDetector } from '@/lib/pitch-detector'
+import type { Note as TargetNote } from '@/lib/exercises/types'
 
 /** The raw data coming from the pitch detector on each animation frame. */
 export interface RawPitchEvent {
@@ -74,24 +81,75 @@ function toPracticeEvent(rawEvent: RawPitchEvent): PracticeEvent {
 }
 
 /**
+ * A higher-order function that returns a predicate to check note stability.
+ */
+function isNoteStable(targetNote: TargetNote, holdTime: number) {
+  return (window: DetectedNote[]): boolean => {
+    if (window.length < 2) return false
+    const first = window[0]
+    const last = window[window.length - 1]
+    const duration = last.timestamp - first.timestamp
+    return isMatch(targetNote, last) && duration >= holdTime
+  }
+}
+
+/**
  * Creates the main declarative pipeline.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
+  targetNote: TargetNote,
   options: Partial<NoteStreamOptions> = {},
+  requiredHoldTime = 500,
 ): AsyncIterable<PracticeEvent> {
   const finalOptions = { ...defaultOptions, ...options }
 
-  return pipe(
+  // Level 1: Raw events to DetectedNotes or null
+  const noteOrNullStream = pipe(
     rawPitchStream,
-    // Step 1 (Filter): Discard events that don't meet the signal threshold.
-    // This adheres to the user request of chaining at least two iter-tools operators.
-    filter(
-      (rawEvent) =>
-        rawEvent.rms > finalOptions.minRms &&
-        rawEvent.confidence > finalOptions.minConfidence,
-    ),
-    // Step 2 (Map): Map the clean raw data to a high-level PracticeEvent.
-    map(toPracticeEvent),
+    map((raw) => {
+      if (
+        raw.rms < finalOptions.minRms ||
+        raw.confidence < finalOptions.minConfidence ||
+        raw.pitchHz === 0
+      ) {
+        return null
+      }
+      try {
+        const musicalNote = MusicalNote.fromFrequency(raw.pitchHz)
+        return {
+          pitch: musicalNote.nameWithOctave,
+          cents: musicalNote.centsDeviation,
+          timestamp: raw.timestamp,
+          confidence: raw.confidence,
+        }
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  // Level 2: Group consecutive identical notes
+  const noteWindowStream = asyncWindow(
+    (a, b) => a?.pitch === b?.pitch,
+    noteOrNullStream,
+  )
+
+  // Level 3: Check for stability and emit high-level events
+  return pipe(
+    noteWindowStream,
+    filter((window): window is DetectedNote[] => !!window[0]),
+    map((window) => {
+      if (isNoteStable(targetNote, requiredHoldTime)(window)) {
+        return {
+          type: 'NOTE_VALIDATED' as const,
+          payload: window[window.length - 1],
+        }
+      }
+      return {
+        type: 'NOTE_DETECTED' as const,
+        payload: window[window.length - 1],
+      }
+    }),
   )
 }

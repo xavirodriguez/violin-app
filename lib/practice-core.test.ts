@@ -1,149 +1,109 @@
 /**
  * @vitest-environment jsdom
  */
+
 import { describe, it, expect } from 'vitest'
-import {
-  reducePracticeEvent,
-  type PracticeState,
-  type PracticeEvent,
-  type DetectedNote,
-} from './practice-core'
+import { reducePracticeEvent, type PracticeState } from './practice-core'
 import { allExercises } from '@/lib/exercises'
 
-// Mock exercise for testing
-const mockExercise = allExercises[0] // G Major Scale
+const mockExercise = allExercises[0] // Assuming this is a simple G Major scale
 
-const getInitialState = (): PracticeState => ({
-  status: 'idle',
-  // DEEP COPY the exercise object to prevent state leakage between tests.
-  // This was the root cause of the persistent test failures.
-  exercise: JSON.parse(JSON.stringify(mockExercise)),
+const getBaseState = (): PracticeState => ({
+  status: 'listening',
+  exercise: mockExercise,
   currentIndex: 0,
   history: [],
-  validationStartTime: null,
 })
 
-describe('practice-core reducer', () => {
-  it('should transition to "listening" on START event', () => {
-    const initialState = getInitialState()
-    const event: PracticeEvent = { type: 'START' }
+describe('reducePracticeEvent', () => {
+  it('should transition from idle to listening on START', () => {
+    const initialState: PracticeState = { ...getBaseState(), status: 'idle' }
+    const event = { type: 'START' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('listening')
     expect(newState.currentIndex).toBe(0)
   })
 
-  it('should transition to "validating" when the correct note is detected', () => {
-    let state = getInitialState()
-    state = reducePracticeEvent(state, { type: 'START' }) // Start listening
-
-    const correctNote: DetectedNote = {
-      pitch: 'G4',
-      cents: 5,
-      timestamp: 1000,
-      confidence: 0.9,
-    }
-    const event: PracticeEvent = { type: 'NOTE_DETECTED', payload: correctNote }
-    const newState = reducePracticeEvent(state, event)
-
-    expect(newState.status).toBe('validating')
-    expect(newState.validationStartTime).toBe(1000)
-    expect(newState.history).toContain(correctNote)
+  it('should transition to idle on STOP', () => {
+    const initialState = getBaseState()
+    const event = { type: 'STOP' as const }
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('idle')
   })
 
-  it('should not advance if an incorrect note is detected', () => {
-    let state = getInitialState()
-    state = reducePracticeEvent(state, { type: 'START' })
-
-    const incorrectNote: DetectedNote = {
-      pitch: 'A4', // Target is G4
-      cents: 0,
-      timestamp: 1000,
-      confidence: 0.9,
+  it('should add a detected note to history but not advance state', () => {
+    const initialState = getBaseState()
+    const event = {
+      type: 'NOTE_DETECTED' as const,
+      payload: { pitch: 'G4', cents: 10, timestamp: 1, confidence: 0.9 },
     }
-    const event: PracticeEvent = { type: 'NOTE_DETECTED', payload: incorrectNote }
-    const newState = reducePracticeEvent(state, event)
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('listening')
+    expect(newState.currentIndex).toBe(0)
+    expect(newState.history).toHaveLength(1)
+    expect(newState.history[0].pitch).toBe('G4')
+  })
 
+  it('should advance to the next note on NOTE_VALIDATED with a correct pitch', () => {
+    const initialState = getBaseState()
+    const targetNote = mockExercise.notes[0]
+    expect(targetNote.pitch.step).toBe('G')
+    expect(targetNote.pitch.octave).toBe(3)
+
+    const event = {
+      type: 'NOTE_VALIDATED' as const,
+      payload: { pitch: 'G3', cents: 5, timestamp: 1, confidence: 0.95 },
+    }
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('correct')
+    expect(newState.currentIndex).toBe(1)
+    expect(newState.history).toHaveLength(0) // History should be cleared for the new note
+  })
+
+  it('should NOT advance on NOTE_VALIDATED with an incorrect pitch', () => {
+    const initialState = getBaseState()
+    const event = {
+      type: 'NOTE_VALIDATED' as const,
+      payload: { pitch: 'A4', cents: 0, timestamp: 1, confidence: 0.95 },
+    }
+    const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('listening')
     expect(newState.currentIndex).toBe(0)
   })
 
-  it('should not advance if the correct note is held for less than the required time', () => {
-    let state = getInitialState()
-    state = reducePracticeEvent(state, { type: 'START' })
-
-    // First detection starts validation
-    const firstNote: DetectedNote = { pitch: 'G4', cents: 2, timestamp: 1000, confidence: 0.9 }
-    state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: firstNote })
-    expect(state.status).toBe('validating')
-
-    // Second detection is within the hold time
-    const secondNote: DetectedNote = { pitch: 'G4', cents: 3, timestamp: 1499, confidence: 0.9 }
-    const newState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: secondNote })
-
-    expect(newState.status).toBe('validating')
-    expect(newState.currentIndex).toBe(0) // Did not advance
-  })
-
-  it('should advance to the next note when the correct note is held for the required time', () => {
-    let state = getInitialState()
-    state = reducePracticeEvent(state, { type: 'START' })
-
-    const requiredHoldTime = 500
-
-    // First detection starts validation
-    const firstNote: DetectedNote = { pitch: 'G4', cents: 2, timestamp: 1000, confidence: 0.9 }
-    state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: firstNote })
-    expect(state.status).toBe('validating')
-
-    // Second detection meets the hold time
-    const secondNote: DetectedNote = { pitch: 'G4', cents: 3, timestamp: 1500, confidence: 0.9 }
-    const newState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: secondNote }, requiredHoldTime)
-
-    expect(newState.status).toBe('correct')
-    expect(newState.currentIndex).toBe(1)
-    expect(newState.validationStartTime).toBeNull()
-  })
-
-  it('should transition to "completed" after the last note is correctly played', () => {
-    let state = getInitialState()
-    // Manually set the state to be on the last note
+  it('should transition to completed when the last note is validated', () => {
     const lastNoteIndex = mockExercise.notes.length - 1
-    const lastNoteTarget = mockExercise.notes[lastNoteIndex]; // This is the full Note object
+    const initialState: PracticeState = { ...getBaseState(), currentIndex: lastNoteIndex }
+    const lastNote = mockExercise.notes[lastNoteIndex]
+    const pitchName = `${lastNote.pitch.step}${lastNote.pitch.alter ?? ''}${lastNote.pitch.octave}`
 
-    // Construct the pitch string from the target object for the test's DetectedNote
-    const lastNotePitchName = `${lastNoteTarget.pitch.step}${lastNoteTarget.pitch.alter ?? ''}${lastNoteTarget.pitch.octave}`;
+    const event = {
+      type: 'NOTE_VALIDATED' as const,
+      payload: { pitch: pitchName, cents: -10, timestamp: 1, confidence: 0.99 },
+    }
 
-    state.currentIndex = lastNoteIndex
-    state.status = 'listening'
-
-    const requiredHoldTime = 500
-
-    // First detection of the last note
-    const firstNote: DetectedNote = { pitch: lastNotePitchName, cents: 0, timestamp: 1000, confidence: 0.9 }
-    state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: firstNote }, requiredHoldTime)
-    expect(state.status).toBe('validating')
-
-    // Second detection of the last note, completing the hold
-    const secondNote: DetectedNote = { pitch: lastNotePitchName, cents: 0, timestamp: 1500, confidence: 0.9 }
-    const finalState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: secondNote }, requiredHoldTime)
-
-    expect(finalState.status).toBe('completed')
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('completed')
   })
 
-  it('should reset validation if a wrong note is played during validation', () => {
-    let state = getInitialState()
-    state = reducePracticeEvent(state, { type: 'START' })
+  it('should handle enharmonic equivalents correctly', () => {
+    // Let's find an exercise with a sharp/flat, or mock one.
+    // Assuming the D Major scale (index 1) has an F#
+    const dMajorExercise = allExercises[1]
+    const fSharpNoteIndex = dMajorExercise.notes.findIndex(n => n.pitch.step === 'F' && n.pitch.alter === '1')
 
-    // Start validating with correct note
-    const correctNote: DetectedNote = { pitch: 'G4', cents: 1, timestamp: 1000, confidence: 0.9 }
-    state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: correctNote })
-    expect(state.status).toBe('validating')
-
-    // Then play a wrong note
-    const incorrectNote: DetectedNote = { pitch: 'A4', cents: 1, timestamp: 1200, confidence: 0.9 }
-    const newState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: incorrectNote })
-
-    expect(newState.status).toBe('listening')
-    expect(newState.validationStartTime).toBeNull()
+    if (fSharpNoteIndex !== -1) {
+      const initialState: PracticeState = { ...getBaseState(), exercise: dMajorExercise, currentIndex: fSharpNoteIndex }
+      const event = {
+        type: 'NOTE_VALIDATED' as const,
+        payload: { pitch: 'Gb5', cents: 0, timestamp: 1, confidence: 0.95 },
+      }
+      const newState = reducePracticeEvent(initialState, event)
+      // Gb5 is enharmonically equivalent to F#5
+      expect(newState.status).toBe('correct')
+      expect(newState.currentIndex).toBe(fSharpNoteIndex + 1)
+    } else {
+      console.warn("Skipping enharmonic test: Could not find an exercise with a suitable note (e.g., F#).")
+    }
   })
 })

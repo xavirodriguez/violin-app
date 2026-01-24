@@ -47,7 +47,6 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   exercise: exercise,
   currentIndex: 0,
   history: [],
-  validationStartTime: null,
 })
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
@@ -117,59 +116,68 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const startedState = reducePracticeEvent(initialPracticeState, startEvent)
       set({ practiceState: startedState })
 
-      // --- 2. CREATE THE EVENT PIPELINE ---
+      // --- 2. CREATE RAW PITCH STREAM ---
       const rawPitchStream = createRawPitchStream(
         analyser,
         detector,
         () => isPracticing,
       )
-      const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream)
 
-      // --- 3. CONSUME THE PIPELINE ---
-      for await (const event of practiceEventPipeline) {
-        if (!isPracticing) break
+      // --- 3. CONSUME THE PIPELINE IN A LOOP ---
+      // We re-create the event pipeline every time the target note changes.
+      while (isPracticing) {
+        const currentState = get().practiceState
+        const targetNote = currentState?.exercise.notes[currentState.currentIndex]
 
-        const currentState = get().practiceState!
-        const newState = reducePracticeEvent(currentState, event)
+        if (!targetNote || currentState?.status === 'completed') {
+          break // Exit if exercise is done or no target
+        }
 
-        // --- 4. UPDATE STATE & HANDLE SIDE EFFECTS ---
-        if (newState !== currentState) {
-          set({ practiceState: newState })
+        const practiceEventPipeline = createPracticeEventPipeline(
+          rawPitchStream,
+          targetNote,
+        )
 
-          // Side Effect: Record analytics on state change
-          if (
-            newState.status === 'validating' &&
-            currentState.status === 'listening'
-          ) {
-            const target = currentState.exercise.notes[currentState.currentIndex]
-            // This is a rough approximation. Analytics would need richer events.
-            if (event.type === 'NOTE_DETECTED') {
-              useAnalyticsStore
-                .getState()
-                .recordNoteAttempt(
-                  currentState.currentIndex,
-                  target.pitch,
-                  event.payload.cents,
-                  true,
-                )
+        let shouldBreakOuterLoop = false
+        for await (const event of practiceEventPipeline) {
+          if (!isPracticing) {
+            shouldBreakOuterLoop = true
+            break
+          }
+
+          const currentPracticeState = get().practiceState!
+          const newState = reducePracticeEvent(currentPracticeState, event)
+
+          // --- 4. UPDATE STATE & HANDLE SIDE EFFECTS ---
+          if (newState !== currentPracticeState) {
+            set({ practiceState: newState })
+
+            // Analytics Side Effect
+            if (event.type === 'NOTE_VALIDATED') {
+              useAnalyticsStore.getState().recordNoteAttempt(
+                currentPracticeState.currentIndex,
+                targetNote.pitch,
+                event.payload.cents,
+                true, // In this new model, validated means it was a good attempt
+              )
+            }
+
+            // If the note was correct, we need to break the inner loop
+            // to re-create the pipeline for the *new* target note.
+            if (newState.currentIndex !== currentPracticeState.currentIndex) {
+              break
             }
           }
-
-          // Side Effect: If a note was just marked 'correct', immediately
-          // transition to 'listening' for the next note.
-          if (newState.status === 'correct') {
-            const finalState = { ...newState, status: 'listening' as const }
-            set({ practiceState: finalState })
-          }
-
-          // Side Effect: On exercise completion
-          if (newState.status === 'completed') {
-            get().stop() // Stop the loop and cleanup
-            useAnalyticsStore.getState().endSession()
-            break // Exit the loop
-          }
         }
+        if (shouldBreakOuterLoop) break
       }
+
+      // --- 5. CLEANUP ---
+      // The loop can be broken by either completing the exercise or calling stop()
+      if (get().practiceState?.status === 'completed') {
+        useAnalyticsStore.getState().endSession()
+      }
+      get().stop()
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Audio initialization failed'

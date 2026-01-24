@@ -82,6 +82,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "canvas": "^3.2.1",
     "jsdom": "^27.4.0",
     "postcss": "^8.5",
     "prettier-plugin-tailwindcss": "^0.7.2",

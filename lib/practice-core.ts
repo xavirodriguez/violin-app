@@ -87,11 +87,10 @@ export interface DetectedNote {
 
 /** The status of the practice session. */
 export type PracticeStatus =
-  | 'idle' // Not yet started
-  | 'listening' // Actively waiting for user input
-  | 'validating' // A potentially correct note is being held
-  | 'correct' // The note was confirmed as correct
-  | 'completed' // The entire exercise is finished
+  | 'idle'
+  | 'listening'
+  | 'correct'
+  | 'completed'
 
 /** The complete, self-contained state of the practice session. */
 export interface PracticeState {
@@ -99,12 +98,12 @@ export interface PracticeState {
   exercise: Exercise
   currentIndex: number
   history: DetectedNote[]
-  validationStartTime: number | null
 }
 
 /** Events that can modify the practice state. */
 export type PracticeEvent =
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
+  | { type: 'NOTE_VALIDATED'; payload: DetectedNote }
   | { type: 'NO_NOTE_DETECTED' }
   | { type: 'START' }
   | { type: 'STOP' }
@@ -144,47 +143,39 @@ export function isMatch(
 export function reducePracticeEvent(
   state: PracticeState,
   event: PracticeEvent,
-  requiredHoldTime = 500,
 ): PracticeState {
   switch (event.type) {
     case 'START':
-      return { ...state, status: 'listening', currentIndex: 0, history: [], validationStartTime: null }
+      return { ...state, status: 'listening', currentIndex: 0, history: [] }
 
     case 'STOP':
     case 'RESET':
-      return { ...state, status: 'idle', currentIndex: 0, history: [], validationStartTime: null }
+      return { ...state, status: 'idle', currentIndex: 0, history: [] }
 
     case 'NO_NOTE_DETECTED':
-      if (state.status === 'validating') {
-        return { ...state, status: 'listening', validationStartTime: null }
-      }
+      // Can be used to reset visual feedback, but doesn't change core state
       return state
 
-    case 'NOTE_DETECTED': {
-      const { exercise, currentIndex, status } = state
+    case 'NOTE_DETECTED':
+      // This event is now for real-time feedback; it doesn't advance the state.
+      return { ...state, history: [...state.history, event.payload] }
+
+    case 'NOTE_VALIDATED': {
+      const { exercise, currentIndex } = state
       const targetNote = exercise.notes[currentIndex]
-      if (!targetNote) return state
+      if (!targetNote) return state // Should not happen
 
       if (isMatch(targetNote, event.payload)) {
-        if (status === 'listening') {
-          return { ...state, status: 'validating', validationStartTime: event.payload.timestamp, history: [...state.history, event.payload] }
-        } else if (status === 'validating' && state.validationStartTime) {
-          const holdDuration = event.payload.timestamp - state.validationStartTime
-          if (holdDuration >= requiredHoldTime) {
-            const isLastNote = currentIndex >= exercise.notes.length - 1
-            if (isLastNote) {
-              return { ...state, status: 'completed' }
-            } else {
-              return { ...state, status: 'correct', currentIndex: currentIndex + 1, validationStartTime: null, history: [] }
-            }
-          }
-          return { ...state, history: [...state.history, event.payload] }
-        }
-      } else {
-        if (status === 'validating') {
-          return { ...state, status: 'listening', validationStartTime: null }
+        const isLastNote = currentIndex >= exercise.notes.length - 1
+        if (isLastNote) {
+          return { ...state, status: 'completed' }
+        } else {
+          // Advance to the next note and reset history for that note
+          return { ...state, status: 'correct', currentIndex: currentIndex + 1, history: [] }
         }
       }
+      // If a note was validated but it doesn't match, ignore it.
+      // This can happen in race conditions. The pipeline is the source of truth.
       return state
     }
     default:
