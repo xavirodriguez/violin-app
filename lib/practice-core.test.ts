@@ -97,7 +97,11 @@ describe('practice-core reducer', () => {
 
     // Second detection meets the hold time
     const secondNote: DetectedNote = { pitch: 'G4', cents: 3, timestamp: 1500, confidence: 0.9 }
-    const newState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: secondNote }, requiredHoldTime)
+    const newState = reducePracticeEvent(
+      state,
+      { type: 'NOTE_DETECTED', payload: secondNote },
+      requiredHoldTime,
+    )
 
     expect(newState.status).toBe('correct')
     expect(newState.currentIndex).toBe(1)
@@ -108,10 +112,10 @@ describe('practice-core reducer', () => {
     let state = getInitialState()
     // Manually set the state to be on the last note
     const lastNoteIndex = mockExercise.notes.length - 1
-    const lastNoteTarget = mockExercise.notes[lastNoteIndex]; // This is the full Note object
+    const lastNoteTarget = mockExercise.notes[lastNoteIndex] // This is the full Note object
 
     // Construct the pitch string from the target object for the test's DetectedNote
-    const lastNotePitchName = `${lastNoteTarget.pitch.step}${lastNoteTarget.pitch.alter ?? ''}${lastNoteTarget.pitch.octave}`;
+    const lastNotePitchName = `${lastNoteTarget.pitch.step}${lastNoteTarget.pitch.alter ?? ''}${lastNoteTarget.pitch.octave}`
 
     state.currentIndex = lastNoteIndex
     state.status = 'listening'
@@ -119,13 +123,31 @@ describe('practice-core reducer', () => {
     const requiredHoldTime = 500
 
     // First detection of the last note
-    const firstNote: DetectedNote = { pitch: lastNotePitchName, cents: 0, timestamp: 1000, confidence: 0.9 }
-    state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: firstNote }, requiredHoldTime)
+    const firstNote: DetectedNote = {
+      pitch: lastNotePitchName,
+      cents: 0,
+      timestamp: 1000,
+      confidence: 0.9,
+    }
+    state = reducePracticeEvent(
+      state,
+      { type: 'NOTE_DETECTED', payload: firstNote },
+      requiredHoldTime,
+    )
     expect(state.status).toBe('validating')
 
     // Second detection of the last note, completing the hold
-    const secondNote: DetectedNote = { pitch: lastNotePitchName, cents: 0, timestamp: 1500, confidence: 0.9 }
-    const finalState = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: secondNote }, requiredHoldTime)
+    const secondNote: DetectedNote = {
+      pitch: lastNotePitchName,
+      cents: 0,
+      timestamp: 1500,
+      confidence: 0.9,
+    }
+    const finalState = reducePracticeEvent(
+      state,
+      { type: 'NOTE_DETECTED', payload: secondNote },
+      requiredHoldTime,
+    )
 
     expect(finalState.status).toBe('completed')
   })

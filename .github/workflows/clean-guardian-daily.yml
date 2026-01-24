@@ -1,0 +1,43 @@
+name: CleanGuardian Daily
+
+on:
+  schedule:
+    - cron: '15 5 * * *' # 05:15 UTC
+  workflow_dispatch:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install
+
+      - name: Format check
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Unit tests
+        run: pnpm run test:unit -- --ci
+
+      - name: Coverage (optional gate)
+        run: pnpm run test:coverage -- --ci
+
+      - name: Architecture check
+        run: pnpm run arch:check

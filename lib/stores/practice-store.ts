@@ -1,13 +1,6 @@
 import { create } from 'zustand'
-import {
-  type PracticeState,
-  type PracticeEvent,
-  reducePracticeEvent,
-} from '@/lib/practice-core'
-import {
-  createRawPitchStream,
-  createPracticeEventPipeline,
-} from '@/lib/note-stream'
+import { type PracticeState, type PracticeEvent, reducePracticeEvent } from '@/lib/practice-core'
+import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
 
@@ -118,11 +111,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       set({ practiceState: startedState })
 
       // --- 2. CREATE THE EVENT PIPELINE ---
-      const rawPitchStream = createRawPitchStream(
-        analyser,
-        detector,
-        () => isPracticing,
-      )
+      const rawPitchStream = createRawPitchStream(analyser, detector, () => isPracticing)
       const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream)
 
       // --- 3. CONSUME THE PIPELINE ---
@@ -137,10 +126,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           set({ practiceState: newState })
 
           // Side Effect: Record analytics on state change
-          if (
-            newState.status === 'validating' &&
-            currentState.status === 'listening'
-          ) {
+          if (newState.status === 'validating' && currentState.status === 'listening') {
             const target = currentState.exercise.notes[currentState.currentIndex]
             // This is a rough approximation. Analytics would need richer events.
             if (event.type === 'NOTE_DETECTED') {
@@ -171,8 +157,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         }
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Audio initialization failed'
+      const errorMessage = err instanceof Error ? err.message : 'Audio initialization failed'
       set({ error: errorMessage })
       isPracticing = false
     }

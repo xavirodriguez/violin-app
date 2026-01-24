@@ -88,8 +88,7 @@ export function createPracticeEventPipeline(
     // This adheres to the user request of chaining at least two iter-tools operators.
     filter(
       (rawEvent) =>
-        rawEvent.rms > finalOptions.minRms &&
-        rawEvent.confidence > finalOptions.minConfidence,
+        rawEvent.rms > finalOptions.minRms && rawEvent.confidence > finalOptions.minConfidence,
     ),
     // Step 2 (Map): Map the clean raw data to a high-level PracticeEvent.
     map(toPracticeEvent),
