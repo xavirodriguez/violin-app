@@ -17,8 +17,16 @@ const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
 const ENHARMONIC_MAP: Record<string, string> = {
-  'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb',
-  'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb',
+  Db: 'C#',
+  Eb: 'D#',
+  Gb: 'F#',
+  Ab: 'G#',
+  Bb: 'A#',
 }
 
 export class MusicalNote {
@@ -56,16 +64,16 @@ export class MusicalNote {
     const [, name, octaveStr] = match
     const octave = parseInt(octaveStr, 10)
 
-    let sharpName = name;
+    let sharpName = name
     if (name.endsWith('b')) {
-        const equivalent = Object.keys(ENHARMONIC_MAP).find(k => ENHARMONIC_MAP[k] === name);
-        sharpName = equivalent || name;
+      const equivalent = Object.keys(ENHARMONIC_MAP).find((k) => ENHARMONIC_MAP[k] === name)
+      sharpName = equivalent || name
     }
 
     const noteIndex = NOTE_NAMES.indexOf(sharpName as NoteName)
     if (noteIndex === -1) throw new Error(`Could not find note index for: ${sharpName}`)
 
-    const midiNumber = (octave + 1) * 12 + noteIndex;
+    const midiNumber = (octave + 1) * 12 + noteIndex
     return MusicalNote.fromMidi(midiNumber)
   }
 
@@ -73,7 +81,6 @@ export class MusicalNote {
     return `${this.noteName}${this.octave}`
   }
 }
-
 
 // --- TYPE DEFINITIONS ---
 
@@ -115,11 +122,7 @@ export type PracticeEvent =
 /**
  * Checks if a detected note matches the target note.
  */
-export function isMatch(
-  target: TargetNote,
-  detected: DetectedNote,
-  centsTolerance = 25,
-): boolean {
+export function isMatch(target: TargetNote, detected: DetectedNote, centsTolerance = 25): boolean {
   if (!target || !detected) {
     return false
   }
@@ -148,7 +151,13 @@ export function reducePracticeEvent(
 ): PracticeState {
   switch (event.type) {
     case 'START':
-      return { ...state, status: 'listening', currentIndex: 0, history: [], validationStartTime: null }
+      return {
+        ...state,
+        status: 'listening',
+        currentIndex: 0,
+        history: [],
+        validationStartTime: null,
+      }
 
     case 'STOP':
     case 'RESET':
@@ -167,7 +176,12 @@ export function reducePracticeEvent(
 
       if (isMatch(targetNote, event.payload)) {
         if (status === 'listening') {
-          return { ...state, status: 'validating', validationStartTime: event.payload.timestamp, history: [...state.history, event.payload] }
+          return {
+            ...state,
+            status: 'validating',
+            validationStartTime: event.payload.timestamp,
+            history: [...state.history, event.payload],
+          }
         } else if (status === 'validating' && state.validationStartTime) {
           const holdDuration = event.payload.timestamp - state.validationStartTime
           if (holdDuration >= requiredHoldTime) {
@@ -175,7 +189,13 @@ export function reducePracticeEvent(
             if (isLastNote) {
               return { ...state, status: 'completed' }
             } else {
-              return { ...state, status: 'correct', currentIndex: currentIndex + 1, validationStartTime: null, history: [] }
+              return {
+                ...state,
+                status: 'correct',
+                currentIndex: currentIndex + 1,
+                validationStartTime: null,
+                history: [],
+              }
             }
           }
           return { ...state, history: [...state.history, event.payload] }

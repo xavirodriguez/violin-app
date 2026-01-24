@@ -39,6 +39,7 @@ export function PracticeFeedback({
   status,
 }: PracticeFeedbackProps) {
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 25
+  const isPitchMatch = detectedPitchName?.slice(0, -1) === targetNote.slice(0, -1)
 
   return (
     <div className="space-y-6">
@@ -54,7 +55,9 @@ export function PracticeFeedback({
         {detectedPitchName ? (
           <>
             <div
-              className={`text-3xl font-semibold ${isInTune ? 'text-green-500' : 'text-yellow-500'}`}
+              className={`text-3xl font-semibold ${
+                isPitchMatch && isInTune ? 'text-green-500' : 'text-yellow-500'
+              }`}
             >
               {detectedPitchName}
             </div>
@@ -87,14 +90,19 @@ export function PracticeFeedback({
       <div className="flex items-center justify-center gap-2">
         {status === 'listening' && (
           <div className="text-muted-foreground flex items-center gap-2">
-            <Circle className="h-5 w-5" />
-            <span>Listening...</span>
+            {detectedPitchName && !isPitchMatch && (
+              <div className="text-center">
+                <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
+              </div>
+            )}
+            {detectedPitchName && isPitchMatch && centsOff !== null && !isInTune && (
+              <IntonationFeedback centsOff={centsOff} />
+            )}
+            {!detectedPitchName && <Circle className="h-5 w-5" />}
+            {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
-        {state === 'NOTE_DETECTED' && !isInTune && centsOff !== null && (
-          <IntonationFeedback centsOff={centsOff} />
-        )}
-        {state === 'VALIDATING' && (
+        {status === 'validating' && (
           <div className="text-primary flex items-center gap-2">
             <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
             <span>Hold steady...</span>
