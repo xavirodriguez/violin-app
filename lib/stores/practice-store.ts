@@ -46,8 +46,7 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   status: 'idle',
   exercise: exercise,
   currentIndex: 0,
-  history: [],
-  validationStartTime: null,
+  detectionHistory: [],
 })
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
@@ -82,124 +81,80 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   start: async () => {
-    const { practiceState } = get()
-    if (!practiceState) {
-      set({ error: 'No exercise loaded' })
+    if (get().practiceState?.status === 'listening') return
+    if (!get().practiceState) {
+      set({ error: 'No exercise loaded.' })
       return
     }
 
-    // Prevent starting if already practicing
-    if (isPracticing) {
-      console.warn('Practice is already in progress.')
-      return
-    }
     isPracticing = true
-
-    // Start analytics session
-    useAnalyticsStore
-      .getState()
-      .startSession(practiceState.exercise.id, practiceState.exercise.name, 'practice')
+    let lastDispatchedNoteIndex = -1
 
     try {
-      // --- 1. SETUP AUDIO HARDWARE & DISPATCH START EVENT ---
+      // 1. Setup audio resources
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const context = new AudioContext()
-      const analyser = context.createAnalyser()
       const source = context.createMediaStreamSource(stream)
+      const analyser = context.createAnalyser()
       source.connect(analyser)
       const detector = new PitchDetector(context.sampleRate)
+      set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
 
-      set({ audioContext: context, analyser, mediaStream: stream, detector })
+      // 2. Transition state to 'listening'
+      const currentState = get().practiceState!
+      set({ practiceState: reducePracticeEvent(currentState, { type: 'START' }) })
+      useAnalyticsStore.getState().startSession(currentState.exercise.id, currentState.exercise.name, 'practice')
 
-      // Dispatch the START event to the reducer to transition state to 'listening'
-      const startEvent: PracticeEvent = { type: 'START' }
-      const initialPracticeState = get().practiceState!
-      const startedState = reducePracticeEvent(initialPracticeState, startEvent)
-      set({ practiceState: startedState })
-
-      // --- 2. CREATE THE EVENT PIPELINE ---
-      const rawPitchStream = createRawPitchStream(
-        analyser,
-        detector,
-        () => isPracticing,
+      // 3. Create and consume the event pipeline
+      const rawPitchStream = createRawPitchStream(analyser, detector, () => isPracticing)
+      const practiceEventPipeline = createPracticeEventPipeline(
+        rawPitchStream,
+        // The pipeline needs access to the current target note.
+        // We provide a getter function to avoid stale closures.
+        () => get().targetNote,
       )
-      const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream)
 
-      // --- 3. CONSUME THE PIPELINE ---
       for await (const event of practiceEventPipeline) {
         if (!isPracticing) break
 
         const currentState = get().practiceState!
         const newState = reducePracticeEvent(currentState, event)
+        set({ practiceState: newState })
 
-        // --- 4. UPDATE STATE & HANDLE SIDE EFFECTS ---
-        if (newState !== currentState) {
-          set({ practiceState: newState })
+        // --- SIDE EFFECTS ---
+        // A note was matched, record it for analytics.
+        if (event.type === 'NOTE_MATCHED' && newState.currentIndex !== lastDispatchedNoteIndex) {
+          const target = currentState.exercise.notes[currentState.currentIndex]
+          useAnalyticsStore.getState().recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
+          lastDispatchedNoteIndex = newState.currentIndex
+        }
 
-          // Side Effect: Record analytics on state change
-          if (
-            newState.status === 'validating' &&
-            currentState.status === 'listening'
-          ) {
-            const target = currentState.exercise.notes[currentState.currentIndex]
-            // This is a rough approximation. Analytics would need richer events.
-            if (event.type === 'NOTE_DETECTED') {
-              useAnalyticsStore
-                .getState()
-                .recordNoteAttempt(
-                  currentState.currentIndex,
-                  target.pitch,
-                  event.payload.cents,
-                  true,
-                )
-            }
-          }
-
-          // Side Effect: If a note was just marked 'correct', immediately
-          // transition to 'listening' for the next note.
-          if (newState.status === 'correct') {
-            const finalState = { ...newState, status: 'listening' as const }
-            set({ practiceState: finalState })
-          }
-
-          // Side Effect: On exercise completion
-          if (newState.status === 'completed') {
-            get().stop() // Stop the loop and cleanup
-            useAnalyticsStore.getState().endSession()
-            break // Exit the loop
-          }
+        // The exercise is complete.
+        if (newState.status === 'completed' && currentState.status !== 'completed') {
+          useAnalyticsStore.getState().endSession()
+          get().stop()
+          break
         }
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Audio initialization failed'
-      set({ error: errorMessage })
+      set({ error: err instanceof Error ? err.message : 'Audio hardware error.' })
       isPracticing = false
     }
   },
 
   stop: () => {
-    if (!isPracticing && !get().mediaStream) return // Nothing to stop
-
+    if (!isPracticing && !get().mediaStream) return
     isPracticing = false
-    const { mediaStream, audioContext } = get()
 
-    mediaStream?.getTracks().forEach((track) => track.stop())
-    audioContext?.close()
+    get().mediaStream?.getTracks().forEach((track) => track.stop())
+    get().audioContext?.close()
 
-    // Dispatch a STOP event to reset the state machine
     const currentState = get().practiceState
-    if (currentState) {
-      const stoppedState = reducePracticeEvent(currentState, { type: 'STOP' })
-      set({ practiceState: stoppedState })
+    if (currentState && currentState.status !== 'idle') {
+      set({ practiceState: reducePracticeEvent(currentState, { type: 'STOP' }) })
     }
 
-    set({
-      audioContext: null,
-      analyser: null,
-      mediaStream: null,
-      detector: null,
-    })
+    set({ audioContext: null, analyser: null, mediaStream: null })
   },
 
   reset: () => {

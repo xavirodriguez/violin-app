@@ -52,19 +52,22 @@ export function PracticeMode() {
 
   // OSMD Cursor Synchronization Effect
   useEffect(() => {
-    if (status === 'listening' && currentNoteIndex === 0) {
+    if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
-    } else if (status === 'correct') {
+    } else {
       osmdHook.advanceCursor()
     }
-  }, [status, currentNoteIndex, osmdHook.resetCursor, osmdHook.advanceCursor])
+    // This effect should ONLY run when the note index changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNoteIndex])
 
   const totalNotes = practiceState?.exercise.notes.length || 0
   const progress =
     totalNotes > 0
       ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100
       : 0
-  const lastDetectedNote = practiceState?.history[practiceState.history.length - 1]
+  const lastDetectedNote =
+    practiceState?.detectionHistory[practiceState.detectionHistory.length - 1]
 
   // Construct the full target note name for display
   const targetPitchName = targetNote
@@ -121,7 +124,7 @@ export function PracticeMode() {
                   <Play className="h-4 w-4" /> Start Practice
                 </Button>
               )}
-              {['listening', 'validating', 'correct'].includes(status) && (
+              {status === 'listening' && (
                 <Button onClick={stop} size="lg" variant="destructive" className="gap-2">
                   <Square className="h-4 w-4" /> Stop
                 </Button>
@@ -157,7 +160,7 @@ export function PracticeMode() {
           </Card>
         )}
 
-        {['listening', 'validating', 'correct'].includes(status) && targetNote && (
+        {status === 'listening' && targetNote && (
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="p-6">
               <PracticeFeedback
