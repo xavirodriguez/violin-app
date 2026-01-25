@@ -57,8 +57,6 @@ export function PracticeMode() {
     } else {
       osmdHook.advanceCursor()
     }
-    // This effect should ONLY run when the note index changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNoteIndex])
 
   const totalNotes = practiceState?.exercise.notes.length || 0
