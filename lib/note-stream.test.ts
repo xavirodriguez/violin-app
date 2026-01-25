@@ -1,8 +1,7 @@
-/**
+/*
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest'
-import { WritableStream } from 'node:stream/web'
+import { describe, it, expect } from 'vitest'
 import { createPracticeEventPipeline } from '@/lib/note-stream'
 import type { RawPitchEvent } from '@/lib/note-stream'
 import type { Note as TargetNote } from '@/lib/exercises/types'
@@ -15,13 +14,6 @@ const createMockRawPitchStream = (events: Array<RawPitchEvent | null>) =>
       await new Promise((resolve) => setTimeout(resolve, 10)) // Simulate async nature
     }
   }
-
-const MOCK_SILENCE = (timestamp: number): RawPitchEvent => ({
-  pitchHz: 0,
-  confidence: 0,
-  rms: 0.001, // Below the default 0.01 threshold
-  timestamp,
-})
 
 // A helper to collect all events from the pipeline into an array
 async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]> {

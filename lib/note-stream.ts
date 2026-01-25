@@ -1,12 +1,10 @@
 /**
- * @file note-stream.ts
- *
  * This file creates a declarative pipeline using `iter-tools` to process raw
  * pitch detection events into a stream of well-defined `PracticeEvent`s.
  * This decouples the audio input source from the state management logic.
  */
 
-import { pipe, map, filter } from 'iter-tools'
+import { pipe, map } from 'iter-tools'
 import {
   MusicalNote,
   type PracticeEvent,

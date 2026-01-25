@@ -1,6 +1,4 @@
 /**
- * @file practice-core.ts
- *
  * This file contains the pure, side-effect-free core logic for the violin practice mode.
  * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
@@ -165,10 +163,11 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         detectionHistory: [],
       }
 
-    case 'NOTE_DETECTED':
+    case 'NOTE_DETECTED': {
       // Keep a small, rolling history of the last few detections for UI feedback.
       const history = [event.payload, ...state.detectionHistory].slice(0, 10)
       return { ...state, detectionHistory: history }
+    }
 
     case 'NO_NOTE_DETECTED':
       // Clear history on signal loss to prevent stale UI feedback.

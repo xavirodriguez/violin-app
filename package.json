@@ -15,7 +15,8 @@
     "test": "vitest",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "arch:check": "dependency-cruiser --config dependency-cruiser.js ."
+    "arch:check": "dependency-cruiser --config dependency-cruiser.js .",
+    "check": "pnpm -s lint:docs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

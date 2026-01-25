@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { type PracticeState, type PracticeEvent, reducePracticeEvent } from '@/lib/practice-core'
+import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'

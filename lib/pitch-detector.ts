@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pure JavaScript pitch detection using the YIN algorithm.
+ * Pure JavaScript pitch detection using the YIN algorithm.
  * No external dependencies - optimized for violin pitch detection.
  *
  * The YIN algorithm is considered the gold standard for monophonic pitch detection
