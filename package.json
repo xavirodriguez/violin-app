@@ -9,10 +9,13 @@
     "lint:docs": "eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "start": "next start",
-    "check": "tsc --noEmit && pnpm lint:docs",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "test": "vitest"
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "arch:check": "dependency-cruiser --config dependency-cruiser.js ."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -85,6 +88,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "dependency-cruiser": "^17.3.7",
     "eslint-plugin-tsdoc": "^0.5.0",
     "jsdom": "^27.4.0",
     "postcss": "^8.5",

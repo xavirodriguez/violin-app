@@ -123,10 +123,7 @@ export function createPracticeEventPipeline(
     rawPitchStream,
     map((rawEvent): DetectedNote | null => {
       // Condition for silence or noise: low volume or low confidence.
-      if (
-        rawEvent.rms < finalOptions.minRms ||
-        rawEvent.confidence < finalOptions.minConfidence
-      ) {
+      if (rawEvent.rms < finalOptions.minRms || rawEvent.confidence < finalOptions.minConfidence) {
         return null
       }
       try {

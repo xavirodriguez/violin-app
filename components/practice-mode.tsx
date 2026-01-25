@@ -63,9 +63,7 @@ export function PracticeMode() {
 
   const totalNotes = practiceState?.exercise.notes.length || 0
   const progress =
-    totalNotes > 0
-      ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100
-      : 0
+    totalNotes > 0 ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100 : 0
   const lastDetectedNote =
     practiceState?.detectionHistory[practiceState.detectionHistory.length - 1]
 
@@ -111,7 +109,9 @@ export function PracticeMode() {
                 <h3 className="text-destructive font-semibold">Error</h3>
                 <p className="text-muted-foreground text-sm">{error}</p>
               </div>
-              <Button onClick={reset} variant="outline">Reset</Button>
+              <Button onClick={reset} variant="outline">
+                Reset
+              </Button>
             </div>
           </Card>
         )}
@@ -130,7 +130,11 @@ export function PracticeMode() {
                 </Button>
               )}
               {status === 'completed' && (
-                <Button onClick={() => practiceState && loadExercise(practiceState.exercise)} size="lg" className="gap-2">
+                <Button
+                  onClick={() => practiceState && loadExercise(practiceState.exercise)}
+                  size="lg"
+                  className="gap-2"
+                >
                   <RotateCcw className="h-4 w-4" /> Practice Again
                 </Button>
               )}
@@ -141,7 +145,10 @@ export function PracticeMode() {
                   Note {Math.min(currentNoteIndex + 1, totalNotes)} of {totalNotes}
                 </div>
                 <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
-                  <div className="bg-primary h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  <div
+                    className="bg-primary h-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
               </div>
             )}
@@ -185,7 +192,11 @@ export function PracticeMode() {
             <Trophy className="text-primary mx-auto mb-4 h-20 w-20" />
             <h3 className="mb-2 text-2xl font-bold">🎉 Exercise Complete!</h3>
             <p className="text-muted-foreground mb-6">Excellent work!</p>
-            <Button onClick={() => practiceState && loadExercise(practiceState.exercise)} size="lg" className="gap-2">
+            <Button
+              onClick={() => practiceState && loadExercise(practiceState.exercise)}
+              size="lg"
+              className="gap-2"
+            >
               <RotateCcw className="h-4 w-4" /> Practice Again
             </Button>
           </Card>

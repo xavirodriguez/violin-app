@@ -6,7 +6,7 @@ import tsdocPlugin from 'eslint-plugin-tsdoc'
 
 export default tseslint.config(
   {
-    ignores: ['.next/**', 'eslint.config.js'],
+    ignores: ['.next/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -27,6 +27,14 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['dependency-cruiser.js'],
+    languageOptions: {
+      globals: {
+        module: 'writable',
+      },
     },
   },
 )
