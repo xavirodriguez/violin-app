@@ -22,7 +22,7 @@ vi.mock('opensheetmusicdisplay', () => ({
       },
     }
   }),
-}));
+}))
 
 const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay')
 

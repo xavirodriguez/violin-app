@@ -1,13 +1,6 @@
 import { create } from 'zustand'
-import {
-  type PracticeState,
-  type PracticeEvent,
-  reducePracticeEvent,
-} from '@/lib/practice-core'
-import {
-  createRawPitchStream,
-  createPracticeEventPipeline,
-} from '@/lib/note-stream'
+import { type PracticeState, type PracticeEvent, reducePracticeEvent } from '@/lib/practice-core'
+import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
 
@@ -103,7 +96,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       // 2. Transition state to 'listening'
       const currentState = get().practiceState!
       set({ practiceState: reducePracticeEvent(currentState, { type: 'START' }) })
-      useAnalyticsStore.getState().startSession(currentState.exercise.id, currentState.exercise.name, 'practice')
+      useAnalyticsStore
+        .getState()
+        .startSession(currentState.exercise.id, currentState.exercise.name, 'practice')
 
       // 3. Create and consume the event pipeline
       const rawPitchStream = createRawPitchStream(analyser, detector, () => isPracticing)
@@ -125,7 +120,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         // A note was matched, record it for analytics.
         if (event.type === 'NOTE_MATCHED' && newState.currentIndex !== lastDispatchedNoteIndex) {
           const target = currentState.exercise.notes[currentState.currentIndex]
-          useAnalyticsStore.getState().recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
+          useAnalyticsStore
+            .getState()
+            .recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
           lastDispatchedNoteIndex = newState.currentIndex
         }
 
@@ -146,7 +143,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (!isPracticing && !get().mediaStream) return
     isPracticing = false
 
-    get().mediaStream?.getTracks().forEach((track) => track.stop())
+    get()
+      .mediaStream?.getTracks()
+      .forEach((track) => track.stop())
     get().audioContext?.close()
 
     const currentState = get().practiceState
