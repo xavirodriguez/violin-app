@@ -1,0 +1,27 @@
+name: CleanGuardian PR Gate
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Format check
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Architecture check
+        run: pnpm arch:check
+      - name: Unit tests
+        run: pnpm test:unit -- --ci

@@ -1,6 +1,4 @@
 /**
- * @file practice-core.ts
- *
  * This file contains the pure, side-effect-free core logic for the violin practice mode.
  * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
@@ -96,8 +94,6 @@ export interface DetectedNote {
 export type PracticeStatus =
   | 'idle' // Not yet started
   | 'listening' // Actively waiting for user input
-  | 'validating' // A potentially correct note is being held
-  | 'correct' // The note was confirmed as correct
   | 'completed' // The entire exercise is finished
 
 /** The complete, self-contained state of the practice session. */
@@ -105,17 +101,21 @@ export interface PracticeState {
   status: PracticeStatus
   exercise: Exercise
   currentIndex: number
-  history: DetectedNote[]
-  validationStartTime: number | null
+  // The history of recent detections, used for UI feedback.
+  detectionHistory: DetectedNote[]
 }
 
 /** Events that can modify the practice state. */
 export type PracticeEvent =
-  | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  | { type: 'NO_NOTE_DETECTED' }
   | { type: 'START' }
   | { type: 'STOP' }
   | { type: 'RESET' }
+  // Fired continuously from the pipeline for UI feedback.
+  | { type: 'NOTE_DETECTED'; payload: DetectedNote }
+  // Fired by the pipeline only when a target note is held stable.
+  | { type: 'NOTE_MATCHED' }
+  // Fired when the signal is lost.
+  | { type: 'NO_NOTE_DETECTED' }
 
 // --- PURE FUNCTIONS ---
 
@@ -142,71 +142,52 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
 }
 
 /**
- * The core reducer function for the practice logic.
+ * The core reducer function for the practice logic. It's a pure function.
  */
-export function reducePracticeEvent(
-  state: PracticeState,
-  event: PracticeEvent,
-  requiredHoldTime = 500,
-): PracticeState {
+export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
   switch (event.type) {
     case 'START':
       return {
         ...state,
         status: 'listening',
         currentIndex: 0,
-        history: [],
-        validationStartTime: null,
+        detectionHistory: [],
       }
 
     case 'STOP':
     case 'RESET':
-      return { ...state, status: 'idle', currentIndex: 0, history: [], validationStartTime: null }
-
-    case 'NO_NOTE_DETECTED':
-      if (state.status === 'validating') {
-        return { ...state, status: 'listening', validationStartTime: null }
+      return {
+        ...state,
+        status: 'idle',
+        currentIndex: 0,
+        detectionHistory: [],
       }
-      return state
 
     case 'NOTE_DETECTED': {
-      const { exercise, currentIndex, status } = state
-      const targetNote = exercise.notes[currentIndex]
-      if (!targetNote) return state
+      // Keep a small, rolling history of the last few detections for UI feedback.
+      const history = [event.payload, ...state.detectionHistory].slice(0, 10)
+      return { ...state, detectionHistory: history }
+    }
 
-      if (isMatch(targetNote, event.payload)) {
-        if (status === 'listening') {
-          return {
-            ...state,
-            status: 'validating',
-            validationStartTime: event.payload.timestamp,
-            history: [...state.history, event.payload],
-          }
-        } else if (status === 'validating' && state.validationStartTime) {
-          const holdDuration = event.payload.timestamp - state.validationStartTime
-          if (holdDuration >= requiredHoldTime) {
-            const isLastNote = currentIndex >= exercise.notes.length - 1
-            if (isLastNote) {
-              return { ...state, status: 'completed' }
-            } else {
-              return {
-                ...state,
-                status: 'correct',
-                currentIndex: currentIndex + 1,
-                validationStartTime: null,
-                history: [],
-              }
-            }
-          }
-          return { ...state, history: [...state.history, event.payload] }
-        }
+    case 'NO_NOTE_DETECTED':
+      // Clear history on signal loss to prevent stale UI feedback.
+      return { ...state, detectionHistory: [] }
+
+    case 'NOTE_MATCHED': {
+      if (state.status !== 'listening') return state
+
+      const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
+      if (isLastNote) {
+        return { ...state, status: 'completed' }
       } else {
-        if (status === 'validating') {
-          return { ...state, status: 'listening', validationStartTime: null }
+        return {
+          ...state,
+          currentIndex: state.currentIndex + 1,
+          detectionHistory: [], // Clear history for the next note.
         }
       }
-      return state
     }
+
     default:
       return state
   }

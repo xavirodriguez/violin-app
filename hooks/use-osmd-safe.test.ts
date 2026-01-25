@@ -10,16 +10,18 @@ const mockReset = vi.fn()
 const mockNext = vi.fn()
 
 vi.mock('opensheetmusicdisplay', () => ({
-  OpenSheetMusicDisplay: vi.fn().mockImplementation(() => ({
-    load: mockLoad,
-    render: mockRender,
-    clear: mockClear,
-    cursor: {
-      show: mockShow,
-      reset: mockReset,
-      next: mockNext,
-    },
-  })),
+  OpenSheetMusicDisplay: vi.fn().mockImplementation(() => {
+    return {
+      load: mockLoad,
+      render: mockRender,
+      clear: mockClear,
+      cursor: {
+        show: mockShow,
+        reset: mockReset,
+        next: mockNext,
+      },
+    }
+  }),
 }))
 
 const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay')

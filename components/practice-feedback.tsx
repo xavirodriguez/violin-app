@@ -10,11 +10,17 @@ interface PracticeFeedbackProps {
   status: string
 }
 
+const WIDE_DEVIATION_THRESHOLD_CENTS = 25
+
 function IntonationFeedback({ centsOff }: { centsOff: number }) {
+  const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
+
   if (centsOff > 10) {
     return (
       <div className="text-center">
-        <div className="text-lg font-semibold text-yellow-500">Too Sharp</div>
+        <div className={`text-lg font-semibold ${isClose ? 'text-yellow-500' : 'text-red-500'}`}>
+          {isClose ? 'A Bit Sharp' : 'Too Sharp'}
+        </div>
         <div className="text-muted-foreground text-sm">
           Move your finger down (toward the scroll)
         </div>
@@ -24,7 +30,9 @@ function IntonationFeedback({ centsOff }: { centsOff: number }) {
   if (centsOff < -10) {
     return (
       <div className="text-center">
-        <div className="text-lg font-semibold text-yellow-500">Too Flat</div>
+        <div className={`text-lg font-semibold ${isClose ? 'text-yellow-500' : 'text-red-500'}`}>
+          {isClose ? 'A Bit Flat' : 'Too Flat'}
+        </div>
         <div className="text-muted-foreground text-sm">Move your finger up (toward the bridge)</div>
       </div>
     )
@@ -38,8 +46,7 @@ export function PracticeFeedback({
   centsOff,
   status,
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 25
-  const isPitchMatch = detectedPitchName?.slice(0, -1) === targetNote.slice(0, -1)
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
 
   return (
     <div className="space-y-6">
@@ -88,7 +95,7 @@ export function PracticeFeedback({
 
       {/* Status Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {status === 'listening' && (
+        {status === 'listening' && !detectedPitchName && (
           <div className="text-muted-foreground flex items-center gap-2">
             {detectedPitchName && !isPitchMatch && (
               <div className="text-center">
@@ -101,6 +108,9 @@ export function PracticeFeedback({
             {!detectedPitchName && <Circle className="h-5 w-5" />}
             {!detectedPitchName && <span>Listening...</span>}
           </div>
+        )}
+        {status === 'listening' && detectedPitchName && !isInTune && centsOff !== null && (
+          <IntonationFeedback centsOff={centsOff} />
         )}
         {status === 'validating' && (
           <div className="text-primary flex items-center gap-2">

@@ -12,7 +12,7 @@ import { songsExercises } from './categories/songs'
 /**
  * A factory function that takes raw exercise data, generates the
  * MusicXML for it, and returns the complete Exercise object.
- * @param exerciseData The raw data for the exercise.
+ * @param exerciseData - The raw data for the exercise.
  * @returns A complete Exercise object with the musicXML string.
  */
 const createExercise = (exerciseData: ExerciseData): Exercise => {
