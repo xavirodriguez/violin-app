@@ -10,11 +10,17 @@ interface PracticeFeedbackProps {
   status: string
 }
 
+const WIDE_DEVIATION_THRESHOLD_CENTS = 25
+
 function IntonationFeedback({ centsOff }: { centsOff: number }) {
+  const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
+
   if (centsOff > 10) {
     return (
       <div className="text-center">
-        <div className="text-lg font-semibold text-yellow-500">Too Sharp</div>
+        <div className={`text-lg font-semibold ${isClose ? 'text-yellow-500' : 'text-red-500'}`}>
+          {isClose ? 'A Bit Sharp' : 'Too Sharp'}
+        </div>
         <div className="text-muted-foreground text-sm">
           Move your finger down (toward the scroll)
         </div>
@@ -24,7 +30,9 @@ function IntonationFeedback({ centsOff }: { centsOff: number }) {
   if (centsOff < -10) {
     return (
       <div className="text-center">
-        <div className="text-lg font-semibold text-yellow-500">Too Flat</div>
+        <div className={`text-lg font-semibold ${isClose ? 'text-yellow-500' : 'text-red-500'}`}>
+          {isClose ? 'A Bit Flat' : 'Too Flat'}
+        </div>
         <div className="text-muted-foreground text-sm">Move your finger up (toward the bridge)</div>
       </div>
     )
@@ -38,7 +46,7 @@ export function PracticeFeedback({
   centsOff,
   status,
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 25
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
 
   return (
     <div className="space-y-6">
@@ -85,16 +93,16 @@ export function PracticeFeedback({
 
       {/* Status Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {status === 'listening' && (
+        {status === 'listening' && !detectedPitchName && (
           <div className="text-muted-foreground flex items-center gap-2">
             <Circle className="h-5 w-5" />
             <span>Listening...</span>
           </div>
         )}
-        {state === 'NOTE_DETECTED' && !isInTune && centsOff !== null && (
+        {status === 'listening' && detectedPitchName && !isInTune && centsOff !== null && (
           <IntonationFeedback centsOff={centsOff} />
         )}
-        {state === 'VALIDATING' && (
+        {status === 'validating' && (
           <div className="text-primary flex items-center gap-2">
             <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
             <span>Hold steady...</span>
