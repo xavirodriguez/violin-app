@@ -1,4 +1,4 @@
-/**
+/*
  * @vitest-environment jsdom
  */
 import { describe, it, expect } from 'vitest'
@@ -60,7 +60,7 @@ describe('practice-core reducer', () => {
   })
 
   it('should transition to "completed" when the last note is matched', () => {
-    let state = getInitialState()
+    const state = getInitialState()
     state.status = 'listening'
     // Manually set the state to be on the last note
     state.currentIndex = mockExercise.notes.length - 1
