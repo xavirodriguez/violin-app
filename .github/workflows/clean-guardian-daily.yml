@@ -2,7 +2,7 @@ name: CleanGuardian Daily
 
 on:
   schedule:
-    - cron: '15 5 * * *' # 05:15 UTC
+    - cron: "15 5 * * *" # 05:15 UTC
   workflow_dispatch:
 
 jobs:
@@ -18,26 +18,26 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install
 
       - name: Format check
-        run: pnpm run format:check
+        run: pnpm format:check
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm lint
 
       - name: Typecheck
-        run: pnpm run typecheck
-
-      - name: Unit tests
-        run: pnpm run test:unit -- --ci
-
-      - name: Coverage (optional gate)
-        run: pnpm run test:coverage -- --ci
+        run: pnpm typecheck
 
       - name: Architecture check
-        run: pnpm run arch:check
+        run: pnpm arch:check
+
+      - name: Unit tests
+        run: pnpm test:unit -- --ci
+
+      - name: Coverage (optional gate)
+        run: pnpm test:coverage -- --ci

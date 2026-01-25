@@ -2,7 +2,7 @@ name: CleanGuardian PR Gate
 
 on:
   pull_request:
-    branches: ['main']
+    branches: [ "main" ]
 
 jobs:
   gate:
@@ -11,11 +11,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm run format:check
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-      - run: pnpm run test:unit -- --ci
-      - run: pnpm run arch:check
+          node-version: "20"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Format check
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Architecture check
+        run: pnpm arch:check
+      - name: Unit tests
+        run: pnpm test:unit -- --ci
