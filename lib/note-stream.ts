@@ -118,7 +118,6 @@ export function createPracticeEventPipeline(
   const finalOptions = { ...defaultOptions, ...options }
 
   const detectedNoteStream = pipe(
-    rawPitchStream,
     map((rawEvent): DetectedNote | null => {
       // Condition for silence or noise: low volume or low confidence.
       if (rawEvent.rms < finalOptions.minRms || rawEvent.confidence < finalOptions.minConfidence) {
@@ -137,7 +136,7 @@ export function createPracticeEventPipeline(
         return null
       }
     }),
-  )
+  )(rawPitchStream)
 
   // The final pipeline applies the stability window logic.
   return stabilityWindow(detectedNoteStream, targetNote, finalOptions)
