@@ -36,9 +36,12 @@ describe('useOSMDSafe', () => {
   })
 
   const setupHook = () => {
-    const { result, rerender, unmount } = renderHook((props) => useOSMDSafe(props), {
-      initialProps: '',
-    })
+    const { result, rerender, unmount } = renderHook(
+      ({ musicXML, options }) => useOSMDSafe(musicXML, options),
+      {
+        initialProps: { musicXML: '' },
+      },
+    )
     act(() => {
       result.current.containerRef.current = document.createElement('div')
     })
@@ -52,7 +55,7 @@ describe('useOSMDSafe', () => {
 
   it('should initialize correctly and render the sheet music', async () => {
     const { result, rerender } = setupHook()
-    rerender(VALID_XML)
+    rerender({ musicXML: VALID_XML })
     await waitFor(() => {
       expect(result.current.isReady).toBe(true)
       expect(result.current.error).toBe(null)
@@ -67,7 +70,7 @@ describe('useOSMDSafe', () => {
     const errorMessage = 'Failed to load music XML'
     mockLoad.mockRejectedValue(new Error(errorMessage))
     const { result, rerender } = setupHook()
-    rerender(VALID_XML)
+    rerender({ musicXML: VALID_XML })
     await waitFor(() => {
       expect(result.current.isReady).toBe(false)
       expect(result.current.error).toBe(errorMessage)
@@ -77,7 +80,7 @@ describe('useOSMDSafe', () => {
 
   it('should call cursor methods correctly', async () => {
     const { result, rerender } = setupHook()
-    rerender(VALID_XML)
+    rerender({ musicXML: VALID_XML })
     await waitFor(() => expect(result.current.isReady).toBe(true))
     act(() => result.current.advanceCursor())
     expect(mockNext).toHaveBeenCalledTimes(1)
@@ -88,7 +91,7 @@ describe('useOSMDSafe', () => {
 
   it('should clean up the OSMD instance on unmount', async () => {
     const { unmount, rerender } = setupHook()
-    rerender(VALID_XML)
+    rerender({ musicXML: VALID_XML })
     await waitFor(() => expect(mockRender).toHaveBeenCalledTimes(1))
     unmount()
     expect(mockClear).toHaveBeenCalledTimes(1)
@@ -96,15 +99,27 @@ describe('useOSMDSafe', () => {
 
   it('should clear and re-render when musicXML changes', async () => {
     const { result, rerender } = setupHook()
-    rerender(VALID_XML)
+    rerender({ musicXML: VALID_XML })
     await waitFor(() => expect(mockRender).toHaveBeenCalledTimes(1))
     expect(mockLoad).toHaveBeenCalledWith(VALID_XML)
-    rerender(NEW_XML)
+    rerender({ musicXML: NEW_XML })
     await waitFor(() => {
       expect(mockClear).toHaveBeenCalledTimes(1)
       expect(mockRender).toHaveBeenCalledTimes(2)
       expect(result.current.isReady).toBe(true)
     })
     expect(mockLoad).toHaveBeenCalledWith(NEW_XML)
+  })
+
+  it('should pass options to OSMD constructor', async () => {
+    const { rerender } = setupHook()
+    const options = { backend: 'canvas', drawTitle: true }
+    rerender({ musicXML: VALID_XML, options })
+    await waitFor(() => {
+      expect(OpenSheetMusicDisplay).toHaveBeenCalledWith(
+        expect.any(HTMLDivElement),
+        expect.objectContaining(options),
+      )
+    })
   })
 })
