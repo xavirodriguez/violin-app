@@ -1,97 +1,113 @@
-/*
- * @vitest-environment jsdom
- */
 import { describe, it, expect } from 'vitest'
-import { createPracticeEventPipeline } from '@/lib/note-stream'
-import type { RawPitchEvent } from '@/lib/note-stream'
-import type { Note as TargetNote } from '@/lib/exercises/types'
+import { createPracticeEventPipeline, type RawPitchEvent } from './note-stream'
+import type { TargetNote } from './practice-core'
 
-// A helper to push async data into a stream for testing
-const createMockRawPitchStream = (events: Array<RawPitchEvent | null>) =>
-  async function* () {
-    for (const event of events) {
-      yield event
-      await new Promise((resolve) => setTimeout(resolve, 10)) // Simulate async nature
-    }
-  }
-
-// A helper to collect all events from the pipeline into an array
+// Helper to collect all events from an async iterable into an array
 async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const result: T[] = []
-  for await (const value of iterable) {
-    result.push(value)
+  for await (const item of iterable) {
+    result.push(item)
   }
   return result
 }
 
-describe('createPracticeEventPipeline', () => {
-  const mockTargetNote: TargetNote = {
-    pitch: { step: 'A', octave: 4, alter: '' },
-    duration: 1,
+// Helper to create a mock raw pitch stream from an array of events
+async function* createMockStream(events: RawPitchEvent[]): AsyncGenerator<RawPitchEvent> {
+  for (const event of events) {
+    yield event
+    // Simulate requestAnimationFrame delay for timing-sensitive tests
+    await new Promise((resolve) => setTimeout(resolve, 10))
   }
+}
 
+describe('createPracticeEventPipeline', () => {
+  const mockTargetNote: TargetNote = { pitch: { step: 'A', octave: 4 }, duration: 1 }
   const getTargetNote = () => mockTargetNote
 
-  it('should emit NOTE_MATCHED after a stable correct note', async () => {
-    const pitchEvents: (RawPitchEvent | null)[] = [
-      // Correct note, held stable
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1000 },
-      { pitchHz: 441, confidence: 0.9, rms: 0.1, timestamp: 1200 },
-      { pitchHz: 439, confidence: 0.9, rms: 0.1, timestamp: 1400 },
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1600 },
-    ]
+  const testOptions = {
+    minRms: 0.01,
+    minConfidence: 0.85,
+    centsTolerance: 25,
+    requiredHoldTime: 100, // Use a shorter hold time for efficient testing
+  }
 
-    const rawPitchStream = createMockRawPitchStream(pitchEvents)()
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, {
-      requiredHoldTime: 500,
-    })
-
+  it('should filter out events with low RMS, emitting NO_NOTE_DETECTED', async () => {
+    const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.9, rms: 0.005, timestamp: 0 }]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, testOptions)
     const events = await collectAsyncIterable(pipeline)
 
-    // Should emit NOTE_DETECTED for each valid input
-    expect(events.filter((e) => e.type === 'NOTE_DETECTED')).toHaveLength(4)
-
-    // Should emit exactly one NOTE_MATCHED event
-    const matchedEvents = events.filter((e) => e.type === 'NOTE_MATCHED')
-    expect(matchedEvents).toHaveLength(1)
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
   })
 
-  it('should not emit NOTE_MATCHED if note is unstable', async () => {
-    const pitchEvents: (RawPitchEvent | null)[] = [
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1000 }, // Correct
-      null, // Silence resets stability
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1200 }, // Correct again
-    ]
-
-    const rawPitchStream = createMockRawPitchStream(pitchEvents)()
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, {
-      requiredHoldTime: 300,
-    })
-
+  it('should filter out events with low confidence, emitting NO_NOTE_DETECTED', async () => {
+    const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.5, rms: 0.02, timestamp: 0 }]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, testOptions)
     const events = await collectAsyncIterable(pipeline)
 
-    expect(events.filter((e) => e.type === 'NOTE_MATCHED')).toHaveLength(0)
-    // We expect 2 NOTE_DETECTED events and 1 NO_NOTE_DETECTED event
-    expect(events.filter((e) => e.type === 'NOTE_DETECTED')).toHaveLength(2)
-    expect(events.filter((e) => e.type === 'NO_NOTE_DETECTED')).toHaveLength(1)
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
   })
 
-  it('should reset stability timer if a wrong note is played', async () => {
-    const pitchEvents: (RawPitchEvent | null)[] = [
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1000 }, // Correct, starts timer
-      { pitchHz: 441, confidence: 0.9, rms: 0.1, timestamp: 1200 }, // Still correct
-      { pitchHz: 330, confidence: 0.9, rms: 0.1, timestamp: 1400 }, // Incorrect (E4), resets timer
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 1600 }, // Correct, starts new timer
-      { pitchHz: 439, confidence: 0.9, rms: 0.1, timestamp: 1800 },
-      { pitchHz: 440, confidence: 0.9, rms: 0.1, timestamp: 2200 }, // Match!
-    ]
+  it('should filter out events with high cent deviation, emitting NO_NOTE_DETECTED', async () => {
+    // A frequency of 453Hz is ~51 cents sharp for A4 (440Hz)
+    const rawEvents: RawPitchEvent[] = [{ pitchHz: 453, confidence: 0.9, rms: 0.02, timestamp: 0 }]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, testOptions)
+    const events = await collectAsyncIterable(pipeline)
 
-    const rawPitchStream = createMockRawPitchStream(pitchEvents)()
+    // The out-of-tune note is mapped to null and should result in a NO_NOTE_DETECTED event.
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
+  })
+
+  it('should transform a valid raw event into a NOTE_DETECTED event', async () => {
+    const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: 0 }]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, testOptions)
+    const events = await collectAsyncIterable(pipeline)
+
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('NOTE_DETECTED')
+    const payload = (events[0] as any).payload
+    expect(payload.pitch).toBe('A4')
+    expect(payload.cents).toBeCloseTo(0)
+  })
+
+  it('should emit NOTE_MATCHED when a correct note is held for the required time', async () => {
+    const startTime = Date.now()
+    const rawEvents: RawPitchEvent[] = [
+      { pitchHz: 441, confidence: 0.9, rms: 0.02, timestamp: startTime },
+      { pitchHz: 442, confidence: 0.9, rms: 0.02, timestamp: startTime + 50 },
+      { pitchHz: 439, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 },
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime + 150 },
+    ]
+    const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, {
-      requiredHoldTime: 500,
+      ...testOptions,
+      requiredHoldTime: 120,
     })
     const events = await collectAsyncIterable(pipeline)
-    expect(events.filter((e) => e.type === 'NOTE_MATCHED')).toHaveLength(1)
-    expect(events.filter((e) => e.type === 'NOTE_DETECTED')).toHaveLength(6)
+
+    const noteDetectedCount = events.filter((e) => e.type === 'NOTE_DETECTED').length
+    const noteMatchedCount = events.filter((e) => e.type === 'NOTE_MATCHED').length
+
+    expect(noteDetectedCount).toBe(4)
+    expect(noteMatchedCount).toBe(1)
+    expect(events.at(-1)?.type).toBe('NOTE_MATCHED')
+  })
+
+  it('should NOT emit NOTE_MATCHED if the note changes before hold time is met', async () => {
+    const startTime = Date.now()
+    const rawEvents: RawPitchEvent[] = [
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime }, // Correct
+      { pitchHz: 441, confidence: 0.9, rms: 0.02, timestamp: startTime + 50 }, // Correct
+      { pitchHz: 392, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 }, // Incorrect (G4)
+    ]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, testOptions)
+    const events = await collectAsyncIterable(pipeline)
+
+    const noteMatched = events.find((e) => e.type === 'NOTE_MATCHED')
+    expect(noteMatched).toBeUndefined()
   })
 })
