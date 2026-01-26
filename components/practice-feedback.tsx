@@ -62,7 +62,9 @@ export function PracticeFeedback({
         {detectedPitchName ? (
           <>
             <div
-              className={`text-3xl font-semibold ${isInTune ? 'text-green-500' : 'text-yellow-500'}`}
+              className={`text-3xl font-semibold ${
+                isPitchMatch && isInTune ? 'text-green-500' : 'text-yellow-500'
+              }`}
             >
               {detectedPitchName}
             </div>
@@ -95,8 +97,16 @@ export function PracticeFeedback({
       <div className="flex items-center justify-center gap-2">
         {status === 'listening' && !detectedPitchName && (
           <div className="text-muted-foreground flex items-center gap-2">
-            <Circle className="h-5 w-5" />
-            <span>Listening...</span>
+            {detectedPitchName && !isPitchMatch && (
+              <div className="text-center">
+                <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
+              </div>
+            )}
+            {detectedPitchName && isPitchMatch && centsOff !== null && !isInTune && (
+              <IntonationFeedback centsOff={centsOff} />
+            )}
+            {!detectedPitchName && <Circle className="h-5 w-5" />}
+            {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
         {status === 'listening' && detectedPitchName && !isInTune && centsOff !== null && (
