@@ -3,11 +3,13 @@ import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
+import { handlePracticeEvent } from '../practice/practice-event-sink'
 
 import type { Exercise } from '@/lib/exercises/types'
 
-// A flag to control the audio processing loop
-let isPracticing = false
+// The AbortController is stored in the closure of the store, not in the Zustand
+// state itself, as it's not a piece of data we want to serialize or subscribe to.
+let practiceLoopController: AbortController | null = null
 
 interface PracticeStore {
   // --- STATE ---
@@ -80,8 +82,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       return
     }
 
-    isPracticing = true
-    let lastDispatchedNoteIndex = -1
+    // Ensure any previous session is stopped before starting a new one.
+    get().stop()
+
+    practiceLoopController = new AbortController()
+    const signal = practiceLoopController.signal
 
     try {
       // 1. Setup audio resources
@@ -93,7 +98,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const detector = new PitchDetector(context.sampleRate)
       set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
 
-      // 2. Transition state to 'listening'
+      // 2. Transition state to 'listening' and start analytics session
       const currentState = get().practiceState!
       set({ practiceState: reducePracticeEvent(currentState, { type: 'START' }) })
       useAnalyticsStore
@@ -101,47 +106,30 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         .startSession(currentState.exercise.id, currentState.exercise.name, 'practice')
 
       // 3. Create and consume the event pipeline
-      const rawPitchStream = createRawPitchStream(analyser, detector, () => isPracticing)
-      const practiceEventPipeline = createPracticeEventPipeline(
-        rawPitchStream,
-        // The pipeline needs access to the current target note.
-        // We provide a getter function to avoid stale closures.
-        () => get().targetNote,
-      )
+      const rawPitchStream = createRawPitchStream(analyser, detector, () => !signal.aborted)
+      const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream, () => get().targetNote)
 
-      for await (const event of practiceEventPipeline) {
-        if (!isPracticing) break
-
-        const currentState = get().practiceState!
-        const newState = reducePracticeEvent(currentState, event)
-        set({ practiceState: newState })
-
-        // --- SIDE EFFECTS ---
-        // A note was matched, record it for analytics.
-        if (event.type === 'NOTE_MATCHED' && newState.currentIndex !== lastDispatchedNoteIndex) {
-          const target = currentState.exercise.notes[currentState.currentIndex]
-          useAnalyticsStore
-            .getState()
-            .recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
-          lastDispatchedNoteIndex = newState.currentIndex
+      // 4. Start processing the pipeline in a non-blocking way
+      ;(async () => {
+        for await (const event of practiceEventPipeline) {
+          if (signal.aborted) break
+          handlePracticeEvent(event, { getState: get, setState: set }, () => get().stop())
         }
-
-        // The exercise is complete.
-        if (newState.status === 'completed' && currentState.status !== 'completed') {
-          useAnalyticsStore.getState().endSession()
-          get().stop()
-          break
+      })().catch((err) => {
+        if (err.name !== 'AbortError') {
+          set({ error: err instanceof Error ? err.message : 'An unexpected error occurred.' })
         }
-      }
+        get().stop()
+      })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Audio hardware error.' })
-      isPracticing = false
+      get().stop()
     }
   },
 
   stop: () => {
-    if (!isPracticing && !get().mediaStream) return
-    isPracticing = false
+    practiceLoopController?.abort()
+    practiceLoopController = null
 
     get()
       .mediaStream?.getTracks()
