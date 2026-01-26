@@ -1,13 +1,15 @@
 import { create } from 'zustand'
 import { MusicalNote } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
+import { AppError, toAppError, ERROR_CODES } from '@/lib/errors/app-error'
+import { logger } from '@/lib/observability/logger'
 
 type TunerState = 'IDLE' | 'INITIALIZING' | 'READY' | 'LISTENING' | 'DETECTED' | 'ERROR'
 
 interface TunerStore {
   // State
   state: TunerState
-  error: string | null
+  error: AppError | null
   currentPitch: number | null
   currentNote: string | null
   centsDeviation: number | null
@@ -54,7 +56,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     const { state: currentState, deviceId, sensitivity } = get()
 
     if (currentState !== 'IDLE' && currentState !== 'ERROR') {
-      console.warn(`Cannot initialize from state: ${currentState}`)
+      logger.warn(`Cannot initialize from state: ${currentState}`)
       return
     }
 
@@ -95,10 +97,15 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         error: null,
       })
     } catch (_err) {
-      const errorMessage = _err instanceof Error ? _err.message : 'Microphone access denied'
+      const appError = toAppError(_err, ERROR_CODES.MIC_GENERIC_ERROR)
+      logger.error({
+        msg: 'Failed to initialize microphone',
+        err: appError,
+        context: { deviceId },
+      })
       set({
         state: 'ERROR',
-        error: errorMessage,
+        error: appError,
       })
     }
   },
@@ -151,11 +158,16 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         set({
           state: 'DETECTED',
           currentPitch: pitch,
-          currentNote: note.getFullName(),
+          currentNote: note.nameWithOctave,
           centsDeviation: note.centsDeviation,
           confidence,
         })
       } catch (_err) {
+        logger.error({
+          msg: 'Failed to create MusicalNote from frequency',
+          err: _err,
+          context: { pitch },
+        })
         set({
           state: 'READY',
           currentPitch: null,
@@ -181,7 +193,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       const audioDevices = devices.filter((device) => device.kind === 'audioinput')
       set({ devices: audioDevices })
     } catch (err) {
-      console.error('Error loading audio devices:', err)
+      logger.error({ msg: 'Error loading audio devices', err })
     }
   },
 
