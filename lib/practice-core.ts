@@ -205,8 +205,9 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
     const isInTune = Math.abs(detected.cents) < centsTolerance
     return isPitchMatch && isInTune
   } catch (error) {
-    console.error('Error comparing notes:', error)
-    return false
+    // Re-throw errors related to parsing, as they indicate a programming or data error.
+    // The logger in the store or UI boundary will catch and report this.
+    throw error
   }
 }
 
