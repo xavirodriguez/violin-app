@@ -11,10 +11,8 @@ export function TunerMode() {
   const {
     state,
     error,
-    currentPitch,
     currentNote,
     centsDeviation,
-    confidence,
     analyser,
     detector,
     initialize,
@@ -23,7 +21,7 @@ export function TunerMode() {
     updatePitch,
   } = useTunerStore()
 
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   // Audio analysis loop
   useEffect(() => {
@@ -36,7 +34,7 @@ export function TunerMode() {
     const analyze = () => {
       analyser.getFloatTimeDomainData(buffer)
 
-      const result = detector.detectPitchWithValidation(buffer)
+      const result = detector.detectPitch(buffer)
 
       updatePitch(result.pitchHz, result.confidence)
 
@@ -108,9 +106,8 @@ export function TunerMode() {
             <div className="space-y-6">
               <ViolinFingerboard
                 targetNote={currentNote}
-                detectedPitch={currentPitch}
+                detectedPitchName={currentNote}
                 centsDeviation={centsDeviation}
-                isInTune={confidence > 0.85 && Math.abs(centsDeviation || 0) <= 10}
               />
 
               <div className="flex justify-center gap-2">

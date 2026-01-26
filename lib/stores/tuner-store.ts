@@ -151,7 +151,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         set({
           state: 'DETECTED',
           currentPitch: pitch,
-          currentNote: note.getFullName(),
+          currentNote: note.nameWithOctave,
           centsDeviation: note.centsDeviation,
           confidence,
         })

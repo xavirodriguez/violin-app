@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 
-export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
+export function useOSMDSafe(musicXML: string) {
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -27,7 +27,6 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
         drawTitle: false,
         followCursor: true,
         disableCursor: false,
-        ...options,
       })
       osmdRef.current = osmd
 
@@ -59,7 +58,7 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
       isMounted = false
       // No need to clear here if we clear at the start of the effect
     }
-  }, [musicXML, options])
+  }, [musicXML])
 
   // Cleanup on unmount
   useEffect(() => {

@@ -11,7 +11,9 @@ const STRINGS = [
   { name: 'G', openPitch: 'G3', color: '#B89870' },
 ]
 
-const FINGER_POSITIONS = {
+type FingerPosition = { string: string; finger: number; fretDistance: number };
+
+const FINGER_POSITIONS: Record<string, FingerPosition> = {
   G3: { string: 'G', finger: 0, fretDistance: 0 },
   A3: { string: 'G', finger: 1, fretDistance: 45 },
   B3: { string: 'G', finger: 2, fretDistance: 90 },
@@ -32,7 +34,7 @@ const FINGER_POSITIONS = {
 
 interface ViolinFingerboardProps {
   targetNote: string | null
-  detectedPitchName?: string
+  detectedPitchName?: string | null
   centsDeviation?: number | null
 }
 
@@ -90,11 +92,15 @@ export function ViolinFingerboard({
 
 /**
  * Dibuja el diapasón base del violín en el canvas.
- * @param ctx - El contexto 2D del canvas.
- * @param width - El ancho del canvas.
- * @param height - La altura del canvas.
+ * @param ctx - The 2D rendering context of the canvas.
+ * @param width - The width of the canvas.
+ * @param height - The height of the canvas.
  */
-function drawFingerboard(ctx, width, height) {
+function drawFingerboard(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
   const nutX = 50,
     bridgeX = width - 50
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
@@ -115,12 +121,17 @@ function drawFingerboard(ctx, width, height) {
 
 /**
  * Dibuja el indicador para la nota objetivo en el diapasón.
- * @param ctx - El contexto 2D del canvas.
- * @param position - La información de la posición de la nota.
- * @param width - El ancho del canvas.
- * @param height - La altura del canvas.
+ * @param ctx - The 2D rendering context of the canvas.
+ * @param position - The position information of the note.
+ * @param width - The width of the canvas.
+ * @param height - The height of the canvas.
  */
-function drawTargetPosition(ctx, position, width, height) {
+function drawTargetPosition(
+  ctx: CanvasRenderingContext2D,
+  position: FingerPosition,
+  width: number,
+  height: number,
+) {
   const nutX = 50
   const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
@@ -142,14 +153,21 @@ function drawTargetPosition(ctx, position, width, height) {
 
 /**
  * Dibuja el indicador para la nota detectada en el diapasón.
- * @param ctx - El contexto 2D del canvas.
- * @param position - La información de la posición de la nota.
- * @param centsDeviation - La desviación en cents para ajustar la posición.
- * @param isInTune - Si la nota está afinada, para colorear el indicador.
- * @param width - El ancho del canvas.
- * @param height - La altura del canvas.
+ * @param ctx - The 2D rendering context of the canvas.
+ * @param position - The position information of the note.
+ * @param centsDeviation - The deviation in cents to adjust the position.
+ * @param isInTune - Whether the note is in tune, for coloring the indicator.
+ * @param width - The width of the canvas.
+ * @param height - The height of the canvas.
  */
-function drawDetectedPosition(ctx, position, centsDeviation, isInTune, width, height) {
+function drawDetectedPosition(
+  ctx: CanvasRenderingContext2D,
+  position: FingerPosition,
+  centsDeviation: number,
+  isInTune: boolean,
+  width: number,
+  height: number,
+) {
   const nutX = 50
   const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)

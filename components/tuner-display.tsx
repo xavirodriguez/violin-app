@@ -1,11 +1,26 @@
 'use client'
 
+/**
+ * Props for the `TunerDisplay` component.
+ */
 interface TunerDisplayProps {
-  note: string | null
-  cents: number | null
-  confidence: number
+  /** The name of the detected musical note (e.g., "A4"). `null` if no note is detected. */
+  note: string | null;
+  /** The pitch deviation from the perfect note. `null` if no note is detected. */
+  cents: number | null;
+  /** The confidence level of the pitch detection. */
+  confidence: number;
 }
 
+/**
+ * A presentational component that provides a visual display for the real-time tuner.
+ *
+ * @remarks
+ * This component visualizes the detected note, its deviation from perfect pitch
+ * in cents, and the confidence of the detection. It features a prominent note
+ * display, a visual meter with a needle to show sharpness/flatness, and textual
+ * feedback. It is a controlled component that receives all its data via props.
+ */
 export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
   const isInTune = cents !== null && Math.abs(cents) < 10
   const isClose = cents !== null && Math.abs(cents) < 25

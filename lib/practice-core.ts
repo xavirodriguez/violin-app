@@ -137,6 +137,8 @@ export class MusicalNote {
 
 // --- TYPE DEFINITIONS ---
 
+import type { Note as TargetNote } from '@/lib/exercises/types'
+
 /** Represents a note detected from the user's microphone input. */
 export interface DetectedNote {
   pitch: string // e.g., "G4"

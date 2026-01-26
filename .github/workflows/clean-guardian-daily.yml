@@ -12,15 +12,15 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          version: 8
+          version: 9 # Asegúrate de poner tu versión mayor aquí
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -29,20 +29,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check formatting
-        run: pnpm run format:check
+      - name: Install dependencies
+        run: pnpm install
 
-      - name: Lint code
-        run: pnpm run lint
+      - name: Format check
+        run: pnpm format:check
 
-      - name: Check types
-        run: pnpm run typecheck
+      - name: Lint
+        run: pnpm lint
 
-      - name: Run unit tests
-        run: pnpm run test:unit -- --ci
+      - name: Typecheck
+        run: pnpm typecheck
 
-      - name: Run coverage check
-        run: pnpm run test:coverage -- --ci
+      - name: Architecture check
+        run: pnpm arch:check
 
-      - name: Check architecture
-        run: pnpm run arch:check
+      - name: Unit tests
+        run: pnpm test:unit -- --ci
+
+      - name: Coverage (optional gate)
+        run: pnpm test:coverage -- --ci

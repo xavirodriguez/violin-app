@@ -120,9 +120,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         // A note was matched, record it for analytics.
         if (event.type === 'NOTE_MATCHED' && newState.currentIndex !== lastDispatchedNoteIndex) {
           const target = currentState.exercise.notes[currentState.currentIndex]
+          const targetPitchName = `${target.pitch.step}${target.pitch.alter ?? ''}${
+            target.pitch.octave
+          }`
           useAnalyticsStore
             .getState()
-            .recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
+            .recordNoteAttempt(currentState.currentIndex, targetPitchName, 0, true)
           lastDispatchedNoteIndex = newState.currentIndex
         }
 

@@ -52,14 +52,12 @@ export function PracticeMode() {
 
   // OSMD Cursor Synchronization Effect
   useEffect(() => {
-    if (!osmdHook.isReady) return
-
     if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else {
       osmdHook.advanceCursor()
     }
-  }, [currentNoteIndex, osmdHook.isReady])
+  }, [currentNoteIndex])
 
   const totalNotes = practiceState?.exercise.notes.length || 0
   const progress =
