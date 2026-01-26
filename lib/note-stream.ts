@@ -4,7 +4,7 @@
  * This decouples the audio input source from the state management logic.
  */
 
-import { pipe, map } from 'iter-tools'
+import { pipe, asyncMap } from 'iter-tools'
 import {
   MusicalNote,
   type PracticeEvent,
@@ -38,7 +38,19 @@ const defaultOptions: NoteStreamOptions = {
 }
 
 /**
- * Creates an async iterable of raw pitch events from an audio source.
+ * Creates an async iterable of raw pitch events from a Web Audio API AnalyserNode.
+ *
+ * @remarks
+ * This function is the entry point for the audio processing pipeline. It runs a
+ * continuous loop using `requestAnimationFrame` to capture audio data, process it
+ * with the provided pitch detector, and yield the raw results. The loop's
+ * lifecycle is controlled by the `isActive` callback, which must be implemented
+ * by the caller to signal when the stream should terminate.
+ *
+ * @param analyser - The configured `AnalyserNode` from which to pull audio time-domain data.
+ * @param detector - An instance of `PitchDetector` used to find the fundamental frequency.
+ * @param isActive - A function that returns `false` to gracefully terminate the async generator loop.
+ * @returns An `AsyncGenerator` that yields `RawPitchEvent` objects on each animation frame.
  */
 export async function* createRawPitchStream(
   analyser: AnalyserNode,
@@ -61,8 +73,24 @@ export async function* createRawPitchStream(
 }
 
 /**
- * A custom iter-tools operator that implements the stability window logic.
- * It yields NOTE_DETECTED for UI feedback and NOTE_MATCHED when stable.
+ * A custom iter-tools operator that implements the note stability validation logic.
+ *
+ * @remarks
+ * This operator processes a stream of detected notes and determines if a note has
+ * been held steadily for a required duration. It emits `NOTE_DETECTED` events
+ * for immediate UI feedback on what the user is playing, and a `NOTE_MATCHED`
+ * event only when the correct target note is held for the duration specified
+ * in `options.requiredHoldTime`.
+ *
+ * This function maintains internal state (`validationStartTime`, `lastNote`) to
+ * track the stability of a detected note over time.
+ *
+ * @internal
+ *
+ * @param source - An async iterable of `DetectedNote` or `null` (for silence).
+ * @param targetNote - A function that returns the current `TargetNote` to match against.
+ * @param options - Configuration for the stability check, including `requiredHoldTime`.
+ * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
  */
 async function* stabilityWindow(
   source: AsyncIterable<DetectedNote | null>,
@@ -110,6 +138,25 @@ async function* stabilityWindow(
   }
 }
 
+/**
+ * Constructs the final practice event pipeline by chaining together signal processing steps.
+ *
+ * @remarks
+ * This function assembles the full processing pipeline:
+ * 1. It takes the raw pitch stream as input.
+ * 2. It maps raw pitch events to `DetectedNote` objects, filtering out noise and silence
+ *    based on the configured RMS and confidence thresholds.
+ * 3. It applies the `stabilityWindow` operator to implement the core logic of
+ *    validating a held note against the current target.
+ *
+ * The resulting stream is consumed by the application's state management logic to
+ * drive the practice mode UI.
+ *
+ * @param rawPitchStream - The source async iterable from `createRawPitchStream`.
+ * @param targetNote - A function returning the current `TargetNote` to match against.
+ * @param options - Optional configuration overrides for thresholds and timings.
+ * @returns An `AsyncIterable<PracticeEvent>` ready to be consumed.
+ */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
   targetNote: () => TargetNote | null,

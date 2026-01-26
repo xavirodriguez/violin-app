@@ -68,7 +68,7 @@ export function PracticeFeedback({
             >
               {detectedPitchName}
             </div>
-            {centsOff !== null && (
+            {centsOff !== null && centsOff !== undefined && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -109,9 +109,11 @@ export function PracticeFeedback({
             {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
-        {status === 'listening' && detectedPitchName && !isInTune && centsOff !== null && (
-          <IntonationFeedback centsOff={centsOff} />
-        )}
+        {status === 'listening' &&
+          detectedPitchName &&
+          !isInTune &&
+          centsOff !== null &&
+          centsOff !== undefined && <IntonationFeedback centsOff={centsOff} />}
         {status === 'validating' && (
           <div className="text-primary flex items-center gap-2">
             <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />

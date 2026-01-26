@@ -159,7 +159,7 @@ export function PracticeMode() {
           <Card className="p-6">
             <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
               <SheetMusic
-                containerRef={osmdHook.containerRef}
+                containerRef={osmdHook.containerRef as React.RefObject<HTMLDivElement>}
                 isReady={osmdHook.isReady}
                 error={osmdHook.error}
               />

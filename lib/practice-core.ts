@@ -5,7 +5,8 @@
  */
 
 // Use the actual Note type from the exercise definitions as our TargetNote.
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+import type { Exercise } from '@/lib/exercises/types'
+export type { Note as TargetNote } from '@/lib/exercises/types'
 
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
@@ -27,7 +28,21 @@ const ENHARMONIC_MAP: Record<string, string> = {
   Bb: 'A#',
 }
 
+/**
+ * Represents a musical note with properties derived from its frequency.
+ *
+ * @remarks
+ * This class provides a robust way to handle musical notes, including conversion
+ * from frequency, MIDI number, and standard notation (e.g., "A#4"). It also
+ * handles enharmonic equivalence (e.g., C# is the same as Db).
+ *
+ * The constructor is private; instances should be created using one of the
+ * static `from...` methods.
+ */
 export class MusicalNote {
+  /**
+   * @internal
+   */
   private constructor(
     public readonly frequency: number,
     public readonly midiNumber: number,
@@ -36,10 +51,30 @@ export class MusicalNote {
     public readonly centsDeviation: number,
   ) {}
 
+  /**
+   * Checks if another `MusicalNote` is enharmonically equivalent to this one.
+   *
+   * @remarks
+   * Two notes are enharmonic if they represent the same pitch but have different
+   * names (e.g., C# and Db). This is determined by comparing their MIDI numbers.
+   *
+   * @param other - The `MusicalNote` to compare against.
+   * @returns `true` if the notes are enharmonically equivalent.
+   */
   isEnharmonic(other: MusicalNote): boolean {
     return this.midiNumber === other.midiNumber
   }
 
+  /**
+   * Creates a `MusicalNote` instance from a given frequency in Hertz.
+   *
+   * @remarks
+   * This is the core factory method. All other `from...` methods ultimately
+   * use this calculation. It will throw an error if the frequency is zero or negative.
+   *
+   * @param frequency - The frequency of the note in Hz.
+   * @returns A new `MusicalNote` instance.
+   */
   static fromFrequency(frequency: number): MusicalNote {
     if (frequency <= 0) throw new Error(`Invalid frequency: ${frequency}`)
     const midiNumber = A4_MIDI + 12 * Math.log2(frequency / A4_FREQUENCY)
@@ -51,11 +86,28 @@ export class MusicalNote {
     return new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
   }
 
+  /**
+   * Creates a `MusicalNote` instance from a standard MIDI note number.
+   *
+   * @param midiNumber - The MIDI number (e.g., 69 for A4).
+   * @returns A new `MusicalNote` instance.
+   */
   static fromMidi(midiNumber: number): MusicalNote {
     const frequency = A4_FREQUENCY * Math.pow(2, (midiNumber - A4_MIDI) / 12)
     return MusicalNote.fromFrequency(frequency)
   }
 
+  /**
+   * Creates a `MusicalNote` instance from its standard notation name.
+   *
+   * @remarks
+   * This method parses a string like "C#4" or "Gb-1". It correctly handles
+   * both sharp (#) and flat (b) accidentals by converting flats to their
+   * sharp equivalents internally.
+   *
+   * @param fullName - The note name including octave (e.g., "A#4").
+   * @returns A new `MusicalNote` instance.
+   */
   static fromName(fullName: string): MusicalNote {
     const match = fullName.match(/^([A-G][#b]?)(-?\d+)$/)
     if (!match) throw new Error(`Invalid full note name format: ${fullName}`)
@@ -75,6 +127,9 @@ export class MusicalNote {
     return MusicalNote.fromMidi(midiNumber)
   }
 
+  /**
+   * Returns the standard note name including the octave (e.g., "C#4").
+   */
   get nameWithOctave(): string {
     return `${this.noteName}${this.octave}`
   }
@@ -120,7 +175,20 @@ export type PracticeEvent =
 // --- PURE FUNCTIONS ---
 
 /**
- * Checks if a detected note matches the target note.
+ * Checks if a detected note matches a target note within a specified tolerance.
+ *
+ * @remarks
+ * This function is the core of the practice mode's validation logic. A match occurs if:
+ * 1. Both the target and detected notes are valid `MusicalNote` objects.
+ * 2. The notes are enharmonically equivalent (e.g., C# matches Db).
+ * 3. The detected note's pitch is within the `centsTolerance` of the target note.
+ *
+ * It gracefully handles parsing errors by logging them and returning `false`.
+ *
+ * @param target - The `TargetNote` from the current exercise.
+ * @param detected - The `DetectedNote` from the audio input pipeline.
+ * @param centsTolerance - The maximum allowed pitch deviation in cents.
+ * @returns `true` if the detected note is a valid match for the target.
  */
 export function isMatch(target: TargetNote, detected: DetectedNote, centsTolerance = 25): boolean {
   if (!target || !detected) {
@@ -142,7 +210,18 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
 }
 
 /**
- * The core reducer function for the practice logic. It's a pure function.
+ * The core reducer for the practice mode, handling all state transitions.
+ *
+ * @remarks
+ * This is a pure function that takes the current state and an event, and returns
+ * a new, immutable state. It is the single source of truth for the practice
+ * session's logic, responsible for starting, stopping, advancing to the next
+ * note, and handling real-time feedback events. It does not perform any side
+ * effects.
+ *
+ * @param state - The current `PracticeState` of the session.
+ * @param event - The `PracticeEvent` that occurred.
+ * @returns The new `PracticeState` after applying the event logic.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
   switch (event.type) {

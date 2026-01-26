@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./lib", "./hooks", "./components", "./app"],
+  "out": "api-docs",
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "node_modules/**/*",
+    "e2e/**/*",
+    "test-results/**/*"
+  ],
+  "entryPointStrategy": "expand"
+}
