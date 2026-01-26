@@ -54,12 +54,14 @@ export function PracticeMode() {
   useEffect(() => {
     if (!osmdHook.isReady) return
 
-    if (currentNoteIndex === 0) {
+    // Reset the cursor at the very beginning of a practice session.
+    if (status === 'listening' && currentNoteIndex === 0) {
       osmdHook.resetCursor()
-    } else {
+    } else if (status === 'listening' && currentNoteIndex > 0) {
+      // Advance the cursor for subsequent notes during the session.
       osmdHook.advanceCursor()
     }
-  }, [currentNoteIndex, osmdHook.isReady])
+  }, [currentNoteIndex, status, osmdHook.isReady])
 
   const totalNotes = practiceState?.exercise.notes.length || 0
   const progress =
