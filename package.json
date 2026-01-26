@@ -16,9 +16,9 @@
     "test": "vitest",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "arch:check": "dependency-cruiser --config dependency-cruiser.js .",
-    "check": "pnpm -s lint:docs",
-    "docs": "typedoc"
+    "test:e2e": "playwright test",
+    "arch:check": "dependency-cruiser --config dependency-cruiser.cjs .",
+    "check": "pnpm -s lint:docs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -91,6 +91,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "dependency-cruiser": "^17.3.7",
     "eslint-plugin-tsdoc": "^0.5.0",
     "jsdom": "^27.4.0",

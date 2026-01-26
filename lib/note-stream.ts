@@ -165,7 +165,8 @@ export function createPracticeEventPipeline(
   const finalOptions = { ...defaultOptions, ...options }
 
   const detectedNoteStream = pipe(
-    asyncMap((rawEvent: RawPitchEvent): DetectedNote | null => {
+    rawPitchStream,
+    map((rawEvent): DetectedNote | null => {
       // Condition for silence or noise: low volume or low confidence.
       if (rawEvent.rms < finalOptions.minRms || rawEvent.confidence < finalOptions.minConfidence) {
         return null
@@ -183,7 +184,14 @@ export function createPracticeEventPipeline(
         return null
       }
     }),
-  )(rawPitchStream)
+    // Add a second operator to filter out wildly out-of-tune notes for cleaner UI feedback.
+    map((note) => {
+      if (note && Math.abs(note.cents) > 50) {
+        return null // Treat as silence if it's more than a quarter-tone off.
+      }
+      return note
+    }),
+  )
 
   // The final pipeline applies the stability window logic.
   return stabilityWindow(detectedNoteStream, targetNote, finalOptions)

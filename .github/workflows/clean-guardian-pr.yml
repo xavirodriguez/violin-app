@@ -8,15 +8,15 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          version: 9 # Asegúrate de poner tu versión mayor aquí
+          version: 8
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -24,15 +24,18 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install dependencies
-        run: pnpm install
-      - name: Format check
-        run: pnpm format:check
-      - name: Lint
-        run: pnpm lint
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Architecture check
-        run: pnpm arch:check
-      - name: Unit tests
-        run: pnpm test:unit -- --ci
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      - name: Lint code
+        run: pnpm run lint
+
+      - name: Check types
+        run: pnpm run typecheck
+
+      - name: Run unit tests
+        run: pnpm run test:unit -- --ci
+
+      - name: Check architecture
+        run: pnpm run arch:check
