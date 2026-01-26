@@ -12,11 +12,17 @@ async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]>
 }
 
 // Helper to create a mock raw pitch stream from an array of events
-async function* createMockStream(events: RawPitchEvent[]): AsyncGenerator<RawPitchEvent> {
+async function* createMockStream(
+  events: Array<RawPitchEvent | { delay: number }>,
+): AsyncGenerator<RawPitchEvent> {
   for (const event of events) {
-    yield event
-    // Simulate requestAnimationFrame delay for timing-sensitive tests
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    if ('delay' in event) {
+      await new Promise((resolve) => setTimeout(resolve, event.delay))
+    } else {
+      yield event
+      // Simulate a minimal delay between events to allow the pipeline to process them
+      await new Promise((resolve) => setTimeout(resolve, 1))
+    }
   }
 }
 
@@ -75,10 +81,14 @@ describe('createPracticeEventPipeline', () => {
 
   it('should emit NOTE_MATCHED when a correct note is held for the required time', async () => {
     const startTime = Date.now()
-    const rawEvents: RawPitchEvent[] = [
+    const rawEvents = [
       { pitchHz: 441, confidence: 0.9, rms: 0.02, timestamp: startTime },
+      { delay: 50 },
       { pitchHz: 442, confidence: 0.9, rms: 0.02, timestamp: startTime + 50 },
+      { delay: 50 },
       { pitchHz: 439, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 },
+      { delay: 50 },
+      // This last event should push the hold time over the 120ms threshold
       { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime + 150 },
     ]
     const rawPitchStream = createMockStream(rawEvents)
@@ -91,6 +101,7 @@ describe('createPracticeEventPipeline', () => {
     const noteDetectedCount = events.filter((e) => e.type === 'NOTE_DETECTED').length
     const noteMatchedCount = events.filter((e) => e.type === 'NOTE_MATCHED').length
 
+    // We expect 4 detections and 1 final match event.
     expect(noteDetectedCount).toBe(4)
     expect(noteMatchedCount).toBe(1)
     expect(events.at(-1)?.type).toBe('NOTE_MATCHED')

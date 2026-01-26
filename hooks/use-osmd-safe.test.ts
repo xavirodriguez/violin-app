@@ -2,29 +2,38 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useOSMDSafe } from './use-osmd-safe'
 
-const mockLoad = vi.fn()
-const mockRender = vi.fn()
-const mockClear = vi.fn()
-const mockShow = vi.fn()
-const mockReset = vi.fn()
-const mockNext = vi.fn()
+// Hoist mocks to make them available in the vi.mock factory
+const {
+  mockLoad,
+  mockRender,
+  mockClear,
+  mockShow,
+  mockReset,
+  mockNext,
+  MockOSMD,
+} = vi.hoisted(() => {
+  const mockLoad = vi.fn()
+  const mockRender = vi.fn()
+  const mockClear = vi.fn()
+  const mockShow = vi.fn()
+  const mockReset = vi.fn()
+  const mockNext = vi.fn()
+  const MockOSMD = vi.fn().mockImplementation(() => ({
+    load: mockLoad,
+    render: mockRender,
+    clear: mockClear,
+    cursor: {
+      show: mockShow,
+      reset: mockReset,
+      next: mockNext,
+    },
+  }))
+  return { mockLoad, mockRender, mockClear, mockShow, mockReset, mockNext, MockOSMD }
+})
 
 vi.mock('opensheetmusicdisplay', () => ({
-  OpenSheetMusicDisplay: vi.fn().mockImplementation(() => {
-    return {
-      load: mockLoad,
-      render: mockRender,
-      clear: mockClear,
-      cursor: {
-        show: mockShow,
-        reset: mockReset,
-        next: mockNext,
-      },
-    }
-  }),
+  OpenSheetMusicDisplay: MockOSMD,
 }))
-
-const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay')
 
 const VALID_XML = `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Music</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>1</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note></measure></part></score-partwise>`
 const NEW_XML = `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P2"><part-name>Music 2</part-name></score-part></part-list><part id="P2"><measure number="1"><attributes><divisions>1</divisions></attributes><note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><type>whole</type></note></measure></part></score-partwise>`
@@ -50,7 +59,7 @@ describe('useOSMDSafe', () => {
 
   it('should not initialize if musicXML is empty', () => {
     setupHook()
-    expect(OpenSheetMusicDisplay).not.toHaveBeenCalled()
+    expect(MockOSMD).not.toHaveBeenCalled()
   })
 
   it('should initialize correctly and render the sheet music', async () => {
@@ -60,7 +69,7 @@ describe('useOSMDSafe', () => {
       expect(result.current.isReady).toBe(true)
       expect(result.current.error).toBe(null)
     })
-    expect(OpenSheetMusicDisplay).toHaveBeenCalledTimes(1)
+    expect(MockOSMD).toHaveBeenCalledTimes(1)
     expect(mockLoad).toHaveBeenCalledWith(VALID_XML)
     expect(mockRender).toHaveBeenCalledTimes(1)
     expect(mockShow).toHaveBeenCalledTimes(1)
@@ -116,7 +125,7 @@ describe('useOSMDSafe', () => {
     const options = { backend: 'canvas', drawTitle: true }
     rerender({ musicXML: VALID_XML, options })
     await waitFor(() => {
-      expect(OpenSheetMusicDisplay).toHaveBeenCalledWith(
+      expect(MockOSMD).toHaveBeenCalledWith(
         expect.any(HTMLDivElement),
         expect.objectContaining(options),
       )

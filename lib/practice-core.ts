@@ -115,8 +115,9 @@ export class MusicalNote {
     const octave = parseInt(octaveStr, 10)
 
     let sharpName = name
+    // Normalize flats to sharps for consistent lookup
     if (name.endsWith('b')) {
-      const equivalent = Object.keys(ENHARMONIC_MAP).find((k) => ENHARMONIC_MAP[k] === name)
+      const equivalent = Object.entries(ENHARMONIC_MAP).find(([, v]) => v === name)?.[0]
       sharpName = equivalent || name
     }
 
