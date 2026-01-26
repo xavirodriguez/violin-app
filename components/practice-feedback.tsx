@@ -2,12 +2,15 @@
 
 import { CheckCircle2, Circle, Music } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Progress } from '@/components/ui/progress'
 
 interface PracticeFeedbackProps {
   targetNote: string
   detectedPitchName?: string
   centsOff?: number | null
   status: string
+  holdDuration: number
+  requiredHoldTime: number
 }
 
 const WIDE_DEVIATION_THRESHOLD_CENTS = 25
@@ -45,6 +48,8 @@ export function PracticeFeedback({
   detectedPitchName,
   centsOff,
   status,
+  holdDuration,
+  requiredHoldTime,
 }: PracticeFeedbackProps) {
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
 
@@ -63,7 +68,7 @@ export function PracticeFeedback({
           <>
             <div
               className={`text-3xl font-semibold ${
-                isPitchMatch && isInTune ? 'text-green-500' : 'text-yellow-500'
+                targetNote === detectedPitchName && isInTune ? 'text-green-500' : 'text-yellow-500'
               }`}
             >
               {detectedPitchName}
@@ -97,12 +102,12 @@ export function PracticeFeedback({
       <div className="flex items-center justify-center gap-2">
         {status === 'listening' && !detectedPitchName && (
           <div className="text-muted-foreground flex items-center gap-2">
-            {detectedPitchName && !isPitchMatch && (
+            {detectedPitchName && targetNote !== detectedPitchName && (
               <div className="text-center">
                 <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
               </div>
             )}
-            {detectedPitchName && isPitchMatch && centsOff !== null && !isInTune && (
+            {detectedPitchName && targetNote === detectedPitchName && centsOff !== null && !isInTune && (
               <IntonationFeedback centsOff={centsOff} />
             )}
             {!detectedPitchName && <Circle className="h-5 w-5" />}
@@ -115,9 +120,12 @@ export function PracticeFeedback({
           centsOff !== null &&
           centsOff !== undefined && <IntonationFeedback centsOff={centsOff} />}
         {status === 'validating' && (
-          <div className="text-primary flex items-center gap-2">
-            <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
-            <span>Hold steady...</span>
+          <div className="w-full max-w-xs text-center">
+            <div className="text-primary mb-2 flex items-center justify-center gap-2">
+              <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
+              <span>Hold steady...</span>
+            </div>
+            <Progress value={(holdDuration / requiredHoldTime) * 100} className="h-2" />
           </div>
         )}
         {status === 'correct' && (

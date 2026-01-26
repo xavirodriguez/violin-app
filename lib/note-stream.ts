@@ -4,7 +4,7 @@
  * This decouples the audio input source from the state management logic.
  */
 
-import { pipe, asyncMap } from 'iter-tools'
+import { pipe, map } from 'iter-tools'
 import {
   MusicalNote,
   type PracticeEvent,
