@@ -43,16 +43,6 @@ export const handlePracticeEvent = (
 
   // 2. Side effects
   try {
-    if (event.type === 'NOTE_MATCHED') {
-      const target = currentState.exercise.notes[currentState.currentIndex]
-      // This check prevents duplicate analytics events for the same note.
-      if (newState.currentIndex !== currentState.currentIndex) {
-        useAnalyticsStore
-          .getState()
-          .recordNoteAttempt(currentState.currentIndex, target.pitch, 0, true)
-      }
-    }
-
     if (newState.status === 'completed' && currentState.status !== 'completed') {
       useAnalyticsStore.getState().endSession()
       onCompleted()
