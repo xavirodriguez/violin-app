@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { NoteTechnique } from '../technique-types'
 
 // Data Models from prompt
 interface Note {
@@ -56,6 +57,8 @@ interface NoteResult {
   averageCents: number
   /** A boolean indicating if the final attempt was in tune. */
   wasInTune: boolean
+  /** Optional technical analysis metrics for this note. */
+  technique?: NoteTechnique
 }
 
 /** A comprehensive model of the user's long-term progress and stats. */
@@ -171,8 +174,13 @@ interface AnalyticsStore {
    *
    * @param noteIndex - The index of the completed note.
    * @param timeToComplete - The time taken to complete the note, in milliseconds.
+   * @param technique - Optional technical analysis metrics.
    */
-  recordNoteCompletion: (noteIndex: number, timeToComplete: number) => void
+  recordNoteCompletion: (
+    noteIndex: number,
+    timeToComplete: number,
+    technique?: NoteTechnique,
+  ) => void
 
   /**
    * Retrieves a filtered list of recent practice sessions.
@@ -334,7 +342,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         // Skills
         newProgress.intonationSkill = calculateIntonationSkill(newSessions)
-        newProgress.rhythmSkill = newProgress.rhythmSkill || 0
+        newProgress.rhythmSkill = calculateRhythmSkill(newSessions)
         newProgress.overallSkill = Math.round(
           (newProgress.intonationSkill + newProgress.rhythmSkill) / 2,
         )
@@ -405,13 +413,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         })
       },
 
-      recordNoteCompletion: (noteIndex, timeToComplete) => {
+      recordNoteCompletion: (noteIndex, timeToComplete, technique) => {
         set((state) => {
           const prevSession = state.currentSession
           if (!prevSession) return state
 
           const nextNoteResults = prevSession.noteResults.map((nr) =>
-            nr.noteIndex === noteIndex ? { ...nr, timeToComplete } : nr,
+            nr.noteIndex === noteIndex ? { ...nr, timeToComplete, technique } : nr,
           )
 
           return {
@@ -520,17 +528,6 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
 /**
  * Calculates a user's intonation skill level based on historical performance.
- *
- * @remarks
- * This function analyzes the last 10 practice sessions to determine a skill score.
- * It calculates a baseline from the average accuracy and applies a small bonus or
- * penalty based on the recent trend (improvement or decline), making the score
- * responsive to recent performance.
- *
- * @internal
- *
- * @param sessions - A list of the user's past practice sessions.
- * @returns A skill score between 0 and 100.
  */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
@@ -544,6 +541,33 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
     recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
 
   return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
+}
+
+/**
+ * Calculates the user's rhythm skill based on onset timing errors.
+ */
+function calculateRhythmSkill(sessions: PracticeSession[]): number {
+  if (sessions.length === 0) return 0
+
+  const recentSessions = sessions.slice(0, 10)
+  let totalError = 0
+  let count = 0
+
+  for (const session of recentSessions) {
+    for (const nr of session.noteResults) {
+      if (nr.technique?.rhythm.onsetErrorMs !== undefined) {
+        totalError += Math.abs(nr.technique.rhythm.onsetErrorMs)
+        count++
+      }
+    }
+  }
+
+  if (count === 0) return 0
+
+  const mae = totalError / count
+  // Score: 100 for 0ms error, 0 for 500ms+ error.
+  const score = Math.max(0, 100 - mae / 5)
+  return Math.round(score)
 }
 
 function checkAchievements(

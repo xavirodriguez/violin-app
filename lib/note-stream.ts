@@ -13,6 +13,11 @@ import {
   type TargetNote,
 } from '@/lib/practice-core'
 import type { PitchDetector } from '@/lib/pitch-detector'
+import { NoteSegmenter } from './note-segmenter'
+import { TechniqueAnalysisAgent } from './technique-analysis-agent'
+import { TechniqueFrame } from './technique-types'
+import { getDurationMs } from './exercises/utils'
+import type { Exercise } from './exercises/types'
 
 /** The raw data coming from the pitch detector on each animation frame. */
 export interface RawPitchEvent {
@@ -28,6 +33,9 @@ export interface NoteStreamOptions {
   minConfidence: number
   centsTolerance: number
   requiredHoldTime: number
+  exercise?: Exercise
+  sessionStartTime?: number
+  bpm: number
 }
 
 const defaultOptions: NoteStreamOptions = {
@@ -35,6 +43,7 @@ const defaultOptions: NoteStreamOptions = {
   minConfidence: 0.85,
   centsTolerance: 25,
   requiredHoldTime: 500,
+  bpm: 60,
 }
 
 /**
@@ -73,126 +82,145 @@ export async function* createRawPitchStream(
 }
 
 /**
- * A custom iter-tools operator that implements the note stability validation logic.
+ * A custom iter-tools operator that implements the note stability validation logic
+ * and technical analysis.
  *
  * @remarks
- * This operator processes a stream of detected notes and determines if a note has
- * been held steadily for a required duration. It emits `NOTE_DETECTED` events
- * for immediate UI feedback on what the user is playing, and a `NOTE_MATCHED`
- * event only when the correct target note is held for the duration specified
- * in `options.requiredHoldTime`.
- *
- * This function maintains internal state (`validationStartTime`, `lastNote`) to
- * track the stability of a detected note over time.
+ * This operator processes a stream of raw pitch events, segments them into notes,
+ * and performs technical analysis on completed segments. It emits `NOTE_DETECTED`
+ * events for immediate UI feedback, and a `NOTE_MATCHED` event (with technique metrics)
+ * only when the correct target note is held for the duration specified in
+ * `options.requiredHoldTime`.
  *
  * @internal
  *
- * @param source - An async iterable of `DetectedNote` or `null` (for silence).
+ * @param source - An async iterable of `RawPitchEvent`.
  * @param targetNote - A function that returns the current `TargetNote` to match against.
- * @param options - Configuration for the stability check, including `requiredHoldTime`.
+ * @param options - Configuration for the stability check and segmentation.
  * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
  */
-async function* stabilityWindow(
-  source: AsyncIterable<DetectedNote | null>,
+async function* technicalAnalysisWindow(
+  source: AsyncIterable<RawPitchEvent>,
   targetNote: () => TargetNote | null,
   options: NoteStreamOptions,
+  getCurrentIndex: () => number,
 ): AsyncGenerator<PracticeEvent> {
-  let validationStartTime: number | null = null
-  let lastNote: string | null = null
+  const segmenter = new NoteSegmenter({
+    minRms: options.minRms,
+    minConfidence: options.minConfidence,
+  })
+  const agent = new TechniqueAnalysisAgent()
+  let lastGapFrames: TechniqueFrame[] = []
 
-  for await (const detected of source) {
+  for await (const raw of source) {
     const currentTarget = targetNote()
     if (!currentTarget) continue
 
-    // Yield NOTE_DETECTED for continuous UI feedback if there is a note.
-    if (detected) {
-      yield { type: 'NOTE_DETECTED', payload: detected }
+    let musicalNote: MusicalNote | null = null
+    try {
+      if (raw.pitchHz > 0) {
+        musicalNote = MusicalNote.fromFrequency(raw.pitchHz)
+      }
+    } catch {
+      // Ignore invalid frequencies
+    }
+
+    const noteName = musicalNote?.nameWithOctave ?? ''
+    const cents = musicalNote?.centsDeviation ?? 0
+
+    const isHighQuality = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
+
+    if (isHighQuality && musicalNote && Math.abs(cents) <= 50) {
+      yield {
+        type: 'NOTE_DETECTED',
+        payload: {
+          pitch: noteName,
+          cents: cents,
+          timestamp: raw.timestamp,
+          confidence: raw.confidence,
+        },
+      }
     } else {
       yield { type: 'NO_NOTE_DETECTED' }
     }
 
-    const noteName = detected?.pitch ?? null
-
-    // If the note changes or disappears, reset the timer.
-    if (noteName !== lastNote) {
-      validationStartTime = null
-      lastNote = noteName
+    const frame: TechniqueFrame = {
+      timestamp: raw.timestamp,
+      pitchHz: raw.pitchHz,
+      cents: cents,
+      rms: raw.rms,
+      confidence: raw.confidence,
+      noteName,
     }
 
-    if (detected && isMatch(currentTarget, detected, options.centsTolerance)) {
-      if (validationStartTime === null) {
-        // Start of a potential match
-        validationStartTime = detected.timestamp
-      } else {
-        // Continue validating the match
-        const holdDuration = detected.timestamp - validationStartTime
-        if (holdDuration >= options.requiredHoldTime) {
-          yield { type: 'NOTE_MATCHED' }
-          validationStartTime = null // Reset after matching
+    const segmentEvent = segmenter.processFrame(frame)
+    if (segmentEvent && segmentEvent.type === 'ONSET') {
+      lastGapFrames = segmentEvent.gapFrames
+    }
+
+    if (segmentEvent && (segmentEvent.type === 'OFFSET' || segmentEvent.type === 'NOTE_CHANGE')) {
+      const frames = segmentEvent.frames
+      if (frames.length > 0) {
+        const segmentNoteName = frames[0].noteName
+        const targetPitch = `${currentTarget.pitch.step}${currentTarget.pitch.alter || ''}${currentTarget.pitch.octave}`
+
+        // Check if the segment matches the target note
+        const lastDetected: DetectedNote = {
+          pitch: segmentNoteName,
+          cents: frames[frames.length - 1].cents,
+          timestamp: frames[frames.length - 1].timestamp,
+          confidence: frames[frames.length - 1].confidence,
+        }
+
+        const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
+        const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
+
+        if (match && duration >= options.requiredHoldTime) {
+          const currentIndex = getCurrentIndex()
+
+          let expectedStartTime: number | undefined
+          let expectedDuration: number | undefined
+
+          if (options.exercise && options.sessionStartTime !== undefined) {
+            expectedDuration = getDurationMs(options.exercise.notes[currentIndex].duration, options.bpm)
+            expectedStartTime = options.sessionStartTime
+            for (let i = 0; i < currentIndex; i++) {
+              expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
+            }
+          }
+
+          const technique = agent.analyzeSegment(
+            {
+              noteIndex: currentIndex,
+              targetPitch,
+              startTime: frames[0].timestamp,
+              endTime: frames[frames.length - 1].timestamp,
+              expectedStartTime,
+              expectedDuration,
+              frames,
+            },
+            lastGapFrames,
+          )
+          const observations = agent.generateObservations(technique)
+          yield { type: 'NOTE_MATCHED', payload: { technique, observations } }
+          lastGapFrames = [] // Reset after use
         }
       }
-    } else {
-      // Not a match, reset timer
-      validationStartTime = null
     }
   }
 }
 
 /**
  * Constructs the final practice event pipeline by chaining together signal processing steps.
- *
- * @remarks
- * This function assembles the full processing pipeline:
- * 1. It takes the raw pitch stream as input.
- * 2. It maps raw pitch events to `DetectedNote` objects, filtering out noise and silence
- *    based on the configured RMS and confidence thresholds.
- * 3. It applies the `stabilityWindow` operator to implement the core logic of
- *    validating a held note against the current target.
- *
- * The resulting stream is consumed by the application's state management logic to
- * drive the practice mode UI.
- *
- * @param rawPitchStream - The source async iterable from `createRawPitchStream`.
- * @param targetNote - A function returning the current `TargetNote` to match against.
- * @param options - Optional configuration overrides for thresholds and timings.
- * @returns An `AsyncIterable<PracticeEvent>` ready to be consumed.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
   targetNote: () => TargetNote | null,
+  getCurrentIndex: () => number,
   options: Partial<NoteStreamOptions> = {},
 ): AsyncIterable<PracticeEvent> {
   const finalOptions = { ...defaultOptions, ...options }
 
-  const detectedNoteStream = pipe(
-    rawPitchStream,
-    map((rawEvent): DetectedNote | null => {
-      // Condition for silence or noise: low volume or low confidence.
-      if (rawEvent.rms < finalOptions.minRms || rawEvent.confidence < finalOptions.minConfidence) {
-        return null
-      }
-      try {
-        const musicalNote = MusicalNote.fromFrequency(rawEvent.pitchHz)
-        return {
-          pitch: musicalNote.nameWithOctave,
-          cents: musicalNote.centsDeviation,
-          timestamp: rawEvent.timestamp,
-          confidence: rawEvent.confidence,
-        }
-      } catch {
-        // fromFrequency can throw if pitchHz is 0.
-        return null
-      }
-    }),
-    // Add a second operator to filter out wildly out-of-tune notes for cleaner UI feedback.
-    map((note) => {
-      if (note && Math.abs(note.cents) > 50) {
-        return null // Treat as silence if it's more than a quarter-tone off.
-      }
-      return note
-    }),
-  )
-
-  // The final pipeline applies the stability window logic.
-  return stabilityWindow(detectedNoteStream, targetNote, finalOptions)
+  // The final pipeline applies the technical analysis and stability logic.
+  return technicalAnalysisWindow(rawPitchStream, targetNote, finalOptions, getCurrentIndex)
 }

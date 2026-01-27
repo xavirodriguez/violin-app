@@ -8,8 +8,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['lib/**/*.test.ts', 'hooks/**/*.test.ts'], // Only run tests in the lib folder
-    exclude: ['node_modules', 'e2e/**'], // Explicitly exclude node_modules
+    include: ['lib/**/*.test.ts', 'hooks/**/*.test.ts', 'components/**/*.test.tsx'],
+    exclude: ['node_modules', 'e2e/**'],
   },
   resolve: {
     alias: {
