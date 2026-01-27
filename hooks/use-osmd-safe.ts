@@ -1,12 +1,51 @@
+/**
+ * useOSMDSafe
+ * A custom React hook for safely initializing and managing OpenSheetMusicDisplay (OSMD) instances.
+ */
+
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 
+/**
+ * Hook that abstracts the complex initialization and cleanup lifecycle of OSMD.
+ *
+ * @param musicXML - The MusicXML string to render.
+ * @param options - Optional OSMD configuration options.
+ * @returns An object containing the container ref, readiness state, error status, and cursor control functions.
+ *
+ * @remarks
+ * OSMD requires a DOM element to be available before instantiation. This hook:
+ * 1. Manages a `containerRef` that should be attached to a `div`.
+ * 2. Re-initializes OSMD whenever `musicXML` or `options` change.
+ * 3. Handles asynchronous loading and rendering of the score.
+ * 4. Provides safe wrappers for cursor manipulation (`resetCursor`, `advanceCursor`).
+ * 5. Ensures proper cleanup of OSMD resources on unmount to prevent memory leaks.
+ *
+ * @example
+ * ```tsx
+ * const { containerRef, isReady, resetCursor } = useOSMDSafe(xmlString);
+ *
+ * return (
+ *   <div>
+ *     <button onClick={resetCursor} disabled={!isReady}>Reset</button>
+ *     <div ref={containerRef} />
+ *   </div>
+ * );
+ * ```
+ */
 export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
+  /** Indicates if the sheet music has been successfully loaded and rendered. */
   const [isReady, setIsReady] = useState(false)
+
+  /** Contains the error message if loading or rendering fails. */
   const [error, setError] = useState<string | null>(null)
+
+  /** Ref to be attached to the HTML container where OSMD will render. */
   const containerRef = useRef<HTMLDivElement>(null)
+
+  /** Internal ref to the OSMD instance. */
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
 
   useEffect(() => {
@@ -68,6 +107,7 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
     }
   }, [])
 
+  /** Resets the OSMD cursor to the beginning of the score. */
   const resetCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
       osmdRef.current.cursor.reset()
@@ -75,6 +115,7 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
     }
   }, [isReady])
 
+  /** Advances the OSMD cursor to the next note or measure. */
   const advanceCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
       osmdRef.current.cursor.next()

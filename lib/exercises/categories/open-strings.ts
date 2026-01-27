@@ -1,15 +1,26 @@
 /**
- * Exercise data for open string exercises.
+ * OpenStringsExercises
+ * Exercise definitions focused on playing open strings (G, D, A, E)
+ * with a steady tone and correct posture.
+ *
+ * @remarks
+ * These exercises are designed for absolute beginners to establish basic
+ * bowing technique and ear training without the complexity of left-hand fingering.
  */
+
 import type { ExerciseData } from '../types'
 import { parsePitch } from '../utils'
 
+/** Shared metadata for all open string exercises. @internal */
 const SCORE_METADATA = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 0, // C Major / A Minor
 }
 
+/**
+ * List of beginner exercises for open strings.
+ */
 export const openStringsExercises: ExerciseData[] = [
   {
     id: 'open-g-string',

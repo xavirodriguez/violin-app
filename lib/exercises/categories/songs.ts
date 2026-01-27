@@ -1,21 +1,33 @@
 /**
- * Exercise data for song excerpts.
+ * SongExercises
+ * Short musical excerpts from popular songs and traditional tunes.
+ *
+ * @remarks
+ * These exercises allow students to apply their technical skills (intonation,
+ * rhythm, string crossing) to recognizable melodies, increasing engagement
+ * and musicality.
  */
+
 import type { ExerciseData } from '../types'
 import { parsePitch } from '../utils'
 
+/** Shared metadata for C Major songs. @internal */
 const SCORE_METADATA_C_MAJOR = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 0, // C Major / A Minor
 }
 
+/** Shared metadata for G Major songs. @internal */
 const SCORE_METADATA_G_MAJOR = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 1, // G Major / E Minor
 }
 
+/**
+ * List of beginner exercises featuring song fragments.
+ */
 export const songsExercises: ExerciseData[] = [
   {
     id: 'twinkle-twinkle-first-phrase',

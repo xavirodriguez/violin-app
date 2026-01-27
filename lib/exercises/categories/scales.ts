@@ -1,27 +1,39 @@
 /**
- * Exercise data for scale exercises.
+ * ScaleExercises
+ * Exercise definitions for fundamental violin scales (G, D, A Major).
+ *
+ * @remarks
+ * Scale practice is essential for developing muscle memory for finger
+ * placements and improving intonation across different strings and hand positions.
  */
+
 import type { ExerciseData } from '../types'
 import { parsePitch } from '../utils'
 
+/** Shared metadata for G Major exercises. @internal */
 const SCORE_METADATA_G_MAJOR = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 1, // G Major / E Minor
 }
 
+/** Shared metadata for D Major exercises. @internal */
 const SCORE_METADATA_D_MAJOR = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 2, // D Major / B Minor
 }
 
+/** Shared metadata for A Major exercises. @internal */
 const SCORE_METADATA_A_MAJOR = {
   clef: 'G' as const,
   timeSignature: { beats: 4, beatType: 4 },
   keySignature: 3, // A Major / F# Minor
 }
 
+/**
+ * List of beginner exercises for major scales.
+ */
 export const scalesExercises: ExerciseData[] = [
   {
     id: 'g-major-scale-first-4',

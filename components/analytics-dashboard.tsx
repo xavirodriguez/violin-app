@@ -1,8 +1,23 @@
+/**
+ * AnalyticsDashboard
+ * Provides a comprehensive view of the user's practice history, skill levels, and achievements.
+ */
+
 'use client'
 
 import { useAnalyticsStore, PracticeSession, Achievement } from '@/lib/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
+/**
+ * Main dashboard component that aggregates various analytics visualizations.
+ *
+ * @returns A JSX element with key metrics, skill bars, a practice time chart, and achievements.
+ *
+ * @remarks
+ * Data Flow:
+ * - Subscribes to `useAnalyticsStore` for the user's progress data.
+ * - Uses internal utility functions to format data for the `recharts` components.
+ */
 export function AnalyticsDashboard() {
   const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
   const todayStats = getTodayStats()
@@ -62,6 +77,10 @@ export function AnalyticsDashboard() {
   )
 }
 
+/**
+ * Internal component for rendering a high-level metric card.
+ * @internal
+ */
 function MetricCard({
   icon,
   value,
@@ -80,6 +99,10 @@ function MetricCard({
   )
 }
 
+/**
+ * Internal component for rendering a progress bar for a specific skill.
+ * @internal
+ */
 function SkillBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="mb-2 flex items-center gap-4">
@@ -92,6 +115,10 @@ function SkillBar({ label, value }: { label: string; value: number }) {
   )
 }
 
+/**
+ * Internal component for rendering an achievement badge.
+ * @internal
+ */
 function AchievementCard({ achievement }: { achievement: Achievement }) {
   return (
     <div className="hover:bg-accent flex items-center gap-4 rounded-lg p-2">
@@ -104,12 +131,20 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
   )
 }
 
+/**
+ * Formats seconds into a human-readable duration string.
+ * @internal
+ */
 function formatTime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`
   const minutes = Math.floor(seconds / 60)
   return `${minutes}m`
 }
 
+/**
+ * Processes raw session data into a format suitable for the 7-day bar chart.
+ * @internal
+ */
 function getLast7DaysData(sessions: PracticeSession[]) {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const data = []
