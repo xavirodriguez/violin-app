@@ -35,14 +35,14 @@ export default function GlobalError({
     <html lang="en">
       <body className="font-sans antialiased">
         <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center">
-          <div className="rounded-lg bg-destructive/10 p-6 text-destructive">
+          <div className="bg-destructive/10 text-destructive rounded-lg p-6">
             <h1 className="text-3xl font-bold">Application Error</h1>
           </div>
-          <p className="max-w-md text-muted-foreground">
+          <p className="text-muted-foreground max-w-md">
             A critical error occurred and the application cannot continue. Please try again. If the
             problem persists, contact support.
           </p>
-          <p className="text-sm text-muted-foreground/80">
+          <p className="text-muted-foreground/80 text-sm">
             Error Code: <code className="font-mono">{appError.code}</code>
             <br />
             Error ID: <code className="font-mono">{appError.id}</code>

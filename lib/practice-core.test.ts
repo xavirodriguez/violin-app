@@ -8,7 +8,10 @@ import { allExercises } from './exercises'
 // Mock data for testing
 const mockExercise = allExercises[0] // Assuming this has at least 2 notes
 
-const getInitialState = (status: PracticeState['status'] = 'idle', currentIndex = 0): PracticeState => ({
+const getInitialState = (
+  status: PracticeState['status'] = 'idle',
+  currentIndex = 0,
+): PracticeState => ({
   status,
   exercise: mockExercise,
   currentIndex,
@@ -50,7 +53,12 @@ describe('reducePracticeEvent', () => {
 
   it('should clear history on NO_NOTE_DETECTED event', () => {
     const initialState = getInitialState('listening')
-    initialState.detectionHistory.push({ pitch: 'A4', cents: 5, timestamp: Date.now(), confidence: 0.9 })
+    initialState.detectionHistory.push({
+      pitch: 'A4',
+      cents: 5,
+      timestamp: Date.now(),
+      confidence: 0.9,
+    })
     const event = { type: 'NO_NOTE_DETECTED' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.detectionHistory).toEqual([])
@@ -82,7 +90,12 @@ describe('reducePracticeEvent', () => {
 
   it('should clear detection history after a successful match', () => {
     const initialState = getInitialState('listening', 0)
-    initialState.detectionHistory.push({ pitch: 'G4', cents: 2, timestamp: Date.now(), confidence: 0.95 })
+    initialState.detectionHistory.push({
+      pitch: 'G4',
+      cents: 2,
+      timestamp: Date.now(),
+      confidence: 0.95,
+    })
     const event = { type: 'NOTE_MATCHED' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.detectionHistory).toEqual([])

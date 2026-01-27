@@ -83,10 +83,10 @@ function log(payload: LogPayload): void {
     `${levelColor}[${level.toUpperCase()}]${resetColor} ${msg}`,
     // Optional data is displayed in a collapsed group for cleaner logs.
     {
-      'Code': appError?.code || code,
-      'Timestamp': timestamp,
+      Code: appError?.code || code,
+      Timestamp: timestamp,
       'Error Obj': appError,
-      'Context': { ...appError?.context, ...context },
+      Context: { ...appError?.context, ...context },
     },
   )
 }

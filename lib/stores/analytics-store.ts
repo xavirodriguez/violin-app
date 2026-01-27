@@ -17,101 +17,101 @@ interface Exercise {
 /** Represents a single, completed practice session. */
 export interface PracticeSession {
   /** A unique identifier for the session. */
-  id: string;
+  id: string
   /** The ISO 8601 timestamp when the session started. */
-  startTime: Date;
+  startTime: Date
   /** The ISO 8601 timestamp when the session ended. */
-  endTime: Date;
+  endTime: Date
   /** The total duration of the session, in seconds. */
-  duration: number;
+  duration: number
   /** The ID of the exercise that was practiced. */
-  exerciseId: string;
+  exerciseId: string
   /** The name of the exercise that was practiced. */
-  exerciseName: string;
+  exerciseName: string
   /** The mode the user was in during the session. */
-  mode: 'tuner' | 'practice';
+  mode: 'tuner' | 'practice'
   /** The total number of notes the user attempted to play. */
-  notesAttempted: number;
+  notesAttempted: number
   /** The total number of notes the user successfully completed. */
-  notesCompleted: number;
+  notesCompleted: number
   /** The overall accuracy for the session, as a percentage from 0 to 100. */
-  accuracy: number;
+  accuracy: number
   /** The average pitch deviation for all attempted notes, in cents. */
-  averageCents: number;
+  averageCents: number
   /** Detailed results for each note within the exercise. */
-  noteResults: NoteResult[];
+  noteResults: NoteResult[]
 }
 
 /** Contains detailed metrics for a single note within a practice session. */
 interface NoteResult {
   /** The zero-based index of the note in the exercise. */
-  noteIndex: number;
+  noteIndex: number
   /** The target pitch of the note (e.g., "G4"). */
-  targetPitch: string;
+  targetPitch: string
   /** The number of times the user tried to play this note. */
-  attempts: number;
+  attempts: number
   /** The time it took to successfully match the note from the first attempt, in milliseconds. */
-  timeToComplete: number;
+  timeToComplete: number
   /** The average pitch deviation for this specific note across all attempts, in cents. */
-  averageCents: number;
+  averageCents: number
   /** A boolean indicating if the final attempt was in tune. */
-  wasInTune: boolean;
+  wasInTune: boolean
 }
 
 /** A comprehensive model of the user's long-term progress and stats. */
 interface UserProgress {
   /** The unique identifier for the user. */
-  userId: string;
+  userId: string
   /** The total number of practice sessions the user has completed. */
-  totalPracticeSessions: number;
+  totalPracticeSessions: number
   /** The cumulative time the user has spent practicing, in seconds. */
-  totalPracticeTime: number;
+  totalPracticeTime: number
   /** A list of unique exercise IDs that the user has completed at least once. */
-  exercisesCompleted: Exercise['id'][];
+  exercisesCompleted: Exercise['id'][]
   /** The current consecutive daily practice streak, in days. */
-  currentStreak: number;
+  currentStreak: number
   /** The longest consecutive daily practice streak the user has ever achieved, in days. */
-  longestStreak: number;
+  longestStreak: number
   /** A calculated skill score for intonation (pitch accuracy), from 0 to 100. */
-  intonationSkill: number;
+  intonationSkill: number
   /** A calculated skill score for rhythm (timing accuracy), from 0 to 100. */
-  rhythmSkill: number;
+  rhythmSkill: number
   /** A combined overall skill score, from 0 to 100. */
-  overallSkill: number;
+  overallSkill: number
   /** A list of achievements the user has unlocked. */
-  achievements: Achievement[];
+  achievements: Achievement[]
   /** A record of performance statistics for each exercise, keyed by exercise ID. */
-  exerciseStats: Record<string, ExerciseStats>;
+  exerciseStats: Record<string, ExerciseStats>
 }
 
 /** Stores lifetime performance statistics for a specific exercise. */
 interface ExerciseStats {
   /** The ID of the exercise these stats belong to. */
-  exerciseId: string;
+  exerciseId: string
   /** The total number of times this exercise has been completed. */
-  timesCompleted: number;
+  timesCompleted: number
   /** The highest accuracy score achieved for this exercise, from 0 to 100. */
-  bestAccuracy: number;
+  bestAccuracy: number
   /** The average accuracy score across all completions of this exercise, from 0 to 100. */
-  averageAccuracy: number;
+  averageAccuracy: number
   /** The shortest time taken to complete this exercise, in seconds. */
-  fastestCompletion: number;
+  fastestCompletion: number
   /** The date this exercise was last practiced. */
-  lastPracticed: Date;
+  lastPracticed: Date
 }
 
 /** Represents a single unlockable achievement. */
 export interface Achievement {
   /** A unique identifier for the achievement. */
-  id: string;
+  id: string
   /** The display name of the achievement. */
-  name: string;
+  name: string
   /** A description of how to unlock the achievement. */
-  description: string;
+  description: string
   /** An emoji or icon representing the achievement. */
-  icon: string;
+  icon: string
   /** The date the achievement was unlocked. */
-  unlockedAt: Date;
+  unlockedAt: Date
 }
 
 /**
@@ -125,17 +125,17 @@ interface AnalyticsStore {
   /**
    * The currently active practice session. `null` if no session is in progress.
    */
-  currentSession: PracticeSession | null;
+  currentSession: PracticeSession | null
 
   /**
    * A historical log of the user's most recent practice sessions.
    */
-  sessions: PracticeSession[];
+  sessions: PracticeSession[]
 
   /**
    * The user's aggregated long-term progress, skills, and achievements.
    */
-  progress: UserProgress;
+  progress: UserProgress
 
   /**
    * Starts a new practice session.
@@ -144,12 +144,12 @@ interface AnalyticsStore {
    * @param exerciseName - The name of the exercise.
    * @param mode - The practice mode ('tuner' or 'practice').
    */
-  startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void;
+  startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
 
   /**
    * Ends the current practice session, calculates final metrics, and persists the data.
    */
-  endSession: () => void;
+  endSession: () => void
 
   /**
    * Records an attempt to play a specific note.
@@ -164,7 +164,7 @@ interface AnalyticsStore {
     targetPitch: string,
     cents: number,
     wasInTune: boolean,
-  ) => void;
+  ) => void
 
   /**
    * Records the successful completion of a note.
@@ -172,7 +172,7 @@ interface AnalyticsStore {
    * @param noteIndex - The index of the completed note.
    * @param timeToComplete - The time taken to complete the note, in milliseconds.
    */
-  recordNoteCompletion: (noteIndex: number, timeToComplete: number) => void;
+  recordNoteCompletion: (noteIndex: number, timeToComplete: number) => void
 
   /**
    * Retrieves a filtered list of recent practice sessions.
@@ -181,7 +181,7 @@ interface AnalyticsStore {
    * @defaultValue 7
    * @returns An array of `PracticeSession` objects.
    */
-  getSessionHistory: (days?: number) => PracticeSession[];
+  getSessionHistory: (days?: number) => PracticeSession[]
 
   /**
    * Retrieves the lifetime statistics for a specific exercise.
@@ -189,17 +189,17 @@ interface AnalyticsStore {
    * @param exerciseId - The ID of the exercise to look up.
    * @returns The `ExerciseStats` object, or `null` if none exist.
    */
-  getExerciseStats: (exerciseId: string) => ExerciseStats | null;
+  getExerciseStats: (exerciseId: string) => ExerciseStats | null
 
   /**
    * Calculates and returns key performance statistics for the current day.
    */
-  getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number };
+  getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
 
   /**
    * Returns the user's current and longest practice streaks.
    */
-  getStreakInfo: () => { current: number; longest: number };
+  getStreakInfo: () => { current: number; longest: number }
 }
 
 /**

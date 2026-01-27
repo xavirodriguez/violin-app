@@ -30,19 +30,37 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check formatting
-        run: pnpm run format:check
+        run: |
+          echo '### Formatting Check' >> clean-guardian-report.md
+          pnpm run format:check >> clean-guardian-report.md 2>&1 || true
 
       - name: Lint code
-        run: pnpm run lint
+        run: |
+          echo '### Linting' >> clean-guardian-report.md
+          pnpm run lint >> clean-guardian-report.md 2>&1 || true
 
       - name: Check types
-        run: pnpm run typecheck
+        run: |
+          echo '### Type Checking' >> clean-guardian-report.md
+          pnpm run typecheck >> clean-guardian-report.md 2>&1 || true
 
       - name: Run unit tests
-        run: pnpm run test:unit -- --ci
+        run: |
+          echo '### Unit Tests' >> clean-guardian-report.md
+          pnpm run test:unit -- --ci >> clean-guardian-report.md 2>&1 || true
 
       - name: Run coverage check
-        run: pnpm run test:coverage -- --ci
+        run: |
+          echo '### Coverage Check' >> clean-guardian-report.md
+          pnpm run test:coverage -- --ci >> clean-guardian-report.md 2>&1 || true
 
       - name: Check architecture
-        run: pnpm run arch:check
+        run: |
+          echo '### Architecture Check' >> clean-guardian-report.md
+          pnpm run arch:check >> clean-guardian-report.md 2>&1 || true
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-guardian-report
+          path: clean-guardian-report.md

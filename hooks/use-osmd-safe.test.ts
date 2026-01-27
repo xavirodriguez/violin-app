@@ -3,33 +3,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useOSMDSafe } from './use-osmd-safe'
 
 // Hoist mocks to make them available in the vi.mock factory
-const {
-  mockLoad,
-  mockRender,
-  mockClear,
-  mockShow,
-  mockReset,
-  mockNext,
-  MockOSMD,
-} = vi.hoisted(() => {
-  const mockLoad = vi.fn()
-  const mockRender = vi.fn()
-  const mockClear = vi.fn()
-  const mockShow = vi.fn()
-  const mockReset = vi.fn()
-  const mockNext = vi.fn()
-  const MockOSMD = vi.fn().mockImplementation(() => ({
-    load: mockLoad,
-    render: mockRender,
-    clear: mockClear,
-    cursor: {
-      show: mockShow,
-      reset: mockReset,
-      next: mockNext,
-    },
-  }))
-  return { mockLoad, mockRender, mockClear, mockShow, mockReset, mockNext, MockOSMD }
-})
+const { mockLoad, mockRender, mockClear, mockShow, mockReset, mockNext, MockOSMD } = vi.hoisted(
+  () => {
+    const mockLoad = vi.fn()
+    const mockRender = vi.fn()
+    const mockClear = vi.fn()
+    const mockShow = vi.fn()
+    const mockReset = vi.fn()
+    const mockNext = vi.fn()
+    const MockOSMD = vi.fn().mockImplementation(() => ({
+      load: mockLoad,
+      render: mockRender,
+      clear: mockClear,
+      cursor: {
+        show: mockShow,
+        reset: mockReset,
+        next: mockNext,
+      },
+    }))
+    return { mockLoad, mockRender, mockClear, mockShow, mockReset, mockNext, MockOSMD }
+  },
+)
 
 vi.mock('opensheetmusicdisplay', () => ({
   OpenSheetMusicDisplay: MockOSMD,

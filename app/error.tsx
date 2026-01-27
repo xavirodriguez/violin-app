@@ -33,13 +33,14 @@ export default function Error({
 
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center gap-6 p-4 text-center">
-      <div className="rounded-lg bg-destructive/10 p-6 text-destructive">
+      <div className="bg-destructive/10 text-destructive rounded-lg p-6">
         <h2 className="text-2xl font-bold">Oops! Something went wrong.</h2>
       </div>
-      <p className="max-w-md text-muted-foreground">
-        {appError.message || 'An unexpected error occurred while rendering this part of the application.'}
+      <p className="text-muted-foreground max-w-md">
+        {appError.message ||
+          'An unexpected error occurred while rendering this part of the application.'}
       </p>
-      <p className="text-sm text-muted-foreground/80">
+      <p className="text-muted-foreground/80 text-sm">
         Error Code: <code className="font-mono">{appError.code}</code>
         <br />
         Error ID: <code className="font-mono">{appError.id}</code>
