@@ -5,9 +5,10 @@
 
 'use client'
 
-import { CheckCircle2, Circle, Music } from 'lucide-react'
+import { CheckCircle2, Circle, Music, Lightbulb, AlertTriangle, Info } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
+import { Observation } from '@/lib/technique-types'
 
 /**
  * Props for the PracticeFeedback component.
@@ -22,20 +23,20 @@ interface PracticeFeedbackProps {
   /** Current status of the practice session (e.g., 'listening', 'validating', 'correct'). */
   status: string
   /** Current duration the note has been held steadily (in ms). */
-  holdDuration: number
+  holdDuration?: number
   /** Total duration the note must be held to be considered correct (in ms). */
-  requiredHoldTime: number
+  requiredHoldTime?: number
+  /** Technical observations for feedback. */
+  observations?: Observation[]
 }
 
 /**
  * Threshold in cents for categorizing intonation as "Close" vs "Far".
- * @internal
  */
 const WIDE_DEVIATION_THRESHOLD_CENTS = 25
 
 /**
  * Internal component to render specific pedagogical feedback about intonation.
- * @internal
  */
 function IntonationFeedback({ centsOff }: { centsOff: number }) {
   const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
@@ -67,23 +68,15 @@ function IntonationFeedback({ centsOff }: { centsOff: number }) {
 
 /**
  * Renders feedback during the practice loop.
- *
- * @param props - Component properties.
- * @returns A JSX element showing target vs detected note and intonation tips.
- *
- * @remarks
- * The component adapts its display based on the `status`:
- * - `listening`: Shows target note and real-time detection status.
- * - `validating`: Shows a progress bar indicating how long the student has held the correct note.
- * - `correct`: Shows a success indicator.
  */
 export function PracticeFeedback({
   targetNote,
   detectedPitchName,
   centsOff,
   status,
-  holdDuration,
-  requiredHoldTime,
+  holdDuration = 0,
+  requiredHoldTime = 500,
+  observations = [],
 }: PracticeFeedbackProps) {
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
 
@@ -170,6 +163,38 @@ export function PracticeFeedback({
           </div>
         )}
       </div>
+
+      {/* Advanced Observations */}
+      {observations.length > 0 && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            <span>Technique Insights</span>
+          </div>
+          <div className="grid gap-3">
+            {observations.slice(0, 2).map((obs, idx) => (
+              <div
+                key={idx}
+                className={`rounded-lg border p-3 ${
+                  obs.severity === 3 ? 'bg-red-500/10 border-red-500/20' :
+                  obs.severity === 2 ? 'bg-yellow-500/10 border-yellow-500/20' :
+                  'bg-blue-500/10 border-blue-500/20'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {obs.severity === 3 ? <AlertTriangle className="h-5 w-5 text-red-500" /> :
+                   obs.severity === 2 ? <AlertTriangle className="h-5 w-5 text-yellow-500" /> :
+                   <Info className="h-5 w-5 text-blue-500" />}
+                  <div className="flex-1">
+                    <div className="text-sm font-bold">{obs.message}</div>
+                    <div className="text-xs text-muted-foreground">{obs.tip}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

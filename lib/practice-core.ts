@@ -6,6 +6,7 @@
 
 // Use the actual Note type from the exercise definitions as our TargetNote.
 import type { Exercise } from '@/lib/exercises/types'
+import { NoteTechnique, Observation } from './technique-types'
 export type { Note as TargetNote } from '@/lib/exercises/types'
 
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
@@ -30,19 +31,8 @@ const ENHARMONIC_MAP: Record<string, string> = {
 
 /**
  * Represents a musical note with properties derived from its frequency.
- *
- * @remarks
- * This class provides a robust way to handle musical notes, including conversion
- * from frequency, MIDI number, and standard notation (e.g., "A#4"). It also
- * handles enharmonic equivalence (e.g., C# is the same as Db).
- *
- * The constructor is private; instances should be created using one of the
- * static `from...` methods.
  */
 export class MusicalNote {
-  /**
-   * @internal
-   */
   private constructor(
     public readonly frequency: number,
     public readonly midiNumber: number,
@@ -51,63 +41,26 @@ export class MusicalNote {
     public readonly centsDeviation: number,
   ) {}
 
-  /**
-   * Checks if another `MusicalNote` is enharmonically equivalent to this one.
-   *
-   * @remarks
-   * Two notes are enharmonic if they represent the same pitch but have different
-   * names (e.g., C# and Db). This is determined by comparing their MIDI numbers.
-   *
-   * @param other - The `MusicalNote` to compare against.
-   * @returns `true` if the notes are enharmonically equivalent.
-   */
   isEnharmonic(other: MusicalNote): boolean {
     return this.midiNumber === other.midiNumber
   }
 
-  /**
-   * Creates a `MusicalNote` instance from a given frequency in Hertz.
-   *
-   * @remarks
-   * This is the core factory method. All other `from...` methods ultimately
-   * use this calculation. It will throw an error if the frequency is zero or negative.
-   *
-   * @param frequency - The frequency of the note in Hz.
-   * @returns A new `MusicalNote` instance.
-   */
   static fromFrequency(frequency: number): MusicalNote {
     if (frequency <= 0) throw new Error(`Invalid frequency: ${frequency}`)
     const midiNumber = A4_MIDI + 12 * Math.log2(frequency / A4_FREQUENCY)
     const roundedMidi = Math.round(midiNumber)
     const centsDeviation = (midiNumber - roundedMidi) * 100
-    const noteIndex = roundedMidi % 12
+    const noteIndex = ((roundedMidi % 12) + 12) % 12
     const octave = Math.floor(roundedMidi / 12) - 1
     const noteName = NOTE_NAMES[noteIndex]
     return new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
   }
 
-  /**
-   * Creates a `MusicalNote` instance from a standard MIDI note number.
-   *
-   * @param midiNumber - The MIDI number (e.g., 69 for A4).
-   * @returns A new `MusicalNote` instance.
-   */
   static fromMidi(midiNumber: number): MusicalNote {
     const frequency = A4_FREQUENCY * Math.pow(2, (midiNumber - A4_MIDI) / 12)
     return MusicalNote.fromFrequency(frequency)
   }
 
-  /**
-   * Creates a `MusicalNote` instance from its standard notation name.
-   *
-   * @remarks
-   * This method parses a string like "C#4" or "Gb-1". It correctly handles
-   * both sharp (#) and flat (b) accidentals by converting flats to their
-   * sharp equivalents internally.
-   *
-   * @param fullName - The note name including octave (e.g., "A#4").
-   * @returns A new `MusicalNote` instance.
-   */
   static fromName(fullName: string): MusicalNote {
     const match = fullName.match(/^([A-G][#b]?)(-?\d+)$/)
     if (!match) throw new Error(`Invalid full note name format: ${fullName}`)
@@ -115,7 +68,6 @@ export class MusicalNote {
     const octave = parseInt(octaveStr, 10)
 
     let sharpName = name
-    // Normalize flats to sharps for consistent lookup
     if (name.endsWith('b')) {
       const equivalent = Object.entries(ENHARMONIC_MAP).find(([, v]) => v === name)?.[0]
       sharpName = equivalent || name
@@ -128,9 +80,6 @@ export class MusicalNote {
     return MusicalNote.fromMidi(midiNumber)
   }
 
-  /**
-   * Returns the standard note name including the octave (e.g., "C#4").
-   */
   get nameWithOctave(): string {
     return `${this.noteName}${this.octave}`
   }
@@ -159,6 +108,8 @@ export interface PracticeState {
   currentIndex: number
   // The history of recent detections, used for UI feedback.
   detectionHistory: DetectedNote[]
+  // Advanced technique observations for the last completed note.
+  lastObservations?: Observation[]
 }
 
 /** Events that can modify the practice state. */
@@ -169,7 +120,7 @@ export type PracticeEvent =
   // Fired continuously from the pipeline for UI feedback.
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
   // Fired by the pipeline only when a target note is held stable.
-  | { type: 'NOTE_MATCHED' }
+  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
   // Fired when the signal is lost.
   | { type: 'NO_NOTE_DETECTED' }
 
@@ -177,19 +128,6 @@ export type PracticeEvent =
 
 /**
  * Checks if a detected note matches a target note within a specified tolerance.
- *
- * @remarks
- * This function is the core of the practice mode's validation logic. A match occurs if:
- * 1. Both the target and detected notes are valid `MusicalNote` objects.
- * 2. The notes are enharmonically equivalent (e.g., C# matches Db).
- * 3. The detected note's pitch is within the `centsTolerance` of the target note.
- *
- * It gracefully handles parsing errors by logging them and returning `false`.
- *
- * @param target - The `TargetNote` from the current exercise.
- * @param detected - The `DetectedNote` from the audio input pipeline.
- * @param centsTolerance - The maximum allowed pitch deviation in cents.
- * @returns `true` if the detected note is a valid match for the target.
  */
 export function isMatch(target: TargetNote, detected: DetectedNote, centsTolerance = 25): boolean {
   if (!target || !detected) {
@@ -205,25 +143,12 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
     const isInTune = Math.abs(detected.cents) < centsTolerance
     return isPitchMatch && isInTune
   } catch (error) {
-    // Re-throw errors related to parsing, as they indicate a programming or data error.
-    // The logger in the store or UI boundary will catch and report this.
     throw error
   }
 }
 
 /**
  * The core reducer for the practice mode, handling all state transitions.
- *
- * @remarks
- * This is a pure function that takes the current state and an event, and returns
- * a new, immutable state. It is the single source of truth for the practice
- * session's logic, responsible for starting, stopping, advancing to the next
- * note, and handling real-time feedback events. It does not perform any side
- * effects.
- *
- * @param state - The current `PracticeState` of the session.
- * @param event - The `PracticeEvent` that occurred.
- * @returns The new `PracticeState` after applying the event logic.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
   switch (event.type) {
@@ -233,6 +158,7 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         status: 'listening',
         currentIndex: 0,
         detectionHistory: [],
+        lastObservations: [],
       }
 
     case 'STOP':
@@ -242,16 +168,15 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         status: 'idle',
         currentIndex: 0,
         detectionHistory: [],
+        lastObservations: [],
       }
 
     case 'NOTE_DETECTED': {
-      // Keep a small, rolling history of the last few detections for UI feedback.
       const history = [event.payload, ...state.detectionHistory].slice(0, 10)
       return { ...state, detectionHistory: history }
     }
 
     case 'NO_NOTE_DETECTED':
-      // Clear history on signal loss to prevent stale UI feedback.
       return { ...state, detectionHistory: [] }
 
     case 'NOTE_MATCHED': {
@@ -259,12 +184,17 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
 
       const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
       if (isLastNote) {
-        return { ...state, status: 'completed' }
+        return {
+          ...state,
+          status: 'completed',
+          lastObservations: event.payload?.observations ?? []
+        }
       } else {
         return {
           ...state,
           currentIndex: state.currentIndex + 1,
-          detectionHistory: [], // Clear history for the next note.
+          detectionHistory: [],
+          lastObservations: event.payload?.observations ?? []
         }
       }
     }
