@@ -5,10 +5,12 @@ import { AppError, toAppError, ERROR_CODES } from '@/lib/errors/app-error'
 import { logger } from '@/lib/observability/logger'
 
 type TunerState = 'IDLE' | 'INITIALIZING' | 'READY' | 'LISTENING' | 'DETECTED' | 'ERROR'
+type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
 
 interface TunerStore {
   // State
   state: TunerState
+  permissionState: PermissionState
   error: AppError | null
   currentPitch: number | null
   currentNote: string | null
@@ -19,6 +21,7 @@ interface TunerStore {
   audioContext: AudioContext | null
   analyser: AnalyserNode | null
   mediaStream: MediaStream | null
+  source: MediaStreamAudioSourceNode | null
   detector: PitchDetector | null
   gainNode: GainNode | null
   devices: MediaDeviceInfo[]
@@ -30,14 +33,20 @@ interface TunerStore {
   retry: () => Promise<void>
   reset: () => void
   updatePitch: (pitch: number, confidence: number) => void
+  startListening: () => void
+  stopListening: () => void
   loadDevices: () => Promise<void>
   setDeviceId: (deviceId: string) => void
   setSensitivity: (sensitivity: number) => void
 }
 
-export const useTunerStore = create<TunerStore>((set, get) => ({
-  // Initial state
-  state: 'IDLE',
+export const useTunerStore = create<TunerStore>((set, get) => {
+  let initToken = 0
+
+  return {
+    // Initial state
+    state: 'IDLE',
+    permissionState: 'PROMPT',
   error: null,
   currentPitch: null,
   currentNote: null,
@@ -46,6 +55,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   audioContext: null,
   analyser: null,
   mediaStream: null,
+  source: null,
   detector: null,
   gainNode: null,
   devices: [],
@@ -54,6 +64,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
 
   initialize: async () => {
     const { state: currentState, deviceId, sensitivity } = get()
+    const token = ++initToken
 
     if (currentState !== 'IDLE' && currentState !== 'ERROR') {
       logger.warn(`Cannot initialize from state: ${currentState}`)
@@ -72,6 +83,12 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
         },
       })
 
+      if (token !== initToken) {
+        stream.getTracks().forEach((track) => track.stop())
+        logger.log('Initialization aborted due to session token mismatch.')
+        return
+      }
+
       const context = new AudioContext()
       const analyser = context.createAnalyser()
       analyser.fftSize = 2048
@@ -89,9 +106,11 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
 
       set({
         state: 'READY',
+        permissionState: 'GRANTED',
         audioContext: context,
         analyser,
         mediaStream: stream,
+        source,
         detector,
         gainNode,
         error: null,
@@ -105,27 +124,36 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       })
       set({
         state: 'ERROR',
+        permissionState: appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT',
         error: appError,
       })
     }
   },
 
   retry: async () => {
-    const { initialize } = get()
+    const { reset, initialize } = get()
+    await reset()
     await initialize()
   },
 
-  reset: () => {
-    const { mediaStream, audioContext, gainNode } = get()
+  reset: async () => {
+    initToken++
+    const { mediaStream, audioContext, gainNode, source, analyser } = get()
 
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop())
     }
+    if (source) {
+      source.disconnect()
+    }
     if (gainNode) {
       gainNode.disconnect()
     }
+    if (analyser) {
+      analyser.disconnect()
+    }
     if (audioContext && audioContext.state !== 'closed') {
-      audioContext.close()
+      await audioContext.close()
     }
 
     set({
@@ -138,6 +166,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       audioContext: null,
       analyser: null,
       mediaStream: null,
+      source: null,
       detector: null,
       gainNode: null,
     })
@@ -146,7 +175,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
   updatePitch: (pitch: number, confidence: number) => {
     const { state } = get()
 
-    if (state !== 'LISTENING' && state !== 'DETECTED' && state !== 'READY') {
+    if (state !== 'LISTENING' && state !== 'DETECTED') {
       return
     }
 
@@ -169,7 +198,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
           context: { pitch },
         })
         set({
-          state: 'READY',
+          state: 'LISTENING',
           currentPitch: null,
           currentNote: null,
           centsDeviation: null,
@@ -178,7 +207,7 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
       }
     } else {
       set({
-        state: 'READY',
+        state: 'LISTENING',
         currentPitch: null,
         currentNote: null,
         centsDeviation: null,
@@ -187,7 +216,40 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     }
   },
 
+  startListening: () => {
+    const { state } = get()
+    if (state === 'READY') {
+      set({ state: 'LISTENING' })
+    } else {
+      logger.warn(`Cannot start listening from state: ${state}`)
+    }
+  },
+
+  stopListening: () => {
+    const { state } = get()
+    if (state === 'LISTENING' || state === 'DETECTED') {
+      set({
+        state: 'READY',
+        currentPitch: null,
+        currentNote: null,
+        centsDeviation: null,
+        confidence: 0,
+      })
+    } else {
+      logger.warn(`Cannot stop listening from state: ${state}`)
+    }
+  },
+
   loadDevices: async () => {
+    const { permissionState, initialize, reset } = get()
+
+    // To get device labels, we need microphone permission. If we haven't asked yet,
+    // we can trigger the prompt by doing a quick initialize/reset cycle.
+    if (permissionState === 'PROMPT' && get().state === 'IDLE') {
+      await initialize()
+      await reset()
+    }
+
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
       const audioDevices = devices.filter((device) => device.kind === 'audioinput')
@@ -197,13 +259,13 @@ export const useTunerStore = create<TunerStore>((set, get) => ({
     }
   },
 
-  setDeviceId: (deviceId: string) => {
+  setDeviceId: async (deviceId: string) => {
     set({ deviceId })
     // Re-initialize to apply the new device
     const { state, reset, initialize } = get()
     if (state !== 'IDLE' && state !== 'ERROR') {
-      reset()
-      initialize()
+      await reset()
+      await initialize()
     }
   },
 
