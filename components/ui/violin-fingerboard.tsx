@@ -1,31 +1,58 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { MusicalNote } from '@/lib/practice-core'
+import { clamp } from '@/lib/ui-utils'
+import { logger } from '@/lib/observability/logger'
 
-// --- (Omitted for brevity: Interfaces and constants for fingerboard drawing) ---
+// --- Type Definitions ---
+
+type Finger = 0 | 1 | 2 | 3 | 4
+interface FingerPosition {
+  string: 'G' | 'D' | 'A' | 'E'
+  finger: Finger
+  fretDistance: number // in pixels from the nut
+}
+
+// --- (Omitted for brevity: Constants for fingerboard drawing) ---
 
 const STRINGS = [
   { name: 'E', openPitch: 'E5', color: '#E8DCC8' },
   { name: 'A', openPitch: 'A4', color: '#D4B896' },
   { name: 'D', openPitch: 'D4', color: '#C8A882' },
   { name: 'G', openPitch: 'G3', color: '#B89870' },
-]
+] as const
 
-const FINGER_POSITIONS = {
+const FINGER_POSITIONS: Record<string, FingerPosition> = {
+  // G String
   G3: { string: 'G', finger: 0, fretDistance: 0 },
+  'G#3': { string: 'G', finger: 1, fretDistance: 20 },
   A3: { string: 'G', finger: 1, fretDistance: 45 },
+  'A#3': { string: 'G', finger: 2, fretDistance: 65 },
   B3: { string: 'G', finger: 2, fretDistance: 90 },
   C4: { string: 'G', finger: 3, fretDistance: 120 },
+  'C#4': { string: 'G', finger: 4, fretDistance: 150 },
+  // D String
   D4: { string: 'D', finger: 0, fretDistance: 0 },
+  'D#4': { string: 'D', finger: 1, fretDistance: 20 },
   E4: { string: 'D', finger: 1, fretDistance: 45 },
+  F4: { string: 'D', finger: 2, fretDistance: 65 },
   'F#4': { string: 'D', finger: 2, fretDistance: 85 },
   G4: { string: 'D', finger: 3, fretDistance: 120 },
+  'G#4': { string: 'D', finger: 4, fretDistance: 150 },
+  // A String
   A4: { string: 'A', finger: 0, fretDistance: 0 },
+  'A#4': { string: 'A', finger: 1, fretDistance: 20 },
   B4: { string: 'A', finger: 1, fretDistance: 45 },
+  C5: { string: 'A', finger: 2, fretDistance: 65 },
   'C#5': { string: 'A', finger: 2, fretDistance: 85 },
   D5: { string: 'A', finger: 3, fretDistance: 120 },
+  'D#5': { string: 'A', finger: 4, fretDistance: 150 },
+  // E String
   E5: { string: 'E', finger: 0, fretDistance: 0 },
+  F5: { string: 'E', finger: 1, fretDistance: 20 },
   'F#5': { string: 'E', finger: 1, fretDistance: 45 },
+  G5: { string: 'E', finger: 2, fretDistance: 65 },
   'G#5': { string: 'E', finger: 2, fretDistance: 85 },
   A5: { string: 'E', finger: 3, fretDistance: 120 },
 }
@@ -34,6 +61,7 @@ interface ViolinFingerboardProps {
   targetNote: string | null
   detectedPitchName?: string
   centsDeviation?: number | null
+  centsTolerance?: number
 }
 
 /**
@@ -45,45 +73,92 @@ export function ViolinFingerboard({
   targetNote,
   detectedPitchName,
   centsDeviation,
+  centsTolerance = 25,
 }: ViolinFingerboardProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const isInTune =
-    centsDeviation !== null && centsDeviation !== undefined && Math.abs(centsDeviation) < 25
+  const baseCanvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Dibuja el fingerboard estático (base) solo una vez
   useEffect(() => {
-    const canvas = canvasRef.current
+    const canvas = baseCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    drawFingerboard(ctx, canvas.width, canvas.height)
+  }, [])
+
+  // Dibuja las notas (overlay) cada vez que cambian
+  useEffect(() => {
+    const canvas = overlayCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    drawFingerboard(ctx, canvas.width, canvas.height)
 
+    // Normalizar y dibujar la nota objetivo
+    let targetPosition: FingerPosition | null = null
     if (targetNote) {
-      const targetPosition = FINGER_POSITIONS[targetNote]
-      if (targetPosition) {
-        drawTargetPosition(ctx, targetPosition, canvas.width, canvas.height)
+      try {
+        const normalizedTarget = MusicalNote.fromName(targetNote)
+        targetPosition = FINGER_POSITIONS[normalizedTarget.nameWithOctave]
+        if (targetPosition) {
+          drawTargetPosition(ctx, targetPosition, canvas.width, canvas.height)
+        }
+      } catch (error) {
+        logger.debug(`[ViolinFingerboard] Target note not found or invalid: ${targetNote}`, {
+          error,
+        })
       }
     }
 
+    // Normalizar y dibujar la nota detectada
     if (detectedPitchName) {
-      const detectedPosition = FINGER_POSITIONS[detectedPitchName]
-      if (detectedPosition) {
-        drawDetectedPosition(
-          ctx,
-          detectedPosition,
-          centsDeviation || 0,
-          isInTune,
-          canvas.width,
-          canvas.height,
+      try {
+        const normalizedDetected = MusicalNote.fromName(detectedPitchName)
+        const detectedPosition = FINGER_POSITIONS[normalizedDetected.nameWithOctave]
+
+        if (detectedPosition) {
+          const isInTune =
+            centsDeviation !== null &&
+            centsDeviation !== undefined &&
+            Math.abs(centsDeviation) < centsTolerance
+
+          drawDetectedPosition(
+            ctx,
+            detectedPosition,
+            centsDeviation || 0,
+            isInTune,
+            canvas.width,
+            canvas.height,
+          )
+        }
+      } catch (error) {
+        logger.debug(
+          `[ViolinFingerboard] Detected note not found or invalid: ${detectedPitchName}`,
+          { error },
         )
       }
     }
-  }, [targetNote, detectedPitchName, centsDeviation, isInTune])
+  }, [targetNote, detectedPitchName, centsDeviation, centsTolerance])
 
   return (
-    <div className="violin-fingerboard">
-      <canvas ref={canvasRef} width={400} height={300} className="fingerboard-canvas" />
+    <div className="violin-fingerboard" style={{ position: 'relative' }}>
+      <canvas
+        ref={baseCanvasRef}
+        width={400}
+        height={300}
+        className="fingerboard-canvas-base"
+        style={{ position: 'absolute', left: 0, top: 0, zIndex: 0 }}
+      />
+      <canvas
+        ref={overlayCanvasRef}
+        width={400}
+        height={300}
+        className="fingerboard-canvas-overlay"
+        style={{ position: 'absolute', left: 0, top: 0, zIndex: 1 }}
+      />
     </div>
   )
 }
@@ -94,7 +169,7 @@ export function ViolinFingerboard({
  * @param width - El ancho del canvas.
  * @param height - La altura del canvas.
  */
-function drawFingerboard(ctx, width, height) {
+function drawFingerboard(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const nutX = 50,
     bridgeX = width - 50
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
@@ -120,7 +195,12 @@ function drawFingerboard(ctx, width, height) {
  * @param width - El ancho del canvas.
  * @param height - La altura del canvas.
  */
-function drawTargetPosition(ctx, position, width, height) {
+function drawTargetPosition(
+  ctx: CanvasRenderingContext2D,
+  position: FingerPosition,
+  width: number,
+  height: number,
+) {
   const nutX = 50
   const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
@@ -149,19 +229,32 @@ function drawTargetPosition(ctx, position, width, height) {
  * @param width - El ancho del canvas.
  * @param height - La altura del canvas.
  */
-function drawDetectedPosition(ctx, position, centsDeviation, isInTune, width, height) {
+function drawDetectedPosition(
+  ctx: CanvasRenderingContext2D,
+  position: FingerPosition,
+  centsDeviation: number,
+  isInTune: boolean,
+  width: number,
+  height: number,
+) {
   const nutX = 50
+  const bridgeX = width - 50
+  const maxOffsetPx = (bridgeX - nutX) / 12 // Limita el offset a un semitono aprox.
+
   const stringIndex = STRINGS.findIndex((s) => s.name === position.string)
   const stringSpacing = (height - 100) / (STRINGS.length - 1)
   const y = 50 + stringIndex * stringSpacing
   const baseX = nutX + position.fretDistance
-  const xOffset = centsDeviation * 0.3
-  const x = baseX + xOffset
+
+  // Clamping del desplazamiento visual
+  const xOffset = clamp(centsDeviation * 0.3, -maxOffsetPx, maxOffsetPx)
+  const finalX = clamp(baseX + xOffset, nutX + 12, bridgeX - 12) // +12 para el radio del círculo
+
   ctx.fillStyle = isInTune ? '#4ADE80' : '#F87171'
   ctx.strokeStyle = isInTune ? '#16A34A' : '#DC2626'
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.arc(x, y, 12, 0, Math.PI * 2)
+  ctx.arc(finalX, y, 12, 0, Math.PI * 2)
   ctx.fill()
   ctx.stroke()
 }
