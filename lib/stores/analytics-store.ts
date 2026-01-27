@@ -266,15 +266,21 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         // Update sessions
         const newSessions = [completedSession, ...sessions]
 
+        const exerciseId = currentSession.exerciseId
+
         // Update progress
+        const exercisesCompleted = progress.exercisesCompleted.includes(exerciseId)
+          ? progress.exercisesCompleted
+          : [...progress.exercisesCompleted, exerciseId]
+
         const newProgress = {
           ...progress,
           totalPracticeSessions: progress.totalPracticeSessions + 1,
           totalPracticeTime: progress.totalPracticeTime + duration,
+          exercisesCompleted,
         }
 
         // Update exercise stats
-        const exerciseId = currentSession.exerciseId
         const existingStats = progress.exerciseStats[exerciseId]
 
         newProgress.exerciseStats[exerciseId] = {

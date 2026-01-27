@@ -32,10 +32,15 @@ export function AnalyticsDashboard() {
       <h1 className="mb-6 text-2xl font-bold">📊 Your Progress</h1>
 
       {/* Key Metrics */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
         <MetricCard icon="🔥" value={streakInfo.current} label="Day Streak" />
         <MetricCard icon="⏱️" value={formatTime(todayStats.duration)} label="Today" />
         <MetricCard icon="✓" value={progress.totalPracticeSessions} label="Sessions" />
+        <MetricCard
+          icon="📚"
+          value={progress.exercisesCompleted?.length ?? 0}
+          label="Exercises Completed"
+        />
       </div>
 
       {/* Skill Levels */}

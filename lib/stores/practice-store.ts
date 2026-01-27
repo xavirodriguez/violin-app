@@ -198,10 +198,38 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       // 4. Start processing the pipeline in a non-blocking way
       ;(async () => {
         const localController = practiceLoopController
+        let lastDispatchedNoteIndex = -1
+        let currentNoteStartedAt = Date.now()
+
         for await (const event of practiceEventPipeline) {
           // Session Guard: If the controller has changed, this loop is from a
           // stale session and must terminate.
           if (signal.aborted || practiceLoopController !== localController) break
+
+          const currentState = get().practiceState
+          if (!currentState) continue
+
+          // Record note completion BEFORE handlePracticeEvent to ensure the final note
+          // is captured before the session is potentially stopped/reset.
+          if (event.type === 'NOTE_MATCHED') {
+            const noteIndex = currentState.currentIndex
+            const target = currentState.exercise.notes[noteIndex]
+
+            // Guard to ensure each note completion is recorded only once.
+            if (noteIndex !== lastDispatchedNoteIndex) {
+              const timeToComplete = Date.now() - currentNoteStartedAt
+              const analytics = useAnalyticsStore.getState()
+              const targetPitch = `${target.pitch.step}${target.pitch.alter || ''}${target.pitch.octave}`
+
+              // Record the final successful attempt and the full note completion.
+              analytics.recordNoteAttempt(noteIndex, targetPitch, 0, true)
+              analytics.recordNoteCompletion(noteIndex, timeToComplete)
+
+              // Housekeeping: Track that this note has been dispatched.
+              lastDispatchedNoteIndex = noteIndex
+              currentNoteStartedAt = Date.now()
+            }
+          }
 
           handlePracticeEvent(event, { getState: get, setState: set }, () => void get().stop())
         }
