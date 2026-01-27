@@ -160,7 +160,7 @@ function getLast7DaysData(sessions: PracticeSession[]) {
     const dayName = days[date.getDay()]
 
     const daySessions = sessions.filter((s) => {
-      const sessionDate = new Date(s.endTime)
+      const sessionDate = new Date(s.endTimeMs)
       return sessionDate.toDateString() === date.toDateString()
     })
 

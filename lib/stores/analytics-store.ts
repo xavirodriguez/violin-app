@@ -18,10 +18,10 @@ interface Exercise {
 export interface PracticeSession {
   /** A unique identifier for the session. */
   id: string
-  /** The ISO 8601 timestamp when the session started. */
-  startTime: Date
-  /** The ISO 8601 timestamp when the session ended. */
-  endTime: Date
+  /** The timestamp when the session started, in milliseconds. */
+  startTimeMs: number
+  /** The timestamp when the session ended, in milliseconds. */
+  endTimeMs: number
   /** The total duration of the session, in seconds. */
   duration: number
   /** The ID of the exercise that was practiced. */
@@ -96,8 +96,8 @@ interface ExerciseStats {
   averageAccuracy: number
   /** The shortest time taken to complete this exercise, in seconds. */
   fastestCompletion: number
-  /** The date this exercise was last practiced. */
-  lastPracticed: Date
+  /** The timestamp when this exercise was last practiced, in milliseconds. */
+  lastPracticedMs: number
 }
 
 /** Represents a single unlockable achievement. */
@@ -110,8 +110,8 @@ export interface Achievement {
   description: string
   /** An emoji or icon representing the achievement. */
   icon: string
-  /** The date the achievement was unlocked. */
-  unlockedAt: Date
+  /** The timestamp when the achievement was unlocked, in milliseconds. */
+  unlockedAtMs: number
 }
 
 /**
@@ -202,6 +202,24 @@ interface AnalyticsStore {
   getStreakInfo: () => { current: number; longest: number }
 }
 
+const DAY_MS = 86_400_000
+
+function startOfDayMs(ms: number): number {
+  const d = new Date(ms)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+function toMs(value: unknown): number {
+  if (typeof value === 'number') return value
+  if (value instanceof Date) return value.getTime()
+  if (typeof value === 'string') {
+    const ms = new Date(value).getTime()
+    return Number.isFinite(ms) ? ms : 0
+  }
+  return 0
+}
+
 /**
  * A Zustand store for tracking and persisting user analytics and progress.
  *
@@ -231,10 +249,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       startSession: (exerciseId, exerciseName, mode) => {
+        const nowMs = Date.now()
+
         const session: PracticeSession = {
           id: crypto.randomUUID(),
-          startTime: new Date(),
-          endTime: new Date(), // Will be updated
+          startTimeMs: nowMs,
+          endTimeMs: nowMs, // se actualizará al terminar
           duration: 0,
           exerciseId,
           exerciseName,
@@ -253,37 +273,22 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const { currentSession, sessions, progress } = get()
         if (!currentSession) return
 
-        // Calculate final metrics
-        const endTime = new Date()
-        const duration = Math.floor((endTime.getTime() - currentSession.startTime.getTime()) / 1000)
+        const endTimeMs = Date.now()
+        const duration = Math.floor((endTimeMs - currentSession.startTimeMs) / 1000)
 
         const completedSession: PracticeSession = {
           ...currentSession,
-          endTime,
+          endTimeMs,
           duration,
         }
 
-        // Update sessions
         const newSessions = [completedSession, ...sessions]
 
+        // Update exercise stats (inmutable)
         const exerciseId = currentSession.exerciseId
-
-        // Update progress
-        const exercisesCompleted = progress.exercisesCompleted.includes(exerciseId)
-          ? progress.exercisesCompleted
-          : [...progress.exercisesCompleted, exerciseId]
-
-        const newProgress = {
-          ...progress,
-          totalPracticeSessions: progress.totalPracticeSessions + 1,
-          totalPracticeTime: progress.totalPracticeTime + duration,
-          exercisesCompleted,
-        }
-
-        // Update exercise stats
         const existingStats = progress.exerciseStats[exerciseId]
 
-        newProgress.exerciseStats[exerciseId] = {
+        const updatedStats: ExerciseStats = {
           exerciseId,
           timesCompleted: (existingStats?.timesCompleted || 0) + 1,
           bestAccuracy: Math.max(existingStats?.bestAccuracy || 0, completedSession.accuracy),
@@ -295,104 +300,133 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           fastestCompletion: existingStats
             ? Math.min(existingStats.fastestCompletion, duration)
             : duration,
-          lastPracticed: endTime,
+          lastPracticedMs: endTimeMs,
         }
 
-        // Update streak
-        const today = new Date().setHours(0, 0, 0, 0)
-        const lastSession = sessions[0]
-        const lastSessionDate = lastSession ? new Date(lastSession.endTime).setHours(0, 0, 0, 0) : 0
-        const yesterday = today - 86400000 // 24 hours
+        const nextExerciseStats = {
+          ...progress.exerciseStats,
+          [exerciseId]: updatedStats,
+        }
 
-        if (lastSessionDate === yesterday || sessions.length === 0) {
+        // Update progress base
+        const newProgress: UserProgress = {
+          ...progress,
+          totalPracticeSessions: progress.totalPracticeSessions + 1,
+          totalPracticeTime: progress.totalPracticeTime + duration,
+          exerciseStats: nextExerciseStats,
+          exercisesCompleted: progress.exercisesCompleted.includes(exerciseId)
+            ? progress.exercisesCompleted
+            : [...progress.exercisesCompleted, exerciseId],
+        }
+
+        // Update streak (con día normalizado por ms)
+        const today = startOfDayMs(Date.now())
+        const lastSession = sessions[0]
+        const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
+        const yesterday = today - DAY_MS
+
+        if (sessions.length === 0 || lastSessionDay === yesterday) {
           newProgress.currentStreak = progress.currentStreak + 1
           newProgress.longestStreak = Math.max(newProgress.longestStreak, newProgress.currentStreak)
-        } else if (lastSessionDate < yesterday) {
+        } else if (lastSessionDay < yesterday) {
           newProgress.currentStreak = 1
         }
 
-        // Calculate skill levels
+        // Skills
         newProgress.intonationSkill = calculateIntonationSkill(newSessions)
-        // placeholder for rhythm skill
         newProgress.rhythmSkill = newProgress.rhythmSkill || 0
         newProgress.overallSkill = Math.round(
           (newProgress.intonationSkill + newProgress.rhythmSkill) / 2,
         )
 
-        // Check for new achievements
+        // Achievements (timestamps)
         const newAchievements = checkAchievements(newProgress, completedSession, newSessions)
         newProgress.achievements = [...progress.achievements, ...newAchievements]
 
         set({
           currentSession: null,
-          sessions: newSessions.slice(0, 100), // Keep last 100 sessions
+          sessions: newSessions.slice(0, 100),
           progress: newProgress,
         })
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
         set((state) => {
-          if (!state.currentSession) return state
+          const prevSession = state.currentSession
+          if (!prevSession) return state
 
-          const session = { ...state.currentSession }
-          session.notesAttempted++
+          const existing = prevSession.noteResults.find((nr) => nr.noteIndex === noteIndex)
 
-          // Find or create note result
-          let noteResult = session.noteResults.find((nr) => nr.noteIndex === noteIndex)
-          if (!noteResult) {
-            noteResult = {
-              noteIndex,
-              targetPitch,
-              attempts: 0,
-              timeToComplete: 0,
-              averageCents: 0,
-              wasInTune: false,
-            }
-            session.noteResults.push(noteResult)
-          }
+          const nextNoteResults: NoteResult[] = existing
+            ? prevSession.noteResults.map((nr) => {
+                if (nr.noteIndex !== noteIndex) return nr
 
-          // Update attempts and average cents
-          noteResult.attempts++
-          noteResult.averageCents =
-            (noteResult.averageCents * (noteResult.attempts - 1) + cents) / noteResult.attempts
-          noteResult.wasInTune = wasInTune
+                const nextAttempts = nr.attempts + 1
+                const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
+
+                return {
+                  ...nr,
+                  targetPitch, // opcional: garantiza coherencia si cambia el target
+                  attempts: nextAttempts,
+                  averageCents: nextAverageCents,
+                  wasInTune,
+                }
+              })
+            : [
+                ...prevSession.noteResults,
+                {
+                  noteIndex,
+                  targetPitch,
+                  attempts: 1,
+                  timeToComplete: 0,
+                  averageCents: cents,
+                  wasInTune,
+                },
+              ]
 
           // Recalculate session accuracy
-          const inTuneNotes = session.noteResults.filter((nr) => nr.wasInTune).length
-          session.accuracy = (inTuneNotes / session.noteResults.length) * 100
+          const inTuneNotes = nextNoteResults.filter((nr) => nr.wasInTune).length
+          const accuracy =
+            nextNoteResults.length > 0 ? (inTuneNotes / nextNoteResults.length) * 100 : 0
 
           // Recalculate average cents
-          const totalCents = session.noteResults.reduce(
-            (sum, nr) => sum + Math.abs(nr.averageCents),
-            0,
-          )
-          session.averageCents = totalCents / session.noteResults.length
+          const totalCents = nextNoteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
+          const averageCents = nextNoteResults.length > 0 ? totalCents / nextNoteResults.length : 0
 
-          return { currentSession: session }
+          const nextSession: PracticeSession = {
+            ...prevSession,
+            notesAttempted: prevSession.notesAttempted + 1,
+            noteResults: nextNoteResults,
+            accuracy,
+            averageCents,
+          }
+
+          return { currentSession: nextSession }
         })
       },
 
       recordNoteCompletion: (noteIndex, timeToComplete) => {
         set((state) => {
-          if (!state.currentSession) return state
+          const prevSession = state.currentSession
+          if (!prevSession) return state
 
-          const session = { ...state.currentSession }
-          session.notesCompleted++
+          const nextNoteResults = prevSession.noteResults.map((nr) =>
+            nr.noteIndex === noteIndex ? { ...nr, timeToComplete } : nr,
+          )
 
-          const noteResult = session.noteResults.find((nr) => nr.noteIndex === noteIndex)
-          if (noteResult) {
-            noteResult.timeToComplete = timeToComplete
+          return {
+            currentSession: {
+              ...prevSession,
+              notesCompleted: prevSession.notesCompleted + 1,
+              noteResults: nextNoteResults,
+            },
           }
-
-          return { currentSession: session }
         })
       },
 
       getSessionHistory: (days = 7) => {
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - days)
-
-        return get().sessions.filter((session) => new Date(session.endTime) >= cutoff)
+        const cutoffMs = Date.now() - days * DAY_MS
+        return get().sessions.filter((session) => session.endTimeMs >= cutoffMs)
       },
 
       getExerciseStats: (exerciseId) => {
@@ -400,11 +434,11 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       getTodayStats: () => {
-        const today = new Date().setHours(0, 0, 0, 0)
-        const todaySessions = get().sessions.filter((session) => {
-          const sessionDate = new Date(session.endTime).setHours(0, 0, 0, 0)
-          return sessionDate === today
-        })
+        const today = startOfDayMs(Date.now())
+
+        const todaySessions = get().sessions.filter(
+          (session) => startOfDayMs(session.endTimeMs) === today,
+        )
 
         const duration = todaySessions.reduce((sum, s) => sum + s.duration, 0)
         const avgAccuracy =
@@ -426,6 +460,56 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     }),
     {
       name: 'violin-analytics',
+      version: 2,
+      migrate: (persisted: any) => {
+        if (!persisted) return persisted
+
+        const sessions = Array.isArray(persisted.sessions)
+          ? persisted.sessions.map((s: any) => {
+              const { startTime, endTime, ...rest } = s || {}
+              return {
+                ...rest,
+                startTimeMs: toMs(s?.startTimeMs ?? startTime),
+                endTimeMs: toMs(s?.endTimeMs ?? endTime),
+              }
+            })
+          : []
+
+        const progress = persisted.progress || {}
+        const achievements = Array.isArray(progress.achievements)
+          ? progress.achievements.map((a: any) => {
+              const { unlockedAt, ...rest } = a || {}
+              return {
+                ...rest,
+                unlockedAtMs: toMs(a?.unlockedAtMs ?? unlockedAt),
+              }
+            })
+          : []
+
+        const exerciseStats = progress.exerciseStats || {}
+        const migratedExerciseStats = Object.fromEntries(
+          Object.entries(exerciseStats).map(([k, v]: [string, any]) => {
+            const { lastPracticed, ...rest } = v || {}
+            return [
+              k,
+              {
+                ...rest,
+                lastPracticedMs: toMs(v?.lastPracticedMs ?? lastPracticed),
+              },
+            ]
+          }),
+        )
+
+        return {
+          ...persisted,
+          sessions,
+          progress: {
+            ...progress,
+            achievements,
+            exerciseStats: migratedExerciseStats,
+          },
+        }
+      },
       partialize: (state) => ({
         sessions: state.sessions,
         progress: state.progress,
@@ -476,7 +560,7 @@ function checkAchievements(
       name: 'First Perfect Scale',
       description: 'Completed a scale with 100% accuracy!',
       icon: '🎯',
-      unlockedAt: new Date(),
+      unlockedAtMs: Date.now(),
     })
   }
 
@@ -487,7 +571,7 @@ function checkAchievements(
       name: '7-Day Streak',
       description: 'Practiced for 7 days in a row!',
       icon: '🔥',
-      unlockedAt: new Date(),
+      unlockedAtMs: Date.now(),
     })
   }
 
@@ -502,7 +586,7 @@ function checkAchievements(
       name: '100 Notes Mastered',
       description: 'Successfully played 100 notes in tune!',
       icon: '📈',
-      unlockedAt: new Date(),
+      unlockedAtMs: Date.now(),
     })
   }
 
