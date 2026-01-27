@@ -33,7 +33,7 @@ interface PracticeStore {
   // --- ACTIONS ---
   loadExercise: (exercise: Exercise) => void
   start: () => Promise<void>
-  stop: () => void
+  stop: () => Promise<void>
   reset: () => void
 }
 
@@ -54,6 +54,22 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   detector: null,
 
   // --- DERIVED STATE GETTERS ---
+  /**
+   * @remarks
+   * These getters provide derived state from the core `practiceState`.
+   * They use the `get()` function from the Zustand store to access the latest
+   * state. This pattern is convenient for co-locating derived state logic
+   * within the store itself.
+   *
+   * However, components using these getters directly will re-render whenever
+   * *any* part of the store's state changes, not just the derived value they
+   * depend on. For performance-critical components, it is recommended to use a
+   * selector with `useShallow` in the component to subscribe only to specific
+   * state changes.
+   *
+   * Example:
+   * `const status = usePracticeStore((state) => state.status)`
+   */
   get currentNoteIndex() {
     return get().practiceState?.currentIndex ?? 0
   },
@@ -68,7 +84,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   // --- ACTIONS ---
   loadExercise: (exercise) => {
-    get().stop()
+    void get().stop()
     set({
       practiceState: getInitialState(exercise),
       error: null,
@@ -83,7 +99,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     }
 
     // Ensure any previous session is stopped before starting a new one.
-    get().stop()
+    await get().stop()
 
     practiceLoopController = new AbortController()
     const signal = practiceLoopController.signal
@@ -99,11 +115,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
 
       // 2. Transition state to 'listening' and start analytics session
-      const currentState = get().practiceState!
-      set({ practiceState: reducePracticeEvent(currentState, { type: 'START' }) })
+      const initialState = get().practiceState!
+      const listeningState = reducePracticeEvent(initialState, { type: 'START' })
+      set({ practiceState: listeningState })
+
+      // Start analytics with the guaranteed "listening" state.
       useAnalyticsStore
         .getState()
-        .startSession(currentState.exercise.id, currentState.exercise.name, 'practice')
+        .startSession(listeningState.exercise.id, listeningState.exercise.name, 'practice')
 
       // 3. Create and consume the event pipeline
       const rawPitchStream = createRawPitchStream(analyser, detector, () => !signal.aborted)
@@ -111,41 +130,67 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
       // 4. Start processing the pipeline in a non-blocking way
       ;(async () => {
+        const localController = practiceLoopController
         for await (const event of practiceEventPipeline) {
-          if (signal.aborted) break
-          handlePracticeEvent(event, { getState: get, setState: set }, () => get().stop())
+          // Session Guard: If the controller has changed, this loop is from a
+          // stale session and must terminate.
+          if (signal.aborted || practiceLoopController !== localController) break
+
+          handlePracticeEvent(event, { getState: get, setState: set }, () => void get().stop())
         }
       })().catch((err) => {
-        if (err.name !== 'AbortError') {
-          set({ error: err instanceof Error ? err.message : 'An unexpected error occurred.' })
+        // Gracefully handle session terminations. AbortErrors are expected
+        // when `stop()` is called, and they should not be surfaced as user-facing errors.
+        const isAbortError = err instanceof Error && err.name === 'AbortError'
+        if (!isAbortError) {
+          set({
+            error: err instanceof Error ? err.message : 'An unexpected error occurred in the practice loop.',
+          })
         }
-        get().stop()
+        void get().stop()
       })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Audio hardware error.' })
-      get().stop()
+      void get().stop()
     }
   },
 
-  stop: () => {
-    practiceLoopController?.abort()
-    practiceLoopController = null
+  stop: async () => {
+    // Abort any active practice loop.
+    if (practiceLoopController) {
+      practiceLoopController.abort()
+      practiceLoopController = null
+    }
 
-    get()
-      .mediaStream?.getTracks()
-      .forEach((track) => track.stop())
-    get().audioContext?.close()
+    const { mediaStream, audioContext } = get()
 
+    // Gracefully stop all media tracks.
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => track.stop())
+    }
+
+    // Gracefully close the audio context.
+    if (audioContext && audioContext.state !== 'closed') {
+      await audioContext.close()
+    }
+
+    // Dispatch a STOP event only if the session is active.
     const currentState = get().practiceState
     if (currentState && currentState.status !== 'idle') {
       set({ practiceState: reducePracticeEvent(currentState, { type: 'STOP' }) })
     }
 
-    set({ audioContext: null, analyser: null, mediaStream: null })
+    // Reset all audio-related resources in the state.
+    set({
+      audioContext: null,
+      analyser: null,
+      mediaStream: null,
+      detector: null, // Ensure detector is cleaned up
+    })
   },
 
   reset: () => {
-    get().stop()
+    void get().stop()
     set({ practiceState: null, error: null })
   },
 }))
