@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /**
- * @file Provides a centralized logging service for the application.
+ * Provides a centralized logging service for the application.
  * @remarks This logger wraps the native `console` object, providing a consistent
  * interface for logging structured data. In a development environment, it enhances
  * readability by color-coding log levels. In production, this module can be

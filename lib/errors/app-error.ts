@@ -1,5 +1,5 @@
 /**
- * @file Defines a standardized application error structure to ensure consistent
+ * Defines a standardized application error structure to ensure consistent
  * error handling and reporting across the application.
  * @remarks This file introduces the `AppError` class, error severity levels,
  * standard error codes, and a utility `toAppError` to normalize caught exceptions.

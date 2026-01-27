@@ -1,3 +1,10 @@
+/**
+ * PracticeStore
+ *
+ * This module provides a Zustand store for managing the state of a violin practice session.
+ * It handles exercise loading, audio resource management, and the real-time pitch detection loop.
+ */
+
 import { create } from 'zustand'
 import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
@@ -11,32 +18,86 @@ import type { Exercise } from '@/lib/exercises/types'
 // state itself, as it's not a piece of data we want to serialize or subscribe to.
 let practiceLoopController: AbortController | null = null
 
+/**
+ * Interface representing the state and actions of the practice store.
+ *
+ * @remarks
+ * State machine:
+ * - `idle` -\> `listening` when `start()` is called successfully.
+ * - `listening` -\> `completed` when the exercise is finished.
+ * - `any` -\> `idle` when `stop()` or `reset()` is called.
+ *
+ * Invariants:
+ * - `practiceState.status === 'listening'` implies `audioContext` and `mediaStream` are initialized.
+ */
 interface PracticeStore {
-  // --- STATE ---
-  // The entire state from the pure functional core
+  /** The core state of the practice session, managed by pure reducers. */
   practiceState: PracticeState | null
+
+  /** Stores any error message encountered during audio setup or processing. */
   error: string | null
 
-  // --- DERIVED STATE ---
-  // Convenience getters for the UI
+  /**
+   * The index of the note currently being practiced.
+   * @defaultValue 0
+   */
   currentNoteIndex: number
+
+  /** The note object that the student is currently expected to play. */
   targetNote: Exercise['notes'][0] | null
+
+  /** The current status of the practice session (e.g., 'idle', 'listening', 'completed'). */
   status: PracticeState['status']
 
-  // --- AUDIO RESOURCES ---
-  // Managed by the store, but not part of the core logic state
+  /** The Web Audio API context used for processing. Managed by the store. */
   audioContext: AudioContext | null
+
+  /** AnalyserNode for extracting frequency data. */
   analyser: AnalyserNode | null
+
+  /** The media stream from the microphone. */
   mediaStream: MediaStream | null
+
+  /** The pitch detection algorithm instance. */
   detector: PitchDetector | null
 
-  // --- ACTIONS ---
+  /**
+   * Loads a new exercise into the store and resets the state.
+   * @param exercise - The exercise to load.
+   */
   loadExercise: (exercise: Exercise) => void
+
+  /**
+   * Initializes audio resources and starts the real-time pitch detection loop.
+   * @remarks
+   * This is an asynchronous action that:
+   * 1. Requests microphone access.
+   * 2. Sets up the Web Audio graph.
+   * 3. Transitions the state to 'listening'.
+   * 4. Starts an analytics session.
+   * 5. Runs the processing pipeline until aborted.
+   *
+   * @throws Will set the `error` state if audio hardware fails or permission is denied.
+   */
   start: () => Promise<void>
+
+  /**
+   * Stops the practice loop and releases all audio resources.
+   * @remarks
+   * Idempotent. Safely handles closing the AudioContext and stopping media tracks.
+   */
   stop: () => Promise<void>
+
+  /**
+   * Resets the entire store to its initial state and stops any active session.
+   */
   reset: () => void
 }
 
+/**
+ * Helper to get the initial state for a given exercise.
+ * @param exercise - The exercise to initialize state for.
+ */
 const getInitialState = (exercise: Exercise): PracticeState => ({
   status: 'idle',
   exercise: exercise,
@@ -44,6 +105,9 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   detectionHistory: [],
 })
 
+/**
+ * Hook for accessing the practice store.
+ */
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
   // --- INITIAL STATE ---
   practiceState: null,

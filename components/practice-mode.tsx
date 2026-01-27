@@ -1,3 +1,10 @@
+/**
+ * PracticeMode
+ * The main container component for the interactive practice session.
+ * It orchestrates exercise selection, audio processing, sheet music rendering,
+ * and real-time feedback.
+ */
+
 'use client'
 
 import { useEffect, useRef } from 'react'
@@ -19,6 +26,23 @@ import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 
+/**
+ * Renders the practice interface and manages its complex lifecycle.
+ *
+ * @remarks
+ * State flow:
+ * - `idle`: Shows exercise selector and "Start" button.
+ * - `listening`: Audio loop is active, providing real-time feedback.
+ * - `completed`: Shows success state and option to restart.
+ *
+ * Side effects:
+ * - Initializes the default exercise on mount.
+ * - Synchronizes the OSMD cursor with the current note index from the practice store.
+ * - Manages audio resource lifecycle via the `usePracticeStore` actions.
+ *
+ * Performance:
+ * - Uses `useOSMDSafe` to efficiently manage sheet music rendering.
+ */
 export function PracticeMode() {
   const {
     practiceState,
@@ -32,7 +56,10 @@ export function PracticeMode() {
     reset,
   } = usePracticeStore()
 
+  /** Ref to track if the default exercise has been loaded. */
   const loadedRef = useRef(false)
+
+  /** Hook for safe OSMD management. */
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
   // Load default exercise on mount
@@ -43,6 +70,10 @@ export function PracticeMode() {
     }
   }, [loadExercise, practiceState])
 
+  /**
+   * Handles exercise selection from the dropdown.
+   * @param exerciseId - The ID of the selected exercise.
+   */
   const handleExerciseChange = (exerciseId: string) => {
     const selectedExercise = allExercises.find((ex) => ex.id === exerciseId)
     if (selectedExercise) {
@@ -51,6 +82,7 @@ export function PracticeMode() {
   }
 
   // OSMD Cursor Synchronization Effect
+  // Synchronizes the visual cursor with the current note index in the state.
   useEffect(() => {
     if (!osmdHook.isReady) return
 
@@ -69,7 +101,7 @@ export function PracticeMode() {
   const lastDetectedNote =
     practiceState?.detectionHistory[practiceState.detectionHistory.length - 1]
 
-  // Construct the full target note name for display
+  // Construct the full target note name for display (e.g., "G3", "C#4")
   const targetPitchName = targetNote
     ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
     : ''

@@ -1,20 +1,42 @@
+/**
+ * PracticeFeedback
+ * Provides visual feedback to the student during an interactive practice session.
+ */
+
 'use client'
 
 import { CheckCircle2, Circle, Music } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
 
+/**
+ * Props for the PracticeFeedback component.
+ */
 interface PracticeFeedbackProps {
+  /** The full name of the note the student should play (e.g., "G3"). */
   targetNote: string
+  /** The name of the note currently being detected by the system. */
   detectedPitchName?: string
+  /** The deviation from the ideal frequency in cents. */
   centsOff?: number | null
+  /** Current status of the practice session (e.g., 'listening', 'validating', 'correct'). */
   status: string
+  /** Current duration the note has been held steadily (in ms). */
   holdDuration: number
+  /** Total duration the note must be held to be considered correct (in ms). */
   requiredHoldTime: number
 }
 
+/**
+ * Threshold in cents for categorizing intonation as "Close" vs "Far".
+ * @internal
+ */
 const WIDE_DEVIATION_THRESHOLD_CENTS = 25
 
+/**
+ * Internal component to render specific pedagogical feedback about intonation.
+ * @internal
+ */
 function IntonationFeedback({ centsOff }: { centsOff: number }) {
   const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
 
@@ -43,6 +65,18 @@ function IntonationFeedback({ centsOff }: { centsOff: number }) {
   return null
 }
 
+/**
+ * Renders feedback during the practice loop.
+ *
+ * @param props - Component properties.
+ * @returns A JSX element showing target vs detected note and intonation tips.
+ *
+ * @remarks
+ * The component adapts its display based on the `status`:
+ * - `listening`: Shows target note and real-time detection status.
+ * - `validating`: Shows a progress bar indicating how long the student has held the correct note.
+ * - `correct`: Shows a success indicator.
+ */
 export function PracticeFeedback({
   targetNote,
   detectedPitchName,

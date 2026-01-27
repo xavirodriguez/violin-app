@@ -1,8 +1,10 @@
 /**
+ * Exercises
  * Main entry point for the exercises module.
- * This file processes all raw exercise data, generates the MusicXML,
- * and exports a single array of fully-formed Exercise objects.
+ * This file aggregates raw exercise data from various categories,
+ * processes them to generate MusicXML, and exports the final collection.
  */
+
 import type { Exercise, ExerciseData } from './types'
 import { generateMusicXML } from './musicxml-builder'
 import { openStringsExercises } from './categories/open-strings'
@@ -10,10 +12,14 @@ import { scalesExercises } from './categories/scales'
 import { songsExercises } from './categories/songs'
 
 /**
- * A factory function that takes raw exercise data, generates the
- * MusicXML for it, and returns the complete Exercise object.
- * @param exerciseData - The raw data for the exercise.
- * @returns A complete Exercise object with the musicXML string.
+ * A factory function that transforms raw exercise data into a complete Exercise object.
+ *
+ * @param exerciseData - The raw definition of the exercise.
+ * @returns A fully-formed Exercise object including the generated MusicXML string.
+ *
+ * @remarks
+ * This function ensures that the `musicXML` property is correctly populated
+ * using the `generateMusicXML` builder before the exercise is consumed by the UI.
  */
 const createExercise = (exerciseData: ExerciseData): Exercise => {
   return {
@@ -22,12 +28,23 @@ const createExercise = (exerciseData: ExerciseData): Exercise => {
   }
 }
 
-// 1. Combine all raw exercise data from different categories
+/**
+ * Flat list of all raw exercise data definitions.
+ * @internal
+ */
 const allExerciseData: ExerciseData[] = [
   ...openStringsExercises,
   ...scalesExercises,
   ...songsExercises,
 ]
 
-// 2. Process each exercise data object to create the final Exercise objects
+/**
+ * A comprehensive collection of all exercises available in the application.
+ *
+ * @remarks
+ * This array is used by the `PracticeMode` component to populate its selection
+ * dropdown and by the store to load individual exercises.
+ *
+ * Exercises are processed once at module load time.
+ */
 export const allExercises: Exercise[] = allExerciseData.map(createExercise)
