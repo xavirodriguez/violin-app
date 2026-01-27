@@ -3,6 +3,7 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import tsdocPlugin from 'eslint-plugin-tsdoc'
+import sonarjs from 'eslint-plugin-sonarjs'
 
 export default tseslint.config(
   {
@@ -13,6 +14,7 @@ export default tseslint.config(
   {
     plugins: {
       tsdoc: tsdocPlugin,
+      sonarjs,
     },
     rules: {
       'tsdoc/syntax': 'error',
@@ -27,6 +29,8 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      'sonarjs/cognitive-complexity': 'warn',
+      'sonarjs/cyclomatic-complexity': 'warn',
     },
   },
   {

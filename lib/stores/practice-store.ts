@@ -126,7 +126,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
       // 3. Create and consume the event pipeline
       const rawPitchStream = createRawPitchStream(analyser, detector, () => !signal.aborted)
-      const practiceEventPipeline = createPracticeEventPipeline(rawPitchStream, () => get().targetNote)
+      const practiceEventPipeline = createPracticeEventPipeline(
+        rawPitchStream,
+        () => get().targetNote,
+      )
 
       // 4. Start processing the pipeline in a non-blocking way
       ;(async () => {

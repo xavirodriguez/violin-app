@@ -1,8 +1,4 @@
-import {
-  type PracticeState,
-  reducePracticeEvent,
-  type PracticeEvent,
-} from '@/lib/practice-core'
+import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
 import { useAnalyticsStore } from '@/lib/stores/analytics-store'
 
 /**
@@ -12,10 +8,7 @@ import { useAnalyticsStore } from '@/lib/stores/analytics-store'
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (
-    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean,
-  ) => void
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => void
 }
 
 /**
@@ -60,10 +53,7 @@ export const handlePracticeEvent = (
       }
     }
 
-    if (
-      newState.status === 'completed' &&
-      currentState.status !== 'completed'
-    ) {
+    if (newState.status === 'completed' && currentState.status !== 'completed') {
       useAnalyticsStore.getState().endSession()
       onCompleted()
     }
