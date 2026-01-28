@@ -111,7 +111,7 @@ async function* technicalAnalysisWindow(
   })
   const agent = new TechniqueAnalysisAgent()
   let lastGapFrames: TechniqueFrame[] = []
-  let holdStartTime = 0 // 0 indicates no active hold
+  let firstNoteOnsetTime: number | null = null
 
   for await (const raw of source) {
     const currentTarget = targetNote()
@@ -132,31 +132,17 @@ async function* technicalAnalysisWindow(
     const isHighQuality = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
 
     if (isHighQuality && musicalNote && Math.abs(cents) <= 50) {
-      const detected: DetectedNote = {
-        pitch: noteName,
-        cents: cents,
-        timestamp: raw.timestamp,
-        confidence: raw.confidence,
-      }
-      yield { type: 'NOTE_DETECTED', payload: detected }
-
-      // Check for a match to update hold duration
-      if (isMatch(currentTarget, detected, options.centsTolerance)) {
-        if (holdStartTime === 0) {
-          holdStartTime = raw.timestamp
-        }
-        const holdDuration = raw.timestamp - holdStartTime
-        yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration } }
-      } else {
-        // Not a match, reset hold time
-        holdStartTime = 0
-        yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration: 0 } }
+      yield {
+        type: 'NOTE_DETECTED',
+        payload: {
+          pitch: noteName,
+          cents: cents,
+          timestamp: raw.timestamp,
+          confidence: raw.confidence,
+        },
       }
     } else {
       yield { type: 'NO_NOTE_DETECTED' }
-      // Signal is lost, reset hold time
-      holdStartTime = 0
-      yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration: 0 } }
     }
 
     const frame: TechniqueFrame = {
@@ -193,15 +179,21 @@ async function* technicalAnalysisWindow(
         if (match && duration >= options.requiredHoldTime) {
           const currentIndex = getCurrentIndex()
 
+          // Track the first note onset to align the rhythmic timeline
+          if (firstNoteOnsetTime === null) {
+            firstNoteOnsetTime = frames[0].timestamp
+          }
+
           let expectedStartTime: number | undefined
           let expectedDuration: number | undefined
 
-          if (options.exercise && options.sessionStartTime !== undefined) {
+          if (options.exercise && firstNoteOnsetTime !== null) {
             expectedDuration = getDurationMs(
               options.exercise.notes[currentIndex].duration,
               options.bpm,
             )
-            expectedStartTime = options.sessionStartTime
+            // Expected start is relative to the first note's onset
+            expectedStartTime = firstNoteOnsetTime
             for (let i = 0; i < currentIndex; i++) {
               expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
             }
@@ -222,7 +214,6 @@ async function* technicalAnalysisWindow(
           const observations = agent.generateObservations(technique)
           yield { type: 'NOTE_MATCHED', payload: { technique, observations } }
           lastGapFrames = [] // Reset after use
-          holdStartTime = 0 // Reset hold timer after a successful match
         }
       }
     }

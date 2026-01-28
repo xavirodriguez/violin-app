@@ -28,15 +28,11 @@ const getInitialState = (
 describe('reducePracticeEvent', () => {
   it('should transition from idle to listening on START event', () => {
     const initialState = getInitialState('idle')
-    const event = {
-      type: 'START' as const,
-      payload: { requiredHoldTime: 500 },
-    }
+    const event = { type: 'START' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('listening')
     expect(newState.currentIndex).toBe(0)
     expect(newState.detectionHistory).toEqual([])
-    expect(newState.requiredHoldTime).toBe(500)
   })
 
   it('should transition from listening to idle on STOP event', () => {
@@ -185,6 +181,28 @@ describe('MusicalNote Edge Cases', () => {
     expect(note.noteName).toBe('B')
     expect(note.octave).toBe(-2)
   })
+
+    it('should handle sharps correctly', () => {
+      const note = MusicalNote.fromName('C#4')
+      expect(note.midiNumber).toBe(61)
+      expect(note.noteName).toBe('C#')
+    })
+
+    it('should handle flats correctly', () => {
+      const note = MusicalNote.fromName('Bb3')
+      expect(note.midiNumber).toBe(58)
+      expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
+    })
+
+    it('should handle double sharps', () => {
+      const note = MusicalNote.fromName('F##4')
+      expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
+    })
+
+    it('should handle double flats', () => {
+      const note = MusicalNote.fromName('Ebb4')
+      expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
+    })
 
   it('should throw an error for invalid frequencies', () => {
     expect(() => MusicalNote.fromFrequency(NaN)).toThrow('Invalid frequency: NaN')
