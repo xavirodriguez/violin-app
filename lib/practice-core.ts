@@ -12,12 +12,25 @@ export type { Note as TargetNote } from '@/lib/exercises/types'
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+const STEP_VALUES: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+const ACCIDENTAL_MODIFIERS: Record<string, number> = {
+  '##': 2,
+  '#': 1,
+  '': 0,
+  b: -1,
+  bb: -2,
+}
+
 type NoteName = (typeof NOTE_NAMES)[number]
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
 /**
  * Represents a musical note with properties derived from its frequency.
+ * @remarks
+ * The factory methods (`fromFrequency`, `fromMidi`, `fromName`) are strict and will
+ * throw errors on invalid input, such as non-finite numbers or malformed note names.
+ * This is intentional to catch data or programming errors early.
  */
 export class MusicalNote {
   private constructor(
@@ -54,24 +67,26 @@ export class MusicalNote {
   }
 
   static fromName(fullName: string): MusicalNote {
-    // A stricter regex that requires the octave number.
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
-    if (!match || !match[3]) {
+    if (!match) {
       throw new Error(`Invalid note name format: "${fullName}"`)
     }
 
-    const [, step, accidental, octaveStr] = match
+    const [, step, accidental = '', octaveStr] = match
     const octave = parseInt(octaveStr, 10)
-    if (!Number.isInteger(octave)) throw new Error(`Invalid octave: ${octaveStr}`)
 
-    let sharpName = name
-    if (name.endsWith('b')) {
-      const equivalent = Object.entries(ENHARMONIC_MAP).find(([, v]) => v === name)?.[0]
-      sharpName = equivalent || name
+    if (!Number.isInteger(octave)) {
+      throw new Error(`Invalid octave: "${octaveStr}" in note "${fullName}"`)
     }
 
-    const midiNumber = (octave + 1) * 12 + noteIndex + alter
+    const stepValue = STEP_VALUES[step]
+    const accidentalValue = ACCIDENTAL_MODIFIERS[accidental]
 
+    if (stepValue === undefined || accidentalValue === undefined) {
+      throw new Error(`Unknown note components: step="${step}", accidental="${accidental}"`)
+    }
+
+    const midiNumber = (octave + 1) * 12 + stepValue + accidentalValue
     return MusicalNote.fromMidi(midiNumber)
   }
 
