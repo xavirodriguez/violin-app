@@ -56,22 +56,26 @@ export class MusicalNote {
   static fromName(fullName: string): MusicalNote {
     // A stricter regex that requires the octave number.
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
-    if (!match || !match[3]) {
+    if (!match) {
       throw new Error(`Invalid note name format: "${fullName}"`)
     }
 
     const [, step, accidental, octaveStr] = match
     const octave = parseInt(octaveStr, 10)
-    if (!Number.isInteger(octave)) throw new Error(`Invalid octave: ${octaveStr}`)
-
-    let sharpName = name
-    if (name.endsWith('b')) {
-      const equivalent = Object.entries(ENHARMONIC_MAP).find(([, v]) => v === name)?.[0]
-      sharpName = equivalent || name
+    if (!Number.isFinite(octave)) {
+      throw new Error(`Invalid octave: ${octaveStr}`)
     }
 
-    const midiNumber = (octave + 1) * 12 + noteIndex + alter
+    const stepIndex = NOTE_NAMES.indexOf(step as any)
+    let alter = 0
+    if (accidental) {
+      if (accidental === '#') alter = 1
+      else if (accidental === '##') alter = 2
+      else if (accidental === 'b') alter = -1
+      else if (accidental === 'bb') alter = -2
+    }
 
+    const midiNumber = (octave + 1) * 12 + stepIndex + alter
     return MusicalNote.fromMidi(midiNumber)
   }
 

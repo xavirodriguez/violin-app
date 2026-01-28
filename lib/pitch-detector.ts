@@ -32,9 +32,9 @@ export class PitchDetector {
   /**
    * The maximum frequency we care about (in Hz).
    * For violin, the highest common note is around E7 at ~2637 Hz.
-   * We set this to 700 Hz to focus on the practical range for beginners.
+   * We set this to 700 Hz by default to focus on the practical range for beginners.
    */
-  private readonly MAX_FREQUENCY = 700
+  private MAX_FREQUENCY = 700
 
   /**
    * The threshold for the YIN algorithm.
@@ -208,6 +208,17 @@ export class PitchDetector {
       min: this.MIN_FREQUENCY,
       max: this.MAX_FREQUENCY,
     }
+  }
+
+  /**
+   * Updates the maximum frequency threshold for pitch detection.
+   * Higher values allow detecting notes in higher positions (e.g., E7 ~2637 Hz).
+   */
+  setMaxFrequency(maxHz: number): void {
+    if (maxHz <= this.MIN_FREQUENCY) {
+      throw new Error(`Max frequency must be greater than min frequency (${this.MIN_FREQUENCY} Hz)`)
+    }
+    this.MAX_FREQUENCY = maxHz
   }
 }
 

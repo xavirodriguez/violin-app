@@ -111,6 +111,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const analyser = context.createAnalyser()
       source.connect(analyser)
       const detector = new PitchDetector(context.sampleRate)
+      // Increase max frequency to support high violin positions (up to ~E7)
+      detector.setMaxFrequency(2700)
       set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
 
       const initialState = get().practiceState!

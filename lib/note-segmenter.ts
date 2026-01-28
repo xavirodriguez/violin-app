@@ -30,13 +30,15 @@ export class NoteSegmenter {
 
   private lastAboveThresholdTime: number | null = null
   private lastBelowThresholdTime: number | null = null
+  private lastSignalTime: number | null = null
 
   constructor(options: Partial<SegmenterOptions> = {}) {
     this.options = { ...defaultOptions, ...options }
   }
 
   processFrame(frame: TechniqueFrame): SegmenterEvent | null {
-    const isSignalPresent = frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
+    const isSignalPresent =
+      frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
     const isSilence = frame.rms < this.options.maxRmsSilence
 
     const now = frame.timestamp
@@ -44,6 +46,7 @@ export class NoteSegmenter {
     if (this.state === 'SILENCE') {
       this.gapFrames.push(frame)
       if (isSignalPresent) {
+        this.lastSignalTime = now
         if (this.lastAboveThresholdTime === null) {
           this.lastAboveThresholdTime = now
         } else if (now - this.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
@@ -56,14 +59,15 @@ export class NoteSegmenter {
           this.lastAboveThresholdTime = null
           return { type: 'ONSET', timestamp: now, noteName: frame.noteName, gapFrames: gap }
         }
-      } else {
+      } else if (isSilence || (this.lastSignalTime !== null && now - this.lastSignalTime > 50)) {
+        // Reset onset timer if we have true silence or too much noisy gap
         this.lastAboveThresholdTime = null
       }
     } else {
       // state === 'NOTE'
       this.frames.push(frame)
 
-      // Check for note change
+      // Check for note change: requires stable signal on the NEW note
       if (isSignalPresent && frame.noteName !== this.currentNoteName) {
         const previousFrames = [...this.frames]
         this.currentNoteName = frame.noteName
@@ -72,7 +76,7 @@ export class NoteSegmenter {
           type: 'NOTE_CHANGE',
           timestamp: now,
           noteName: frame.noteName,
-          frames: previousFrames
+          frames: previousFrames,
         }
       }
 
@@ -86,6 +90,7 @@ export class NoteSegmenter {
           this.currentNoteName = null
           this.frames = []
           this.lastBelowThresholdTime = null
+          this.lastSignalTime = null
           return { type: 'OFFSET', timestamp: now, frames: completedFrames }
         }
       } else {

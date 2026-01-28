@@ -111,6 +111,7 @@ async function* technicalAnalysisWindow(
   })
   const agent = new TechniqueAnalysisAgent()
   let lastGapFrames: TechniqueFrame[] = []
+  let firstNoteOnsetTime: number | null = null
 
   for await (const raw of source) {
     const currentTarget = targetNote()
@@ -178,12 +179,21 @@ async function* technicalAnalysisWindow(
         if (match && duration >= options.requiredHoldTime) {
           const currentIndex = getCurrentIndex()
 
+          // Track the first note onset to align the rhythmic timeline
+          if (firstNoteOnsetTime === null) {
+            firstNoteOnsetTime = frames[0].timestamp
+          }
+
           let expectedStartTime: number | undefined
           let expectedDuration: number | undefined
 
-          if (options.exercise && options.sessionStartTime !== undefined) {
-            expectedDuration = getDurationMs(options.exercise.notes[currentIndex].duration, options.bpm)
-            expectedStartTime = options.sessionStartTime
+          if (options.exercise && firstNoteOnsetTime !== null) {
+            expectedDuration = getDurationMs(
+              options.exercise.notes[currentIndex].duration,
+              options.bpm,
+            )
+            // Expected start is relative to the first note's onset
+            expectedStartTime = firstNoteOnsetTime
             for (let i = 0; i < currentIndex; i++) {
               expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
             }

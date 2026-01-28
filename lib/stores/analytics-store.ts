@@ -545,28 +545,39 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 
 /**
  * Calculates the user's rhythm skill based on onset timing errors.
+ *
+ * @remarks
+ * This replaces the previous placeholder. It calculates the Mean Absolute Error (MAE)
+ * and the percentage of notes played within a ±40ms tolerance window.
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
 
   const recentSessions = sessions.slice(0, 10)
   let totalError = 0
-  let count = 0
+  let inWindowCount = 0
+  let totalCount = 0
 
   for (const session of recentSessions) {
     for (const nr of session.noteResults) {
       if (nr.technique?.rhythm.onsetErrorMs !== undefined) {
-        totalError += Math.abs(nr.technique.rhythm.onsetErrorMs)
-        count++
+        const error = Math.abs(nr.technique.rhythm.onsetErrorMs)
+        totalError += error
+        if (error <= 40) inWindowCount++
+        totalCount++
       }
     }
   }
 
-  if (count === 0) return 0
+  if (totalCount === 0) return 0
 
-  const mae = totalError / count
-  // Score: 100 for 0ms error, 0 for 500ms+ error.
-  const score = Math.max(0, 100 - mae / 5)
+  const mae = totalError / totalCount
+  const percentInWindow = (inWindowCount / totalCount) * 100
+
+  // Balanced score: 50% MAE-based, 50% tolerance-based
+  const maeScore = Math.max(0, 100 - mae / 4) // 100 for 0ms, 0 for 400ms
+  const score = (maeScore + percentInWindow) / 2
+
   return Math.round(score)
 }
 
