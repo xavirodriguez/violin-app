@@ -23,7 +23,6 @@ const ACCIDENTAL_MODIFIERS: Record<string, number> = {
   bb: -2,
 }
 
-type NoteName = (typeof NOTE_NAMES)[number]
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
@@ -206,16 +205,12 @@ export function isMatch(
 
   const actualTolerance = isCurrentlyMatched ? h.exit : h.enter
 
-  try {
-    const targetPitchName = formatPitchName(target.pitch)
-    const targetNote = MusicalNote.fromName(targetPitchName)
-    const detectedNote = MusicalNote.fromName(detected.pitch)
-    const isPitchMatch = targetNote.isEnharmonic(detectedNote)
-    const isInTune = Math.abs(detected.cents) < actualTolerance
-    return isPitchMatch && isInTune
-  } catch (error) {
-    throw error
-  }
+  const targetPitchName = formatPitchName(target.pitch)
+  const targetNote = MusicalNote.fromName(targetPitchName)
+  const detectedNote = MusicalNote.fromName(detected.pitch)
+  const isPitchMatch = targetNote.isEnharmonic(detectedNote)
+  const isInTune = Math.abs(detected.cents) < actualTolerance
+  return isPitchMatch && isInTune
 }
 
 /**

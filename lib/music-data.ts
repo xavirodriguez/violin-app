@@ -97,10 +97,33 @@ export function adaptLegacyExercise(legacy: Exercise): ModernExercise {
       timeSignature: { beats: 4, beatType: 4 },
       keySignature: 0,
     },
-    notes: legacy.notes.map((n) => ({
-      pitch: parsePitch(n.pitch),
-      duration: n.duration as any,
-    })),
+    notes: legacy.notes.map((n) => {
+      let duration: 4 | 2 | 1 | 8 | 16 | 32 = 4
+      switch (n.duration) {
+        case 'whole':
+          duration = 1
+          break
+        case 'half':
+          duration = 2
+          break
+        case 'quarter':
+          duration = 4
+          break
+        case 'eighth':
+          duration = 8
+          break
+        case '16th':
+          duration = 16
+          break
+        case '32nd':
+          duration = 32
+          break
+      }
+      return {
+        pitch: parsePitch(n.pitch),
+        duration,
+      }
+    }),
     musicXML: legacy.musicXML,
   }
 }

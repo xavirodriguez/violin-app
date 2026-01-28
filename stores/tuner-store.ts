@@ -17,7 +17,7 @@ import { audioManager } from '@/lib/infrastructure/audio-manager'
  * Possible states for the tuner state machine.
  * @remarks Uses a Discriminated Union to ensure that properties like `pitch` or `error`
  * are only accessible when the state machine is in the appropriate phase.
- * Transitions: IDLE -> INITIALIZING -> READY -> LISTENING <-> DETECTED
+ * Transitions: IDLE -\> INITIALIZING -\> READY -\> LISTENING \<-\> DETECTED
  */
 type TunerState =
   | { kind: 'IDLE' }

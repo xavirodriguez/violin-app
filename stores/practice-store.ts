@@ -148,7 +148,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
             const noteIndex = currentState.currentIndex
             const target = currentState.exercise.notes[noteIndex]
 
-            if (noteIndex !== lastDispatchedNoteIndex) {
+            if (target && noteIndex !== lastDispatchedNoteIndex) {
               const timeToComplete = Date.now() - currentNoteStartedAt
               const analytics = useAnalyticsStore.getState()
               const targetPitch = formatPitchName(target.pitch)
