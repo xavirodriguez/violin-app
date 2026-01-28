@@ -4,10 +4,12 @@
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
  */
 
-// Use the actual Note type from the exercise definitions as our TargetNote.
-import type { Exercise } from '@/lib/exercises/types'
 import { NoteTechnique, Observation } from './technique-types'
-export type { Note as TargetNote } from '@/lib/exercises/types'
+import { normalizeAccidental } from './domain/musical-domain'
+import { FixedRingBuffer } from './domain/data-structures'
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+
+export type { TargetNote }
 
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
@@ -97,6 +99,18 @@ export class MusicalNote {
 
 // --- TYPE DEFINITIONS ---
 
+/**
+ * Defines the tolerance boundaries for matching a note.
+ * Uses different values for entering and exiting the matched state
+ * to prevent oscillation (hysteresis).
+ */
+export interface MatchHysteresis {
+  /** Tolerance in cents to consider a note as "starting to match". */
+  enter: number
+  /** Tolerance in cents to consider a note as "no longer matching". */
+  exit: number
+}
+
 /** Represents a note detected from the user's microphone input. */
 export interface DetectedNote {
   pitch: string // e.g., "G4"
@@ -149,54 +163,45 @@ export type PracticeEvent =
  * @returns A standardized note name string like `"C#4"` or `"Bb3"`.
  */
 export function formatPitchName(pitch: TargetNote['pitch']): string {
+  const canonicalAlter = normalizeAccidental(pitch.alter)
   let alterStr = ''
-  switch (pitch.alter) {
-    case 1:
-    case 'sharp':
-    case '#':
-      alterStr = '#'
-      break
-    case -1:
-    case 'flat':
-    case 'b':
-      alterStr = 'b'
-      break
-    case 2:
-    case 'double-sharp':
-    case '##':
-      alterStr = '##'
-      break
-    case -2:
-    case 'double-flat':
-    case 'bb':
-      alterStr = 'bb'
-      break
-    case 0:
-    case undefined:
-    case null:
-      alterStr = ''
-      break
-    default:
-      // Treat any other value as a data error from the exercise source.
-      throw new Error(`Unsupported alter value: ${pitch.alter}`)
-  }
+  if (canonicalAlter === 1) alterStr = '#'
+  else if (canonicalAlter === -1) alterStr = 'b'
+
   return `${pitch.step}${alterStr}${pitch.octave}`
 }
 
 /**
  * Checks if a detected note matches a target note within a specified tolerance.
+ * Supports hysteresis to prevent rapid toggling near the tolerance boundary.
+ *
+ * @param target - The expected musical note.
+ * @param detected - The note detected from audio.
+ * @param tolerance - Either a fixed cent tolerance or a `MatchHysteresis` object.
+ * @param isCurrentlyMatched - Whether the note was already matching in the previous frame.
+ * @returns True if the detected note is considered a match.
  */
-export function isMatch(target: TargetNote, detected: DetectedNote, centsTolerance = 25): boolean {
+export function isMatch(
+  target: TargetNote,
+  detected: DetectedNote,
+  tolerance: number | MatchHysteresis = 25,
+  isCurrentlyMatched = false,
+): boolean {
   if (!target || !detected) {
     return false
   }
+
+  const h: MatchHysteresis =
+    typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
+
+  const actualTolerance = isCurrentlyMatched ? h.exit : h.enter
 
   try {
     const targetPitchName = formatPitchName(target.pitch)
     const targetNote = MusicalNote.fromName(targetPitchName)
     const detectedNote = MusicalNote.fromName(detected.pitch)
     const isPitchMatch = targetNote.isEnharmonic(detectedNote)
-    const isInTune = Math.abs(detected.cents) < centsTolerance
+    const isInTune = Math.abs(detected.cents) < actualTolerance
     return isPitchMatch && isInTune
   } catch (error) {
     throw error
@@ -228,8 +233,9 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
       }
 
     case 'NOTE_DETECTED': {
-      const history = [event.payload, ...state.detectionHistory].slice(0, 10)
-      return { ...state, detectionHistory: history }
+      const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
+      buffer.push(...[event.payload, ...state.detectionHistory])
+      return { ...state, detectionHistory: buffer.toArray() }
     }
 
     case 'NO_NOTE_DETECTED':
@@ -243,14 +249,14 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         return {
           ...state,
           status: 'completed',
-          lastObservations: event.payload?.observations ?? []
+          lastObservations: event.payload?.observations ?? [],
         }
       } else {
         return {
           ...state,
           currentIndex: state.currentIndex + 1,
           detectionHistory: [],
-          lastObservations: event.payload?.observations ?? []
+          lastObservations: event.payload?.observations ?? [],
         }
       }
     }

@@ -209,7 +209,7 @@ export function PracticeMode() {
                 detectedPitchName={lastDetectedNote?.pitch}
                 centsOff={lastDetectedNote?.cents}
                 status={status}
-                observations={practiceState.lastObservations}
+                observations={practiceState?.lastObservations}
               />
             </Card>
             <Card className="p-6">

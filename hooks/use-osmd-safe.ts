@@ -48,13 +48,20 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
   /** Internal ref to the OSMD instance. */
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
 
+  /** Ref to track the current load token to handle race conditions. */
+  const loadTokenRef = useRef(0)
+
   useEffect(() => {
     let isMounted = true
+    const token = ++loadTokenRef.current
 
     async function initializeOSMD() {
       if (!containerRef.current || !musicXML) return
 
-      // Always clear previous instance if musicXML changes
+      // Performance Optimization: Only re-instantiate if absolutely necessary
+      // If we already have an instance, we might just want to reload the XML
+      // But OSMD is tricky with re-rendering on the same container.
+      // For now, we clear the container to ensure a clean state.
       if (osmdRef.current) {
         osmdRef.current.clear()
       }
@@ -74,10 +81,13 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
         // 2. Load the MusicXML
         await osmd.load(musicXML)
 
-        // 3. Render the score
+        // 3. Guard against race conditions: check if this is still the latest load request
+        if (token !== loadTokenRef.current) return
+
+        // 4. Render the score
         osmd.render()
 
-        // 4. Show cursor and set ready state
+        // 5. Show cursor and set ready state
         if (isMounted) {
           osmd.cursor.show()
           setIsReady(true)
@@ -85,20 +95,20 @@ export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
         }
       } catch (err) {
         console.error('[OSMD] Error loading or rendering sheet music:', err)
-        if (isMounted) {
+        if (isMounted && token === loadTokenRef.current) {
           setError(err instanceof Error ? err.message : 'An unknown error occurred.')
           setIsReady(false)
         }
       }
     }
 
+    setIsReady(false) // Reset ready state while loading
     initializeOSMD()
 
     return () => {
       isMounted = false
-      // No need to clear here if we clear at the start of the effect
     }
-  }, [musicXML, options])
+  }, [musicXML, JSON.stringify(options)])
 
   // Cleanup on unmount
   useEffect(() => {

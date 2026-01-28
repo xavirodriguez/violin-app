@@ -11,6 +11,7 @@ import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-st
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
 import { handlePracticeEvent } from '../practice/practice-event-sink'
+import { audioManager } from '@/lib/infrastructure/audio-manager'
 
 import type { Exercise } from '@/lib/exercises/types'
 
@@ -28,9 +29,7 @@ interface PracticeStore {
   currentNoteIndex: number
   targetNote: Exercise['notes'][0] | null
   status: PracticeState['status']
-  audioContext: AudioContext | null
   analyser: AnalyserNode | null
-  mediaStream: MediaStream | null
   detector: PitchDetector | null
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
@@ -48,10 +47,11 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
   practiceState: null,
   error: null,
-  audioContext: null,
-  analyser: null,
-  mediaStream: null,
   detector: null,
+
+  get analyser() {
+    return audioManager.getAnalyser()
+  },
 
   /**
    * @remarks
@@ -105,15 +105,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     const signal = practiceLoopController.signal
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const context = new AudioContext()
-      const source = context.createMediaStreamSource(stream)
-      const analyser = context.createAnalyser()
-      source.connect(analyser)
+      const { context } = await audioManager.initialize()
       const detector = new PitchDetector(context.sampleRate)
       // Increase max frequency to support high violin positions (up to ~E7)
       detector.setMaxFrequency(2700)
-      set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
+      set({ detector, error: null })
 
       const initialState = get().practiceState!
       const listeningState = reducePracticeEvent(initialState, { type: 'START' })
@@ -124,7 +120,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const { exercise } = get().practiceState!
       useAnalyticsStore.getState().startSession(exercise.id, exercise.name, 'practice')
 
-      const rawPitchStream = createRawPitchStream(analyser, detector, () => !signal.aborted)
+      const rawPitchStream = createRawPitchStream(get().analyser!, detector, () => !signal.aborted)
       const practiceEventPipeline = createPracticeEventPipeline(
         rawPitchStream,
         () => get().targetNote,
@@ -172,7 +168,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         const name = err instanceof Error ? err.name : ''
         if (name !== 'AbortError') {
           set({
-            error: err instanceof Error ? err.message : 'An unexpected error occurred in the practice loop.',
+            error:
+              err instanceof Error
+                ? err.message
+                : 'An unexpected error occurred in the practice loop.',
           })
         }
         // Always ensure cleanup happens, even if the error was just an abort.
@@ -193,15 +192,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       practiceLoopController = null
     }
 
-    const { mediaStream, audioContext } = get()
-
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop())
-    }
-
-    if (audioContext && audioContext.state !== 'closed') {
-      await audioContext.close()
-    }
+    await audioManager.cleanup()
 
     const currentState = get().practiceState
     if (currentState && currentState.status !== 'idle') {
@@ -209,9 +200,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     }
 
     set({
-      audioContext: null,
-      analyser: null,
-      mediaStream: null,
       detector: null,
     })
   },

@@ -136,7 +136,7 @@ export function PracticeFeedback({
             )}
             {detectedPitchName &&
               targetNote === detectedPitchName &&
-              centsOff !== null &&
+              typeof centsOff === 'number' &&
               !isInTune && <IntonationFeedback centsOff={centsOff} />}
             {!detectedPitchName && <Circle className="h-5 w-5" />}
             {!detectedPitchName && <span>Listening...</span>}
