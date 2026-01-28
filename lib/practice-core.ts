@@ -16,19 +16,6 @@ type NoteName = (typeof NOTE_NAMES)[number]
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
-const ENHARMONIC_MAP: Record<string, string> = {
-  'C#': 'Db',
-  'D#': 'Eb',
-  'F#': 'Gb',
-  'G#': 'Ab',
-  'A#': 'Bb',
-  Db: 'C#',
-  Eb: 'D#',
-  Gb: 'F#',
-  Ab: 'G#',
-  Bb: 'A#',
-}
-
 /**
  * Represents a musical note with properties derived from its frequency.
  */
@@ -46,7 +33,9 @@ export class MusicalNote {
   }
 
   static fromFrequency(frequency: number): MusicalNote {
-    if (frequency <= 0) throw new Error(`Invalid frequency: ${frequency}`)
+    if (!Number.isFinite(frequency) || frequency <= 0) {
+      throw new Error(`Invalid frequency: ${frequency}`)
+    }
     const midiNumber = A4_MIDI + 12 * Math.log2(frequency / A4_FREQUENCY)
     const roundedMidi = Math.round(midiNumber)
     const centsDeviation = (midiNumber - roundedMidi) * 100
@@ -57,15 +46,23 @@ export class MusicalNote {
   }
 
   static fromMidi(midiNumber: number): MusicalNote {
+    if (!Number.isFinite(midiNumber)) {
+      throw new Error(`Invalid MIDI number: ${midiNumber}`)
+    }
     const frequency = A4_FREQUENCY * Math.pow(2, (midiNumber - A4_MIDI) / 12)
     return MusicalNote.fromFrequency(frequency)
   }
 
   static fromName(fullName: string): MusicalNote {
-    const match = fullName.match(/^([A-G][#b]?)(-?\d+)$/)
-    if (!match) throw new Error(`Invalid full note name format: ${fullName}`)
-    const [, name, octaveStr] = match
+    // A stricter regex that requires the octave number.
+    const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
+    if (!match || !match[3]) {
+      throw new Error(`Invalid note name format: "${fullName}"`)
+    }
+
+    const [, step, accidental, octaveStr] = match
     const octave = parseInt(octaveStr, 10)
+    if (!Number.isInteger(octave)) throw new Error(`Invalid octave: ${octaveStr}`)
 
     let sharpName = name
     if (name.endsWith('b')) {
@@ -73,10 +70,8 @@ export class MusicalNote {
       sharpName = equivalent || name
     }
 
-    const noteIndex = NOTE_NAMES.indexOf(sharpName as NoteName)
-    if (noteIndex === -1) throw new Error(`Could not find note index for: ${sharpName}`)
+    const midiNumber = (octave + 1) * 12 + noteIndex + alter
 
-    const midiNumber = (octave + 1) * 12 + noteIndex
     return MusicalNote.fromMidi(midiNumber)
   }
 
@@ -127,6 +122,53 @@ export type PracticeEvent =
 // --- PURE FUNCTIONS ---
 
 /**
+ * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
+ *
+ * @remarks
+ * This function handles various `alter` formats, including numeric (`1`, `-1`) and
+ * string-based (`"sharp"`, `"#"`), normalizing them into a format that `MusicalNote`
+ * can parse (e.g., "C#4"). It will throw an error if the `alter` value is
+ * unsupported, as this indicates a data validation issue upstream.
+ *
+ * @param pitch - The pitch object from a `TargetNote`.
+ * @returns A standardized note name string like `"C#4"` or `"Bb3"`.
+ */
+export function formatPitchName(pitch: TargetNote['pitch']): string {
+  let alterStr = ''
+  switch (pitch.alter) {
+    case 1:
+    case 'sharp':
+    case '#':
+      alterStr = '#'
+      break
+    case -1:
+    case 'flat':
+    case 'b':
+      alterStr = 'b'
+      break
+    case 2:
+    case 'double-sharp':
+    case '##':
+      alterStr = '##'
+      break
+    case -2:
+    case 'double-flat':
+    case 'bb':
+      alterStr = 'bb'
+      break
+    case 0:
+    case undefined:
+    case null:
+      alterStr = ''
+      break
+    default:
+      // Treat any other value as a data error from the exercise source.
+      throw new Error(`Unsupported alter value: ${pitch.alter}`)
+  }
+  return `${pitch.step}${alterStr}${pitch.octave}`
+}
+
+/**
  * Checks if a detected note matches a target note within a specified tolerance.
  */
 export function isMatch(target: TargetNote, detected: DetectedNote, centsTolerance = 25): boolean {
@@ -135,8 +177,7 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
   }
 
   try {
-    const targetAlter = target.pitch.alter ?? ''
-    const targetPitchName = `${target.pitch.step}${targetAlter}${target.pitch.octave}`
+    const targetPitchName = formatPitchName(target.pitch)
     const targetNote = MusicalNote.fromName(targetPitchName)
     const detectedNote = MusicalNote.fromName(detected.pitch)
     const isPitchMatch = targetNote.isEnharmonic(detectedNote)
