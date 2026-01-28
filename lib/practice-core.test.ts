@@ -30,15 +30,11 @@ const getInitialState = (
 describe('reducePracticeEvent', () => {
   it('should transition from idle to listening on START event', () => {
     const initialState = getInitialState('idle')
-    const event = {
-      type: 'START' as const,
-      payload: { requiredHoldTime: 500 },
-    }
+    const event = { type: 'START' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('listening')
     expect(newState.currentIndex).toBe(0)
     expect(newState.detectionHistory).toEqual([])
-    expect(newState.requiredHoldTime).toBe(500)
   })
 
   it('should transition from listening to idle on STOP event', () => {
@@ -189,6 +185,28 @@ describe('MusicalNote Edge Cases', () => {
     expect(note.octave).toBe(-2)
   })
 
+    it('should handle sharps correctly', () => {
+      const note = MusicalNote.fromName('C#4')
+      expect(note.midiNumber).toBe(61)
+      expect(note.noteName).toBe('C#')
+    })
+
+    it('should handle flats correctly', () => {
+      const note = MusicalNote.fromName('Bb3')
+      expect(note.midiNumber).toBe(58)
+      expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
+    })
+
+    it('should handle double sharps', () => {
+      const note = MusicalNote.fromName('F##4')
+      expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
+    })
+
+    it('should handle double flats', () => {
+      const note = MusicalNote.fromName('Ebb4')
+      expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
+    })
+
   it('should throw an error for invalid frequencies', () => {
     expect(() => MusicalNote.fromFrequency(NaN)).toThrow('Invalid frequency: NaN')
     expect(() => MusicalNote.fromFrequency(Infinity)).toThrow('Invalid frequency: Infinity')
@@ -202,9 +220,14 @@ describe('MusicalNote Edge Cases', () => {
   })
 
   it('should throw an error for malformed note names', () => {
-    expect(() => MusicalNote.fromName('H4')).toThrow('Invalid note name format: "H4"')
+    // Missing octave
     expect(() => MusicalNote.fromName('C#')).toThrow('Invalid note name format: "C#"')
+    // Invalid step
+    expect(() => MusicalNote.fromName('H4')).toThrow('Invalid note name format: "H4"')
+    // Misplaced accidental
     expect(() => MusicalNote.fromName('C4#')).toThrow('Invalid note name format: "C4#"')
+    // Empty string
+    expect(() => MusicalNote.fromName('')).toThrow('Invalid note name format: ""')
   })
 })
 
@@ -228,14 +251,39 @@ describe('isMatch', () => {
     expect(isMatch(enharmonicTarget, detected)).toBe(true)
   })
 
+  it('should handle numeric alter values in the target', () => {
+    const sharpTarget: TargetNote = {
+      pitch: { step: 'G', octave: 3, alter: 1 }, // G#3
+      duration: 1,
+    }
+    const flatTarget: TargetNote = {
+      pitch: { step: 'B', octave: 4, alter: -1 }, // Bb4
+      duration: 1,
+    }
+    const detectedSharp = { pitch: 'G#3', cents: 0, timestamp: 0, confidence: 1 }
+    const detectedFlat = { pitch: 'A#4', cents: 0, timestamp: 0, confidence: 1 } // Enharmonic equivalent
+
+    expect(isMatch(sharpTarget, detectedSharp)).toBe(true)
+    expect(isMatch(flatTarget, detectedFlat)).toBe(true)
+  })
+
   it('should return false if cents are out of tolerance', () => {
     const detected = { pitch: 'A4', cents: 30, timestamp: 0, confidence: 1 }
     expect(isMatch(target, detected, 25)).toBe(false)
   })
 
-  it('should return true if cents are within tolerance', () => {
-    const detected = { pitch: 'A4', cents: 24, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detected, 25)).toBe(true)
+  it('should return true if cents are exactly at the tolerance boundary (exclusive)', () => {
+    const detectedPositive = { pitch: 'A4', cents: 24.99, timestamp: 0, confidence: 1 }
+    const detectedNegative = { pitch: 'A4', cents: -24.99, timestamp: 0, confidence: 1 }
+    expect(isMatch(target, detectedPositive, 25)).toBe(true)
+    expect(isMatch(target, detectedNegative, 25)).toBe(true)
+  })
+
+  it('should return false if cents are exactly at the tolerance boundary (inclusive)', () => {
+    const detectedPositive = { pitch: 'A4', cents: 25, timestamp: 0, confidence: 1 }
+    const detectedNegative = { pitch: 'A4', cents: -25, timestamp: 0, confidence: 1 }
+    expect(isMatch(target, detectedPositive, 25)).toBe(false)
+    expect(isMatch(target, detectedNegative, 25)).toBe(false)
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {

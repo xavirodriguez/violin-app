@@ -30,6 +30,11 @@ export class NoteSegmenter {
 
   private lastAboveThresholdTime: number | null = null
   private lastBelowThresholdTime: number | null = null
+  private lastSignalTime: number | null = null
+
+  // NOTE_CHANGE debouncing: prevents false note changes from momentary pitch flicker
+  private pendingNoteName: string | null = null
+  private pendingSince: number | null = null
 
   constructor(options: Partial<SegmenterOptions> = {}) {
     this.options = { ...defaultOptions, ...options }
@@ -45,6 +50,7 @@ export class NoteSegmenter {
     if (this.state === 'SILENCE') {
       this.gapFrames.push(frame)
       if (isSignalPresent) {
+        this.lastSignalTime = now
         if (this.lastAboveThresholdTime === null) {
           this.lastAboveThresholdTime = now
         } else if (now - this.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
@@ -57,24 +63,37 @@ export class NoteSegmenter {
           this.lastAboveThresholdTime = null
           return { type: 'ONSET', timestamp: now, noteName: frame.noteName, gapFrames: gap }
         }
-      } else {
+      } else if (isSilence || (this.lastSignalTime !== null && now - this.lastSignalTime > 50)) {
+        // Reset onset timer if we have true silence or too much noisy gap
         this.lastAboveThresholdTime = null
       }
     } else {
       // state === 'NOTE'
       this.frames.push(frame)
 
-      // Check for note change
+      // Check for note change with temporal debouncing
       if (isSignalPresent && frame.noteName !== this.currentNoteName) {
-        const previousFrames = [...this.frames]
-        this.currentNoteName = frame.noteName
-        this.frames = [frame]
-        return {
-          type: 'NOTE_CHANGE',
-          timestamp: now,
-          noteName: frame.noteName,
-          frames: previousFrames,
+        if (!this.pendingNoteName) {
+          this.pendingNoteName = frame.noteName
+          this.pendingSince = now
+        } else if (this.pendingNoteName === frame.noteName && now - (this.pendingSince ?? 0) >= 60) {
+          // Confirmed: new note stable for ≥60ms
+          const previousFrames = [...this.frames]
+          this.currentNoteName = frame.noteName
+          this.frames = [frame]
+          this.pendingNoteName = null
+          this.pendingSince = null
+          return {
+            type: 'NOTE_CHANGE',
+            timestamp: now,
+            noteName: frame.noteName,
+            frames: previousFrames,
+          }
         }
+      } else {
+        // Note returned to current or signal lost: cancel pending change
+        this.pendingNoteName = null
+        this.pendingSince = null
       }
 
       if (isSilence || !isSignalPresent) {
@@ -87,6 +106,7 @@ export class NoteSegmenter {
           this.currentNoteName = null
           this.frames = []
           this.lastBelowThresholdTime = null
+          this.lastSignalTime = null
           return { type: 'OFFSET', timestamp: now, frames: completedFrames }
         }
       } else {
@@ -104,5 +124,7 @@ export class NoteSegmenter {
     this.gapFrames = []
     this.lastAboveThresholdTime = null
     this.lastBelowThresholdTime = null
+    this.pendingNoteName = null
+    this.pendingSince = null
   }
 }

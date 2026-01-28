@@ -16,10 +16,16 @@ describe('PracticeFeedback', () => {
         severity: 2 as const,
         confidence: 0.9,
         message: 'Slow vibrato detected',
-        tip: 'Try to increase the speed',
-      },
+        tip: 'Try to increase the speed'
+      }
     ]
-    render(<PracticeFeedback targetNote="A4" status="listening" observations={observations} />)
+    render(
+      <PracticeFeedback
+        targetNote="A4"
+        status="listening"
+        observations={observations}
+      />
+    )
     expect(screen.getByText('Slow vibrato detected')).toBeDefined()
   })
 })

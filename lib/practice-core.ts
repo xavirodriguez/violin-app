@@ -12,12 +12,25 @@ import { NoteTechnique, Observation } from './technique-types'
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+const STEP_VALUES: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+const ACCIDENTAL_MODIFIERS: Record<string, number> = {
+  '##': 2,
+  '#': 1,
+  '': 0,
+  b: -1,
+  bb: -2,
+}
+
 type NoteName = (typeof NOTE_NAMES)[number]
 const A4_FREQUENCY = 440
 const A4_MIDI = 69
 
 /**
  * Represents a musical note with properties derived from its frequency.
+ * @remarks
+ * The factory methods (`fromFrequency`, `fromMidi`, `fromName`) are strict and will
+ * throw errors on invalid input, such as non-finite numbers or malformed note names.
+ * This is intentional to catch data or programming errors early.
  */
 export class MusicalNote {
   private constructor(
@@ -54,28 +67,26 @@ export class MusicalNote {
   }
 
   static fromName(fullName: string): MusicalNote {
-    // A stricter regex that requires the octave number.
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
-    if (!match || !match[3]) {
+    if (!match) {
       throw new Error(`Invalid note name format: "${fullName}"`)
     }
 
-    const [, step, accidental, octaveStr] = match
+    const [, step, accidental = '', octaveStr] = match
     const octave = parseInt(octaveStr, 10)
-    if (!Number.isInteger(octave)) throw new Error(`Invalid octave: ${octaveStr}`)
 
-    const noteIndex = NOTE_NAMES.indexOf(step as NoteName)
-    let alter = 0
-    if (accidental) {
-      if (accidental.startsWith('#')) {
-        alter = accidental.length
-      } else {
-        alter = -accidental.length
-      }
+    if (!Number.isInteger(octave)) {
+      throw new Error(`Invalid octave: "${octaveStr}" in note "${fullName}"`)
     }
 
-    const midiNumber = (octave + 1) * 12 + noteIndex + alter
+    const stepValue = STEP_VALUES[step]
+    const accidentalValue = ACCIDENTAL_MODIFIERS[accidental]
 
+    if (stepValue === undefined || accidentalValue === undefined) {
+      throw new Error(`Unknown note components: step="${step}", accidental="${accidental}"`)
+    }
+
+    const midiNumber = (octave + 1) * 12 + stepValue + accidentalValue
     return MusicalNote.fromMidi(midiNumber)
   }
 
@@ -109,21 +120,15 @@ export interface PracticeState {
   detectionHistory: DetectedNote[]
   // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
-  // Current hold duration for the target note, in milliseconds.
-  holdDuration: number
-  // The required hold time for the current note, in milliseconds.
-  requiredHoldTime: number
 }
 
 /** Events that can modify the practice state. */
 export type PracticeEvent =
-  | { type: 'START'; payload: { requiredHoldTime: number } }
+  | { type: 'START' }
   | { type: 'STOP' }
   | { type: 'RESET' }
   // Fired continuously from the pipeline for UI feedback.
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  // Fired on each frame while a note is being correctly held.
-  | { type: 'NOTE_HOLD_PROGRESS'; payload: { holdDuration: number } }
   // Fired by the pipeline only when a target note is held stable.
   | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
   // Fired when the signal is lost.
@@ -196,8 +201,6 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         currentIndex: 0,
         detectionHistory: [],
         lastObservations: [],
-        holdDuration: 0,
-        requiredHoldTime: event.payload.requiredHoldTime,
       }
 
     case 'STOP':
@@ -215,12 +218,6 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
       return { ...state, detectionHistory: history }
     }
 
-    case 'NOTE_HOLD_PROGRESS':
-      return {
-        ...state,
-        holdDuration: event.payload.holdDuration,
-      }
-
     case 'NO_NOTE_DETECTED':
       return { ...state, detectionHistory: [] }
 
@@ -232,16 +229,14 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         return {
           ...state,
           status: 'completed',
-          lastObservations: event.payload?.observations ?? [],
-          holdDuration: 0,
+          lastObservations: event.payload?.observations ?? []
         }
       } else {
         return {
           ...state,
           currentIndex: state.currentIndex + 1,
           detectionHistory: [],
-          lastObservations: event.payload?.observations ?? [],
-          holdDuration: 0,
+          lastObservations: event.payload?.observations ?? []
         }
       }
     }

@@ -43,7 +43,7 @@ describe('useOSMDSafe', () => {
 
   const setupHook = () => {
     const { result, rerender, unmount } = renderHook(
-      ({ musicXML, options }) => useOSMDSafe(musicXML, options as any),
+      ({ musicXML, options }) => useOSMDSafe(musicXML, (options as any)),
       {
         initialProps: { musicXML: '', options: undefined },
       },
