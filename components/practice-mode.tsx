@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
+import { formatPitchName } from '@/lib/practice-core'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -98,13 +99,12 @@ export function PracticeMode() {
   const totalNotes = practiceState?.exercise.notes.length || 0
   const progress =
     totalNotes > 0 ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100 : 0
-  const lastDetectedNote =
-    practiceState?.detectionHistory[practiceState.detectionHistory.length - 1]
+
+  const history = practiceState?.detectionHistory ?? []
+  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
 
   // Construct the full target note name for display (e.g., "G3", "C#4")
-  const targetPitchName = targetNote
-    ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
-    : ''
+  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : ''
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

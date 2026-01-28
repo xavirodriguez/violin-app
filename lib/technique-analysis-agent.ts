@@ -233,7 +233,7 @@ export class TechniqueAnalysisAgent {
   private calculateTransition(
     gapFrames: TechniqueFrame[],
     currentFrames: TechniqueFrame[],
-    prevSegment: NoteSegment | null,
+    _prevSegment: NoteSegment | null,
   ): TransitionMetrics {
     if (currentFrames.length === 0) {
       return { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 }

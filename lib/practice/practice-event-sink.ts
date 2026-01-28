@@ -12,7 +12,8 @@ type StoreApi<T> = {
   getState: () => T
   setState: (
     partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean | any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    replace?: any,
   ) => void
 }
 

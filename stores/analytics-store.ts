@@ -337,78 +337,92 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     {
       name: 'violin-analytics',
       version: 3,
-      migrate: (persisted: any, version: number) => {
+      migrate: (persisted: unknown, version: number) => {
         if (!persisted) return persisted
+        const p = persisted as Record<string, unknown>
+
         if (version < 3) {
-          if (Array.isArray(persisted.sessions)) {
-            persisted.sessions = persisted.sessions.map((s: any) => {
-              const { duration, ...rest } = s || {}
+          if (Array.isArray(p.sessions)) {
+            p.sessions = p.sessions.map((s: unknown) => {
+              const session = s as Record<string, unknown>
+              const { duration, ...rest } = session || {}
+              const durationMs =
+                ((session?.durationMs as number) ?? (duration as number) ?? 0) * 1000
+              const noteResults = Array.isArray(session?.noteResults)
+                ? session.noteResults.map((nr: unknown) => {
+                    const result = nr as Record<string, unknown>
+                    const { timeToComplete, ...nrRest } = result || {}
+                    return {
+                      ...nrRest,
+                      timeToCompleteMs: (result?.timeToCompleteMs ?? timeToComplete ?? 0) as number,
+                    }
+                  })
+                : []
               return {
                 ...rest,
-                durationMs: (s.durationMs ?? duration ?? 0) * 1000,
-                noteResults: Array.isArray(s.noteResults)
-                  ? s.noteResults.map((nr: any) => {
-                      const { timeToComplete, ...nrRest } = nr || {}
-                      return {
-                        ...nrRest,
-                        timeToCompleteMs: nr.timeToCompleteMs ?? timeToComplete ?? 0,
-                      }
-                    })
-                  : [],
+                durationMs,
+                noteResults,
               }
             })
           }
-          if (persisted.progress?.exerciseStats) {
-            Object.values(persisted.progress.exerciseStats).forEach((stats: any) => {
-              if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
-                stats.fastestCompletionMs = stats.fastestCompletion * 1000
-                delete stats.fastestCompletion
-              }
-            })
+          const progress = p.progress as Record<string, unknown>
+          if (progress?.exerciseStats) {
+            Object.values(progress.exerciseStats as Record<string, unknown>).forEach(
+              (stats: unknown) => {
+                const s = stats as Record<string, unknown>
+                if (s.fastestCompletion !== undefined && s.fastestCompletionMs === undefined) {
+                  s.fastestCompletionMs = (s.fastestCompletion as number) * 1000
+                  delete s.fastestCompletion
+                }
+              },
+            )
           }
         }
 
-        const sessions = Array.isArray(persisted.sessions)
-          ? persisted.sessions.map((s: any) => {
-              const { startTime, endTime, ...rest } = s || {}
+        const sessions = Array.isArray(p.sessions)
+          ? p.sessions.map((s: unknown) => {
+              const session = s as Record<string, unknown>
+              const { startTime, endTime, ...rest } = session || {}
               return {
                 ...rest,
-                startTimeMs: toMs(s?.startTimeMs ?? startTime),
-                endTimeMs: toMs(s?.endTimeMs ?? endTime),
+                startTimeMs: toMs(session?.startTimeMs ?? startTime),
+                endTimeMs: toMs(session?.endTimeMs ?? endTime),
               }
             })
           : []
 
-        const progress = persisted.progress || {}
-        const achievements = Array.isArray(progress.achievements)
-          ? progress.achievements.map((a: any) => {
-              const { unlockedAt, ...rest } = a || {}
+        const pProgress = (p.progress as Record<string, unknown>) || {}
+        const achievements = Array.isArray(pProgress.achievements)
+          ? pProgress.achievements.map((a: unknown) => {
+              const achievement = a as Record<string, unknown>
+              const { unlockedAt, ...rest } = achievement || {}
               return {
                 ...rest,
-                unlockedAtMs: toMs(a?.unlockedAtMs ?? unlockedAt),
+                unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
               }
             })
           : []
 
-        const exerciseStats = progress.exerciseStats || {}
+        const exerciseStats = (pProgress.exerciseStats as Record<string, unknown>) || {}
         const migratedExerciseStats = Object.fromEntries(
-          Object.entries(exerciseStats).map(([k, v]: [string, any]) => {
-            const { lastPracticed, ...rest } = v || {}
+          Object.entries(exerciseStats).map(([k, v]: [string, unknown]) => {
+            const stats = v as Record<string, unknown>
+            const { lastPracticed, ...rest } = stats || {}
             return [
               k,
               {
                 ...rest,
-                lastPracticedMs: toMs(v?.lastPracticedMs ?? lastPracticed),
+                lastPracticedMs: toMs(stats?.lastPracticedMs ?? lastPracticed),
               },
             ]
           }),
         )
 
         return {
-          ...persisted,
+          ...p,
           sessions,
           progress: {
-            ...progress,
+            ...pProgress,
             achievements,
             exerciseStats: migratedExerciseStats,
           },

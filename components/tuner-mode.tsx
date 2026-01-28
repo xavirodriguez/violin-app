@@ -25,7 +25,6 @@ export function TunerMode() {
   const isError = state.kind === 'ERROR'
   const isActive = state.kind === 'READY' || state.kind === 'LISTENING' || state.kind === 'DETECTED'
 
-  const currentPitch = state.kind === 'DETECTED' ? state.pitch : null
   const currentNote = state.kind === 'DETECTED' ? state.note : null
   const centsDeviation = state.kind === 'DETECTED' ? state.cents : null
   const errorMessage = state.kind === 'ERROR' ? state.error.message : null

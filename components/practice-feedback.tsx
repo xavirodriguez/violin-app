@@ -130,23 +130,23 @@ export function PracticeFeedback({
       <div className="flex items-center justify-center gap-2">
         {status === 'listening' && (
           <div className="text-muted-foreground flex items-center gap-2">
-            {!detectedPitchName && (
+            {!detectedPitchName ? (
               <>
                 <Circle className="h-5 w-5" />
                 <span>Listening...</span>
               </>
+            ) : (
+              <>
+                {targetNote !== detectedPitchName && (
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
+                  </div>
+                )}
+                {targetNote === detectedPitchName &&
+                  typeof centsOff === 'number' &&
+                  !isInTune && <IntonationFeedback centsOff={centsOff} />}
+              </>
             )}
-            {detectedPitchName && targetNote !== detectedPitchName && (
-              <div className="text-center">
-                <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
-              </div>
-            )}
-            {detectedPitchName &&
-              targetNote === detectedPitchName &&
-              typeof centsOff === 'number' &&
-              !isInTune && <IntonationFeedback centsOff={centsOff} />}
-            {!detectedPitchName && <Circle className="h-5 w-5" />}
-            {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
         {status === 'validating' && (
