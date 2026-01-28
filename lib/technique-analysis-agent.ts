@@ -233,7 +233,7 @@ export class TechniqueAnalysisAgent {
   private calculateTransition(
     gapFrames: TechniqueFrame[],
     currentFrames: TechniqueFrame[],
-    prevSegment: NoteSegment | null,
+    _prevSegment: NoteSegment | null,
   ): TransitionMetrics {
     if (currentFrames.length === 0) {
       return { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 }
@@ -242,31 +242,11 @@ export class TechniqueAnalysisAgent {
     const transitionTimeMs =
       gapFrames.length > 0 ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp : 0
 
-    let glissAmountCents = 0
-    if (gapFrames.length > 1) {
-      const cents = gapFrames.filter((f) => f.pitchHz > 0).map((f) => f.cents)
-      if (cents.length > 1) {
-        glissAmountCents = Math.max(...cents) - Math.min(...cents)
-      }
-    }
+    const glissAmountCents = this.calculateGlissando(gapFrames)
 
     const startTime = currentFrames[0].timestamp
-    const landingFrames = currentFrames.filter((f) => f.timestamp - startTime <= 200)
-    const landingErrorCents =
-      landingFrames.length > 0
-        ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
-        : 0
-
-    let correctionCount = 0
-    const correctionFrames = currentFrames.filter((f) => f.timestamp - startTime <= 300)
-    for (let i = 1; i < correctionFrames.length; i++) {
-      if (
-        (correctionFrames[i - 1].cents > 0 && correctionFrames[i].cents < 0) ||
-        (correctionFrames[i - 1].cents < 0 && correctionFrames[i].cents > 0)
-      ) {
-        correctionCount++
-      }
-    }
+    const landingErrorCents = this.calculateLandingError(currentFrames, startTime)
+    const correctionCount = this.calculateCorrectionCount(currentFrames, startTime)
 
     return {
       transitionTimeMs,
@@ -274,6 +254,32 @@ export class TechniqueAnalysisAgent {
       landingErrorCents,
       correctionCount,
     }
+  }
+
+  private calculateGlissando(gapFrames: TechniqueFrame[]): number {
+    if (gapFrames.length <= 1) return 0
+    const cents = gapFrames.filter((f) => f.pitchHz > 0).map((f) => f.cents)
+    return cents.length > 1 ? Math.max(...cents) - Math.min(...cents) : 0
+  }
+
+  private calculateLandingError(frames: TechniqueFrame[], startTime: number): number {
+    const landingFrames = frames.filter((f) => f.timestamp - startTime <= 200)
+    return landingFrames.length > 0
+      ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
+      : 0
+  }
+
+  private calculateCorrectionCount(frames: TechniqueFrame[], startTime: number): number {
+    let count = 0
+    const correctionFrames = frames.filter((f) => f.timestamp - startTime <= 300)
+    for (let i = 1; i < correctionFrames.length; i++) {
+      const prev = correctionFrames[i - 1].cents
+      const curr = correctionFrames[i].cents
+      if ((prev > 0 && curr < 0) || (prev < 0 && curr > 0)) {
+        count++
+      }
+    }
+    return count
   }
 
   /**
@@ -285,58 +291,82 @@ export class TechniqueAnalysisAgent {
    * the most critical and certain feedback is presented first.
    */
   generateObservations(technique: NoteTechnique): Observation[] {
-    const observations: Observation[] = []
+    const observations: Observation[] = [
+      ...this.generateStabilityObservations(technique),
+      ...this.generateVibratoObservations(technique),
+      ...this.generateAttackObservations(technique),
+      ...this.generateTransitionObservations(technique),
+      ...this.generateResonanceObservations(technique),
+      ...this.generateRhythmObservations(technique),
+    ]
 
-    // 1. Stability & Drift
-    if (Math.abs(technique.pitchStability.driftCentsPerSec) > 15) {
-      observations.push({
+    // Prioritize and rank observations
+    return observations
+      .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
+      .slice(0, 3)
+  }
+
+  private generateStabilityObservations(technique: NoteTechnique): Observation[] {
+    const drift = technique.pitchStability.driftCentsPerSec
+    if (Math.abs(drift) <= 15) return []
+    return [
+      {
         type: 'stability',
         severity: 2,
         confidence: 0.9,
-        message:
-          technique.pitchStability.driftCentsPerSec > 0
-            ? 'Pitch is drifting sharp'
-            : 'Pitch is drifting flat',
+        message: drift > 0 ? 'Pitch is drifting sharp' : 'Pitch is drifting flat',
         tip: 'Maintain consistent finger pressure and bow speed.',
-        evidence: { drift: technique.pitchStability.driftCentsPerSec },
-      })
-    }
+        evidence: { drift },
+      },
+    ]
+  }
 
-    // 2. Vibrato
-    if (technique.vibrato.present) {
-      if (technique.vibrato.rateHz < 4.5) {
-        observations.push({
-          type: 'vibrato',
-          severity: 1,
-          confidence: 0.8,
-          message: 'Slow vibrato detected',
-          tip: 'Try to slightly increase the speed of your hand oscillation.',
-          evidence: { rate: technique.vibrato.rateHz },
-        })
-      } else if (technique.vibrato.widthCents > 35) {
-        observations.push({
-          type: 'vibrato',
-          severity: 1,
-          confidence: 0.8,
-          message: 'Wide vibrato detected',
-          tip: 'Focus on a narrower, more controlled oscillation.',
-          evidence: { width: technique.vibrato.widthCents },
-        })
+  private generateVibratoObservations(technique: NoteTechnique): Observation[] {
+    const { present, rateHz, widthCents, regularity } = technique.vibrato
+    if (present) {
+      if (rateHz < 4.5) {
+        return [
+          {
+            type: 'vibrato',
+            severity: 1,
+            confidence: 0.8,
+            message: 'Slow vibrato detected',
+            tip: 'Try to slightly increase the speed of your hand oscillation.',
+            evidence: { rate: rateHz },
+          },
+        ]
       }
-    } else if (technique.vibrato.widthCents > 10 && technique.vibrato.regularity < 0.4) {
-      observations.push({
-        type: 'vibrato',
-        severity: 2,
-        confidence: 0.7,
-        message: 'Inconsistent vibrato',
-        tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
-        evidence: { regularity: technique.vibrato.regularity },
-      })
+      if (widthCents > 35) {
+        return [
+          {
+            type: 'vibrato',
+            severity: 1,
+            confidence: 0.8,
+            message: 'Wide vibrato detected',
+            tip: 'Focus on a narrower, more controlled oscillation.',
+            evidence: { width: widthCents },
+          },
+        ]
+      }
+    } else if (widthCents > 10 && regularity < 0.4) {
+      return [
+        {
+          type: 'vibrato',
+          severity: 2,
+          confidence: 0.7,
+          message: 'Inconsistent vibrato',
+          tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
+          evidence: { regularity },
+        },
+      ]
     }
+    return []
+  }
 
-    // 3. Attack & Release
+  private generateAttackObservations(technique: NoteTechnique): Observation[] {
+    const obs: Observation[] = []
     if (technique.attackRelease.attackTimeMs > 200) {
-      observations.push({
+      obs.push({
         type: 'attack',
         severity: 1,
         confidence: 0.9,
@@ -345,9 +375,8 @@ export class TechniqueAnalysisAgent {
         evidence: { attackTime: technique.attackRelease.attackTimeMs },
       })
     }
-
     if (Math.abs(technique.attackRelease.pitchScoopCents) > 15) {
-      observations.push({
+      obs.push({
         type: 'attack',
         severity: 2,
         confidence: 0.85,
@@ -357,10 +386,13 @@ export class TechniqueAnalysisAgent {
         evidence: { scoop: technique.attackRelease.pitchScoopCents },
       })
     }
+    return obs
+  }
 
-    // 4. Transitions
+  private generateTransitionObservations(technique: NoteTechnique): Observation[] {
+    const obs: Observation[] = []
     if (technique.transition.glissAmountCents > 50 && technique.transition.transitionTimeMs > 120) {
-      observations.push({
+      obs.push({
         type: 'transition',
         severity: 2,
         confidence: 0.8,
@@ -372,9 +404,8 @@ export class TechniqueAnalysisAgent {
         },
       })
     }
-
     if (technique.transition.landingErrorCents > 20) {
-      observations.push({
+      obs.push({
         type: 'transition',
         severity: 2,
         confidence: 0.75,
@@ -383,10 +414,13 @@ export class TechniqueAnalysisAgent {
         evidence: { error: technique.transition.landingErrorCents },
       })
     }
+    return obs
+  }
 
-    // 5. Resonance
-    if (technique.resonance.suspectedWolf) {
-      observations.push({
+  private generateResonanceObservations(technique: NoteTechnique): Observation[] {
+    if (!technique.resonance.suspectedWolf) return []
+    return [
+      {
         type: 'resonance',
         severity: 3,
         confidence: 0.6,
@@ -396,29 +430,22 @@ export class TechniqueAnalysisAgent {
           beating: technique.resonance.rmsBeatingScore,
           chaos: technique.resonance.pitchChaosScore,
         },
-      })
-    }
+      },
+    ]
+  }
 
-    // 6. Rhythm
-    if (Math.abs(technique.rhythm.onsetErrorMs) > 60) {
-      observations.push({
+  private generateRhythmObservations(technique: NoteTechnique): Observation[] {
+    if (Math.abs(technique.rhythm.onsetErrorMs) <= 60) return []
+    return [
+      {
         type: 'rhythm',
         severity: 2,
         confidence: 0.95,
         message: technique.rhythm.onsetErrorMs > 0 ? 'Late note entry' : 'Early note entry',
         tip: 'Focus on the internal beat and prepare your fingers in advance.',
         evidence: { error: technique.rhythm.onsetErrorMs },
-      })
-    }
-
-    // Prioritize and rank observations
-    return observations
-      .sort((a, b) => {
-        const scoreA = a.severity * a.confidence
-        const scoreB = b.severity * b.confidence
-        return scoreB - scoreA
-      })
-      .slice(0, 3) // Limit to top 3 for the specific note
+      },
+    ]
   }
 
   private calculateStdDev(values: number[]): number {

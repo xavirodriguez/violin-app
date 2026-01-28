@@ -79,9 +79,13 @@ describe('createPracticeEventPipeline', () => {
 
     expect(events).toHaveLength(1)
     expect(events[0].type).toBe('NOTE_DETECTED')
-    const payload = (events[0] as any).payload
-    expect(payload.pitch).toBe('A4')
-    expect(payload.cents).toBeCloseTo(0)
+    const event = events[0]
+    if (event.type === 'NOTE_DETECTED') {
+      expect(event.payload.pitch).toBe('A4')
+      expect(event.payload.cents).toBeCloseTo(0)
+    } else {
+      throw new Error('Expected NOTE_DETECTED event')
+    }
   })
 
   it('should emit NOTE_MATCHED when a correct note is held for the required time', async () => {

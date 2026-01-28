@@ -5,8 +5,6 @@
  * Encapsulates the complexity of initialization, resource tracking, and cleanup.
  */
 
-import { AppError, ERROR_CODES } from '@/lib/errors/app-error'
-
 export interface AudioResources {
   context: AudioContext
   stream: MediaStream
@@ -102,7 +100,7 @@ export class AudioManager {
     if (this.context && this.context.state !== 'closed') {
       try {
         await this.context.close()
-      } catch (err) {
+      } catch (_err) {
         // Ignore errors during close
       }
       this.context = null

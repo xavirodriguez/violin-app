@@ -12,7 +12,7 @@ type StoreApi<T> = {
   getState: () => T
   setState: (
     partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean | any,
+    replace?: boolean | unknown,
   ) => void
 }
 

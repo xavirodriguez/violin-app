@@ -101,45 +101,60 @@ export class AppError extends Error {
 /**
  * @public
  */
+/**
+ * Maps common browser exceptions to specialized application error codes.
+ *
+ * @param err - The native Error or DOMException to map.
+ * @param fallbackCode - The default code if no specific mapping exists.
+ * @returns An object containing the resolved ErrorCode and a user-friendly message.
+ */
+function mapSystemError(err: Error, fallbackCode: ErrorCode): { code: ErrorCode; message: string } {
+  const mapping: Record<string, { code: ErrorCode; message: string }> = {
+    NotAllowedError: {
+      code: ERROR_CODES.MIC_PERMISSION_DENIED,
+      message: 'Microphone access was denied. Please grant permission in your browser settings.',
+    },
+    NotFoundError: {
+      code: ERROR_CODES.MIC_NOT_FOUND,
+      message: 'No microphone was found. Please ensure one is connected and enabled.',
+    },
+    NotReadableError: {
+      code: ERROR_CODES.MIC_IN_USE,
+      message: 'Your microphone is already in use by another application or browser tab.',
+    },
+    TrackStartError: {
+      code: ERROR_CODES.MIC_IN_USE,
+      message: 'Your microphone is already in use by another application or browser tab.',
+    },
+    OverconstrainedError: {
+      code: ERROR_CODES.MIC_GENERIC_ERROR,
+      message: 'The specified microphone is not supported.',
+    },
+    TypeError: {
+      code: ERROR_CODES.MIC_NOT_FOUND,
+      message: 'No microphone selected or the device is unavailable.',
+    },
+  }
+
+  const result = mapping[err.name]
+  return result || { code: fallbackCode, message: err.message }
+}
+
 export function toAppError(
   err: unknown,
   fallbackCode: ErrorCode = ERROR_CODES.UNKNOWN,
   context: Record<string, unknown> = {},
 ): AppError {
   if (err instanceof AppError) {
-    // If context is provided, merge it with the existing error's context.
-    if (Object.keys(context).length > 0) {
-      return new AppError({
-        ...err,
-        context: { ...err.context, ...context },
-      })
-    }
-    return err
+    if (Object.keys(context).length === 0) return err
+    return new AppError({
+      ...err,
+      context: { ...err.context, ...context },
+    })
   }
 
   if (err instanceof Error) {
-    let code = fallbackCode
-    let message = err.message
-
-    // --- DOMException Mapping ---
-    // UserMedia errors have specific names we can map to our codes.
-    if (err.name === 'NotAllowedError') {
-      code = ERROR_CODES.MIC_PERMISSION_DENIED
-      message = 'Microphone access was denied. Please grant permission in your browser settings.'
-    } else if (err.name === 'NotFoundError') {
-      code = ERROR_CODES.MIC_NOT_FOUND
-      message = 'No microphone was found. Please ensure one is connected and enabled.'
-    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-      code = ERROR_CODES.MIC_IN_USE
-      message = 'Your microphone is already in use by another application or browser tab.'
-    } else if (err.name === 'OverconstrainedError') {
-      code = ERROR_CODES.MIC_GENERIC_ERROR
-      message = 'The specified microphone is not supported.'
-    } else if (err.name === 'TypeError') {
-      // This can happen if no device is selected.
-      code = ERROR_CODES.MIC_NOT_FOUND
-      message = 'No microphone selected or the device is unavailable.'
-    }
+    const { code, message } = mapSystemError(err, fallbackCode)
 
     return new AppError({
       message,

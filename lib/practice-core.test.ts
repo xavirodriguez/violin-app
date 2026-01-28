@@ -1,6 +1,4 @@
-/**
- * @vitest-environment jsdom
- */
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import {
   reducePracticeEvent,
@@ -116,13 +114,13 @@ describe('formatPitchName', () => {
   })
 
   it('should handle string alter values correctly', () => {
-    const pitch: TargetNote['pitch'] = { step: 'D', octave: 4, alter: 'flat' as any }
+    const pitch = { step: 'D', octave: 4, alter: 'flat' } as unknown as TargetNote['pitch']
     expect(formatPitchName(pitch)).toBe('Db4')
   })
 
   it('should handle double sharp/flat values', () => {
-    const pitch1: TargetNote['pitch'] = { step: 'E', octave: 4, alter: '##' as any }
-    const pitch2: TargetNote['pitch'] = { step: 'F', octave: 4, alter: -2 as any }
+    const pitch1 = { step: 'E', octave: 4, alter: '##' } as unknown as TargetNote['pitch']
+    const pitch2 = { step: 'F', octave: 4, alter: -2 } as unknown as TargetNote['pitch']
     // Canonicalization to -1 | 0 | 1 simplifies double accidentals for standard tuning logic
     expect(formatPitchName(pitch1)).toBe('E#4')
     expect(formatPitchName(pitch2)).toBe('Fb4')
@@ -134,7 +132,7 @@ describe('formatPitchName', () => {
   })
 
   it('should throw an error for unsupported alter values', () => {
-    const pitch: TargetNote['pitch'] = { step: 'A', octave: 4, alter: 3 as any }
+    const pitch = { step: 'A', octave: 4, alter: 3 } as unknown as TargetNote['pitch']
     expect(() => formatPitchName(pitch)).toThrow(/Unsupported alter value: 3/)
   })
 })
@@ -300,10 +298,10 @@ describe('isMatch', () => {
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
-    const invalidTarget: TargetNote = {
-      pitch: { step: 'C', octave: 4, alter: 7 as any },
+    const invalidTarget = {
+      pitch: { step: 'C', octave: 4, alter: 7 },
       duration: 4,
-    }
+    } as unknown as TargetNote
     const detected = { pitch: 'A4', cents: 0, timestamp: 0, confidence: 1 }
     expect(() => isMatch(invalidTarget, detected)).toThrow(/Unsupported alter value: 7/)
   })

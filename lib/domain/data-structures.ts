@@ -8,8 +8,9 @@
  * A fixed-size circular buffer that automatically discards the oldest elements.
  * Useful for tracking detection history without unbounded memory growth.
  *
- * @template T - The type of elements in the buffer.
- * @template N - The maximum size of the buffer.
+ * @remarks
+ * T - The type of elements in the buffer.
+ * N - The maximum size of the buffer.
  */
 export class FixedRingBuffer<T, N extends number> {
   private items: T[] = []

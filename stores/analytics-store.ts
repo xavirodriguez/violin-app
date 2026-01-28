@@ -164,65 +164,29 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         const endTimeMs = Date.now()
         const durationMs = endTimeMs - currentSession.startTimeMs
-
-        const completedSession: PracticeSession = {
-          ...currentSession,
-          endTimeMs,
-          durationMs,
-        }
-
+        const completedSession: PracticeSession = { ...currentSession, endTimeMs, durationMs }
         const newSessions = [completedSession, ...sessions]
 
-        const exerciseId = currentSession.exerciseId
-        const existingStats = progress.exerciseStats[exerciseId]
-
-        const updatedStats: ExerciseStats = {
-          exerciseId,
-          timesCompleted: (existingStats?.timesCompleted || 0) + 1,
-          bestAccuracy: Math.max(existingStats?.bestAccuracy || 0, completedSession.accuracy),
-          averageAccuracy: existingStats
-            ? (existingStats.averageAccuracy * existingStats.timesCompleted +
-                completedSession.accuracy) /
-              (existingStats.timesCompleted + 1)
-            : completedSession.accuracy,
-          fastestCompletionMs: existingStats
-            ? Math.min(existingStats.fastestCompletionMs, durationMs)
-            : durationMs,
-          lastPracticedMs: endTimeMs,
-        }
-
-        const nextExerciseStats = {
-          ...progress.exerciseStats,
-          [exerciseId]: updatedStats,
-        }
+        const nextExerciseStats = updateExerciseStats(
+          progress.exerciseStats,
+          currentSession.exerciseId,
+          completedSession.accuracy,
+          durationMs,
+          endTimeMs,
+        )
 
         const newProgress: UserProgress = {
           ...progress,
           totalPracticeSessions: progress.totalPracticeSessions + 1,
           totalPracticeTime: progress.totalPracticeTime + Math.floor(durationMs / 1000),
           exerciseStats: nextExerciseStats,
-          exercisesCompleted: progress.exercisesCompleted.includes(exerciseId)
+          exercisesCompleted: progress.exercisesCompleted.includes(currentSession.exerciseId)
             ? progress.exercisesCompleted
-            : [...progress.exercisesCompleted, exerciseId],
+            : [...progress.exercisesCompleted, currentSession.exerciseId],
         }
 
-        const today = startOfDayMs(Date.now())
-        const lastSession = sessions[0]
-        const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
-        const yesterday = today - DAY_MS
-
-        if (sessions.length === 0 || lastSessionDay === yesterday) {
-          newProgress.currentStreak = progress.currentStreak + 1
-          newProgress.longestStreak = Math.max(newProgress.longestStreak, newProgress.currentStreak)
-        } else if (lastSessionDay < yesterday) {
-          newProgress.currentStreak = 1
-        }
-
-        newProgress.intonationSkill = calculateIntonationSkill(newSessions)
-        newProgress.rhythmSkill = calculateRhythmSkill(newSessions)
-        newProgress.overallSkill = Math.round(
-          (newProgress.intonationSkill + newProgress.rhythmSkill) / 2,
-        )
+        updateStreak(newProgress, sessions)
+        calculateSkills(newProgress, newSessions)
 
         const newAchievements = checkAchievements(newProgress, completedSession, newSessions)
         newProgress.achievements = [...progress.achievements, ...newAchievements]
@@ -239,32 +203,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           const prevSession = state.currentSession
           if (!prevSession) return state
 
-          const existing = prevSession.noteResults.find((nr) => nr.noteIndex === noteIndex)
-
-          const nextNoteResults: NoteResult[] = existing
-            ? prevSession.noteResults.map((nr) => {
-                if (nr.noteIndex !== noteIndex) return nr
-                const nextAttempts = nr.attempts + 1
-                const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
-                return {
-                  ...nr,
-                  targetPitch,
-                  attempts: nextAttempts,
-                  averageCents: nextAverageCents,
-                  wasInTune,
-                }
-              })
-            : [
-                ...prevSession.noteResults,
-                {
-                  noteIndex,
-                  targetPitch,
-                  attempts: 1,
-                  timeToCompleteMs: 0,
-                  averageCents: cents,
-                  wasInTune,
-                },
-              ]
+          const nextNoteResults = updateNoteResults(
+            prevSession.noteResults,
+            noteIndex,
+            targetPitch,
+            cents,
+            wasInTune,
+          )
 
           const inTuneNotes = nextNoteResults.filter((nr) => nr.wasInTune).length
           const accuracy =
@@ -272,14 +217,15 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           const totalCents = nextNoteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
           const averageCents = nextNoteResults.length > 0 ? totalCents / nextNoteResults.length : 0
 
-          const nextSession: PracticeSession = {
-            ...prevSession,
-            notesAttempted: prevSession.notesAttempted + 1,
-            noteResults: nextNoteResults,
-            accuracy,
-            averageCents,
+          return {
+            currentSession: {
+              ...prevSession,
+              notesAttempted: prevSession.notesAttempted + 1,
+              noteResults: nextNoteResults,
+              accuracy,
+              averageCents,
+            },
           }
-          return { currentSession: nextSession }
         })
       },
 
@@ -337,82 +283,89 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     {
       name: 'violin-analytics',
       version: 3,
-      migrate: (persisted: any, version: number) => {
-        if (!persisted) return persisted
+      migrate: (persisted: unknown, version: number) => {
+        if (!persisted) return persisted as AnalyticsStore
+        const persistedData = persisted as Record<string, unknown>
         if (version < 3) {
-          if (Array.isArray(persisted.sessions)) {
-            persisted.sessions = persisted.sessions.map((s: any) => {
-              const { duration, ...rest } = s || {}
+          if (Array.isArray(persistedData.sessions)) {
+            persistedData.sessions = persistedData.sessions.map((s: unknown) => {
+              const session = s as Record<string, unknown>
+              const { duration, ...rest } = session || {}
               return {
                 ...rest,
-                durationMs: (s.durationMs ?? duration ?? 0) * 1000,
-                noteResults: Array.isArray(s.noteResults)
-                  ? s.noteResults.map((nr: any) => {
-                      const { timeToComplete, ...nrRest } = nr || {}
+                durationMs: ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000,
+                noteResults: Array.isArray(session.noteResults)
+                  ? session.noteResults.map((nr: unknown) => {
+                      const noteResult = nr as Record<string, unknown>
+                      const { timeToComplete, ...nrRest } = noteResult || {}
                       return {
                         ...nrRest,
-                        timeToCompleteMs: nr.timeToCompleteMs ?? timeToComplete ?? 0,
+                        timeToCompleteMs: (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0,
                       }
                     })
                   : [],
               }
             })
           }
-          if (persisted.progress?.exerciseStats) {
-            Object.values(persisted.progress.exerciseStats).forEach((stats: any) => {
+          const progress = persistedData.progress as Record<string, unknown> | undefined
+          if (progress?.exerciseStats) {
+            Object.values(progress.exerciseStats as Record<string, Record<string, unknown>>).forEach((stats) => {
               if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
-                stats.fastestCompletionMs = stats.fastestCompletion * 1000
+                stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
                 delete stats.fastestCompletion
               }
             })
           }
         }
 
-        const sessions = Array.isArray(persisted.sessions)
-          ? persisted.sessions.map((s: any) => {
-              const { startTime, endTime, ...rest } = s || {}
+        const sessions = Array.isArray(persistedData.sessions)
+          ? persistedData.sessions.map((s: unknown) => {
+              const session = s as Record<string, unknown>
+              const { startTime, endTime, ...rest } = session || {}
               return {
                 ...rest,
-                startTimeMs: toMs(s?.startTimeMs ?? startTime),
-                endTimeMs: toMs(s?.endTimeMs ?? endTime),
+                startTimeMs: toMs(session?.startTimeMs ?? startTime),
+                endTimeMs: toMs(session?.endTimeMs ?? endTime),
               }
             })
           : []
 
-        const progress = persisted.progress || {}
+        const progress = (persistedData.progress as Record<string, unknown>) || {}
         const achievements = Array.isArray(progress.achievements)
-          ? progress.achievements.map((a: any) => {
-              const { unlockedAt, ...rest } = a || {}
+          ? progress.achievements.map((a: unknown) => {
+              const achievement = a as Record<string, unknown>
+              const { unlockedAt, ...rest } = achievement || {}
               return {
                 ...rest,
-                unlockedAtMs: toMs(a?.unlockedAtMs ?? unlockedAt),
+                unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
               }
             })
           : []
 
-        const exerciseStats = progress.exerciseStats || {}
+        const exerciseStats = (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
         const migratedExerciseStats = Object.fromEntries(
-          Object.entries(exerciseStats).map(([k, v]: [string, any]) => {
-            const { lastPracticed, ...rest } = v || {}
+          Object.entries(exerciseStats).map(([k, v]) => {
+            const stats = v as Record<string, unknown>
+            const { lastPracticed, ...rest } = stats || {}
             return [
               k,
               {
                 ...rest,
-                lastPracticedMs: toMs(v?.lastPracticedMs ?? lastPracticed),
+                lastPracticedMs: toMs(stats?.lastPracticedMs ?? lastPracticed),
               },
             ]
           }),
         )
 
         return {
-          ...persisted,
+          ...persistedData,
           sessions,
           progress: {
             ...progress,
             achievements,
             exerciseStats: migratedExerciseStats,
           },
-        }
+        } as AnalyticsStore
       },
       partialize: (state) => ({
         sessions: state.sessions,
@@ -429,6 +382,85 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
   const trend =
     recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
   return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
+}
+
+function updateExerciseStats(
+  exerciseStats: Record<string, ExerciseStats>,
+  exerciseId: string,
+  accuracy: number,
+  durationMs: number,
+  endTimeMs: number,
+): Record<string, ExerciseStats> {
+  const existing = exerciseStats[exerciseId]
+  const updated: ExerciseStats = {
+    exerciseId,
+    timesCompleted: (existing?.timesCompleted || 0) + 1,
+    bestAccuracy: Math.max(existing?.bestAccuracy || 0, accuracy),
+    averageAccuracy: existing
+      ? (existing.averageAccuracy * existing.timesCompleted + accuracy) /
+        (existing.timesCompleted + 1)
+      : accuracy,
+    fastestCompletionMs: existing
+      ? Math.min(existing.fastestCompletionMs, durationMs)
+      : durationMs,
+    lastPracticedMs: endTimeMs,
+  }
+  return { ...exerciseStats, [exerciseId]: updated }
+}
+
+function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
+  const today = startOfDayMs(Date.now())
+  const lastSession = sessions[0]
+  const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
+  const yesterday = today - DAY_MS
+
+  if (sessions.length === 0 || lastSessionDay === yesterday) {
+    progress.currentStreak += 1
+    progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
+  } else if (lastSessionDay < yesterday) {
+    progress.currentStreak = 1
+  }
+}
+
+function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
+  progress.intonationSkill = calculateIntonationSkill(sessions)
+  progress.rhythmSkill = calculateRhythmSkill(sessions)
+  progress.overallSkill = Math.round((progress.intonationSkill + progress.rhythmSkill) / 2)
+}
+
+function updateNoteResults(
+  noteResults: NoteResult[],
+  noteIndex: number,
+  targetPitch: string,
+  cents: number,
+  wasInTune: boolean,
+): NoteResult[] {
+  const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
+  if (existing) {
+    return noteResults.map((nr) => {
+      if (nr.noteIndex !== noteIndex) return nr
+      const nextAttempts = nr.attempts + 1
+      const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
+      return {
+        ...nr,
+        targetPitch,
+        attempts: nextAttempts,
+        averageCents: nextAverageCents,
+        wasInTune,
+      }
+    })
+  }
+  return [
+    ...noteResults,
+    {
+      noteIndex,
+      targetPitch,
+      attempts: 1,
+      timeToCompleteMs: 0,
+      averageCents: cents,
+      wasInTune,
+    },
+  ]
 }
 
 function calculateRhythmSkill(sessions: PracticeSession[]): number {

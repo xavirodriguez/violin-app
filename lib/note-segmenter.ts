@@ -44,76 +44,102 @@ export class NoteSegmenter {
     const isSignalPresent =
       frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
     const isSilence = frame.rms < this.options.maxRmsSilence
-
     const now = frame.timestamp
 
     if (this.state === 'SILENCE') {
-      this.gapFrames.push(frame)
-      if (isSignalPresent) {
-        this.lastSignalTime = now
-        if (this.lastAboveThresholdTime === null) {
-          this.lastAboveThresholdTime = now
-        } else if (now - this.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
-          // ONSET detected
-          this.state = 'NOTE'
-          this.currentNoteName = frame.noteName
-          this.frames = [frame]
-          const gap = [...this.gapFrames]
-          this.gapFrames = []
-          this.lastAboveThresholdTime = null
-          return { type: 'ONSET', timestamp: now, noteName: frame.noteName, gapFrames: gap }
-        }
-      } else if (isSilence || (this.lastSignalTime !== null && now - this.lastSignalTime > 50)) {
-        // Reset onset timer if we have true silence or too much noisy gap
+      return this.handleSilenceState(frame, isSignalPresent, isSilence, now)
+    } else {
+      return this.handleNoteState(frame, isSignalPresent, isSilence, now)
+    }
+  }
+
+  private handleSilenceState(
+    frame: TechniqueFrame,
+    isSignalPresent: boolean,
+    isSilence: boolean,
+    now: number,
+  ): SegmenterEvent | null {
+    this.gapFrames.push(frame)
+    if (isSignalPresent) {
+      this.lastSignalTime = now
+      if (this.lastAboveThresholdTime === null) {
+        this.lastAboveThresholdTime = now
+      } else if (now - this.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
+        // ONSET detected
+        this.state = 'NOTE'
+        this.currentNoteName = frame.noteName
+        this.frames = [frame]
+        const gap = [...this.gapFrames]
+        this.gapFrames = []
         this.lastAboveThresholdTime = null
+        return { type: 'ONSET', timestamp: now, noteName: frame.noteName, gapFrames: gap }
+      }
+    } else if (isSilence || (this.lastSignalTime !== null && now - this.lastSignalTime > 50)) {
+      // Reset onset timer if we have true silence or too much noisy gap
+      this.lastAboveThresholdTime = null
+    }
+    return null
+  }
+
+  private handleNoteState(
+    frame: TechniqueFrame,
+    isSignalPresent: boolean,
+    isSilence: boolean,
+    now: number,
+  ): SegmenterEvent | null {
+    this.frames.push(frame)
+
+    const noteChangeEvent = this.checkNoteChange(frame, isSignalPresent, now)
+    if (noteChangeEvent) return noteChangeEvent
+
+    if (isSilence || !isSignalPresent) {
+      if (this.lastBelowThresholdTime === null) {
+        this.lastBelowThresholdTime = now
+      } else if (now - this.lastBelowThresholdTime >= this.options.offsetDebounceMs) {
+        // OFFSET detected
+        const completedFrames = [...this.frames]
+        this.state = 'SILENCE'
+        this.currentNoteName = null
+        this.frames = []
+        this.lastBelowThresholdTime = null
+        this.lastSignalTime = null
+        return { type: 'OFFSET', timestamp: now, frames: completedFrames }
       }
     } else {
-      // state === 'NOTE'
-      this.frames.push(frame)
-
-      // Check for note change with temporal debouncing
-      if (isSignalPresent && frame.noteName !== this.currentNoteName) {
-        if (!this.pendingNoteName) {
-          this.pendingNoteName = frame.noteName
-          this.pendingSince = now
-        } else if (this.pendingNoteName === frame.noteName && now - (this.pendingSince ?? 0) >= 60) {
-          // Confirmed: new note stable for ≥60ms
-          const previousFrames = [...this.frames]
-          this.currentNoteName = frame.noteName
-          this.frames = [frame]
-          this.pendingNoteName = null
-          this.pendingSince = null
-          return {
-            type: 'NOTE_CHANGE',
-            timestamp: now,
-            noteName: frame.noteName,
-            frames: previousFrames,
-          }
-        }
-      } else {
-        // Note returned to current or signal lost: cancel pending change
-        this.pendingNoteName = null
-        this.pendingSince = null
-      }
-
-      if (isSilence || !isSignalPresent) {
-        if (this.lastBelowThresholdTime === null) {
-          this.lastBelowThresholdTime = now
-        } else if (now - this.lastBelowThresholdTime >= this.options.offsetDebounceMs) {
-          // OFFSET detected
-          const completedFrames = [...this.frames]
-          this.state = 'SILENCE'
-          this.currentNoteName = null
-          this.frames = []
-          this.lastBelowThresholdTime = null
-          this.lastSignalTime = null
-          return { type: 'OFFSET', timestamp: now, frames: completedFrames }
-        }
-      } else {
-        this.lastBelowThresholdTime = null
-      }
+      this.lastBelowThresholdTime = null
     }
 
+    return null
+  }
+
+  private checkNoteChange(
+    frame: TechniqueFrame,
+    isSignalPresent: boolean,
+    now: number,
+  ): SegmenterEvent | null {
+    if (isSignalPresent && frame.noteName !== this.currentNoteName) {
+      if (!this.pendingNoteName) {
+        this.pendingNoteName = frame.noteName
+        this.pendingSince = now
+      } else if (this.pendingNoteName === frame.noteName && now - (this.pendingSince ?? 0) >= 60) {
+        // Confirmed: new note stable for ≥60ms
+        const previousFrames = [...this.frames]
+        this.currentNoteName = frame.noteName
+        this.frames = [frame]
+        this.pendingNoteName = null
+        this.pendingSince = null
+        return {
+          type: 'NOTE_CHANGE',
+          timestamp: now,
+          noteName: frame.noteName,
+          frames: previousFrames,
+        }
+      }
+    } else {
+      // Note returned to current or signal lost: cancel pending change
+      this.pendingNoteName = null
+      this.pendingSince = null
+    }
     return null
   }
 
