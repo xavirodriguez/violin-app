@@ -17,7 +17,7 @@ describe('NoteSegmenter', () => {
     confidence: conf,
     noteName: name,
     pitchHz: 440,
-    cents: 0
+    cents: 0,
   })
 
   it('should detect onset after debounce', () => {
@@ -33,7 +33,7 @@ describe('NoteSegmenter', () => {
     const onset = segmenter.processFrame(createFrame(60, 0.03, 0.9, 'A4'))
     expect(onset?.type).toBe('ONSET')
     if (onset?.type === 'ONSET') {
-        expect(onset.noteName).toBe('A4')
+      expect(onset.noteName).toBe('A4')
     }
   })
 
@@ -63,7 +63,7 @@ describe('NoteSegmenter', () => {
     const change = segmenter.processFrame(createFrame(100, 0.03, 0.9, 'B4'))
     expect(change?.type).toBe('NOTE_CHANGE')
     if (change?.type === 'NOTE_CHANGE') {
-        expect(change.noteName).toBe('B4')
+      expect(change.noteName).toBe('B4')
     }
   })
 })

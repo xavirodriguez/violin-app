@@ -43,7 +43,7 @@ describe('useOSMDSafe', () => {
 
   const setupHook = () => {
     const { result, rerender, unmount } = renderHook(
-      ({ musicXML, options }) => useOSMDSafe(musicXML, (options as any)),
+      ({ musicXML, options }) => useOSMDSafe(musicXML, options as any),
       {
         initialProps: { musicXML: '', options: undefined },
       },
@@ -66,10 +66,13 @@ describe('useOSMDSafe', () => {
   it('should initialize correctly and render the sheet music', async () => {
     const { result, rerender } = setupHook()
     rerender({ musicXML: VALID_XML })
-    await waitFor(() => {
-      expect(result.current.isReady).toBe(true)
-      expect(result.current.error).toBe(null)
-    }, { timeout: 2000 })
+    await waitFor(
+      () => {
+        expect(result.current.isReady).toBe(true)
+        expect(result.current.error).toBe(null)
+      },
+      { timeout: 2000 },
+    )
     expect(spies.load).toHaveBeenCalledWith(VALID_XML)
     expect(spies.render).toHaveBeenCalledTimes(1)
     expect(spies.show).toHaveBeenCalledTimes(1)
