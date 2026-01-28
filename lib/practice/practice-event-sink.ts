@@ -3,7 +3,7 @@ import {
   reducePracticeEvent,
   type PracticeEvent,
 } from '@/lib/practice-core'
-import { useAnalyticsStore } from '@/lib/stores/analytics-store'
+import { useAnalyticsStore } from '@/stores/analytics-store'
 
 /**
  * A type representing the core state management functions of a Zustand store.

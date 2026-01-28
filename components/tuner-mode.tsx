@@ -28,7 +28,7 @@ export function TunerMode() {
   const currentPitch = state.kind === 'DETECTED' ? state.pitch : null
   const currentNote = state.kind === 'DETECTED' ? state.note : null
   const centsDeviation = state.kind === 'DETECTED' ? state.cents : null
-  const error = state.kind === 'ERROR' ? state.error.message : null
+  const errorMessage = state.kind === 'ERROR' ? state.error.message : null
 
   const animationFrameRef = useRef<number>(undefined)
 
@@ -95,7 +95,7 @@ export function TunerMode() {
               <AlertCircle className="text-destructive mx-auto h-16 w-16" />
               <div>
                 <h3 className="text-destructive mb-2 text-xl font-semibold">Microphone Error</h3>
-                <p className="text-muted-foreground mb-4">{error?.message ?? String(error)}</p>
+                <p className="text-muted-foreground mb-4">{errorMessage}</p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={retry} variant="default">
                     Retry
