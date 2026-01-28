@@ -36,7 +36,8 @@ export class NoteSegmenter {
   }
 
   processFrame(frame: TechniqueFrame): SegmenterEvent | null {
-    const isSignalPresent = frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
+    const isSignalPresent =
+      frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
     const isSilence = frame.rms < this.options.maxRmsSilence
 
     const now = frame.timestamp
@@ -72,7 +73,7 @@ export class NoteSegmenter {
           type: 'NOTE_CHANGE',
           timestamp: now,
           noteName: frame.noteName,
-          frames: previousFrames
+          frames: previousFrames,
         }
       }
 

@@ -8,7 +8,7 @@ import {
   ResonanceMetrics,
   RhythmMetrics,
   TransitionMetrics,
-  Observation
+  Observation,
 } from './technique-types'
 
 export class TechniqueAnalysisAgent {
@@ -30,23 +30,23 @@ export class TechniqueAnalysisAgent {
       return { settlingStdCents: 0, globalStdCents: 0, driftCentsPerSec: 0, inTuneRatio: 0 }
     }
 
-    const cents = frames.map(f => f.cents)
+    const cents = frames.map((f) => f.cents)
     const globalStd = this.calculateStdDev(cents)
 
     // Settling stability: use frames after 200ms
     const startTime = frames[0].timestamp
-    const settlingFrames = frames.filter(f => f.timestamp - startTime > 200)
-    const settlingCents = settlingFrames.length > 0 ? settlingFrames.map(f => f.cents) : cents
+    const settlingFrames = frames.filter((f) => f.timestamp - startTime > 200)
+    const settlingCents = settlingFrames.length > 0 ? settlingFrames.map((f) => f.cents) : cents
     const settlingStd = this.calculateStdDev(settlingCents)
 
     const drift = this.calculateDrift(frames)
-    const inTuneRatio = frames.filter(f => Math.abs(f.cents) < 25).length / frames.length
+    const inTuneRatio = frames.filter((f) => Math.abs(f.cents) < 25).length / frames.length
 
     return {
       settlingStdCents: settlingStd,
       globalStdCents: globalStd,
       driftCentsPerSec: drift,
-      inTuneRatio
+      inTuneRatio,
     }
   }
 
@@ -64,7 +64,10 @@ export class TechniqueAnalysisAgent {
     const std = this.calculateStdDev(detrended)
     const widthCents = std * 2.828 // peak-to-peak for sine-like wave
 
-    const { periodMs, correlation } = this.findPeriod(detrended, frames.map(f => f.timestamp))
+    const { periodMs, correlation } = this.findPeriod(
+      detrended,
+      frames.map((f) => f.timestamp),
+    )
     const rateHz = periodMs > 0 ? 1000 / periodMs : 0
     const regularity = Math.max(0, correlation)
 
@@ -79,19 +82,19 @@ export class TechniqueAnalysisAgent {
     }
 
     const startTime = frames[0].timestamp
-    const maxRms = Math.max(...frames.map(f => f.rms))
+    const maxRms = Math.max(...frames.map((f) => f.rms))
     const stableRmsThreshold = maxRms * 0.9
 
     // Attack Time
     let attackTimeMs = 0
-    const stableFrame = frames.find(f => f.rms >= stableRmsThreshold)
+    const stableFrame = frames.find((f) => f.rms >= stableRmsThreshold)
     if (stableFrame) {
       attackTimeMs = stableFrame.timestamp - startTime
     }
 
     // Pitch Scoop: First 100ms vs frames after 200ms (stable)
-    const earlyFrames = frames.filter(f => f.timestamp - startTime <= 100)
-    const stableFrames = frames.filter(f => f.timestamp - startTime > 200)
+    const earlyFrames = frames.filter((f) => f.timestamp - startTime <= 100)
+    const stableFrames = frames.filter((f) => f.timestamp - startTime > 200)
 
     let pitchScoopCents = 0
     if (earlyFrames.length > 0 && stableFrames.length > 0) {
@@ -102,15 +105,14 @@ export class TechniqueAnalysisAgent {
 
     // Release Stability: Last 100ms
     const endTime = frames[frames.length - 1].timestamp
-    const lateFrames = frames.filter(f => endTime - f.timestamp <= 100)
-    const releaseStability = lateFrames.length > 0
-      ? this.calculateStdDev(lateFrames.map(f => f.cents))
-      : 0
+    const lateFrames = frames.filter((f) => endTime - f.timestamp <= 100)
+    const releaseStability =
+      lateFrames.length > 0 ? this.calculateStdDev(lateFrames.map((f) => f.cents)) : 0
 
     return {
       attackTimeMs,
       pitchScoopCents,
-      releaseStability
+      releaseStability,
     }
   }
 
@@ -119,15 +121,19 @@ export class TechniqueAnalysisAgent {
       return { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 }
     }
 
-    const highRmsFrames = frames.filter(f => f.rms > 0.02)
-    const lowConfRatio = highRmsFrames.length > 0
-      ? highRmsFrames.filter(f => f.confidence < 0.6).length / highRmsFrames.length
-      : 0
+    const highRmsFrames = frames.filter((f) => f.rms > 0.02)
+    const lowConfRatio =
+      highRmsFrames.length > 0
+        ? highRmsFrames.filter((f) => f.confidence < 0.6).length / highRmsFrames.length
+        : 0
 
-    const rmsValues = frames.map(f => f.rms)
+    const rmsValues = frames.map((f) => f.rms)
     const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
-    const detrendedRms = rmsValues.map(v => v - meanRms)
-    const { correlation: rmsBeatingScore } = this.findPeriod(detrendedRms, frames.map(f => f.timestamp))
+    const detrendedRms = rmsValues.map((v) => v - meanRms)
+    const { correlation: rmsBeatingScore } = this.findPeriod(
+      detrendedRms,
+      frames.map((f) => f.timestamp),
+    )
 
     const detrendedCents = this.detrend(frames)
     const pitchChaosScore = this.calculateStdDev(detrendedCents)
@@ -138,53 +144,58 @@ export class TechniqueAnalysisAgent {
       suspectedWolf,
       rmsBeatingScore: Math.max(0, rmsBeatingScore),
       pitchChaosScore,
-      lowConfRatio
+      lowConfRatio,
     }
   }
 
   private calculateRhythm(segment: NoteSegment): RhythmMetrics {
-    const onsetErrorMs = segment.expectedStartTime !== undefined
-      ? segment.startTime - segment.expectedStartTime
-      : 0
+    const onsetErrorMs =
+      segment.expectedStartTime !== undefined ? segment.startTime - segment.expectedStartTime : 0
 
-    const durationErrorMs = segment.expectedDuration !== undefined
-      ? (segment.endTime - segment.startTime) - segment.expectedDuration
-      : undefined
+    const durationErrorMs =
+      segment.expectedDuration !== undefined
+        ? segment.endTime - segment.startTime - segment.expectedDuration
+        : undefined
 
     return {
       onsetErrorMs,
-      durationErrorMs
+      durationErrorMs,
     }
   }
 
-  private calculateTransition(gapFrames: TechniqueFrame[], currentFrames: TechniqueFrame[]): TransitionMetrics {
+  private calculateTransition(
+    gapFrames: TechniqueFrame[],
+    currentFrames: TechniqueFrame[],
+  ): TransitionMetrics {
     if (currentFrames.length === 0) {
       return { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 }
     }
 
-    const transitionTimeMs = gapFrames.length > 0
-      ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp
-      : 0
+    const transitionTimeMs =
+      gapFrames.length > 0 ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp : 0
 
     let glissAmountCents = 0
     if (gapFrames.length > 1) {
-      const cents = gapFrames.filter(f => f.pitchHz > 0).map(f => f.cents)
+      const cents = gapFrames.filter((f) => f.pitchHz > 0).map((f) => f.cents)
       if (cents.length > 1) {
         glissAmountCents = Math.max(...cents) - Math.min(...cents)
       }
     }
 
     const startTime = currentFrames[0].timestamp
-    const landingFrames = currentFrames.filter(f => f.timestamp - startTime <= 200)
-    const landingErrorCents = landingFrames.length > 0
-      ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
-      : 0
+    const landingFrames = currentFrames.filter((f) => f.timestamp - startTime <= 200)
+    const landingErrorCents =
+      landingFrames.length > 0
+        ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
+        : 0
 
     let correctionCount = 0
-    const correctionFrames = currentFrames.filter(f => f.timestamp - startTime <= 300)
+    const correctionFrames = currentFrames.filter((f) => f.timestamp - startTime <= 300)
     for (let i = 1; i < correctionFrames.length; i++) {
-      if ((correctionFrames[i-1].cents > 0 && correctionFrames[i].cents < 0) ||
-          (correctionFrames[i-1].cents < 0 && correctionFrames[i].cents > 0)) {
+      if (
+        (correctionFrames[i - 1].cents > 0 && correctionFrames[i].cents < 0) ||
+        (correctionFrames[i - 1].cents < 0 && correctionFrames[i].cents > 0)
+      ) {
         correctionCount++
       }
     }
@@ -193,7 +204,7 @@ export class TechniqueAnalysisAgent {
       transitionTimeMs,
       glissAmountCents,
       landingErrorCents,
-      correctionCount
+      correctionCount,
     }
   }
 
@@ -201,81 +212,85 @@ export class TechniqueAnalysisAgent {
     const observations: Observation[] = []
 
     if (Math.abs(technique.pitchStability.driftCentsPerSec) > 15) {
-       observations.push({
-         type: 'stability',
-         severity: 2,
-         confidence: 0.9,
-         message: technique.pitchStability.driftCentsPerSec > 0 ? 'Pitch is drifting sharp' : 'Pitch is drifting flat',
-         tip: 'Maintain consistent finger pressure and bow speed.'
-       })
+      observations.push({
+        type: 'stability',
+        severity: 2,
+        confidence: 0.9,
+        message:
+          technique.pitchStability.driftCentsPerSec > 0
+            ? 'Pitch is drifting sharp'
+            : 'Pitch is drifting flat',
+        tip: 'Maintain consistent finger pressure and bow speed.',
+      })
     }
 
     if (technique.vibrato.present) {
-       if (technique.vibrato.rateHz < 4.5) {
-          observations.push({
-            type: 'vibrato',
-            severity: 1,
-            confidence: 0.8,
-            message: 'Slow vibrato detected',
-            tip: 'Try to slightly increase the speed of your hand oscillation.'
-          })
-       } else if (technique.vibrato.widthCents > 35) {
-          observations.push({
-            type: 'vibrato',
-            severity: 1,
-            confidence: 0.8,
-            message: 'Wide vibrato detected',
-            tip: 'Focus on a narrower, more controlled oscillation.'
-          })
-       }
+      if (technique.vibrato.rateHz < 4.5) {
+        observations.push({
+          type: 'vibrato',
+          severity: 1,
+          confidence: 0.8,
+          message: 'Slow vibrato detected',
+          tip: 'Try to slightly increase the speed of your hand oscillation.',
+        })
+      } else if (technique.vibrato.widthCents > 35) {
+        observations.push({
+          type: 'vibrato',
+          severity: 1,
+          confidence: 0.8,
+          message: 'Wide vibrato detected',
+          tip: 'Focus on a narrower, more controlled oscillation.',
+        })
+      }
     } else if (technique.vibrato.widthCents > 5 && technique.vibrato.regularity < 0.4) {
-       observations.push({
-            type: 'vibrato',
-            severity: 2,
-            confidence: 0.7,
-            message: 'Inconsistent vibrato',
-            tip: 'Focus on a regular, relaxed movement of the wrist or arm.'
-       })
+      observations.push({
+        type: 'vibrato',
+        severity: 2,
+        confidence: 0.7,
+        message: 'Inconsistent vibrato',
+        tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
+      })
     }
 
     if (technique.attackRelease.attackTimeMs > 250) {
-       observations.push({
-         type: 'attack',
-         severity: 1,
-         confidence: 0.9,
-         message: 'Slow note attack',
-         tip: 'Start the note with more clarity and deliberate bow contact.'
-       })
+      observations.push({
+        type: 'attack',
+        severity: 1,
+        confidence: 0.9,
+        message: 'Slow note attack',
+        tip: 'Start the note with more clarity and deliberate bow contact.',
+      })
     }
 
     if (Math.abs(technique.attackRelease.pitchScoopCents) > 15) {
-       observations.push({
-         type: 'attack',
-         severity: 2,
-         confidence: 0.8,
-         message: technique.attackRelease.pitchScoopCents < 0 ? 'Pitch scoops up' : 'Pitch drops down',
-         tip: 'Ensure your finger is accurately placed before starting the bow.'
-       })
+      observations.push({
+        type: 'attack',
+        severity: 2,
+        confidence: 0.8,
+        message:
+          technique.attackRelease.pitchScoopCents < 0 ? 'Pitch scoops up' : 'Pitch drops down',
+        tip: 'Ensure your finger is accurately placed before starting the bow.',
+      })
     }
 
     if (technique.transition.glissAmountCents > 60 && technique.transition.transitionTimeMs > 100) {
-       observations.push({
-         type: 'transition',
-         severity: 2,
-         confidence: 0.8,
-         message: 'Audible glissando',
-         tip: 'Move your hand more quickly between positions for a cleaner transition.'
-       })
+      observations.push({
+        type: 'transition',
+        severity: 2,
+        confidence: 0.8,
+        message: 'Audible glissando',
+        tip: 'Move your hand more quickly between positions for a cleaner transition.',
+      })
     }
 
     if (technique.resonance.suspectedWolf) {
-       observations.push({
-         type: 'resonance',
-         severity: 2,
-         confidence: 0.6,
-         message: 'Tone instability detected',
-         tip: 'Adjust your bow pressure or contact point to stabilize the resonance.'
-       })
+      observations.push({
+        type: 'resonance',
+        severity: 2,
+        confidence: 0.6,
+        message: 'Tone instability detected',
+        tip: 'Adjust your bow pressure or contact point to stabilize the resonance.',
+      })
     }
 
     return observations
@@ -284,7 +299,7 @@ export class TechniqueAnalysisAgent {
   private calculateStdDev(values: number[]): number {
     if (values.length === 0) return 0
     const mean = values.reduce((a, b) => a + b) / values.length
-    const squareDiffs = values.map(v => (v - mean) ** 2)
+    const squareDiffs = values.map((v) => (v - mean) ** 2)
     const avgSquareDiff = squareDiffs.reduce((a, b) => a + b) / values.length
     return Math.sqrt(avgSquareDiff)
   }
@@ -308,7 +323,7 @@ export class TechniqueAnalysisAgent {
       sumXX += x * x
     }
 
-    const denominator = (n * sumXX - sumX * sumX)
+    const denominator = n * sumXX - sumX * sumX
     if (Math.abs(denominator) < 1e-10) return 0
 
     const slope = (n * sumXY - sumX * sumY) / denominator
@@ -334,17 +349,20 @@ export class TechniqueAnalysisAgent {
       sumXX += x * x
     }
 
-    const denominator = (n * sumXX - sumX * sumX)
+    const denominator = n * sumXX - sumX * sumX
     const slope = Math.abs(denominator) < 1e-10 ? 0 : (n * sumXY - sumX * sumY) / denominator
     const intercept = (sumY - slope * sumX) / n
 
-    return frames.map(f => {
+    return frames.map((f) => {
       const x = (f.timestamp - startTime) / 1000
       return f.cents - (intercept + slope * x)
     })
   }
 
-  private findPeriod(values: number[], timestamps: number[]): { periodMs: number, correlation: number } {
+  private findPeriod(
+    values: number[],
+    timestamps: number[],
+  ): { periodMs: number; correlation: number } {
     let bestCorrelation = -1
     let bestPeriodMs = 0
 
