@@ -7,7 +7,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useTunerStore } from '@/lib/stores/tuner-store'
+import { useTunerStore } from '@/stores/tuner-store'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Mic, MicOff, AlertCircle } from 'lucide-react'
@@ -45,7 +45,7 @@ export function TunerMode() {
     updatePitch,
   } = useTunerStore()
 
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   // Audio analysis loop
   useEffect(() => {
@@ -113,7 +113,7 @@ export function TunerMode() {
               <AlertCircle className="text-destructive mx-auto h-16 w-16" />
               <div>
                 <h3 className="text-destructive mb-2 text-xl font-semibold">Microphone Error</h3>
-                <p className="text-muted-foreground mb-4">{error}</p>
+                <p className="text-muted-foreground mb-4">{error?.message ?? String(error)}</p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={retry} variant="default">
                     Retry
@@ -130,7 +130,7 @@ export function TunerMode() {
             <div className="space-y-6">
               <ViolinFingerboard
                 targetNote={currentNote}
-                detectedPitch={currentPitch}
+                detectedPitchName={currentNote ?? undefined}
                 centsDeviation={centsDeviation}
                 isInTune={confidence > 0.85 && Math.abs(centsDeviation || 0) <= 10}
               />

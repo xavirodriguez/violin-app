@@ -65,11 +65,14 @@ describe('useOSMDSafe', () => {
 
   it('should initialize correctly and render the sheet music', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
-    await waitFor(() => {
-      expect(result.current.isReady).toBe(true)
-      expect(result.current.error).toBe(null)
-    }, { timeout: 2000 })
+    rerender({ musicXML: VALID_XML, options: undefined })
+    await waitFor(
+      () => {
+        expect(result.current.isReady).toBe(true)
+        expect(result.current.error).toBe(null)
+      },
+      { timeout: 2000 },
+    )
     expect(spies.load).toHaveBeenCalledWith(VALID_XML)
     expect(spies.render).toHaveBeenCalledTimes(1)
     expect(spies.show).toHaveBeenCalledTimes(1)
@@ -79,7 +82,7 @@ describe('useOSMDSafe', () => {
     const errorMessage = 'Failed to load music XML'
     spies.load.mockRejectedValue(new Error(errorMessage))
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => {
       expect(result.current.isReady).toBe(false)
       expect(result.current.error).toBe(errorMessage)
@@ -89,7 +92,7 @@ describe('useOSMDSafe', () => {
 
   it('should call cursor methods correctly', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(result.current.isReady).toBe(true))
     act(() => result.current.advanceCursor())
     expect(spies.next).toHaveBeenCalledTimes(1)
@@ -100,7 +103,7 @@ describe('useOSMDSafe', () => {
 
   it('should clean up the OSMD instance on unmount', async () => {
     const { unmount, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(spies.render).toHaveBeenCalledTimes(1))
     unmount()
     expect(spies.clear).toHaveBeenCalledTimes(1)
@@ -108,10 +111,10 @@ describe('useOSMDSafe', () => {
 
   it('should clear and re-render when musicXML changes', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(spies.render).toHaveBeenCalledTimes(1))
     expect(spies.load).toHaveBeenCalledWith(VALID_XML)
-    rerender({ musicXML: NEW_XML })
+    rerender({ musicXML: NEW_XML, options: undefined })
     await waitFor(() => {
       expect(spies.clear).toHaveBeenCalledTimes(1)
       expect(spies.render).toHaveBeenCalledTimes(2)

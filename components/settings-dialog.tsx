@@ -6,7 +6,7 @@
 'use client'
 
 import { FC, useEffect } from 'react'
-import { useTunerStore } from '@/lib/stores/tuner-store'
+import { useTunerStore } from '@/stores/tuner-store'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,

@@ -1,4 +1,5 @@
-/* @type {import('dependency-cruiser').IConfiguration} */
+/* global module, __dirname */
+/** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
     {

@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useAnalyticsStore, PracticeSession, Achievement } from '@/lib/stores/analytics-store'
+import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 /**

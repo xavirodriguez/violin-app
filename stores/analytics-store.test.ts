@@ -84,7 +84,7 @@ describe('useAnalyticsStore', () => {
   it('should migrate data from version 0/1 to 2', () => {
     // This is a bit tricky to test because it's in the persist config
     // We can manually call the migrate function if we export it or get it from the store
-    const storeOptions = (useAnalyticsStore as any).persist.getOptions()
+    const storeOptions = (useAnalyticsStore as unknown).persist.getOptions()
     const migrate = storeOptions.migrate
 
     const oldData = {

@@ -98,6 +98,9 @@ export class AppError extends Error {
  * @param context - Additional key-value pairs to attach for debugging.
  * @returns A standardized `AppError` instance.
  */
+/**
+ * @public
+ */
 export function toAppError(
   err: unknown,
   fallbackCode: ErrorCode = ERROR_CODES.UNKNOWN,

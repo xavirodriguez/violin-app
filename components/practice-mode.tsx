@@ -8,7 +8,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { usePracticeStore } from '@/lib/stores/practice-store'
+import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -201,7 +201,7 @@ export function PracticeMode() {
           </Card>
         )}
 
-        {status === 'listening' && targetNote && (
+        {status === 'listening' && targetNote && practiceState && (
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="p-6">
               <PracticeFeedback

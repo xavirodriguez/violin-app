@@ -7,8 +7,8 @@
 /** Represents the base name of a musical pitch. */
 export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 
-/** Represents a pitch alteration: '#' for sharp, 'b' for flat, or null for natural. */
-export type Accidental = '#' | 'b' | null
+/** Represents a pitch alteration: -2 (bb), -1 (b), 0 (natural), 1 (#), 2 (##). */
+export type Accidental = -2 | -1 | 0 | 1 | 2
 
 /**
  * Represents a specific note on the musical staff.
@@ -24,8 +24,9 @@ export interface Pitch {
 
 /**
  * Represents the rhythmic duration of a note in standard musical notation.
+ * 1 = Whole, 2 = Half, 4 = Quarter, 8 = Eighth, 16 = 16th, 32 = 32nd.
  */
-export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | '16th' | '32nd'
+export type NoteDuration = 1 | 2 | 4 | 8 | 16 | 32
 
 /**
  * Represents a single musical note with its pitch and rhythmic duration.
