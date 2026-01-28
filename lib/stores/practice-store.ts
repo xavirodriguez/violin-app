@@ -17,6 +17,7 @@ import type { Exercise } from '@/lib/exercises/types'
 // The AbortController is stored in the closure of the store, not in the Zustand
 // state itself, as it's not a piece of data we want to serialize or subscribe to.
 let practiceLoopController: AbortController | null = null
+let sessionId = 0
 
 /**
  * Interface representing the state and actions of the practice store.
@@ -31,10 +32,10 @@ interface PracticeStore {
   analyser: AnalyserNode | null
   mediaStream: MediaStream | null
   detector: PitchDetector | null
-  loadExercise: (exercise: Exercise) => void
+  loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
-  reset: () => void
+  reset: () => Promise<void>
 }
 
 const getInitialState = (exercise: Exercise): PracticeState => ({
@@ -52,20 +53,38 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   mediaStream: null,
   detector: null,
 
+  /**
+   * @remarks
+   * This is a derived value. Using it directly in a component will cause the component
+   * to re-render on any state change. For performance-critical components, prefer
+   * a selector with `useShallow`.
+   */
   get currentNoteIndex() {
     return get().practiceState?.currentIndex ?? 0
   },
+  /**
+   * @remarks
+   * This is a derived value. Using it directly in a component will cause the component
+   * to re-render on any state change. For performance-critical components, prefer
+   * a selector with `useShallow`.
+   */
   get targetNote() {
     const state = get().practiceState
     if (!state) return null
     return state.exercise.notes[state.currentIndex] ?? null
   },
+  /**
+   * @remarks
+   * This is a derived value. Using it directly in a component will cause the component
+   * to re-render on any state change. For performance-critical components, prefer
+   * a selector with `useShallow`.
+   */
   get status() {
     return get().practiceState?.status ?? 'idle'
   },
 
-  loadExercise: (exercise) => {
-    void get().stop()
+  loadExercise: async (exercise) => {
+    await get().stop()
     set({
       practiceState: getInitialState(exercise),
       error: null,
@@ -81,6 +100,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     await get().stop()
 
+    sessionId += 1
     practiceLoopController = new AbortController()
     const signal = practiceLoopController.signal
 
@@ -98,9 +118,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       set({ practiceState: listeningState })
 
       const sessionStartTime = Date.now()
-      useAnalyticsStore
-        .getState()
-        .startSession(listeningState.exercise.id, listeningState.exercise.name, 'practice')
+      // Analytics and the pipeline should be initialized with the definitive state *after* the START event.
+      const { exercise } = get().practiceState!
+      useAnalyticsStore.getState().startSession(exercise.id, exercise.name, 'practice')
 
       const rawPitchStream = createRawPitchStream(analyser, detector, () => !signal.aborted)
       const practiceEventPipeline = createPracticeEventPipeline(
@@ -108,7 +128,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         () => get().targetNote,
         () => get().currentNoteIndex,
         {
-          exercise: listeningState.exercise,
+          exercise,
           sessionStartTime,
           bpm: 60,
         },
@@ -116,11 +136,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
       ;(async () => {
         const localController = practiceLoopController
+        const localSessionId = sessionId
         let lastDispatchedNoteIndex = -1
         let currentNoteStartedAt = Date.now()
 
         for await (const event of practiceEventPipeline) {
-          if (signal.aborted || practiceLoopController !== localController) break
+          if (practiceLoopController !== localController || sessionId !== localSessionId) break
 
           const currentState = get().practiceState
           if (!currentState) continue
@@ -145,12 +166,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           handlePracticeEvent(event, { getState: get, setState: set }, () => void get().stop())
         }
       })().catch((err) => {
-        const isAbortError = err instanceof Error && err.name === 'AbortError'
-        if (!isAbortError) {
+        // AbortErrors are expected during normal operation (e.g., calling stop), so we don't treat them as errors.
+        const name = err instanceof Error ? err.name : ''
+        if (name !== 'AbortError') {
           set({
             error: err instanceof Error ? err.message : 'An unexpected error occurred in the practice loop.',
           })
         }
+        // Always ensure cleanup happens, even if the error was just an abort.
         void get().stop()
       })
     } catch (err) {
@@ -160,6 +183,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   stop: async () => {
+    if (get().practiceState?.status === 'idle') {
+      return
+    }
     if (practiceLoopController) {
       practiceLoopController.abort()
       practiceLoopController = null
@@ -188,8 +214,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     })
   },
 
-  reset: () => {
-    void get().stop()
+  reset: async () => {
+    await get().stop()
     set({ practiceState: null, error: null })
   },
 }))
