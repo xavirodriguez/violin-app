@@ -23,9 +23,9 @@ type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
  *
  * @remarks
  * State machine:
- * - `IDLE` -\> `INITIALIZING` -\> `READY` when `initialize()` is called.
- * - `READY` -\> `LISTENING` when `startListening()` is called.
- * - `LISTENING` \<-\> `DETECTED` based on whether a clear pitch is found.
+ * - `IDLE` -> `INITIALIZING` -> `READY` when `initialize()` is called.
+ * - `READY` -> `LISTENING` when `startListening()` is called.
+ * - `LISTENING` <-> `DETECTED` based on whether a clear pitch is found.
  *
  * Error handling:
  * - Errors during initialization transition the state to `ERROR`.
@@ -52,7 +52,7 @@ interface TunerStore {
 
   /**
    * Confidence level of the pitch detection (0 to 1).
-   * Typically \> 0.85 is considered a reliable signal.
+   * Typically > 0.85 is considered a reliable signal.
    */
   confidence: number
 
@@ -83,7 +83,7 @@ interface TunerStore {
 
   /**
    * Input sensitivity (0 to 100).
-   * Maps to gain: 0 -\> 0x, 50 -\> 1x, 100 -\> 2x.
+   * Maps to gain: 0 -> 0x, 50 -> 1x, 100 -> 2x.
    */
   sensitivity: number
 
@@ -99,7 +99,7 @@ interface TunerStore {
   retry: () => Promise<void>
 
   /** Stops all audio processing and releases resources. */
-  reset: () => void
+  reset: () => Promise<void>
 
   /**
    * Updates the detected pitch and note based on new analysis results.
@@ -123,7 +123,7 @@ interface TunerStore {
   loadDevices: () => Promise<void>
 
   /** Sets the active microphone device and re-initializes. */
-  setDeviceId: (deviceId: string) => void
+  setDeviceId: (deviceId: string) => Promise<void>
 
   /**
    * Sets the input sensitivity and updates the gain node immediately.
@@ -199,6 +199,13 @@ export const useTunerStore = create<TunerStore>((set, get) => {
 
         const detector = new PitchDetector(context.sampleRate)
 
+        if (token !== initToken) {
+          logger.log('Initialization successful, but a new session has started. Discarding.')
+          stream.getTracks().forEach((track) => track.stop())
+          void context.close()
+          return
+        }
+
         set({
           state: 'READY',
           permissionState: 'GRANTED',
@@ -217,6 +224,12 @@ export const useTunerStore = create<TunerStore>((set, get) => {
           err: appError,
           context: { deviceId },
         })
+
+        if (token !== initToken) {
+          logger.log('Initialization failed, but a new session has already started.')
+          return
+        }
+
         set({
           state: 'ERROR',
           permissionState: appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT',
@@ -226,18 +239,20 @@ export const useTunerStore = create<TunerStore>((set, get) => {
     },
 
     retry: async () => {
-      const { reset, initialize } = get()
-      await reset()
-      await initialize()
+      await get().reset()
+      await get().initialize()
     },
 
     reset: async () => {
-      initToken++
+      initToken++ // Invalidate any in-flight initializations
       const { mediaStream, audioContext, gainNode, source, analyser } = get()
 
+      // 1. Stop media stream tracks
       if (mediaStream) {
         mediaStream.getTracks().forEach((track) => track.stop())
       }
+
+      // 2. Disconnect all audio nodes
       if (source) {
         source.disconnect()
       }
@@ -247,10 +262,13 @@ export const useTunerStore = create<TunerStore>((set, get) => {
       if (analyser) {
         analyser.disconnect()
       }
+
+      // 3. Close the AudioContext
       if (audioContext && audioContext.state !== 'closed') {
         await audioContext.close()
       }
 
+      // 4. Reset state, but preserve devices and deviceId
       set({
         state: 'IDLE',
         error: null,
@@ -292,6 +310,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
             err: _err,
             context: { pitch },
           })
+          // On error, revert to listening state without valid pitch
           set({
             state: 'LISTENING',
             currentPitch: null,
@@ -301,6 +320,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
           })
         }
       } else {
+        // If signal is lost, transition back to LISTENING
         set({
           state: 'LISTENING',
           currentPitch: null,
@@ -336,13 +356,11 @@ export const useTunerStore = create<TunerStore>((set, get) => {
     },
 
     loadDevices: async () => {
-      const { permissionState, initialize, reset } = get()
-
       // To get device labels, we need microphone permission. If we haven't asked yet,
       // we can trigger the prompt by doing a quick initialize/reset cycle.
-      if (permissionState === 'PROMPT' && get().state === 'IDLE') {
-        await initialize()
-        await reset()
+      if (get().permissionState === 'PROMPT' && get().state === 'IDLE') {
+        await get().initialize()
+        await get().reset()
       }
 
       try {
@@ -357,10 +375,10 @@ export const useTunerStore = create<TunerStore>((set, get) => {
     setDeviceId: async (deviceId: string) => {
       set({ deviceId })
       // Re-initialize to apply the new device
-      const { state, reset, initialize } = get()
+      const { state } = get()
       if (state !== 'IDLE' && state !== 'ERROR') {
-        await reset()
-        await initialize()
+        await get().reset()
+        await get().initialize()
       }
     },
 
