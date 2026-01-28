@@ -38,7 +38,8 @@ const WIDE_DEVIATION_THRESHOLD_CENTS = 25
 /**
  * Internal component to render specific pedagogical feedback about intonation.
  */
-function IntonationFeedback({ centsOff }: { centsOff: number }) {
+function IntonationFeedback({ centsOff }: { centsOff: number | null | undefined }) {
+  if (centsOff === null || centsOff === undefined) return null
   const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
 
   if (centsOff > 10) {
@@ -127,8 +128,14 @@ export function PracticeFeedback({
 
       {/* Status Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {status === 'listening' && !detectedPitchName && (
+        {status === 'listening' && (
           <div className="text-muted-foreground flex items-center gap-2">
+            {!detectedPitchName && (
+              <>
+                <Circle className="h-5 w-5" />
+                <span>Listening...</span>
+              </>
+            )}
             {detectedPitchName && targetNote !== detectedPitchName && (
               <div className="text-center">
                 <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
@@ -142,11 +149,6 @@ export function PracticeFeedback({
             {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
-        {status === 'listening' &&
-          detectedPitchName &&
-          !isInTune &&
-          centsOff !== null &&
-          centsOff !== undefined && <IntonationFeedback centsOff={centsOff} />}
         {status === 'validating' && (
           <div className="w-full max-w-xs text-center">
             <div className="text-primary mb-2 flex items-center justify-center gap-2">

@@ -1,5 +1,5 @@
 /**
- * @vitest-environment jsdom
+ * \@vitest-environment jsdom
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -23,6 +23,8 @@ const getInitialState = (
   exercise: mockExercise,
   currentIndex,
   detectionHistory: [],
+  holdDuration: 0,
+  requiredHoldTime: 500,
 })
 
 describe('reducePracticeEvent', () => {
@@ -300,6 +302,7 @@ describe('isMatch', () => {
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
+    // @ts-expect-error - testing invalid data
     const invalidTarget: TargetNote = {
       pitch: { step: 'C', octave: 4, alter: 7 as any },
       duration: 'quarter',

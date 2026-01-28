@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { NoteTechnique } from '../technique-types'
+import { NoteTechnique } from '../lib/technique-types'
 
 // Data Models
 interface Note {
@@ -336,8 +336,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     }),
     {
       name: 'violin-analytics',
+<<<<<<< HEAD:lib/stores/analytics-store.ts
       version: 3,
       migrate: (persisted: any, version: number) => {
+=======
+      version: 2,
+      migrate: (persisted: unknown) => {
+>>>>>>> main:stores/analytics-store.ts
         if (!persisted) return persisted
         if (version < 3) {
           if (Array.isArray(persisted.sessions)) {
@@ -369,7 +374,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         }
 
         const sessions = Array.isArray(persisted.sessions)
-          ? persisted.sessions.map((s: any) => {
+          ? persisted.sessions.map((s: unknown) => {
               const { startTime, endTime, ...rest } = s || {}
               return {
                 ...rest,
@@ -381,7 +386,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         const progress = persisted.progress || {}
         const achievements = Array.isArray(progress.achievements)
-          ? progress.achievements.map((a: any) => {
+          ? progress.achievements.map((a: unknown) => {
               const { unlockedAt, ...rest } = a || {}
               return {
                 ...rest,
@@ -392,7 +397,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         const exerciseStats = progress.exerciseStats || {}
         const migratedExerciseStats = Object.fromEntries(
-          Object.entries(exerciseStats).map(([k, v]: [string, any]) => {
+          Object.entries(exerciseStats).map(([k, v]: [string, unknown]) => {
             const { lastPracticed, ...rest } = v || {}
             return [
               k,

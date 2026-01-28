@@ -59,7 +59,7 @@ interface TunerStore {
 
   /**
    * Input sensitivity (0 to 100).
-   * Maps to gain: 0 -> 0x, 50 -> 1x, 100 -> 2x.
+   * Maps to gain: 0 -\> 0x, 50 -\> 1x, 100 -\> 2x.
    */
   sensitivity: number
 

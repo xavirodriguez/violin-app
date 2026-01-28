@@ -4,12 +4,19 @@
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
  */
 
+<<<<<<< HEAD
 import { NoteTechnique, Observation } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { FixedRingBuffer } from './domain/data-structures'
 import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 
 export type { TargetNote }
+=======
+// Use the actual Note type from the exercise definitions as our TargetNote.
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+export type { Note as TargetNote } from '@/lib/exercises/types'
+import { NoteTechnique, Observation } from './technique-types'
+>>>>>>> main
 
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
@@ -165,9 +172,32 @@ export type PracticeEvent =
 export function formatPitchName(pitch: TargetNote['pitch']): string {
   const canonicalAlter = normalizeAccidental(pitch.alter)
   let alterStr = ''
+<<<<<<< HEAD
   if (canonicalAlter === 1) alterStr = '#'
   else if (canonicalAlter === -1) alterStr = 'b'
 
+=======
+  switch (pitch.alter) {
+    case 1:
+      alterStr = '#'
+      break
+    case -1:
+      alterStr = 'b'
+      break
+    case 2:
+      alterStr = '##'
+      break
+    case -2:
+      alterStr = 'bb'
+      break
+    case 0:
+      alterStr = ''
+      break
+    default:
+      // @ts-expect-error - handling potential runtime data errors
+      throw new Error(`Unsupported alter value: ${pitch.alter}`)
+  }
+>>>>>>> main
   return `${pitch.step}${alterStr}${pitch.octave}`
 }
 
@@ -191,6 +221,7 @@ export function isMatch(
     return false
   }
 
+<<<<<<< HEAD
   const h: MatchHysteresis =
     typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
 
@@ -206,6 +237,14 @@ export function isMatch(
   } catch (error) {
     throw error
   }
+=======
+  const targetPitchName = formatPitchName(target.pitch)
+  const targetNote = MusicalNote.fromName(targetPitchName)
+  const detectedNote = MusicalNote.fromName(detected.pitch)
+  const isPitchMatch = targetNote.isEnharmonic(detectedNote)
+  const isInTune = Math.abs(detected.cents) < centsTolerance
+  return isPitchMatch && isInTune
+>>>>>>> main
 }
 
 /**

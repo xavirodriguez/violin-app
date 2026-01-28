@@ -6,12 +6,16 @@
  */
 
 import { create } from 'zustand'
-import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
+import { type PracticeState, reducePracticeEvent, formatPitchName } from '@/lib/practice-core'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
+<<<<<<< HEAD:lib/stores/practice-store.ts
 import { handlePracticeEvent } from '../practice/practice-event-sink'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
+=======
+import { handlePracticeEvent } from '../lib/practice/practice-event-sink'
+>>>>>>> main:stores/practice-store.ts
 
 import type { Exercise } from '@/lib/exercises/types'
 
@@ -151,7 +155,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
             if (noteIndex !== lastDispatchedNoteIndex) {
               const timeToComplete = Date.now() - currentNoteStartedAt
               const analytics = useAnalyticsStore.getState()
-              const targetPitch = `${target.pitch.step}${target.pitch.alter || ''}${target.pitch.octave}`
+              const targetPitch = formatPitchName(target.pitch)
 
               analytics.recordNoteAttempt(noteIndex, targetPitch, 0, true)
               analytics.recordNoteCompletion(noteIndex, timeToComplete, event.payload?.technique)

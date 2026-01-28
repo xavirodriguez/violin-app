@@ -5,12 +5,12 @@ import type { NoteDuration, Pitch, PitchName } from './types'
 import { normalizeAccidental } from '../domain/musical-domain'
 
 const DURATION_BEATS: Record<NoteDuration, number> = {
-  whole: 4,
-  half: 2,
-  quarter: 1,
-  eighth: 0.5,
-  '16th': 0.25,
-  '32nd': 0.125,
+  1: 4,
+  2: 2,
+  4: 1,
+  8: 0.5,
+  16: 0.25,
+  32: 0.125,
 }
 
 /**
@@ -31,6 +31,10 @@ export const parsePitch = (pitchString: string): Pitch => {
   }
 
   const [, step, alter, octave] = match
+
+  let alterNum: Accidental = 0
+  if (alter === '#') alterNum = 1
+  else if (alter === 'b') alterNum = -1
 
   return {
     step: step as PitchName,
