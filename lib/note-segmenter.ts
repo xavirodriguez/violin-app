@@ -32,6 +32,10 @@ export class NoteSegmenter {
   private lastBelowThresholdTime: number | null = null
   private lastSignalTime: number | null = null
 
+  // NOTE_CHANGE debouncing: prevents false note changes from momentary pitch flicker
+  private pendingNoteName: string | null = null
+  private pendingSince: number | null = null
+
   constructor(options: Partial<SegmenterOptions> = {}) {
     this.options = { ...defaultOptions, ...options }
   }
@@ -67,17 +71,29 @@ export class NoteSegmenter {
       // state === 'NOTE'
       this.frames.push(frame)
 
-      // Check for note change: requires stable signal on the NEW note
+      // Check for note change with temporal debouncing
       if (isSignalPresent && frame.noteName !== this.currentNoteName) {
-        const previousFrames = [...this.frames]
-        this.currentNoteName = frame.noteName
-        this.frames = [frame]
-        return {
-          type: 'NOTE_CHANGE',
-          timestamp: now,
-          noteName: frame.noteName,
-          frames: previousFrames,
+        if (!this.pendingNoteName) {
+          this.pendingNoteName = frame.noteName
+          this.pendingSince = now
+        } else if (this.pendingNoteName === frame.noteName && now - (this.pendingSince ?? 0) >= 60) {
+          // Confirmed: new note stable for ≥60ms
+          const previousFrames = [...this.frames]
+          this.currentNoteName = frame.noteName
+          this.frames = [frame]
+          this.pendingNoteName = null
+          this.pendingSince = null
+          return {
+            type: 'NOTE_CHANGE',
+            timestamp: now,
+            noteName: frame.noteName,
+            frames: previousFrames,
+          }
         }
+      } else {
+        // Note returned to current or signal lost: cancel pending change
+        this.pendingNoteName = null
+        this.pendingSince = null
       }
 
       if (isSilence || !isSignalPresent) {
@@ -108,5 +124,7 @@ export class NoteSegmenter {
     this.gapFrames = []
     this.lastAboveThresholdTime = null
     this.lastBelowThresholdTime = null
+    this.pendingNoteName = null
+    this.pendingSince = null
   }
 }

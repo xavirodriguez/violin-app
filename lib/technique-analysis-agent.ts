@@ -8,7 +8,7 @@ import {
   ResonanceMetrics,
   RhythmMetrics,
   TransitionMetrics,
-  Observation,
+  Observation
 } from './technique-types'
 
 export interface AnalysisOptions {
@@ -87,6 +87,14 @@ export class TechniqueAnalysisAgent {
       return { present: false, rateHz: 0, widthCents: 0, regularity: 0 }
     }
 
+    // CRITICAL: Gate vibrato detection by pitch stability
+    // True vibrato oscillates around a stable center (stdDev < 40 cents)
+    // High global deviation indicates tuning chaos, not expressive technique
+    const pitchStd = this.calculateStdDev(frames.map((f) => f.cents))
+    if (pitchStd > 40) {
+      return { present: false, rateHz: 0, widthCents: 0, regularity: 0 }
+    }
+
     const detrended = this.detrend(frames)
     // Robust width: 2 * std covers ~95% of a sine wave's peak-to-peak if noise is low
     // std * 2.828 is more precise for pure sine (sqrt(2)*2)
@@ -159,19 +167,15 @@ export class TechniqueAnalysisAgent {
       return { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 }
     }
 
-    const highRmsFrames = frames.filter((f) => f.rms > 0.02)
-    const lowConfRatio =
-      highRmsFrames.length > 0
-        ? highRmsFrames.filter((f) => f.confidence < 0.6).length / highRmsFrames.length
-        : 0
+    const highRmsFrames = frames.filter(f => f.rms > 0.02)
+    const lowConfRatio = highRmsFrames.length > 0
+      ? highRmsFrames.filter(f => f.confidence < 0.6).length / highRmsFrames.length
+      : 0
 
-    const rmsValues = frames.map((f) => f.rms)
+    const rmsValues = frames.map(f => f.rms)
     const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
-    const detrendedRms = rmsValues.map((v) => v - meanRms)
-    const { correlation: rmsBeatingScore } = this.findPeriod(
-      detrendedRms,
-      frames.map((f) => f.timestamp),
-    )
+    const detrendedRms = rmsValues.map(v => v - meanRms)
+    const { correlation: rmsBeatingScore } = this.findPeriod(detrendedRms, frames.map(f => f.timestamp))
 
     const detrendedCents = this.detrend(frames)
     const pitchChaosScore = this.calculateStdDev(detrendedCents)
@@ -192,53 +196,48 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateRhythm(segment: NoteSegment): RhythmMetrics {
-    const onsetErrorMs =
-      segment.expectedStartTime !== undefined ? segment.startTime - segment.expectedStartTime : 0
+    const onsetErrorMs = segment.expectedStartTime !== undefined
+      ? segment.startTime - segment.expectedStartTime
+      : 0
 
-    const durationErrorMs =
-      segment.expectedDuration !== undefined
-        ? segment.endTime - segment.startTime - segment.expectedDuration
-        : undefined
+    const durationErrorMs = segment.expectedDuration !== undefined
+      ? (segment.endTime - segment.startTime) - segment.expectedDuration
+      : undefined
 
     return {
       onsetErrorMs,
-      durationErrorMs,
+      durationErrorMs
     }
   }
 
-  private calculateTransition(
-    gapFrames: TechniqueFrame[],
-    currentFrames: TechniqueFrame[],
-  ): TransitionMetrics {
+  private calculateTransition(gapFrames: TechniqueFrame[], currentFrames: TechniqueFrame[]): TransitionMetrics {
     if (currentFrames.length === 0) {
       return { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 }
     }
 
-    const transitionTimeMs =
-      gapFrames.length > 0 ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp : 0
+    const transitionTimeMs = gapFrames.length > 0
+      ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp
+      : 0
 
     let glissAmountCents = 0
     if (gapFrames.length > 1) {
-      const cents = gapFrames.filter((f) => f.pitchHz > 0).map((f) => f.cents)
+      const cents = gapFrames.filter(f => f.pitchHz > 0).map(f => f.cents)
       if (cents.length > 1) {
         glissAmountCents = Math.max(...cents) - Math.min(...cents)
       }
     }
 
     const startTime = currentFrames[0].timestamp
-    const landingFrames = currentFrames.filter((f) => f.timestamp - startTime <= 200)
-    const landingErrorCents =
-      landingFrames.length > 0
-        ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
-        : 0
+    const landingFrames = currentFrames.filter(f => f.timestamp - startTime <= 200)
+    const landingErrorCents = landingFrames.length > 0
+      ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
+      : 0
 
     let correctionCount = 0
-    const correctionFrames = currentFrames.filter((f) => f.timestamp - startTime <= 300)
+    const correctionFrames = currentFrames.filter(f => f.timestamp - startTime <= 300)
     for (let i = 1; i < correctionFrames.length; i++) {
-      if (
-        (correctionFrames[i - 1].cents > 0 && correctionFrames[i].cents < 0) ||
-        (correctionFrames[i - 1].cents < 0 && correctionFrames[i].cents > 0)
-      ) {
+      if ((correctionFrames[i-1].cents > 0 && correctionFrames[i].cents < 0) ||
+          (correctionFrames[i-1].cents < 0 && correctionFrames[i].cents > 0)) {
         correctionCount++
       }
     }
@@ -247,7 +246,7 @@ export class TechniqueAnalysisAgent {
       transitionTimeMs,
       glissAmountCents,
       landingErrorCents,
-      correctionCount,
+      correctionCount
     }
   }
 
@@ -399,7 +398,7 @@ export class TechniqueAnalysisAgent {
   private calculateStdDev(values: number[]): number {
     if (values.length === 0) return 0
     const mean = values.reduce((a, b) => a + b) / values.length
-    const squareDiffs = values.map((v) => (v - mean) ** 2)
+    const squareDiffs = values.map(v => (v - mean) ** 2)
     const avgSquareDiff = squareDiffs.reduce((a, b) => a + b) / values.length
     return Math.sqrt(avgSquareDiff)
   }
@@ -423,7 +422,7 @@ export class TechniqueAnalysisAgent {
       sumXX += x * x
     }
 
-    const denominator = n * sumXX - sumX * sumX
+    const denominator = (n * sumXX - sumX * sumX)
     if (Math.abs(denominator) < 1e-10) return 0
 
     const slope = (n * sumXY - sumX * sumY) / denominator
@@ -449,11 +448,11 @@ export class TechniqueAnalysisAgent {
       sumXX += x * x
     }
 
-    const denominator = n * sumXX - sumX * sumX
+    const denominator = (n * sumXX - sumX * sumX)
     const slope = Math.abs(denominator) < 1e-10 ? 0 : (n * sumXY - sumX * sumY) / denominator
     const intercept = (sumY - slope * sumX) / n
 
-    return frames.map((f) => {
+    return frames.map(f => {
       const x = (f.timestamp - startTime) / 1000
       return f.cents - (intercept + slope * x)
     })

@@ -167,7 +167,7 @@ export function PracticeFeedback({
       {/* Advanced Observations */}
       {observations.length > 0 && (
         <div className="mt-4 space-y-3">
-          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             <Lightbulb className="h-4 w-4 text-yellow-500" />
             <span>Technique Insights</span>
           </div>
@@ -184,16 +184,12 @@ export function PracticeFeedback({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  {obs.severity === 3 ? (
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
-                  ) : obs.severity === 2 ? (
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                  ) : (
-                    <Info className="h-5 w-5 text-blue-500" />
-                  )}
+                  {obs.severity === 3 ? <AlertTriangle className="h-5 w-5 text-red-500" /> :
+                   obs.severity === 2 ? <AlertTriangle className="h-5 w-5 text-yellow-500" /> :
+                   <Info className="h-5 w-5 text-blue-500" />}
                   <div className="flex-1">
                     <div className="text-sm font-bold">{obs.message}</div>
-                    <div className="text-muted-foreground text-xs">{obs.tip}</div>
+                    <div className="text-xs text-muted-foreground">{obs.tip}</div>
                   </div>
                 </div>
               </div>

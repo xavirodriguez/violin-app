@@ -132,31 +132,17 @@ async function* technicalAnalysisWindow(
     const isHighQuality = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
 
     if (isHighQuality && musicalNote && Math.abs(cents) <= 50) {
-      const detected: DetectedNote = {
-        pitch: noteName,
-        cents: cents,
-        timestamp: raw.timestamp,
-        confidence: raw.confidence,
-      }
-      yield { type: 'NOTE_DETECTED', payload: detected }
-
-      // Check for a match to update hold duration
-      if (isMatch(currentTarget, detected, options.centsTolerance)) {
-        if (holdStartTime === 0) {
-          holdStartTime = raw.timestamp
-        }
-        const holdDuration = raw.timestamp - holdStartTime
-        yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration } }
-      } else {
-        // Not a match, reset hold time
-        holdStartTime = 0
-        yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration: 0 } }
+      yield {
+        type: 'NOTE_DETECTED',
+        payload: {
+          pitch: noteName,
+          cents: cents,
+          timestamp: raw.timestamp,
+          confidence: raw.confidence,
+        },
       }
     } else {
       yield { type: 'NO_NOTE_DETECTED' }
-      // Signal is lost, reset hold time
-      holdStartTime = 0
-      yield { type: 'NOTE_HOLD_PROGRESS', payload: { holdDuration: 0 } }
     }
 
     const frame: TechniqueFrame = {
@@ -228,7 +214,6 @@ async function* technicalAnalysisWindow(
           const observations = agent.generateObservations(technique)
           yield { type: 'NOTE_MATCHED', payload: { technique, observations } }
           lastGapFrames = [] // Reset after use
-          holdStartTime = 0 // Reset hold timer after a successful match
         }
       }
     }

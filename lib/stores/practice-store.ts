@@ -43,8 +43,6 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   exercise: exercise,
   currentIndex: 0,
   detectionHistory: [],
-  holdDuration: 0,
-  requiredHoldTime: 500, // Default value
 })
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
@@ -118,11 +116,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       set({ audioContext: context, analyser, mediaStream: stream, detector, error: null })
 
       const initialState = get().practiceState!
-      // The pipeline options will determine the required hold time.
-      const listeningState = reducePracticeEvent(initialState, {
-        type: 'START',
-        payload: { requiredHoldTime: 500 }, // Hardcoded for now, matches pipeline default
-      })
+      const listeningState = reducePracticeEvent(initialState, { type: 'START' })
       set({ practiceState: listeningState })
 
       const sessionStartTime = Date.now()
@@ -178,10 +172,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         const name = err instanceof Error ? err.name : ''
         if (name !== 'AbortError') {
           set({
-            error:
-              err instanceof Error
-                ? err.message
-                : 'An unexpected error occurred in the practice loop.',
+            error: err instanceof Error ? err.message : 'An unexpected error occurred in the practice loop.',
           })
         }
         // Always ensure cleanup happens, even if the error was just an abort.

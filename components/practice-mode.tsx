@@ -208,9 +208,7 @@ export function PracticeMode() {
                 targetNote={targetPitchName}
                 detectedPitchName={lastDetectedNote?.pitch}
                 centsOff={lastDetectedNote?.cents}
-                status={practiceState.holdDuration > 0 ? 'validating' : 'listening'}
-                holdDuration={practiceState.holdDuration}
-                requiredHoldTime={practiceState.requiredHoldTime}
+                status={status}
                 observations={practiceState.lastObservations}
               />
             </Card>

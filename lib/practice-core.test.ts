@@ -28,15 +28,11 @@ const getInitialState = (
 describe('reducePracticeEvent', () => {
   it('should transition from idle to listening on START event', () => {
     const initialState = getInitialState('idle')
-    const event = {
-      type: 'START' as const,
-      payload: { requiredHoldTime: 500 },
-    }
+    const event = { type: 'START' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('listening')
     expect(newState.currentIndex).toBe(0)
     expect(newState.detectionHistory).toEqual([])
-    expect(newState.requiredHoldTime).toBe(500)
   })
 
   it('should transition from listening to idle on STOP event', () => {

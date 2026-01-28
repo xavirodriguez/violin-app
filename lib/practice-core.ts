@@ -109,21 +109,15 @@ export interface PracticeState {
   detectionHistory: DetectedNote[]
   // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
-  // Current hold duration for the target note, in milliseconds.
-  holdDuration: number
-  // The required hold time for the current note, in milliseconds.
-  requiredHoldTime: number
 }
 
 /** Events that can modify the practice state. */
 export type PracticeEvent =
-  | { type: 'START'; payload: { requiredHoldTime: number } }
+  | { type: 'START' }
   | { type: 'STOP' }
   | { type: 'RESET' }
   // Fired continuously from the pipeline for UI feedback.
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  // Fired on each frame while a note is being correctly held.
-  | { type: 'NOTE_HOLD_PROGRESS'; payload: { holdDuration: number } }
   // Fired by the pipeline only when a target note is held stable.
   | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
   // Fired when the signal is lost.
@@ -210,8 +204,6 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         currentIndex: 0,
         detectionHistory: [],
         lastObservations: [],
-        holdDuration: 0,
-        requiredHoldTime: event.payload.requiredHoldTime,
       }
 
     case 'STOP':
@@ -229,12 +221,6 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
       return { ...state, detectionHistory: history }
     }
 
-    case 'NOTE_HOLD_PROGRESS':
-      return {
-        ...state,
-        holdDuration: event.payload.holdDuration,
-      }
-
     case 'NO_NOTE_DETECTED':
       return { ...state, detectionHistory: [] }
 
@@ -246,16 +232,14 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         return {
           ...state,
           status: 'completed',
-          lastObservations: event.payload?.observations ?? [],
-          holdDuration: 0,
+          lastObservations: event.payload?.observations ?? []
         }
       } else {
         return {
           ...state,
           currentIndex: state.currentIndex + 1,
           detectionHistory: [],
-          lastObservations: event.payload?.observations ?? [],
-          holdDuration: 0,
+          lastObservations: event.payload?.observations ?? []
         }
       }
     }
