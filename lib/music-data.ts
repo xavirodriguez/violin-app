@@ -6,7 +6,7 @@
  * Use the new exercise system in `lib/exercises/` for new features.
  */
 
-import type { Exercise as ModernExercise } from './exercises/types'
+import type { Exercise as ModernExercise, NoteDuration } from './exercises/types'
 import { parsePitch } from './exercises/utils'
 
 /**
@@ -98,27 +98,14 @@ export function adaptLegacyExercise(legacy: Exercise): ModernExercise {
       keySignature: 0,
     },
     notes: legacy.notes.map((n) => {
-      let duration: 4 | 2 | 1 | 8 | 16 | 32 = 4
-      switch (n.duration) {
-        case 'whole':
-          duration = 1
-          break
-        case 'half':
-          duration = 2
-          break
-        case 'quarter':
-          duration = 4
-          break
-        case 'eighth':
-          duration = 8
-          break
-        case '16th':
-          duration = 16
-          break
-        case '32nd':
-          duration = 32
-          break
-      }
+      let duration: NoteDuration = 4
+      if (n.duration === 'whole') duration = 1
+      else if (n.duration === 'half') duration = 2
+      else if (n.duration === 'quarter') duration = 4
+      else if (n.duration === 'eighth') duration = 8
+      else if (n.duration === 'sixteenth') duration = 16
+      else if (n.duration === 'thirty-second') duration = 32
+
       return {
         pitch: parsePitch(n.pitch),
         duration,

@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useOSMDSafe } from './use-osmd-safe'
+import { IOSMDOptions } from 'opensheetmusicdisplay'
 
 // Use vi.hoisted to create the mock class and its spies before vi.mock is hoisted
 const { MockOSMD, spies } = vi.hoisted(() => {
@@ -43,14 +44,15 @@ describe('useOSMDSafe', () => {
 
   const setupHook = () => {
     const { result, rerender, unmount } = renderHook(
-      ({ musicXML, options }) => useOSMDSafe(musicXML, options as any),
+      ({ musicXML, options }: { musicXML: string; options?: IOSMDOptions }) =>
+        useOSMDSafe(musicXML, options),
       {
-        initialProps: { musicXML: '', options: undefined as any },
+        initialProps: { musicXML: '', options: undefined as IOSMDOptions | undefined },
       },
     )
     act(() => {
       if (result.current.containerRef.current === null) {
-        // @ts-ignore - manipulating ref for testing
+        // @ts-expect-error - manipulating ref for testing
         result.current.containerRef.current = document.createElement('div')
       }
     })

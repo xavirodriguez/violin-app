@@ -82,8 +82,8 @@ describe('useAnalyticsStore', () => {
   })
 
   it('should migrate data from version 0/1 to 3', () => {
-    const storeOptions = (useAnalyticsStore as any).persist.getOptions()
-    const migrate = storeOptions.migrate
+    const storeOptions = useAnalyticsStore.persist.getOptions()
+    const migrate = storeOptions.migrate as (persisted: unknown, version: number) => Record<string, unknown>
 
     const oldData = {
       sessions: [
@@ -134,7 +134,12 @@ describe('useAnalyticsStore', () => {
       },
     }
 
-    const migrated = migrate(oldData, 0)
+    const migrated = migrate(oldData, 0) as unknown as import('./analytics-store').AnalyticsStore
+
+    const firstSession = migrated.sessions[0] as unknown as Record<string, unknown>
+    const firstNoteResult = migrated.sessions[0].noteResults[0] as unknown as Record<string, unknown>
+    const firstAchievement = migrated.progress.achievements[0] as unknown as Record<string, unknown>
+    const ex1Stats = migrated.progress.exerciseStats.ex1 as unknown as Record<string, unknown>
 
     expect(migrated.sessions[0].startTimeMs).toBe(new Date('2023-01-01T10:00:00.000Z').getTime())
     expect(migrated.sessions[0].endTimeMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
@@ -149,11 +154,12 @@ describe('useAnalyticsStore', () => {
     expect(migrated.progress.exerciseStats.ex1.fastestCompletionMs).toBe(300000)
 
     // Check that old fields are removed or handled
-    expect(migrated.sessions[0].startTime).toBeUndefined()
-    expect(migrated.sessions[0].endTime).toBeUndefined()
-    expect(migrated.progress.achievements[0].unlockedAt).toBeUndefined()
-    expect(migrated.progress.exerciseStats.ex1.lastPracticed).toBeUndefined()
-    expect(migrated.progress.exerciseStats.ex1.fastestCompletion).toBeUndefined()
+    expect(firstSession.startTime).toBeUndefined()
+    expect(firstSession.endTime).toBeUndefined()
+    expect(firstNoteResult.timeToComplete).toBeUndefined()
+    expect(firstAchievement.unlockedAt).toBeUndefined()
+    expect(ex1Stats.lastPracticed).toBeUndefined()
+    expect(ex1Stats.fastestCompletion).toBeUndefined()
   })
 
   it('should calculate rhythm skill correctly based on technical metrics', () => {
@@ -175,13 +181,13 @@ describe('useAnalyticsStore', () => {
         landingErrorCents: 0,
         correctionCount: 0,
       },
-    } as any)
+    } as unknown as NoteTechnique)
 
     // Note 2: Poor timing (200ms error)
     recordNoteAttempt(1, 'B4', 0, true)
     recordNoteCompletion(1, 500, {
       rhythm: { onsetErrorMs: 200 },
-    } as any)
+    } as unknown as NoteTechnique)
 
     endSession()
 

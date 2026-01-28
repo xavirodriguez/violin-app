@@ -9,8 +9,8 @@
  * Useful for tracking detection history without unbounded memory growth.
  *
  * @remarks
- * - T: The type of elements in the buffer.
- * - N: The maximum size of the buffer.
+ * T - The type of elements in the buffer.
+ * N - The maximum size of the buffer.
  */
 export class FixedRingBuffer<T, N extends number> {
   private items: T[] = []

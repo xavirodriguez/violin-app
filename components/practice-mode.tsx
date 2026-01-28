@@ -10,7 +10,8 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
-import { formatPitchName } from '@/lib/practice-core'
+import { type TargetNote, type DetectedNote } from '@/lib/practice-core'
+import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -27,6 +28,166 @@ import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 
+function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
+  return (
+    <div className="text-center">
+      <h2 className="text-foreground mb-2 text-3xl font-bold">{exerciseName}</h2>
+      <p className="text-muted-foreground">Play each note in tune to advance.</p>
+    </div>
+  )
+}
+
+function ExerciseSelector({
+  value,
+  onValueChange,
+  disabled,
+}: {
+  value?: string
+  onValueChange: (val: string) => void
+  disabled: boolean
+}) {
+  return (
+    <Card className="p-4">
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select an exercise" />
+        </SelectTrigger>
+        <SelectContent>
+          {allExercises.map((exercise) => (
+            <SelectItem key={exercise.id} value={exercise.id}>
+              {exercise.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Card>
+  )
+}
+
+function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }) {
+  return (
+    <Card className="bg-destructive/10 border-destructive p-6">
+      <div className="flex items-center gap-3">
+        <AlertCircle className="text-destructive h-6 w-6" />
+        <div className="flex-1">
+          <h3 className="text-destructive font-semibold">Error</h3>
+          <p className="text-muted-foreground text-sm">{error}</p>
+        </div>
+        <Button onClick={onReset} variant="outline">
+          Reset
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+function PracticeControls({
+  status,
+  hasExercise,
+  onStart,
+  onStop,
+  onRestart,
+  progress,
+  currentNoteIndex,
+  totalNotes,
+}: {
+  status: string
+  hasExercise: boolean
+  onStart: () => void
+  onStop: () => void
+  onRestart: () => void
+  progress: number
+  currentNoteIndex: number
+  totalNotes: number
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {status === 'idle' && (
+            <Button onClick={onStart} size="lg" className="gap-2" disabled={!hasExercise}>
+              <Play className="h-4 w-4" /> Start Practice
+            </Button>
+          )}
+          {status === 'listening' && (
+            <Button onClick={onStop} size="lg" variant="destructive" className="gap-2">
+              <Square className="h-4 w-4" /> Stop
+            </Button>
+          )}
+          {status === 'completed' && (
+            <Button onClick={onRestart} size="lg" className="gap-2">
+              <RotateCcw className="h-4 w-4" /> Practice Again
+            </Button>
+          )}
+        </div>
+        {hasExercise && (
+          <div className="flex items-center gap-4">
+            <div className="text-muted-foreground text-sm">
+              Note {Math.min(currentNoteIndex + 1, totalNotes)} of {totalNotes}
+            </div>
+            <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+function PracticeCompletion({ onRestart }: { onRestart: () => void }) {
+  return (
+    <Card className="bg-primary/10 p-8 text-center">
+      <Trophy className="text-primary mx-auto mb-4 h-20 w-20" />
+      <h3 className="mb-2 text-2xl font-bold">🎉 Exercise Complete!</h3>
+      <p className="text-muted-foreground mb-6">Excellent work!</p>
+      <Button onClick={onRestart} size="lg" className="gap-2">
+        <RotateCcw className="h-4 w-4" /> Practice Again
+      </Button>
+    </Card>
+  )
+}
+
+function PracticeActiveView({
+  status,
+  targetNote,
+  targetPitchName,
+  lastDetectedNote,
+  lastObservations,
+}: {
+  status: string
+  targetNote: TargetNote | null
+  targetPitchName: string
+  lastDetectedNote: DetectedNote | undefined
+  lastObservations?: Observation[]
+}) {
+  if (status !== 'listening' || !targetNote) return null
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card className="p-6">
+        <PracticeFeedback
+          targetNote={targetPitchName}
+          detectedPitchName={lastDetectedNote?.pitch}
+          centsOff={lastDetectedNote?.cents}
+          status={status}
+          observations={lastObservations}
+        />
+      </Card>
+      <Card className="p-6">
+        <ViolinFingerboard
+          targetNote={targetPitchName}
+          detectedPitchName={lastDetectedNote?.pitch}
+          centsDeviation={lastDetectedNote?.cents}
+        />
+      </Card>
+    </div>
+  )
+}
+
 /**
  * Renders the practice interface and manages its complex lifecycle.
  *
@@ -35,14 +196,6 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
  * - `idle`: Shows exercise selector and "Start" button.
  * - `listening`: Audio loop is active, providing real-time feedback.
  * - `completed`: Shows success state and option to restart.
- *
- * Side effects:
- * - Initializes the default exercise on mount.
- * - Synchronizes the OSMD cursor with the current note index from the practice store.
- * - Manages audio resource lifecycle via the `usePracticeStore` actions.
- *
- * Performance:
- * - Uses `useOSMDSafe` to efficiently manage sheet music rendering.
  */
 export function PracticeMode() {
   const {
@@ -57,13 +210,9 @@ export function PracticeMode() {
     reset,
   } = usePracticeStore()
 
-  /** Ref to track if the default exercise has been loaded. */
   const loadedRef = useRef(false)
-
-  /** Hook for safe OSMD management. */
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
-  // Load default exercise on mount
   useEffect(() => {
     if (!loadedRef.current && !practiceState) {
       loadExercise(allExercises[0])
@@ -71,27 +220,11 @@ export function PracticeMode() {
     }
   }, [loadExercise, practiceState])
 
-  /**
-   * Handles exercise selection from the dropdown.
-   * @param exerciseId - The ID of the selected exercise.
-   */
-  const handleExerciseChange = (exerciseId: string) => {
-    const selectedExercise = allExercises.find((ex) => ex.id === exerciseId)
-    if (selectedExercise) {
-      loadExercise(selectedExercise)
-    }
-  }
-
-  // OSMD Cursor Synchronization Effect
-  // Synchronizes the visual cursor with the current note index in the state.
   useEffect(() => {
     if (!osmdHook.isReady) return
-
-    // Reset the cursor at the very beginning of a practice session.
     if (status === 'listening' && currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else if (status === 'listening' && currentNoteIndex > 0) {
-      // Advance the cursor for subsequent notes during the session.
       osmdHook.advanceCursor()
     }
   }, [currentNoteIndex, status, osmdHook.isReady])
@@ -103,91 +236,38 @@ export function PracticeMode() {
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
 
-  // Construct the full target note name for display (e.g., "G3", "C#4")
-  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : ''
+  const targetPitchName = targetNote
+    ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
+    : ''
+
+  const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-foreground mb-2 text-3xl font-bold">
-            {practiceState?.exercise.name}
-          </h2>
-          <p className="text-muted-foreground">Play each note in tune to advance.</p>
-        </div>
+        <PracticeHeader exerciseName={practiceState?.exercise.name} />
 
-        <Card className="p-4">
-          <Select
-            value={practiceState?.exercise.id}
-            onValueChange={handleExerciseChange}
-            disabled={status !== 'idle'}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an exercise" />
-            </SelectTrigger>
-            <SelectContent>
-              {allExercises.map((exercise) => (
-                <SelectItem key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Card>
+        <ExerciseSelector
+          value={practiceState?.exercise.id}
+          onValueChange={(id) => {
+            const exercise = allExercises.find((ex) => ex.id === id)
+            if (exercise) loadExercise(exercise)
+          }}
+          disabled={status !== 'idle'}
+        />
 
-        {error && (
-          <Card className="bg-destructive/10 border-destructive p-6">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="text-destructive h-6 w-6" />
-              <div className="flex-1">
-                <h3 className="text-destructive font-semibold">Error</h3>
-                <p className="text-muted-foreground text-sm">{error}</p>
-              </div>
-              <Button onClick={reset} variant="outline">
-                Reset
-              </Button>
-            </div>
-          </Card>
-        )}
+        {error && <ErrorDisplay error={error} onReset={reset} />}
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {status === 'idle' && (
-                <Button onClick={start} size="lg" className="gap-2" disabled={!practiceState}>
-                  <Play className="h-4 w-4" /> Start Practice
-                </Button>
-              )}
-              {status === 'listening' && (
-                <Button onClick={stop} size="lg" variant="destructive" className="gap-2">
-                  <Square className="h-4 w-4" /> Stop
-                </Button>
-              )}
-              {status === 'completed' && (
-                <Button
-                  onClick={() => practiceState && loadExercise(practiceState.exercise)}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" /> Practice Again
-                </Button>
-              )}
-            </div>
-            {practiceState && (
-              <div className="flex items-center gap-4">
-                <div className="text-muted-foreground text-sm">
-                  Note {Math.min(currentNoteIndex + 1, totalNotes)} of {totalNotes}
-                </div>
-                <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
-                  <div
-                    className="bg-primary h-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </Card>
+        <PracticeControls
+          status={status}
+          hasExercise={!!practiceState}
+          onStart={start}
+          onStop={stop}
+          onRestart={handleRestart}
+          progress={progress}
+          currentNoteIndex={currentNoteIndex}
+          totalNotes={totalNotes}
+        />
 
         {practiceState?.exercise.musicXML && (
           <Card className="p-6">
@@ -201,41 +281,15 @@ export function PracticeMode() {
           </Card>
         )}
 
-        {status === 'listening' && targetNote && practiceState && (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="p-6">
-              <PracticeFeedback
-                targetNote={targetPitchName}
-                detectedPitchName={lastDetectedNote?.pitch}
-                centsOff={lastDetectedNote?.cents}
-                status={status}
-                observations={practiceState?.lastObservations}
-              />
-            </Card>
-            <Card className="p-6">
-              <ViolinFingerboard
-                targetNote={targetPitchName}
-                detectedPitchName={lastDetectedNote?.pitch}
-                centsDeviation={lastDetectedNote?.cents}
-              />
-            </Card>
-          </div>
-        )}
+        <PracticeActiveView
+          status={status}
+          targetNote={targetNote}
+          targetPitchName={targetPitchName}
+          lastDetectedNote={lastDetectedNote}
+          lastObservations={practiceState?.lastObservations}
+        />
 
-        {status === 'completed' && (
-          <Card className="bg-primary/10 p-8 text-center">
-            <Trophy className="text-primary mx-auto mb-4 h-20 w-20" />
-            <h3 className="mb-2 text-2xl font-bold">🎉 Exercise Complete!</h3>
-            <p className="text-muted-foreground mb-6">Excellent work!</p>
-            <Button
-              onClick={() => practiceState && loadExercise(practiceState.exercise)}
-              size="lg"
-              className="gap-2"
-            >
-              <RotateCcw className="h-4 w-4" /> Practice Again
-            </Button>
-          </Card>
-        )}
+        {status === 'completed' && <PracticeCompletion onRestart={handleRestart} />}
       </div>
     </div>
   )

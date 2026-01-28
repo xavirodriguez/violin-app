@@ -20,22 +20,32 @@ export type CanonicalAccidental = -1 | 0 | 1
  * @returns A CanonicalAccidental (-1, 0, or 1).
  */
 export function normalizeAccidental(input: unknown): CanonicalAccidental {
-  if (input === 1 || input === 'sharp' || input === '#') {
-    return 1
+  const mapping: Record<string, CanonicalAccidental> = {
+    '1': 1,
+    'sharp': 1,
+    '#': 1,
+    '2': 1,
+    'double-sharp': 1,
+    '##': 1,
+    '-1': -1,
+    'flat': -1,
+    'b': -1,
+    '-2': -1,
+    'double-flat': -1,
+    'bb': -1,
+    '0': 0,
+    'natural': 0,
+    '': 0,
   }
-  if (input === -1 || input === 'flat' || input === 'b') {
-    return -1
-  }
-  if (input === 2 || input === 'double-sharp' || input === '##') {
-    return 1
-  }
-  if (input === -2 || input === 'double-flat' || input === 'bb') {
-    return -1
-  }
-  if (input === 0 || input === 'natural' || input === '' || input === null || input === undefined) {
+
+  if (input === null || input === undefined) {
     return 0
   }
 
-  // If we reach here, the input is something unexpected.
+  const key = String(input)
+  if (key in mapping) {
+    return mapping[key]
+  }
+
   throw new Error(`Unsupported alter value: ${input}`)
 }
