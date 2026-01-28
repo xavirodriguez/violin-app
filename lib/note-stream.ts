@@ -4,7 +4,6 @@
  * This decouples the audio input source from the state management logic.
  */
 
-import { _pipe, _map } from 'iter-tools'
 import {
   MusicalNote,
   type PracticeEvent,
@@ -15,7 +14,7 @@ import {
 import type { PitchDetector } from '@/lib/pitch-detector'
 import { NoteSegmenter } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
-import { TechniqueFrame } from './technique-types'
+import { TechniqueFrame, NoteSegment } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'
 
@@ -48,18 +47,6 @@ const defaultOptions: NoteStreamOptions = {
 
 /**
  * Creates an async iterable of raw pitch events from a Web Audio API AnalyserNode.
- *
- * @remarks
- * This function is the entry point for the audio processing pipeline. It runs a
- * continuous loop using `requestAnimationFrame` to capture audio data, process it
- * with the provided pitch detector, and yield the raw results. The loop's
- * lifecycle is controlled by the `isActive` callback, which must be implemented
- * by the caller to signal when the stream should terminate.
- *
- * @param analyser - The configured `AnalyserNode` from which to pull audio time-domain data.
- * @param detector - An instance of `PitchDetector` used to find the fundamental frequency.
- * @param isActive - A function that returns `false` to gracefully terminate the async generator loop.
- * @returns An `AsyncGenerator` that yields `RawPitchEvent` objects on each animation frame.
  */
 export async function* createRawPitchStream(
   analyser: AnalyserNode,
@@ -84,20 +71,6 @@ export async function* createRawPitchStream(
 /**
  * A custom iter-tools operator that implements the note stability validation logic
  * and technical analysis.
- *
- * @remarks
- * This operator processes a stream of raw pitch events, segments them into notes,
- * and performs technical analysis on completed segments. It emits `NOTE_DETECTED`
- * events for immediate UI feedback, and a `NOTE_MATCHED` event (with technique metrics)
- * only when the correct target note is held for the duration specified in
- * `options.requiredHoldTime`.
- *
- * @internal
- *
- * @param source - An async iterable of `RawPitchEvent`.
- * @param targetNote - A function that returns the current `TargetNote` to match against.
- * @param options - Configuration for the stability check and segmentation.
- * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
  */
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
@@ -112,6 +85,7 @@ async function* technicalAnalysisWindow(
   const agent = new TechniqueAnalysisAgent()
   let lastGapFrames: TechniqueFrame[] = []
   let firstNoteOnsetTime: number | null = null
+  let prevSegment: NoteSegment | null = null
 
   for await (const raw of source) {
     const currentTarget = targetNote()
@@ -163,7 +137,7 @@ async function* technicalAnalysisWindow(
       const frames = segmentEvent.frames
       if (frames.length > 0) {
         const segmentNoteName = frames[0].noteName
-        const targetPitch = `${currentTarget.pitch.step}${currentTarget.pitch.alter || ''}${currentTarget.pitch.octave}`
+        const targetPitch = `${currentTarget.pitch.step}${currentTarget.pitch.alter === 1 ? '#' : currentTarget.pitch.alter === -1 ? 'b' : ''}${currentTarget.pitch.octave}`
 
         // Check if the segment matches the target note
         const lastDetected: DetectedNote = {
@@ -179,7 +153,6 @@ async function* technicalAnalysisWindow(
         if (match && duration >= options.requiredHoldTime) {
           const currentIndex = getCurrentIndex()
 
-          // Track the first note onset to align the rhythmic timeline
           if (firstNoteOnsetTime === null) {
             firstNoteOnsetTime = frames[0].timestamp
           }
@@ -192,25 +165,24 @@ async function* technicalAnalysisWindow(
               options.exercise.notes[currentIndex].duration,
               options.bpm,
             )
-            // Expected start is relative to the first note's onset
             expectedStartTime = firstNoteOnsetTime
             for (let i = 0; i < currentIndex; i++) {
               expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
             }
           }
 
-          const technique = agent.analyzeSegment(
-            {
-              noteIndex: currentIndex,
-              targetPitch,
-              startTime: frames[0].timestamp,
-              endTime: frames[frames.length - 1].timestamp,
-              expectedStartTime,
-              expectedDuration,
-              frames,
-            },
-            lastGapFrames,
-          )
+          const currentSegment = {
+            noteIndex: currentIndex,
+            targetPitch,
+            startTime: frames[0].timestamp,
+            endTime: frames[frames.length - 1].timestamp,
+            expectedStartTime,
+            expectedDuration,
+            frames,
+          }
+
+          const technique = agent.analyzeSegment(currentSegment, lastGapFrames, prevSegment)
+          prevSegment = currentSegment
           const observations = agent.generateObservations(technique)
           yield { type: 'NOTE_MATCHED', payload: { technique, observations } }
           lastGapFrames = [] // Reset after use
@@ -230,7 +202,5 @@ export function createPracticeEventPipeline(
   options: Partial<NoteStreamOptions> = {},
 ): AsyncIterable<PracticeEvent> {
   const finalOptions = { ...defaultOptions, ...options }
-
-  // The final pipeline applies the technical analysis and stability logic.
   return technicalAnalysisWindow(rawPitchStream, targetNote, finalOptions, getCurrentIndex)
 }

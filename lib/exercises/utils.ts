@@ -1,7 +1,8 @@
 /**
  * Utility functions for handling exercise data.
  */
-import type { Accidental, NoteDuration, Pitch, PitchName } from './types'
+import type { NoteDuration, Pitch, PitchName } from './types'
+import { normalizeAccidental } from '../domain/musical-domain'
 
 const DURATION_BEATS: Record<NoteDuration, number> = {
   1: 4,
@@ -37,7 +38,7 @@ export const parsePitch = (pitchString: string): Pitch => {
 
   return {
     step: step as PitchName,
-    alter: alterNum,
+    alter: normalizeAccidental(alter),
     octave: parseInt(octave, 10),
   }
 }

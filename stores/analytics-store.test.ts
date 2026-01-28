@@ -74,17 +74,22 @@ describe('useAnalyticsStore', () => {
     const state = useAnalyticsStore.getState()
     expect(state.currentSession).toBeNull()
     expect(state.sessions).toHaveLength(1)
-    expect(state.sessions[0].duration).toBe(5)
+    expect(state.sessions[0].durationMs).toBe(5000)
     expect(state.sessions[0].endTimeMs).toBe(endTime)
     expect(state.progress.totalPracticeSessions).toBe(1)
     expect(state.progress.exerciseStats['ex1'].timesCompleted).toBe(1)
     expect(state.progress.exerciseStats['ex1'].lastPracticedMs).toBe(endTime)
   })
 
+<<<<<<< HEAD:lib/stores/analytics-store.test.ts
+  it('should migrate data from version 0/1 to 3', () => {
+    const storeOptions = (useAnalyticsStore as any).persist.getOptions()
+=======
   it('should migrate data from version 0/1 to 2', () => {
     // This is a bit tricky to test because it's in the persist config
     // We can manually call the migrate function if we export it or get it from the store
     const storeOptions = (useAnalyticsStore as unknown).persist.getOptions()
+>>>>>>> main:stores/analytics-store.test.ts
     const migrate = storeOptions.migrate
 
     const oldData = {
@@ -101,7 +106,9 @@ describe('useAnalyticsStore', () => {
           notesCompleted: 5,
           accuracy: 50,
           averageCents: 10,
-          noteResults: [],
+          noteResults: [
+            { noteIndex: 0, targetPitch: 'G4', attempts: 1, timeToComplete: 1000, averageCents: 0, wasInTune: true }
+          ],
         },
       ],
       progress: {
@@ -131,14 +138,18 @@ describe('useAnalyticsStore', () => {
 
     expect(migrated.sessions[0].startTimeMs).toBe(new Date('2023-01-01T10:00:00.000Z').getTime())
     expect(migrated.sessions[0].endTimeMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
+    expect(migrated.sessions[0].durationMs).toBe(300000)
+    expect(migrated.sessions[0].noteResults[0].timeToCompleteMs).toBe(1000)
     expect(migrated.progress.achievements[0].unlockedAtMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
     expect(migrated.progress.exerciseStats.ex1.lastPracticedMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
+    expect(migrated.progress.exerciseStats.ex1.fastestCompletionMs).toBe(300000)
 
-    // Check that old fields are removed or at least new ones are present
+    // Check that old fields are removed or handled
     expect(migrated.sessions[0].startTime).toBeUndefined()
     expect(migrated.sessions[0].endTime).toBeUndefined()
     expect(migrated.progress.achievements[0].unlockedAt).toBeUndefined()
     expect(migrated.progress.exerciseStats.ex1.lastPracticed).toBeUndefined()
+    expect(migrated.progress.exerciseStats.ex1.fastestCompletion).toBeUndefined()
   })
 
   it('should calculate rhythm skill correctly based on technical metrics', () => {

@@ -141,9 +141,12 @@ export function PracticeFeedback({
                 <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
               </div>
             )}
-            {detectedPitchName && targetNote === detectedPitchName && !isInTune && (
-              <IntonationFeedback centsOff={centsOff} />
-            )}
+            {detectedPitchName &&
+              targetNote === detectedPitchName &&
+              typeof centsOff === 'number' &&
+              !isInTune && <IntonationFeedback centsOff={centsOff} />}
+            {!detectedPitchName && <Circle className="h-5 w-5" />}
+            {!detectedPitchName && <span>Listening...</span>}
           </div>
         )}
         {status === 'validating' && (

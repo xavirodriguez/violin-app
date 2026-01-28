@@ -6,6 +6,9 @@
  * Use the new exercise system in `lib/exercises/` for new features.
  */
 
+import type { Exercise as ModernExercise } from './exercises/types'
+import { parsePitch } from './exercises/utils'
+
 /**
  * Represents a single musical note in the legacy system.
  * @internal
@@ -77,4 +80,27 @@ export const G_MAJOR_SCALE_EXERCISE: Exercise = {
     </measure>
   </part>
 </score-partwise>`,
+}
+
+/**
+ * Adapts a legacy exercise into the modern Exercise format.
+ */
+export function adaptLegacyExercise(legacy: Exercise): ModernExercise {
+  return {
+    id: legacy.id,
+    name: legacy.name,
+    description: 'Legacy exercise',
+    category: 'Scales', // Default category for legacy
+    difficulty: 'Beginner',
+    scoreMetadata: {
+      clef: 'G',
+      timeSignature: { beats: 4, beatType: 4 },
+      keySignature: 0,
+    },
+    notes: legacy.notes.map((n) => ({
+      pitch: parsePitch(n.pitch),
+      duration: n.duration as any,
+    })),
+    musicXML: legacy.musicXML,
+  }
 }

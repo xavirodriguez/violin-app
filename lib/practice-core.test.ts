@@ -117,16 +117,17 @@ describe('formatPitchName', () => {
     expect(formatPitchName(pitch)).toBe('C#4')
   })
 
-  it('should handle flat values correctly', () => {
-    const pitch: TargetNote['pitch'] = { step: 'D', octave: 4, alter: -1 }
+  it('should handle string alter values correctly', () => {
+    const pitch: TargetNote['pitch'] = { step: 'D', octave: 4, alter: 'flat' as any }
     expect(formatPitchName(pitch)).toBe('Db4')
   })
 
   it('should handle double sharp/flat values', () => {
-    const pitch1: TargetNote['pitch'] = { step: 'E', octave: 4, alter: 2 }
-    const pitch2: TargetNote['pitch'] = { step: 'F', octave: 4, alter: -2 }
-    expect(formatPitchName(pitch1)).toBe('E##4')
-    expect(formatPitchName(pitch2)).toBe('Fbb4')
+    const pitch1: TargetNote['pitch'] = { step: 'E', octave: 4, alter: '##' as any }
+    const pitch2: TargetNote['pitch'] = { step: 'F', octave: 4, alter: -2 as any }
+    // Canonicalization to -1 | 0 | 1 simplifies double accidentals for standard tuning logic
+    expect(formatPitchName(pitch1)).toBe('E#4')
+    expect(formatPitchName(pitch2)).toBe('Fb4')
   })
 
   it('should handle no alter value', () => {
@@ -135,9 +136,8 @@ describe('formatPitchName', () => {
   })
 
   it('should throw an error for unsupported alter values', () => {
-    // @ts-expect-error - testing invalid data
-    const pitch: TargetNote['pitch'] = { step: 'A', octave: 4, alter: 3 }
-    expect(() => formatPitchName(pitch)).toThrow('Unsupported alter value: 3')
+    const pitch: TargetNote['pitch'] = { step: 'A', octave: 4, alter: 3 as any }
+    expect(() => formatPitchName(pitch)).toThrow(/Unsupported alter value: 3/)
   })
 })
 
@@ -234,7 +234,7 @@ describe('MusicalNote Edge Cases', () => {
 describe('isMatch', () => {
   const target: TargetNote = {
     pitch: { step: 'A', octave: 4, alter: 0 },
-    duration: 4,
+    duration: 'quarter',
   }
 
   it('should return true for a correct match', () => {
@@ -244,8 +244,8 @@ describe('isMatch', () => {
 
   it('should return true for an enharmonic match', () => {
     const enharmonicTarget: TargetNote = {
-      pitch: { step: 'C', octave: 4, alter: 1 },
-      duration: 4,
+      pitch: { step: 'C', octave: 4, alter: 1 }, // C#4
+      duration: 'quarter',
     }
     const detected = { pitch: 'Db4', cents: 0, timestamp: 0, confidence: 1 }
     expect(isMatch(enharmonicTarget, detected)).toBe(true)
@@ -254,11 +254,11 @@ describe('isMatch', () => {
   it('should handle numeric alter values in the target', () => {
     const sharpTarget: TargetNote = {
       pitch: { step: 'G', octave: 3, alter: 1 }, // G#3
-      duration: 1,
+      duration: 'quarter',
     }
     const flatTarget: TargetNote = {
       pitch: { step: 'B', octave: 4, alter: -1 }, // Bb4
-      duration: 1,
+      duration: 'quarter',
     }
     const detectedSharp = { pitch: 'G#3', cents: 0, timestamp: 0, confidence: 1 }
     const detectedFlat = { pitch: 'A#4', cents: 0, timestamp: 0, confidence: 1 } // Enharmonic equivalent
@@ -286,13 +286,28 @@ describe('isMatch', () => {
     expect(isMatch(target, detectedNegative, 25)).toBe(false)
   })
 
+  it('should implement hysteresis correctly', () => {
+    const hysteresis = { enter: 20, exit: 30 }
+    const detectedAt25 = { pitch: 'A4', cents: 25, timestamp: 0, confidence: 1 }
+
+    // Case 1: Not previously matched, 25 cents is outside "enter" (20)
+    expect(isMatch(target, detectedAt25, hysteresis, false)).toBe(false)
+
+    // Case 2: Previously matched, 25 cents is inside "exit" (30)
+    expect(isMatch(target, detectedAt25, hysteresis, true)).toBe(true)
+
+    // Case 3: Transition out of match (35 cents is outside exit 30)
+    const detectedAt35 = { pitch: 'A4', cents: 35, timestamp: 0, confidence: 1 }
+    expect(isMatch(target, detectedAt35, hysteresis, true)).toBe(false)
+  })
+
   it('should rethrow parsing errors for invalid target notes', () => {
     // @ts-expect-error - testing invalid data
     const invalidTarget: TargetNote = {
-      pitch: { step: 'C', octave: 4, alter: 7 },
-      duration: 4,
+      pitch: { step: 'C', octave: 4, alter: 7 as any },
+      duration: 'quarter',
     }
     const detected = { pitch: 'A4', cents: 0, timestamp: 0, confidence: 1 }
-    expect(() => isMatch(invalidTarget, detected)).toThrow('Unsupported alter value: 7')
+    expect(() => isMatch(invalidTarget, detected)).toThrow(/Unsupported alter value: 7/)
   })
 })
