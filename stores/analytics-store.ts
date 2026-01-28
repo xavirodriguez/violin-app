@@ -361,7 +361,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           ...persistedData,
           sessions,
           progress: {
-            ...progress,
+            ...pProgress,
             achievements,
             exerciseStats: migratedExerciseStats,
           },
