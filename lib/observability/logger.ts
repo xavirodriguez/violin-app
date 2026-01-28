@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 /**
  * Provides a centralized logging service for the application.
  * @remarks This logger wraps the native `console` object, providing a consistent
