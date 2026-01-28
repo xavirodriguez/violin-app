@@ -27,11 +27,10 @@ async function* createMockStream(
 }
 
 describe('createPracticeEventPipeline', () => {
-<<<<<<< HEAD
-  const mockTargetNote: TargetNote = { pitch: { step: 'A', octave: 4, alter: 0 }, duration: 'quarter' }
-=======
-  const mockTargetNote: TargetNote = { pitch: { step: 'A', octave: 4, alter: 0 }, duration: 4 }
->>>>>>> main
+  const mockTargetNote: TargetNote = {
+    pitch: { step: 'A', octave: 4, alter: 0 },
+    duration: 4,
+  }
   const getTargetNote = () => mockTargetNote
 
   const testOptions = {

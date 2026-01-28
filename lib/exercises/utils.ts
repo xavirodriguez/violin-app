@@ -32,10 +32,6 @@ export const parsePitch = (pitchString: string): Pitch => {
 
   const [, step, alter, octave] = match
 
-  let alterNum: Accidental = 0
-  if (alter === '#') alterNum = 1
-  else if (alter === 'b') alterNum = -1
-
   return {
     step: step as PitchName,
     alter: normalizeAccidental(alter),

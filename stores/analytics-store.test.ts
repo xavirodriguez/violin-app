@@ -81,15 +81,8 @@ describe('useAnalyticsStore', () => {
     expect(state.progress.exerciseStats['ex1'].lastPracticedMs).toBe(endTime)
   })
 
-<<<<<<< HEAD:lib/stores/analytics-store.test.ts
   it('should migrate data from version 0/1 to 3', () => {
     const storeOptions = (useAnalyticsStore as any).persist.getOptions()
-=======
-  it('should migrate data from version 0/1 to 2', () => {
-    // This is a bit tricky to test because it's in the persist config
-    // We can manually call the migrate function if we export it or get it from the store
-    const storeOptions = (useAnalyticsStore as unknown).persist.getOptions()
->>>>>>> main:stores/analytics-store.test.ts
     const migrate = storeOptions.migrate
 
     const oldData = {
@@ -107,7 +100,14 @@ describe('useAnalyticsStore', () => {
           accuracy: 50,
           averageCents: 10,
           noteResults: [
-            { noteIndex: 0, targetPitch: 'G4', attempts: 1, timeToComplete: 1000, averageCents: 0, wasInTune: true }
+            {
+              noteIndex: 0,
+              targetPitch: 'G4',
+              attempts: 1,
+              timeToComplete: 1000,
+              averageCents: 0,
+              wasInTune: true,
+            },
           ],
         },
       ],
@@ -140,8 +140,12 @@ describe('useAnalyticsStore', () => {
     expect(migrated.sessions[0].endTimeMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
     expect(migrated.sessions[0].durationMs).toBe(300000)
     expect(migrated.sessions[0].noteResults[0].timeToCompleteMs).toBe(1000)
-    expect(migrated.progress.achievements[0].unlockedAtMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
-    expect(migrated.progress.exerciseStats.ex1.lastPracticedMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
+    expect(migrated.progress.achievements[0].unlockedAtMs).toBe(
+      new Date('2023-01-01T10:05:00.000Z').getTime(),
+    )
+    expect(migrated.progress.exerciseStats.ex1.lastPracticedMs).toBe(
+      new Date('2023-01-01T10:05:00.000Z').getTime(),
+    )
     expect(migrated.progress.exerciseStats.ex1.fastestCompletionMs).toBe(300000)
 
     // Check that old fields are removed or handled
@@ -153,7 +157,8 @@ describe('useAnalyticsStore', () => {
   })
 
   it('should calculate rhythm skill correctly based on technical metrics', () => {
-    const { startSession, recordNoteAttempt, recordNoteCompletion, endSession } = useAnalyticsStore.getState()
+    const { startSession, recordNoteAttempt, recordNoteCompletion, endSession } =
+      useAnalyticsStore.getState()
     startSession('ex1', 'Exercise 1', 'practice')
 
     // Note 1: Perfect timing (0ms error)
@@ -164,7 +169,12 @@ describe('useAnalyticsStore', () => {
       pitchStability: { settlingStdCents: 0, globalStdCents: 0, driftCentsPerSec: 0, inTuneRatio: 1 },
       attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
       resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
-      transition: { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 },
+      transition: {
+        transitionTimeMs: 0,
+        glissAmountCents: 0,
+        landingErrorCents: 0,
+        correctionCount: 0,
+      },
     } as any)
 
     // Note 2: Poor timing (200ms error)

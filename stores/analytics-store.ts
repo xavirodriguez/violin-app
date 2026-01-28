@@ -336,13 +336,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     }),
     {
       name: 'violin-analytics',
-<<<<<<< HEAD:lib/stores/analytics-store.ts
       version: 3,
       migrate: (persisted: any, version: number) => {
-=======
-      version: 2,
-      migrate: (persisted: unknown) => {
->>>>>>> main:stores/analytics-store.ts
         if (!persisted) return persisted
         if (version < 3) {
           if (Array.isArray(persisted.sessions)) {
@@ -374,7 +369,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         }
 
         const sessions = Array.isArray(persisted.sessions)
-          ? persisted.sessions.map((s: unknown) => {
+          ? persisted.sessions.map((s: any) => {
               const { startTime, endTime, ...rest } = s || {}
               return {
                 ...rest,
@@ -386,7 +381,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         const progress = persisted.progress || {}
         const achievements = Array.isArray(progress.achievements)
-          ? progress.achievements.map((a: unknown) => {
+          ? progress.achievements.map((a: any) => {
               const { unlockedAt, ...rest } = a || {}
               return {
                 ...rest,
@@ -397,7 +392,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
         const exerciseStats = progress.exerciseStats || {}
         const migratedExerciseStats = Object.fromEntries(
-          Object.entries(exerciseStats).map(([k, v]: [string, unknown]) => {
+          Object.entries(exerciseStats).map(([k, v]: [string, any]) => {
             const { lastPracticed, ...rest } = v || {}
             return [
               k,

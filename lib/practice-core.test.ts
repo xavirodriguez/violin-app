@@ -1,5 +1,5 @@
 /**
- * \@vitest-environment jsdom
+ * @vitest-environment jsdom
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -23,8 +23,6 @@ const getInitialState = (
   exercise: mockExercise,
   currentIndex,
   detectionHistory: [],
-  holdDuration: 0,
-  requiredHoldTime: 500,
 })
 
 describe('reducePracticeEvent', () => {
@@ -185,27 +183,27 @@ describe('MusicalNote Edge Cases', () => {
     expect(note.octave).toBe(-2)
   })
 
-    it('should handle sharps correctly', () => {
-      const note = MusicalNote.fromName('C#4')
-      expect(note.midiNumber).toBe(61)
-      expect(note.noteName).toBe('C#')
-    })
+  it('should handle sharps correctly', () => {
+    const note = MusicalNote.fromName('C#4')
+    expect(note.midiNumber).toBe(61)
+    expect(note.noteName).toBe('C#')
+  })
 
-    it('should handle flats correctly', () => {
-      const note = MusicalNote.fromName('Bb3')
-      expect(note.midiNumber).toBe(58)
-      expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
-    })
+  it('should handle flats correctly', () => {
+    const note = MusicalNote.fromName('Bb3')
+    expect(note.midiNumber).toBe(58)
+    expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
+  })
 
-    it('should handle double sharps', () => {
-      const note = MusicalNote.fromName('F##4')
-      expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
-    })
+  it('should handle double sharps', () => {
+    const note = MusicalNote.fromName('F##4')
+    expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
+  })
 
-    it('should handle double flats', () => {
-      const note = MusicalNote.fromName('Ebb4')
-      expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
-    })
+  it('should handle double flats', () => {
+    const note = MusicalNote.fromName('Ebb4')
+    expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
+  })
 
   it('should throw an error for invalid frequencies', () => {
     expect(() => MusicalNote.fromFrequency(NaN)).toThrow('Invalid frequency: NaN')
@@ -234,7 +232,7 @@ describe('MusicalNote Edge Cases', () => {
 describe('isMatch', () => {
   const target: TargetNote = {
     pitch: { step: 'A', octave: 4, alter: 0 },
-    duration: 'quarter',
+    duration: 4,
   }
 
   it('should return true for a correct match', () => {
@@ -245,7 +243,7 @@ describe('isMatch', () => {
   it('should return true for an enharmonic match', () => {
     const enharmonicTarget: TargetNote = {
       pitch: { step: 'C', octave: 4, alter: 1 }, // C#4
-      duration: 'quarter',
+      duration: 4,
     }
     const detected = { pitch: 'Db4', cents: 0, timestamp: 0, confidence: 1 }
     expect(isMatch(enharmonicTarget, detected)).toBe(true)
@@ -254,11 +252,11 @@ describe('isMatch', () => {
   it('should handle numeric alter values in the target', () => {
     const sharpTarget: TargetNote = {
       pitch: { step: 'G', octave: 3, alter: 1 }, // G#3
-      duration: 'quarter',
+      duration: 4,
     }
     const flatTarget: TargetNote = {
       pitch: { step: 'B', octave: 4, alter: -1 }, // Bb4
-      duration: 'quarter',
+      duration: 4,
     }
     const detectedSharp = { pitch: 'G#3', cents: 0, timestamp: 0, confidence: 1 }
     const detectedFlat = { pitch: 'A#4', cents: 0, timestamp: 0, confidence: 1 } // Enharmonic equivalent
@@ -302,10 +300,9 @@ describe('isMatch', () => {
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
-    // @ts-expect-error - testing invalid data
     const invalidTarget: TargetNote = {
       pitch: { step: 'C', octave: 4, alter: 7 as any },
-      duration: 'quarter',
+      duration: 4,
     }
     const detected = { pitch: 'A4', cents: 0, timestamp: 0, confidence: 1 }
     expect(() => isMatch(invalidTarget, detected)).toThrow(/Unsupported alter value: 7/)

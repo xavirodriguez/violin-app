@@ -10,12 +10,8 @@ import { type PracticeState, reducePracticeEvent, formatPitchName } from '@/lib/
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
-<<<<<<< HEAD:lib/stores/practice-store.ts
-import { handlePracticeEvent } from '../practice/practice-event-sink'
-import { audioManager } from '@/lib/infrastructure/audio-manager'
-=======
 import { handlePracticeEvent } from '../lib/practice/practice-event-sink'
->>>>>>> main:stores/practice-store.ts
+import { audioManager } from '@/lib/infrastructure/audio-manager'
 
 import type { Exercise } from '@/lib/exercises/types'
 
