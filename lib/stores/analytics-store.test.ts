@@ -140,4 +140,34 @@ describe('useAnalyticsStore', () => {
     expect(migrated.progress.achievements[0].unlockedAt).toBeUndefined()
     expect(migrated.progress.exerciseStats.ex1.lastPracticed).toBeUndefined()
   })
+
+  it('should calculate rhythm skill correctly based on technical metrics', () => {
+    const { startSession, recordNoteAttempt, recordNoteCompletion, endSession } = useAnalyticsStore.getState()
+    startSession('ex1', 'Exercise 1', 'practice')
+
+    // Note 1: Perfect timing (0ms error)
+    recordNoteAttempt(0, 'A4', 0, true)
+    recordNoteCompletion(0, 500, {
+      rhythm: { onsetErrorMs: 0 },
+      vibrato: { present: false, rateHz: 0, widthCents: 0, regularity: 0 },
+      pitchStability: { settlingStdCents: 0, globalStdCents: 0, driftCentsPerSec: 0, inTuneRatio: 1 },
+      attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
+      resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
+      transition: { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 },
+    } as any)
+
+    // Note 2: Poor timing (200ms error)
+    recordNoteAttempt(1, 'B4', 0, true)
+    recordNoteCompletion(1, 500, {
+      rhythm: { onsetErrorMs: 200 },
+    } as any)
+
+    endSession()
+
+    const { progress } = useAnalyticsStore.getState()
+    // MAE = 100ms. maeScore = 100 - 100/4 = 75.
+    // In Window: 1 of 2 = 50%.
+    // Total score = (75 + 50) / 2 = 62.5 -> 63
+    expect(progress.rhythmSkill).toBe(63)
+  })
 })

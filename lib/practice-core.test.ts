@@ -182,6 +182,28 @@ describe('MusicalNote Edge Cases', () => {
     expect(note.octave).toBe(-2)
   })
 
+    it('should handle sharps correctly', () => {
+      const note = MusicalNote.fromName('C#4')
+      expect(note.midiNumber).toBe(61)
+      expect(note.noteName).toBe('C#')
+    })
+
+    it('should handle flats correctly', () => {
+      const note = MusicalNote.fromName('Bb3')
+      expect(note.midiNumber).toBe(58)
+      expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
+    })
+
+    it('should handle double sharps', () => {
+      const note = MusicalNote.fromName('F##4')
+      expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
+    })
+
+    it('should handle double flats', () => {
+      const note = MusicalNote.fromName('Ebb4')
+      expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
+    })
+
   it('should throw an error for invalid frequencies', () => {
     expect(() => MusicalNote.fromFrequency(NaN)).toThrow('Invalid frequency: NaN')
     expect(() => MusicalNote.fromFrequency(Infinity)).toThrow('Invalid frequency: Infinity')

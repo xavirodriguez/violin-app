@@ -172,13 +172,15 @@ export function PracticeFeedback({
             <span>Technique Insights</span>
           </div>
           <div className="grid gap-3">
-            {observations.slice(0, 2).map((obs, idx) => (
+            {observations.slice(0, 3).map((obs, idx) => (
               <div
                 key={idx}
                 className={`rounded-lg border p-3 ${
-                  obs.severity === 3 ? 'bg-red-500/10 border-red-500/20' :
-                  obs.severity === 2 ? 'bg-yellow-500/10 border-yellow-500/20' :
-                  'bg-blue-500/10 border-blue-500/20'
+                  obs.severity === 3
+                    ? 'bg-red-500/10 border-red-500/20'
+                    : obs.severity === 2
+                      ? 'bg-yellow-500/10 border-yellow-500/20'
+                      : 'bg-blue-500/10 border-blue-500/20'
                 }`}
               >
                 <div className="flex items-start gap-3">
