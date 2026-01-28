@@ -217,9 +217,14 @@ describe('MusicalNote Edge Cases', () => {
   })
 
   it('should throw an error for malformed note names', () => {
-    expect(() => MusicalNote.fromName('H4')).toThrow('Invalid note name format: "H4"')
+    // Missing octave
     expect(() => MusicalNote.fromName('C#')).toThrow('Invalid note name format: "C#"')
+    // Invalid step
+    expect(() => MusicalNote.fromName('H4')).toThrow('Invalid note name format: "H4"')
+    // Misplaced accidental
     expect(() => MusicalNote.fromName('C4#')).toThrow('Invalid note name format: "C4#"')
+    // Empty string
+    expect(() => MusicalNote.fromName('')).toThrow('Invalid note name format: ""')
   })
 })
 
@@ -236,11 +241,27 @@ describe('isMatch', () => {
 
   it('should return true for an enharmonic match', () => {
     const enharmonicTarget: TargetNote = {
-      pitch: { step: 'C', octave: 4, alter: 1 },
+      pitch: { step: 'C', octave: 4, alter: 1 }, // C#4
       duration: 1,
     }
     const detected = { pitch: 'Db4', cents: 0, timestamp: 0, confidence: 1 }
     expect(isMatch(enharmonicTarget, detected)).toBe(true)
+  })
+
+  it('should handle numeric alter values in the target', () => {
+    const sharpTarget: TargetNote = {
+      pitch: { step: 'G', octave: 3, alter: 1 }, // G#3
+      duration: 1,
+    }
+    const flatTarget: TargetNote = {
+      pitch: { step: 'B', octave: 4, alter: -1 }, // Bb4
+      duration: 1,
+    }
+    const detectedSharp = { pitch: 'G#3', cents: 0, timestamp: 0, confidence: 1 }
+    const detectedFlat = { pitch: 'A#4', cents: 0, timestamp: 0, confidence: 1 } // Enharmonic equivalent
+
+    expect(isMatch(sharpTarget, detectedSharp)).toBe(true)
+    expect(isMatch(flatTarget, detectedFlat)).toBe(true)
   })
 
   it('should return false if cents are out of tolerance', () => {
@@ -248,9 +269,18 @@ describe('isMatch', () => {
     expect(isMatch(target, detected, 25)).toBe(false)
   })
 
-  it('should return true if cents are within tolerance', () => {
-    const detected = { pitch: 'A4', cents: 24, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detected, 25)).toBe(true)
+  it('should return true if cents are exactly at the tolerance boundary (exclusive)', () => {
+    const detectedPositive = { pitch: 'A4', cents: 24.99, timestamp: 0, confidence: 1 }
+    const detectedNegative = { pitch: 'A4', cents: -24.99, timestamp: 0, confidence: 1 }
+    expect(isMatch(target, detectedPositive, 25)).toBe(true)
+    expect(isMatch(target, detectedNegative, 25)).toBe(true)
+  })
+
+  it('should return false if cents are exactly at the tolerance boundary (inclusive)', () => {
+    const detectedPositive = { pitch: 'A4', cents: 25, timestamp: 0, confidence: 1 }
+    const detectedNegative = { pitch: 'A4', cents: -25, timestamp: 0, confidence: 1 }
+    expect(isMatch(target, detectedPositive, 25)).toBe(false)
+    expect(isMatch(target, detectedNegative, 25)).toBe(false)
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
