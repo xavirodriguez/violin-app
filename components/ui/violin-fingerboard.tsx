@@ -88,6 +88,8 @@ interface ViolinFingerboardProps {
   centsDeviation?: number | null
   /** The tolerance in cents within which a note is considered "In Tune". @defaultValue 25 */
   centsTolerance?: number
+  /** Explicit override for the in-tune state. */
+  isInTune?: boolean
 }
 
 /**
@@ -113,6 +115,7 @@ export function ViolinFingerboard({
   detectedPitchName,
   centsDeviation,
   centsTolerance = 25,
+  isInTune,
 }: ViolinFingerboardProps) {
   const baseCanvasRef = useRef<HTMLCanvasElement>(null)
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -159,16 +162,17 @@ export function ViolinFingerboard({
         const detectedPosition = FINGER_POSITIONS[normalizedDetected.nameWithOctave]
 
         if (detectedPosition) {
-          const isInTune =
-            centsDeviation !== null &&
-            centsDeviation !== undefined &&
-            Math.abs(centsDeviation) < centsTolerance
+          const isNoteInTune =
+            isInTune ??
+            (centsDeviation !== null &&
+              centsDeviation !== undefined &&
+              Math.abs(centsDeviation) < centsTolerance)
 
           drawDetectedPosition(
             ctx,
             detectedPosition,
             centsDeviation || 0,
-            isInTune,
+            isNoteInTune,
             canvas.width,
             canvas.height,
           )

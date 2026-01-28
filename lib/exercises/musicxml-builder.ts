@@ -10,10 +10,22 @@ import type { ExerciseData, Note, Pitch } from './types'
  * Mapping of rhythmic durations to MusicXML division values.
  * @internal
  */
-const DURATION_TO_VALUE: Record<string, number> = {
-  quarter: 1,
-  half: 2,
-  whole: 4,
+const DURATION_TO_VALUE: Record<number, number> = {
+  4: 1,
+  2: 2,
+  1: 4,
+  8: 0.5,
+  16: 0.25,
+  32: 0.125,
+}
+
+const DURATION_TO_TYPE: Record<number, string> = {
+  1: 'whole',
+  2: 'half',
+  4: 'quarter',
+  8: 'eighth',
+  16: '16th',
+  32: '32nd',
 }
 
 /**
@@ -25,7 +37,7 @@ const DURATION_TO_VALUE: Record<string, number> = {
  */
 const renderPitch = (pitch: Pitch): string => {
   const { step, octave, alter } = pitch
-  const alterTag = alter ? `<alter>${alter === '#' ? 1 : -1}</alter>` : ''
+  const alterTag = alter !== 0 ? `<alter>${alter}</alter>` : ''
   return `<pitch><step>${step}</step>${alterTag}<octave>${octave}</octave></pitch>`
 }
 
@@ -38,11 +50,12 @@ const renderPitch = (pitch: Pitch): string => {
  */
 const renderNote = (note: Note): string => {
   const durationValue = DURATION_TO_VALUE[note.duration] || 1
+  const typeString = DURATION_TO_TYPE[note.duration] || 'quarter'
   return `
     <note>
       ${renderPitch(note.pitch)}
       <duration>${durationValue}</duration>
-      <type>${note.duration}</type>
+      <type>${typeString}</type>
     </note>`
 }
 

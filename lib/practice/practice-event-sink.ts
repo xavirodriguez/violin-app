@@ -1,14 +1,16 @@
 import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
-import { useAnalyticsStore } from '@/lib/stores/analytics-store'
+import { useAnalyticsStore } from '@/stores/analytics-store'
+import type { StoreApi as ZustandStoreApi } from 'zustand'
 
 /**
  * A type representing the core state management functions of a Zustand store.
  *
- * @template T - The type of the state managed by the store.
+ * @remarks
+ * Template T - The type of the state managed by the store.
  */
 type StoreApi<T> = {
-  getState: () => T
-  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => void
+  getState: ZustandStoreApi<T>['getState']
+  setState: ZustandStoreApi<T>['setState']
 }
 
 /**

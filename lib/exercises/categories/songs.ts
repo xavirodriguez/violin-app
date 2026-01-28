@@ -37,10 +37,10 @@ export const songsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_C_MAJOR,
     notes: [
-      { pitch: parsePitch('G3'), duration: 'quarter' },
-      { pitch: parsePitch('G3'), duration: 'quarter' },
-      { pitch: parsePitch('D4'), duration: 'quarter' },
-      { pitch: parsePitch('D4'), duration: 'quarter' },
+      { pitch: parsePitch('G3'), duration: 4 },
+      { pitch: parsePitch('G3'), duration: 4 },
+      { pitch: parsePitch('D4'), duration: 4 },
+      { pitch: parsePitch('D4'), duration: 4 },
     ],
   },
   {
@@ -51,10 +51,10 @@ export const songsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_G_MAJOR,
     notes: [
-      { pitch: parsePitch('A4'), duration: 'quarter' },
-      { pitch: parsePitch('A4'), duration: 'quarter' },
-      { pitch: parsePitch('G4'), duration: 'quarter' },
-      { pitch: parsePitch('F#4'), duration: 'quarter' },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('G4'), duration: 4 },
+      { pitch: parsePitch('F#4'), duration: 4 },
     ],
   },
   {
@@ -65,10 +65,10 @@ export const songsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_G_MAJOR,
     notes: [
-      { pitch: parsePitch('B4'), duration: 'quarter' },
-      { pitch: parsePitch('B4'), duration: 'quarter' },
-      { pitch: parsePitch('C5'), duration: 'quarter' },
-      { pitch: parsePitch('D5'), duration: 'quarter' },
+      { pitch: parsePitch('B4'), duration: 4 },
+      { pitch: parsePitch('B4'), duration: 4 },
+      { pitch: parsePitch('C5'), duration: 4 },
+      { pitch: parsePitch('D5'), duration: 4 },
     ],
   },
 ]

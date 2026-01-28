@@ -23,9 +23,9 @@ type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
  *
  * @remarks
  * State machine:
- * - `IDLE` -> `INITIALIZING` -> `READY` when `initialize()` is called.
- * - `READY` -> `LISTENING` when `startListening()` is called.
- * - `LISTENING` <-> `DETECTED` based on whether a clear pitch is found.
+ * - `IDLE` -\> `INITIALIZING` -\> `READY` when `initialize()` is called.
+ * - `READY` -\> `LISTENING` when `startListening()` is called.
+ * - `LISTENING` \<-\> `DETECTED` based on whether a clear pitch is found.
  *
  * Error handling:
  * - Errors during initialization transition the state to `ERROR`.
@@ -52,7 +52,7 @@ interface TunerStore {
 
   /**
    * Confidence level of the pitch detection (0 to 1).
-   * Typically > 0.85 is considered a reliable signal.
+   * Typically \> 0.85 is considered a reliable signal.
    */
   confidence: number
 
@@ -83,7 +83,7 @@ interface TunerStore {
 
   /**
    * Input sensitivity (0 to 100).
-   * Maps to gain: 0 -> 0x, 50 -> 1x, 100 -> 2x.
+   * Maps to gain: 0 -\> 0x, 50 -\> 1x, 100 -\> 2x.
    */
   sensitivity: number
 
@@ -180,7 +180,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
 
         if (token !== initToken) {
           stream.getTracks().forEach((track) => track.stop())
-          logger.log('Initialization aborted due to session token mismatch.')
+          logger.info('Initialization aborted due to session token mismatch.')
           return
         }
 
@@ -200,7 +200,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
         const detector = new PitchDetector(context.sampleRate)
 
         if (token !== initToken) {
-          logger.log('Initialization successful, but a new session has started. Discarding.')
+          logger.info('Initialization successful, but a new session has started. Discarding.')
           stream.getTracks().forEach((track) => track.stop())
           void context.close()
           return
@@ -226,7 +226,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
         })
 
         if (token !== initToken) {
-          logger.log('Initialization failed, but a new session has already started.')
+          logger.info('Initialization failed, but a new session has already started.')
           return
         }
 

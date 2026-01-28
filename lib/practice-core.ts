@@ -5,9 +5,9 @@
  */
 
 // Use the actual Note type from the exercise definitions as our TargetNote.
-import type { Exercise } from '@/lib/exercises/types'
-import { NoteTechnique, Observation } from './technique-types'
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 export type { Note as TargetNote } from '@/lib/exercises/types'
+import { NoteTechnique, Observation } from './technique-types'
 
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
@@ -147,32 +147,22 @@ export function formatPitchName(pitch: TargetNote['pitch']): string {
   let alterStr = ''
   switch (pitch.alter) {
     case 1:
-    case 'sharp':
-    case '#':
       alterStr = '#'
       break
     case -1:
-    case 'flat':
-    case 'b':
       alterStr = 'b'
       break
     case 2:
-    case 'double-sharp':
-    case '##':
       alterStr = '##'
       break
     case -2:
-    case 'double-flat':
-    case 'bb':
       alterStr = 'bb'
       break
     case 0:
-    case undefined:
-    case null:
       alterStr = ''
       break
     default:
-      // Treat any other value as a data error from the exercise source.
+      // @ts-expect-error - handling potential runtime data errors
       throw new Error(`Unsupported alter value: ${pitch.alter}`)
   }
   return `${pitch.step}${alterStr}${pitch.octave}`
@@ -186,16 +176,12 @@ export function isMatch(target: TargetNote, detected: DetectedNote, centsToleran
     return false
   }
 
-  try {
-    const targetPitchName = formatPitchName(target.pitch)
-    const targetNote = MusicalNote.fromName(targetPitchName)
-    const detectedNote = MusicalNote.fromName(detected.pitch)
-    const isPitchMatch = targetNote.isEnharmonic(detectedNote)
-    const isInTune = Math.abs(detected.cents) < centsTolerance
-    return isPitchMatch && isInTune
-  } catch (error) {
-    throw error
-  }
+  const targetPitchName = formatPitchName(target.pitch)
+  const targetNote = MusicalNote.fromName(targetPitchName)
+  const detectedNote = MusicalNote.fromName(detected.pitch)
+  const isPitchMatch = targetNote.isEnharmonic(detectedNote)
+  const isInTune = Math.abs(detected.cents) < centsTolerance
+  return isPitchMatch && isInTune
 }
 
 /**

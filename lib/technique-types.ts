@@ -75,5 +75,5 @@ export interface Observation {
   confidence: number // 0..1
   message: string
   tip: string
-  evidence?: any
+  evidence?: unknown
 }

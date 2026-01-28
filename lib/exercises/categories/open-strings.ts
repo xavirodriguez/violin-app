@@ -30,10 +30,10 @@ export const openStringsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     notes: [
-      { pitch: parsePitch('G3'), duration: 'quarter' },
-      { pitch: parsePitch('G3'), duration: 'quarter' },
-      { pitch: parsePitch('G3'), duration: 'quarter' },
-      { pitch: parsePitch('G3'), duration: 'quarter' },
+      { pitch: parsePitch('G3'), duration: 4 },
+      { pitch: parsePitch('G3'), duration: 4 },
+      { pitch: parsePitch('G3'), duration: 4 },
+      { pitch: parsePitch('G3'), duration: 4 },
     ],
   },
   {
@@ -44,10 +44,10 @@ export const openStringsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     notes: [
-      { pitch: parsePitch('D4'), duration: 'quarter' },
-      { pitch: parsePitch('D4'), duration: 'quarter' },
-      { pitch: parsePitch('D4'), duration: 'quarter' },
-      { pitch: parsePitch('D4'), duration: 'quarter' },
+      { pitch: parsePitch('D4'), duration: 4 },
+      { pitch: parsePitch('D4'), duration: 4 },
+      { pitch: parsePitch('D4'), duration: 4 },
+      { pitch: parsePitch('D4'), duration: 4 },
     ],
   },
   {
@@ -58,10 +58,10 @@ export const openStringsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     notes: [
-      { pitch: parsePitch('A4'), duration: 'quarter' },
-      { pitch: parsePitch('A4'), duration: 'quarter' },
-      { pitch: parsePitch('A4'), duration: 'quarter' },
-      { pitch: parsePitch('A4'), duration: 'quarter' },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('A4'), duration: 4 },
     ],
   },
   {
@@ -72,10 +72,10 @@ export const openStringsExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     notes: [
-      { pitch: parsePitch('E5'), duration: 'quarter' },
-      { pitch: parsePitch('E5'), duration: 'quarter' },
-      { pitch: parsePitch('E5'), duration: 'quarter' },
-      { pitch: parsePitch('E5'), duration: 'quarter' },
+      { pitch: parsePitch('E5'), duration: 4 },
+      { pitch: parsePitch('E5'), duration: 4 },
+      { pitch: parsePitch('E5'), duration: 4 },
+      { pitch: parsePitch('E5'), duration: 4 },
     ],
   },
 ]

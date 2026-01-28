@@ -1,5 +1,5 @@
 /**
- * @vitest-environment jsdom
+ * \@vitest-environment jsdom
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -23,6 +23,8 @@ const getInitialState = (
   exercise: mockExercise,
   currentIndex,
   detectionHistory: [],
+  holdDuration: 0,
+  requiredHoldTime: 500,
 })
 
 describe('reducePracticeEvent', () => {
@@ -119,25 +121,26 @@ describe('formatPitchName', () => {
     expect(formatPitchName(pitch)).toBe('C#4')
   })
 
-  it('should handle string alter values correctly', () => {
-    const pitch: TargetNote['pitch'] = { step: 'D', octave: 4, alter: 'flat' }
+  it('should handle flat values correctly', () => {
+    const pitch: TargetNote['pitch'] = { step: 'D', octave: 4, alter: -1 }
     expect(formatPitchName(pitch)).toBe('Db4')
   })
 
   it('should handle double sharp/flat values', () => {
-    const pitch1: TargetNote['pitch'] = { step: 'E', octave: 4, alter: '##' }
+    const pitch1: TargetNote['pitch'] = { step: 'E', octave: 4, alter: 2 }
     const pitch2: TargetNote['pitch'] = { step: 'F', octave: 4, alter: -2 }
     expect(formatPitchName(pitch1)).toBe('E##4')
     expect(formatPitchName(pitch2)).toBe('Fbb4')
   })
 
   it('should handle no alter value', () => {
-    const pitch: TargetNote['pitch'] = { step: 'G', octave: 4 }
+    const pitch: TargetNote['pitch'] = { step: 'G', octave: 4, alter: 0 }
     expect(formatPitchName(pitch)).toBe('G4')
   })
 
   it('should throw an error for unsupported alter values', () => {
-    const pitch: TargetNote['pitch'] = { step: 'A', octave: 4, alter: 3 as any }
+    // @ts-expect-error - testing invalid data
+    const pitch: TargetNote['pitch'] = { step: 'A', octave: 4, alter: 3 }
     expect(() => formatPitchName(pitch)).toThrow('Unsupported alter value: 3')
   })
 })
@@ -208,7 +211,7 @@ describe('MusicalNote Edge Cases', () => {
 describe('isMatch', () => {
   const target: TargetNote = {
     pitch: { step: 'A', octave: 4, alter: 0 },
-    duration: 1,
+    duration: 4,
   }
 
   it('should return true for a correct match', () => {
@@ -219,7 +222,7 @@ describe('isMatch', () => {
   it('should return true for an enharmonic match', () => {
     const enharmonicTarget: TargetNote = {
       pitch: { step: 'C', octave: 4, alter: 1 },
-      duration: 1,
+      duration: 4,
     }
     const detected = { pitch: 'Db4', cents: 0, timestamp: 0, confidence: 1 }
     expect(isMatch(enharmonicTarget, detected)).toBe(true)
@@ -236,9 +239,10 @@ describe('isMatch', () => {
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
+    // @ts-expect-error - testing invalid data
     const invalidTarget: TargetNote = {
-      pitch: { step: 'C', octave: 4, alter: 7 as any },
-      duration: 1,
+      pitch: { step: 'C', octave: 4, alter: 7 },
+      duration: 4,
     }
     const detected = { pitch: 'A4', cents: 0, timestamp: 0, confidence: 1 }
     expect(() => isMatch(invalidTarget, detected)).toThrow('Unsupported alter value: 7')
