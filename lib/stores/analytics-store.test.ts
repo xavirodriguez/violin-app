@@ -131,8 +131,12 @@ describe('useAnalyticsStore', () => {
 
     expect(migrated.sessions[0].startTimeMs).toBe(new Date('2023-01-01T10:00:00.000Z').getTime())
     expect(migrated.sessions[0].endTimeMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
-    expect(migrated.progress.achievements[0].unlockedAtMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
-    expect(migrated.progress.exerciseStats.ex1.lastPracticedMs).toBe(new Date('2023-01-01T10:05:00.000Z').getTime())
+    expect(migrated.progress.achievements[0].unlockedAtMs).toBe(
+      new Date('2023-01-01T10:05:00.000Z').getTime(),
+    )
+    expect(migrated.progress.exerciseStats.ex1.lastPracticedMs).toBe(
+      new Date('2023-01-01T10:05:00.000Z').getTime(),
+    )
 
     // Check that old fields are removed or at least new ones are present
     expect(migrated.sessions[0].startTime).toBeUndefined()
