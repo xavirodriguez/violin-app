@@ -219,14 +219,7 @@ function handleDetectedDrawing(
       const isNoteInTune =
         isInTune ?? (centsDeviation !== null && Math.abs(centsDeviation) < centsTolerance)
 
-      drawDetectedPosition(
-        ctx,
-        detectedPosition,
-        centsDeviation || 0,
-        isNoteInTune,
-        width,
-        height,
-      )
+      drawDetectedPosition(ctx, detectedPosition, centsDeviation || 0, isNoteInTune, width, height)
     }
   } catch (error) {
     logger.debug(`[ViolinFingerboard] Detected note not found or invalid: ${detectedPitchName}`, {
