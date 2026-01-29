@@ -11,6 +11,17 @@ import {
   Observation,
 } from './technique-types'
 
+export interface TechniqueAnalysisOptions {
+  settlingTimeMs: number
+  inTuneThresholdCents: number
+
+  vibratoMinRateHz: number
+  vibratoMaxRateHz: number
+  vibratoMinWidthCents: number
+  vibratoMinRegularity: number
+}
+
+
 /**
  * A stateful agent that analyzes note segments to provide detailed technical feedback.
  *
@@ -28,7 +39,11 @@ import {
  *     and filtered pedagogical tips ready for display to the user.
  */
 export class TechniqueAnalysisAgent {
-  options: unknown
+  options: TechniqueAnalysisOptions
+
+  constructor(options: TechniqueAnalysisOptions) {
+    this.options = options
+  }
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
    *
