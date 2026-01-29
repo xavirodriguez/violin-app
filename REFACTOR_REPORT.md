@@ -1,6 +1,7 @@
 # Type Safety Refactoring Report
 
 ## Errors Fixed
+
 - [x] ERROR-001: Exercise type duplication
   - Files changed: `lib/music-data.ts`
   - Breaking changes: None (compatibility aliases added, legacy `Exercise` renamed to `LegacyExercise`)
@@ -45,12 +46,14 @@
   - Implementation: Documented state machine and event sequence.
 
 ## Metrics
+
 - Total files modified: 18
 - TypeScript errors before: 7
 - TypeScript errors after: 0
 - New tests added: 3 (8 new test cases)
 
 ## Migration Guide
+
 - **Note Names**: Use `assertValidNoteName(str)` before passing raw strings to `MusicalNote.fromName()`, or cast if already validated.
 - **Exercises**: Use `Exercise` from `@/lib/exercises/types`. For old data structures, use `adaptLegacyExercise`.
 - **Props**: Pass `null` explicitly to `PracticeFeedback` or `ViolinFingerboard` when a value (like `centsOff`) is not available.
