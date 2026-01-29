@@ -8,6 +8,7 @@
 import { create } from 'zustand'
 import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
+import { type AppError, toAppError, ERROR_CODES } from '@/lib/errors/app-error'
 import { useAnalyticsStore } from './analytics-store'
 import { runPracticeSession } from '@/lib/practice/session-runner'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
@@ -24,10 +25,7 @@ let sessionId = 0
  */
 interface PracticeStore {
   practiceState: PracticeState | null
-  error: string | null
-  currentNoteIndex: number
-  targetNote: Exercise['notes'][0] | null
-  status: PracticeState['status']
+  error: AppError | null
   analyser: AnalyserNode | null
   detector: PitchDetector | null
   loadExercise: (exercise: Exercise) => Promise<void>
@@ -52,36 +50,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     return audioManager.getAnalyser()
   },
 
-  /**
-   * @remarks
-   * This is a derived value. Using it directly in a component will cause the component
-   * to re-render on any state change. For performance-critical components, prefer
-   * a selector with `useShallow`.
-   */
-  get currentNoteIndex() {
-    return get().practiceState?.currentIndex ?? 0
-  },
-  /**
-   * @remarks
-   * This is a derived value. Using it directly in a component will cause the component
-   * to re-render on any state change. For performance-critical components, prefer
-   * a selector with `useShallow`.
-   */
-  get targetNote() {
-    const state = get().practiceState
-    if (!state) return null
-    return state.exercise.notes[state.currentIndex] ?? null
-  },
-  /**
-   * @remarks
-   * This is a derived value. Using it directly in a component will cause the component
-   * to re-render on any state change. For performance-critical components, prefer
-   * a selector with `useShallow`.
-   */
-  get status() {
-    return get().practiceState?.status ?? 'idle'
-  },
-
   loadExercise: async (exercise) => {
     await get().stop()
     set(() => ({
@@ -93,7 +61,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   start: async () => {
     if (get().practiceState?.status === 'listening') return
     if (!get().practiceState) {
-      set(() => ({ error: 'No exercise loaded.' }))
+      set(() => ({
+        error: toAppError('No exercise loaded.', ERROR_CODES.STATE_INVALID_TRANSITION),
+      }))
       return
     }
 
@@ -137,19 +107,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       }).catch((err) => {
         const name = err instanceof Error ? err.name : ''
         if (name !== 'AbortError') {
-          console.error('[PRACTICE LOOP ERROR]', err)
+          const appError = toAppError(err, ERROR_CODES.UNKNOWN)
+          console.error('[PRACTICE LOOP ERROR]', appError)
           set(() => ({
-            error:
-              err instanceof Error
-                ? err.message
-                : 'An unexpected error occurred in the practice loop.',
+            error: appError,
           }))
         }
         void get().stop()
       })
     } catch (err) {
-      console.error('[PRACTICE START ERROR]', err)
-      set(() => ({ error: err instanceof Error ? err.message : 'Audio hardware error.' }))
+      const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
+      console.error('[PRACTICE START ERROR]', appError)
+      set(() => ({ error: appError }))
       void get().stop()
     }
   },

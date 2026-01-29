@@ -157,6 +157,8 @@ export interface DetectedNote {
 export type PracticeStatus =
   | 'idle' // Not yet started
   | 'listening' // Actively waiting for user input
+  | 'validating' // Target note detected, waiting for hold time
+  | 'correct' // Target note held for required time (transient)
   | 'completed' // The entire exercise is finished
 
 /** The complete, self-contained state of the practice session. */
@@ -166,6 +168,8 @@ export interface PracticeState {
   currentIndex: number
   // The history of recent detections, used for UI feedback.
   detectionHistory: readonly DetectedNote[]
+  // The current duration the target note has been held (ms).
+  holdDuration?: number
   // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
 }
@@ -177,6 +181,8 @@ export type PracticeEvent =
   | { type: 'RESET' }
   // Fired continuously from the pipeline for UI feedback.
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
+  // Fired when a note matches target but is still being validated.
+  | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   // Fired by the pipeline only when a target note is held stable.
   | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
   // Fired when the signal is lost.
@@ -263,6 +269,7 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         status: 'listening',
         currentIndex: 0,
         detectionHistory: [],
+        holdDuration: 0,
         lastObservations: [],
       }
 
@@ -273,33 +280,50 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
         status: 'idle',
         currentIndex: 0,
         detectionHistory: [],
+        holdDuration: 0,
         lastObservations: [],
       }
 
     case 'NOTE_DETECTED': {
       const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
       buffer.push(...[event.payload, ...state.detectionHistory])
-      return { ...state, detectionHistory: buffer.toArray() }
+      // Transition back to listening if we were validating/correct and received a detection
+      const status =
+        state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
+      return {
+        ...state,
+        detectionHistory: buffer.toArray(),
+        status,
+        holdDuration: status === 'listening' ? 0 : state.holdDuration,
+      }
+    }
+
+    case 'HOLDING_NOTE': {
+      if (state.status !== 'listening' && state.status !== 'validating') return state
+      return { ...state, status: 'validating', holdDuration: event.payload.duration }
     }
 
     case 'NO_NOTE_DETECTED':
-      return { ...state, detectionHistory: [] }
+      return { ...state, detectionHistory: [], status: 'listening', holdDuration: 0 }
 
     case 'NOTE_MATCHED': {
-      if (state.status !== 'listening') return state
+      if (state.status !== 'listening' && state.status !== 'validating') return state
 
       const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
       if (isLastNote) {
         return {
           ...state,
           status: 'completed',
+          holdDuration: 0,
           lastObservations: event.payload?.observations ?? [],
         }
       } else {
         return {
           ...state,
           currentIndex: state.currentIndex + 1,
+          status: 'correct',
           detectionHistory: [],
+          holdDuration: 0,
           lastObservations: event.payload?.observations ?? [],
         }
       }

@@ -81,7 +81,7 @@ describe('reducePracticeEvent', () => {
     const event = { type: 'NOTE_MATCHED' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.currentIndex).toBe(1)
-    expect(newState.status).toBe('listening')
+    expect(newState.status).toBe('correct')
   })
 
   it('should not advance note on NOTE_MATCHED when not listening', () => {
