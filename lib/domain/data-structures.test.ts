@@ -28,8 +28,9 @@ describe('FixedRingBuffer', () => {
     buffer.push(2)
 
     const array = buffer.toArray()
-    // Try to modify the array (casting as any to bypass TypeScript)
-    ;(array as any)[0] = 99
+    // Try to modify the array (bypassing TypeScript to test runtime copy)
+    // @ts-expect-error - testing runtime immutability by attempting to modify readonly array
+    array[0] = 99
 
     expect(buffer.toArray()).toEqual([2, 1])
     expect(buffer.toArray()[0]).toBe(2)

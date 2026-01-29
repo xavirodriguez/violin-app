@@ -225,9 +225,8 @@ function SheetMusicView({
 export function PracticeMode() {
   const { practiceState, error, loadExercise, start, stop, reset } = usePracticeStore()
 
-  const status = practiceState?.status ?? 'idle'
-  const currentNoteIndex = practiceState?.currentIndex ?? 0
-  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
+  const { status, currentNoteIndex, targetNote, totalNotes, progress } =
+    derivePracticeState(practiceState)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -240,22 +239,11 @@ export function PracticeMode() {
   }, [loadExercise, practiceState])
 
   useEffect(() => {
-    if (!osmdHook.isReady) return
-    if (status === 'listening' && currentNoteIndex === 0) {
-      osmdHook.resetCursor()
-    } else if (status === 'listening' && currentNoteIndex > 0) {
-      osmdHook.advanceCursor()
-    }
-  }, [currentNoteIndex, status, osmdHook.isReady])
-
-  const totalNotes = practiceState?.exercise.notes.length ?? 0
-  const isCompleted = status === 'completed'
-  const progress =
-    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+    syncCursorWithNote(osmdHook, status, currentNoteIndex)
+  }, [currentNoteIndex, status, osmdHook])
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
-
   const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
@@ -303,8 +291,33 @@ export function PracticeMode() {
           lastObservations={practiceState?.lastObservations}
         />
 
-        {isCompleted && <PracticeCompletion onRestart={handleRestart} />}
+        {status === 'completed' && <PracticeCompletion onRestart={handleRestart} />}
       </div>
     </div>
   )
+}
+
+function derivePracticeState(practiceState: ReturnType<typeof usePracticeStore>['practiceState']) {
+  const status = practiceState?.status ?? 'idle'
+  const currentNoteIndex = practiceState?.currentIndex ?? 0
+  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
+  const totalNotes = practiceState?.exercise.notes.length ?? 0
+  const isCompleted = status === 'completed'
+  const progress =
+    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+
+  return { status, currentNoteIndex, targetNote, totalNotes, progress }
+}
+
+function syncCursorWithNote(
+  osmdHook: ReturnType<typeof useOSMDSafe>,
+  status: string,
+  currentNoteIndex: number,
+) {
+  if (!osmdHook.isReady) return
+  if (status === 'listening' && currentNoteIndex === 0) {
+    osmdHook.resetCursor()
+  } else if (status === 'listening' && currentNoteIndex > 0) {
+    osmdHook.advanceCursor()
+  }
 }

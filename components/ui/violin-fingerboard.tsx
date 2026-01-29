@@ -139,54 +139,17 @@ export function ViolinFingerboard({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Normalize and draw the target note
-    let targetPosition: FingerPosition | null = null
-    if (targetNote) {
-      try {
-        assertValidNoteName(targetNote)
-        const normalizedTarget = MusicalNote.fromName(targetNote)
-        targetPosition = FINGER_POSITIONS[normalizedTarget.nameWithOctave]
-        if (targetPosition) {
-          drawTargetPosition(ctx, targetPosition, canvas.width, canvas.height)
-        }
-      } catch (error) {
-        logger.debug(`[ViolinFingerboard] Target note not found or invalid: ${targetNote}`, {
-          error,
-        })
-      }
-    }
-
-    // Normalize and draw the detected note
-    if (detectedPitchName) {
-      try {
-        assertValidNoteName(detectedPitchName)
-        const normalizedDetected = MusicalNote.fromName(detectedPitchName)
-        const detectedPosition = FINGER_POSITIONS[normalizedDetected.nameWithOctave]
-
-        if (detectedPosition) {
-          const isNoteInTune =
-            isInTune ??
-            (centsDeviation !== null &&
-              centsDeviation !== undefined &&
-              Math.abs(centsDeviation) < centsTolerance)
-
-          drawDetectedPosition(
-            ctx,
-            detectedPosition,
-            centsDeviation || 0,
-            isNoteInTune,
-            canvas.width,
-            canvas.height,
-          )
-        }
-      } catch (error) {
-        logger.debug(
-          `[ViolinFingerboard] Detected note not found or invalid: ${detectedPitchName}`,
-          { error },
-        )
-      }
-    }
-  }, [targetNote, detectedPitchName, centsDeviation, centsTolerance])
+    handleTargetDrawing(ctx, targetNote, canvas.width, canvas.height)
+    handleDetectedDrawing(
+      ctx,
+      detectedPitchName,
+      centsDeviation,
+      centsTolerance,
+      isInTune,
+      canvas.width,
+      canvas.height,
+    )
+  }, [targetNote, detectedPitchName, centsDeviation, centsTolerance, isInTune])
 
   return (
     <div className="violin-fingerboard" style={{ position: 'relative' }}>
@@ -216,6 +179,62 @@ export function ViolinFingerboard({
  * @param height - The height of the canvas.
  * @internal
  */
+function handleTargetDrawing(
+  ctx: CanvasRenderingContext2D,
+  targetNote: string | null,
+  width: number,
+  height: number,
+) {
+  if (!targetNote) return
+  try {
+    assertValidNoteName(targetNote)
+    const normalizedTarget = MusicalNote.fromName(targetNote)
+    const targetPosition = FINGER_POSITIONS[normalizedTarget.nameWithOctave]
+    if (targetPosition) {
+      drawTargetPosition(ctx, targetPosition, width, height)
+    }
+  } catch (error) {
+    logger.debug(`[ViolinFingerboard] Target note not found or invalid: ${targetNote}`, {
+      error,
+    })
+  }
+}
+
+function handleDetectedDrawing(
+  ctx: CanvasRenderingContext2D,
+  detectedPitchName: string | null,
+  centsDeviation: number | null,
+  centsTolerance: number,
+  isInTune: boolean | undefined,
+  width: number,
+  height: number,
+) {
+  if (!detectedPitchName) return
+  try {
+    assertValidNoteName(detectedPitchName)
+    const normalizedDetected = MusicalNote.fromName(detectedPitchName)
+    const detectedPosition = FINGER_POSITIONS[normalizedDetected.nameWithOctave]
+
+    if (detectedPosition) {
+      const isNoteInTune =
+        isInTune ?? (centsDeviation !== null && Math.abs(centsDeviation) < centsTolerance)
+
+      drawDetectedPosition(
+        ctx,
+        detectedPosition,
+        centsDeviation || 0,
+        isNoteInTune,
+        width,
+        height,
+      )
+    }
+  } catch (error) {
+    logger.debug(`[ViolinFingerboard] Detected note not found or invalid: ${detectedPitchName}`, {
+      error,
+    })
+  }
+}
+
 function drawFingerboard(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const nutX = 50,
     bridgeX = width - 50

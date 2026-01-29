@@ -54,7 +54,7 @@ describe('AudioManager', () => {
     const mockStream = {
       getTracks: vi.fn().mockReturnValue([mockTrack]),
     }
-    ;(navigator.mediaDevices.getUserMedia as any).mockResolvedValue(mockStream)
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(mockStream as MediaStream)
 
     const resources = await audioManager.initialize()
     expect(resources.stream).toBe(mockStream)
@@ -64,7 +64,7 @@ describe('AudioManager', () => {
   it('should throw AppError with MIC_PERMISSION_DENIED when permission is rejected', async () => {
     const permissionError = new Error('Permission denied')
     permissionError.name = 'NotAllowedError'
-    ;(navigator.mediaDevices.getUserMedia as any).mockRejectedValue(permissionError)
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(permissionError)
 
     try {
       await audioManager.initialize()
@@ -82,7 +82,7 @@ describe('AudioManager', () => {
     const mockStream = {
       getTracks: vi.fn().mockReturnValue([mockTrack]),
     }
-    ;(navigator.mediaDevices.getUserMedia as any).mockResolvedValue(mockStream)
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(mockStream as MediaStream)
 
     await audioManager.initialize()
     await audioManager.cleanup()
