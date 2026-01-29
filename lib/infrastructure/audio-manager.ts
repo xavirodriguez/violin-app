@@ -5,6 +5,8 @@
  * Encapsulates the complexity of initialization, resource tracking, and cleanup.
  */
 
+import { toAppError, ERROR_CODES } from '../errors/app-error'
+
 export interface AudioResources {
   context: AudioContext
   stream: MediaStream
@@ -69,7 +71,7 @@ export class AudioManager {
       }
     } catch (err) {
       await this.cleanup()
-      throw err
+      throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
     }
   }
 
