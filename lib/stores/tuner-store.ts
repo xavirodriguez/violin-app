@@ -180,7 +180,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
 
         if (token !== initToken) {
           stream.getTracks().forEach((track) => track.stop())
-          logger.log('Initialization aborted due to session token mismatch.')
+          // Initialization aborted due to session token mismatch
           return
         }
 
@@ -200,7 +200,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
         const detector = new PitchDetector(context.sampleRate)
 
         if (token !== initToken) {
-          logger.log('Initialization successful, but a new session has started. Discarding.')
+          //Initialization successful, but a new session has started. Discarding.
           stream.getTracks().forEach((track) => track.stop())
           void context.close()
           return
@@ -226,7 +226,7 @@ export const useTunerStore = create<TunerStore>((set, get) => {
         })
 
         if (token !== initToken) {
-          logger.log('Initialization failed, but a new session has already started.')
+          // Initialization failed, but a new session has already started.
           return
         }
 
