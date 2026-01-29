@@ -131,7 +131,11 @@ describe('formatPitchName', () => {
     const pitchSharp = { step: 'F', octave: 4, alter: 'sharp' } as unknown as TargetNote['pitch']
     expect(formatPitchName(pitchSharp)).toBe('F#4')
 
-    const pitchNatural = { step: 'G', octave: 4, alter: 'natural' } as unknown as TargetNote['pitch']
+    const pitchNatural = {
+      step: 'G',
+      octave: 4,
+      alter: 'natural',
+    } as unknown as TargetNote['pitch']
     expect(formatPitchName(pitchNatural)).toBe('G4')
   })
 

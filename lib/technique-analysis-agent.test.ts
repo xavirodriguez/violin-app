@@ -218,7 +218,11 @@ describe('TechniqueAnalysisAgent', () => {
     // 1. Critical Wolf tone (severity 3, confidence 0.6 -> score 1.8)
     // 2. Inconsistent vibrato (severity 2, confidence 0.7 -> score 1.4)
 
-    const frames = createFrames(1000, () => 0, () => 0.1).map((f) => ({
+    const frames = createFrames(
+      1000,
+      () => 0,
+      () => 0.1,
+    ).map((f) => ({
       ...f,
       confidence: 0.3, // Low confidence contributes to suspectedWolf
     }))
@@ -244,7 +248,6 @@ describe('TechniqueAnalysisAgent', () => {
     const metrics = agent.analyzeSegment(segment)
     const observations = agent.generateObservations(metrics)
 
-
     expect(observations.length).toBeGreaterThan(1)
     // Highest score first: Resonance (1.8) > Vibrato (1.4)
     expect(observations[0].type).toBe('resonance')
@@ -254,7 +257,11 @@ describe('TechniqueAnalysisAgent', () => {
 
   it('should filter observations by confidence threshold', () => {
     // Generate many low-severity/low-confidence observations and check they are capped at 3
-    const frames = createFrames(500, (t) => 20 * Math.sin(t), () => 0.1)
+    const frames = createFrames(
+      500,
+      (t) => 20 * Math.sin(t),
+      () => 0.1,
+    )
     const segment: NoteSegment = {
       noteIndex: 0,
       targetPitch: 'A4',
