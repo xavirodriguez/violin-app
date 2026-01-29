@@ -1,8 +1,4 @@
-import {
-  type PracticeState,
-  reducePracticeEvent,
-  type PracticeEvent,
-} from '@/lib/practice-core'
+import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 
 /**
@@ -10,18 +6,15 @@ import { useAnalyticsStore } from '@/stores/analytics-store'
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (
-    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean | unknown,
-  ) => void
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => void
 }
 
 /**
  * Handles all state transitions and side effects for a given practice event.
  */
-export const handlePracticeEvent = (
+export const handlePracticeEvent = <T extends { practiceState: PracticeState | null }>(
   event: PracticeEvent,
-  store: StoreApi<{ practiceState: PracticeState | null }>,
+  store: StoreApi<T>,
   onCompleted: () => void,
 ) => {
   const currentState = store.getState().practiceState
@@ -29,7 +22,7 @@ export const handlePracticeEvent = (
 
   // 1. Pure state transition
   const newState = reducePracticeEvent(currentState, event)
-  store.setState({ practiceState: newState })
+  store.setState({ practiceState: newState } as Partial<T>)
 
   // 2. Side effects
   try {

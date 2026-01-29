@@ -79,7 +79,7 @@ export interface Achievement {
 /**
  * Defines the state and actions for the analytics Zustand store.
  */
-interface AnalyticsStore {
+export interface AnalyticsStore {
   currentSession: PracticeSession | null
   sessions: PracticeSession[]
   progress: UserProgress
@@ -300,7 +300,10 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
                       const { timeToComplete, ...nrRest } = noteResult || {}
                       return {
                         ...nrRest,
-                        timeToCompleteMs: (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0,
+                        timeToCompleteMs:
+                          (noteResult.timeToCompleteMs as number) ??
+                          (timeToComplete as number) ??
+                          0,
                       }
                     })
                   : [],
@@ -309,8 +312,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           }
           const progress = persistedData.progress as Record<string, unknown> | undefined
           if (progress?.exerciseStats) {
-            Object.values(progress.exerciseStats as Record<string, Record<string, unknown>>).forEach((stats) => {
-              if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
+            Object.values(
+              progress.exerciseStats as Record<string, Record<string, unknown>>,
+            ).forEach((stats) => {
+              if (
+                stats.fastestCompletion !== undefined &&
+                stats.fastestCompletionMs === undefined
+              ) {
                 stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
                 delete stats.fastestCompletion
               }
@@ -342,7 +350,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             })
           : []
 
-        const exerciseStats = (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
+        const exerciseStats =
+          (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
         const migratedExerciseStats = Object.fromEntries(
           Object.entries(exerciseStats).map(([k, v]) => {
             const stats = v as Record<string, unknown>
@@ -361,7 +370,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           ...persistedData,
           sessions,
           progress: {
-            ...pProgress,
+            ...progress,
             achievements,
             exerciseStats: migratedExerciseStats,
           },
@@ -400,9 +409,7 @@ function updateExerciseStats(
       ? (existing.averageAccuracy * existing.timesCompleted + accuracy) /
         (existing.timesCompleted + 1)
       : accuracy,
-    fastestCompletionMs: existing
-      ? Math.min(existing.fastestCompletionMs, durationMs)
-      : durationMs,
+    fastestCompletionMs: existing ? Math.min(existing.fastestCompletionMs, durationMs) : durationMs,
     lastPracticedMs: endTimeMs,
   }
   return { ...exerciseStats, [exerciseId]: updated }
