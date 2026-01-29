@@ -2,9 +2,8 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
 import { useAnalyticsStore } from '@/lib/stores/analytics-store'
 
 /**
- * A type representing the core state management functions of a Zustand store.
- *
- * @template T - The type of the state managed by the store.
+ * A type representing the core state management functions of a Zustand store,
+ * generic over the state type `T`.
  */
 type StoreApi<T> = {
   getState: () => T
