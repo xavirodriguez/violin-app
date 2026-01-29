@@ -5,6 +5,8 @@
  * It handles exercise loading, audio resource management, and the real-time pitch detection loop.
  */
 
+'use client'
+
 import { create } from 'zustand'
 import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
@@ -28,6 +30,7 @@ interface PracticeStore {
   error: AppError | null
   analyser: AnalyserNode | null
   detector: PitchDetector | null
+  isStarting: boolean
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
@@ -45,10 +48,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   practiceState: null,
   error: null,
   detector: null,
-
-  get analyser() {
-    return audioManager.getAnalyser()
-  },
+  analyser: null,
+  isStarting: false,
 
   loadExercise: async (exercise) => {
     await get().stop()
@@ -59,41 +60,62 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   start: async () => {
-    if (get().practiceState?.status === 'listening') return
-    if (!get().practiceState) {
-      set(() => ({
+    // 1. Sincronic guards for concurrency and state
+    const current = get()
+    if (current.isStarting || current.practiceState?.status === 'listening') return
+
+    if (!current.practiceState) {
+      set({
         error: toAppError('No exercise loaded.', ERROR_CODES.STATE_INVALID_TRANSITION),
-      }))
+      })
       return
     }
 
-    await get().stop()
-
-    sessionId += 1
-    practiceLoopController = new AbortController()
-    const signal = practiceLoopController.signal
+    set({ isStarting: true, error: null })
 
     try {
+      // 2. Kill any existing session before starting new one
+      await get().stop()
+
+      sessionId += 1
+      const localSessionId = sessionId
+      practiceLoopController = new AbortController()
+      const signal = practiceLoopController.signal
+
+      // 3. Resource initialization
       const { context } = await audioManager.initialize()
       const detector = new PitchDetector(context.sampleRate)
       detector.setMaxFrequency(2700)
-      set(() => ({ detector, error: null }))
+      const analyser = audioManager.getAnalyser()
 
       const initialState = get().practiceState!
       const listeningState = reducePracticeEvent(initialState, { type: 'START' })
-      set(() => ({ practiceState: listeningState }))
+
+      // 4. Update state to listening
+      set({
+        detector,
+        analyser,
+        practiceState: listeningState,
+        isStarting: false,
+      })
 
       const sessionStartTime = Date.now()
       const { exercise } = get().practiceState!
       const analyticsStore = useAnalyticsStore.getState()
       analyticsStore.startSession(exercise.id, exercise.name, 'practice')
 
+      // 5. Session-guarded setState wrapper for the runner
+      const guardedSetState: typeof set = (updater) => {
+        if (sessionId !== localSessionId) return
+        set(updater)
+      }
+
       runPracticeSession({
         signal,
-        sessionId,
+        sessionId: localSessionId,
         store: {
           getState: get,
-          setState: set,
+          setState: guardedSetState,
           stop: get().stop,
         },
         analytics: {
@@ -106,41 +128,49 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         sessionStartTime,
       }).catch((err) => {
         const name = err instanceof Error ? err.name : ''
-        if (name !== 'AbortError') {
+        if (name !== 'AbortError' && sessionId === localSessionId) {
           const appError = toAppError(err, ERROR_CODES.UNKNOWN)
           console.error('[PRACTICE LOOP ERROR]', appError)
-          set(() => ({
-            error: appError,
-          }))
+          set({ error: appError })
+          void get().stop()
         }
-        void get().stop()
       })
     } catch (err) {
       const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
       console.error('[PRACTICE START ERROR]', appError)
-      set(() => ({ error: appError }))
+      set({ error: appError, isStarting: false })
       void get().stop()
     }
   },
 
   stop: async () => {
-    if (get().practiceState?.status === 'idle') {
-      return
-    }
+    // 1. Resource cleanup (always, regardless of state)
     if (practiceLoopController) {
       practiceLoopController.abort()
       practiceLoopController = null
     }
 
-    await audioManager.cleanup()
+    try {
+      await audioManager.cleanup()
+    } catch (err) {
+      console.warn('[PRACTICE STOP] Audio cleanup failed:', err)
+    }
 
-    set((state) => {
-      if (!state.practiceState || state.practiceState.status === 'idle') return state
-      return { practiceState: reducePracticeEvent(state.practiceState, { type: 'STOP' }) }
-    })
+    // 2. Guarantee analytics closure
+    const analyticsStore = useAnalyticsStore.getState()
+    if (analyticsStore.currentSession) {
+      analyticsStore.endSession()
+    }
 
-    set(() => ({
+    // 3. Unified state update
+    set((state) => ({
+      practiceState:
+        state.practiceState && state.practiceState.status !== 'idle'
+          ? reducePracticeEvent(state.practiceState, { type: 'STOP' })
+          : state.practiceState,
       detector: null,
+      analyser: null,
+      isStarting: false,
     }))
   },
 
