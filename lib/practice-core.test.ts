@@ -7,7 +7,10 @@ import {
   type TargetNote,
   MusicalNote,
   isMatch,
+  type NoteName,
 } from './practice-core'
+
+const n = (s: string) => s as NoteName
 import { allExercises } from './exercises'
 
 // Mock data for testing
@@ -57,13 +60,17 @@ describe('reducePracticeEvent', () => {
   })
 
   it('should clear history on NO_NOTE_DETECTED event', () => {
-    const initialState = getInitialState('listening')
-    initialState.detectionHistory.push({
-      pitch: 'A4',
-      cents: 5,
-      timestamp: Date.now(),
-      confidence: 0.9,
-    })
+    const initialState: PracticeState = {
+      ...getInitialState('listening'),
+      detectionHistory: [
+        {
+          pitch: 'A4',
+          cents: 5,
+          timestamp: Date.now(),
+          confidence: 0.9,
+        },
+      ],
+    }
     const event = { type: 'NO_NOTE_DETECTED' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.detectionHistory).toEqual([])
@@ -94,13 +101,17 @@ describe('reducePracticeEvent', () => {
   })
 
   it('should clear detection history after a successful match', () => {
-    const initialState = getInitialState('listening', 0)
-    initialState.detectionHistory.push({
-      pitch: 'G4',
-      cents: 2,
-      timestamp: Date.now(),
-      confidence: 0.95,
-    })
+    const initialState: PracticeState = {
+      ...getInitialState('listening', 0),
+      detectionHistory: [
+        {
+          pitch: 'G4',
+          cents: 2,
+          timestamp: Date.now(),
+          confidence: 0.95,
+        },
+      ],
+    }
     const event = { type: 'NOTE_MATCHED' as const }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.detectionHistory).toEqual([])
@@ -139,36 +150,36 @@ describe('formatPitchName', () => {
 
 describe('MusicalNote Enharmonic Equivalents', () => {
   it('should treat C#4 and Db4 as equivalent', () => {
-    const cSharp = MusicalNote.fromName('C#4')
-    const dFlat = MusicalNote.fromName('Db4')
+    const cSharp = MusicalNote.fromName(n('C#4'))
+    const dFlat = MusicalNote.fromName(n('Db4'))
     expect(cSharp.isEnharmonic(dFlat)).toBe(true)
     expect(cSharp.midiNumber).toBe(dFlat.midiNumber)
   })
 
   it('should handle Cb4 as equivalent to B3', () => {
-    const cFlat = MusicalNote.fromName('Cb4')
-    const bNatural = MusicalNote.fromName('B3')
+    const cFlat = MusicalNote.fromName(n('Cb4'))
+    const bNatural = MusicalNote.fromName(n('B3'))
     expect(cFlat.isEnharmonic(bNatural)).toBe(true)
     expect(cFlat.midiNumber).toBe(bNatural.midiNumber)
   })
 
   it('should handle B#3 as equivalent to C4', () => {
-    const bSharp = MusicalNote.fromName('B#3')
-    const cNatural = MusicalNote.fromName('C4')
+    const bSharp = MusicalNote.fromName(n('B#3'))
+    const cNatural = MusicalNote.fromName(n('C4'))
     expect(bSharp.isEnharmonic(cNatural)).toBe(true)
     expect(bSharp.midiNumber).toBe(cNatural.midiNumber)
   })
 
   it('should handle E#4 as equivalent to F4', () => {
-    const eSharp = MusicalNote.fromName('E#4')
-    const fNatural = MusicalNote.fromName('F4')
+    const eSharp = MusicalNote.fromName(n('E#4'))
+    const fNatural = MusicalNote.fromName(n('F4'))
     expect(eSharp.isEnharmonic(fNatural)).toBe(true)
     expect(eSharp.midiNumber).toBe(fNatural.midiNumber)
   })
 
   it('should handle Fb4 as equivalent to E4', () => {
-    const fFlat = MusicalNote.fromName('Fb4')
-    const eNatural = MusicalNote.fromName('E4')
+    const fFlat = MusicalNote.fromName(n('Fb4'))
+    const eNatural = MusicalNote.fromName(n('E4'))
     expect(fFlat.isEnharmonic(eNatural)).toBe(true)
     expect(fFlat.midiNumber).toBe(eNatural.midiNumber)
   })
@@ -182,24 +193,24 @@ describe('MusicalNote Edge Cases', () => {
   })
 
   it('should handle sharps correctly', () => {
-    const note = MusicalNote.fromName('C#4')
+    const note = MusicalNote.fromName(n('C#4'))
     expect(note.midiNumber).toBe(61)
     expect(note.noteName).toBe('C#')
   })
 
   it('should handle flats correctly', () => {
-    const note = MusicalNote.fromName('Bb3')
+    const note = MusicalNote.fromName(n('Bb3'))
     expect(note.midiNumber).toBe(58)
     expect(note.noteName).toBe('A#') // MusicalNote currently returns sharp names
   })
 
   it('should handle double sharps', () => {
-    const note = MusicalNote.fromName('F##4')
+    const note = MusicalNote.fromName(n('F##4'))
     expect(note.midiNumber).toBe(67) // F#4=66, F##4=67 (G4)
   })
 
   it('should handle double flats', () => {
-    const note = MusicalNote.fromName('Ebb4')
+    const note = MusicalNote.fromName(n('Ebb4'))
     expect(note.midiNumber).toBe(62) // E4=64, Eb4=63, Ebb4=62 (D4)
   })
 
@@ -217,13 +228,13 @@ describe('MusicalNote Edge Cases', () => {
 
   it('should throw an error for malformed note names', () => {
     // Missing octave
-    expect(() => MusicalNote.fromName('C#')).toThrow('Invalid note name format: "C#"')
+    expect(() => MusicalNote.fromName(n('C#'))).toThrow('Invalid note name format: "C#"')
     // Invalid step
-    expect(() => MusicalNote.fromName('H4')).toThrow('Invalid note name format: "H4"')
+    expect(() => MusicalNote.fromName(n('H4'))).toThrow('Invalid note name format: "H4"')
     // Misplaced accidental
-    expect(() => MusicalNote.fromName('C4#')).toThrow('Invalid note name format: "C4#"')
+    expect(() => MusicalNote.fromName(n('C4#'))).toThrow('Invalid note name format: "C4#"')
     // Empty string
-    expect(() => MusicalNote.fromName('')).toThrow('Invalid note name format: ""')
+    expect(() => MusicalNote.fromName(n(''))).toThrow('Invalid note name format: ""')
   })
 })
 

@@ -12,11 +12,52 @@ import {
 } from './technique-types'
 
 export interface AnalysisOptions {
+  /**
+   * Time to wait for pitch to settle after note onset.
+   *
+   * @range 50-500 ms
+   * @default 200
+   */
   settlingTimeMs: number
+
+  /**
+   * Maximum pitch deviation to consider "in tune".
+   *
+   * @range 5-50 cents
+   * @default 25
+   */
   inTuneThresholdCents: number
+
+  /**
+   * Minimum vibrato rate to detect.
+   *
+   * @range 3-6 Hz
+   * @default 4
+   */
   vibratoMinRateHz: number
+
+  /**
+   * Maximum vibrato rate to detect.
+   *
+   * @range 6-10 Hz
+   * @default 9
+   */
   vibratoMaxRateHz: number
+
+  /**
+   * Minimum vibrato width to consider present.
+   *
+   * @range 5-20 cents
+   * @default 8
+   */
   vibratoMinWidthCents: number
+
+  /**
+   * Minimum regularity score to classify as intentional vibrato.
+   *
+   * @range 0.3-0.8
+   * @default 0.5
+   */
   vibratoMinRegularity: number
 }
 

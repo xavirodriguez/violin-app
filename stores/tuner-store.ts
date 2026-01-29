@@ -21,16 +21,16 @@ import { audioManager } from '@/lib/infrastructure/audio-manager'
  */
 type TunerState =
   | { kind: 'IDLE' }
-  | { kind: 'INITIALIZING'; token: number }
-  | { kind: 'READY' }
-  | { kind: 'LISTENING'; token: number }
+  | { kind: 'INITIALIZING'; readonly sessionToken: number }
+  | { kind: 'READY'; readonly sessionToken: number }
+  | { kind: 'LISTENING'; readonly sessionToken: number }
   | {
       kind: 'DETECTED'
       pitch: number
       note: string
       cents: number
       confidence: number
-      token: number
+      readonly sessionToken: number
     }
   | { kind: 'ERROR'; error: AppError }
 
@@ -41,7 +41,13 @@ type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
  * Interface representing the tuner store's state and actions.
  */
 interface TunerStore {
-  /** The current state object of the tuner. */
+  /**
+   * Current state with session tracking.
+   *
+   * @remarks
+   * States with `sessionToken` prevent stale updates from previous sessions.
+   * If you call `initialize()` twice, only the latest session updates state.
+   */
   state: TunerState
 
   /** Current microphone permission status. */
@@ -67,10 +73,19 @@ interface TunerStore {
   analyser: AnalyserNode | null
 
   /**
-   * Initializes the audio pipeline and requests microphone access.
+   * Initializes audio pipeline with automatic session management.
+   *
    * @remarks
-   * Implements a session guard using a token to prevent race conditions
-   * if multiple initializations are triggered.
+   * **Concurrency Safety**:
+   * - Multiple calls are safe: previous sessions are automatically invalidated
+   * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
+   * - If a previous initialization is pending, it will be cancelled
+   *
+   * **State Transitions**:
+   * - IDLE → INITIALIZING → READY (success)
+   * - IDLE → INITIALIZING → ERROR (failure)
+   *
+   * @throws Never throws - errors are captured in state.error
    */
   initialize: () => Promise<void>
 
@@ -139,7 +154,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
         return
       }
 
-      set({ state: { kind: 'INITIALIZING', token } })
+      set({ state: { kind: 'INITIALIZING', sessionToken: token } })
 
       try {
         const { context } = await audioManager.initialize(deviceId ?? undefined)
@@ -156,7 +171,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
         const detector = new PitchDetector(context.sampleRate)
 
         set({
-          state: { kind: 'READY' },
+          state: { kind: 'READY', sessionToken: token },
           permissionState: 'GRANTED',
           detector,
         })
@@ -202,7 +217,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
         return
       }
 
-      const token = state.token
+      const token = state.sessionToken
       const hasSignal = confidence > 0.85 && pitch > 0
 
       if (hasSignal) {
@@ -215,7 +230,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
               note: note.nameWithOctave,
               cents: note.centsDeviation,
               confidence,
-              token,
+              sessionToken: token,
             },
           })
         } catch (_err) {
@@ -225,18 +240,18 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
             context: { pitch },
           })
           // On error, revert to listening state without valid pitch
-          set({ state: { kind: 'LISTENING', token } })
+          set({ state: { kind: 'LISTENING', sessionToken: token } })
         }
       } else {
         // If signal is lost, transition back to LISTENING
-        set({ state: { kind: 'LISTENING', token } })
+        set({ state: { kind: 'LISTENING', sessionToken: token } })
       }
     },
 
     startListening: () => {
       const { state } = get()
       if (state.kind === 'READY') {
-        set({ state: { kind: 'LISTENING', token: initToken } })
+        set({ state: { kind: 'LISTENING', sessionToken: state.sessionToken } })
       } else {
         logger.warn(`Cannot start listening from state: ${state.kind}`)
       }
@@ -245,7 +260,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     stopListening: () => {
       const { state } = get()
       if (state.kind === 'LISTENING' || state.kind === 'DETECTED') {
-        set({ state: { kind: 'READY' } })
+        set({ state: { kind: 'READY', sessionToken: state.sessionToken } })
       } else {
         logger.warn(`Cannot stop listening from state: ${state.kind}`)
       }

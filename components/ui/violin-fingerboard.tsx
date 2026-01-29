@@ -7,7 +7,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { MusicalNote } from '@/lib/practice-core'
+import { MusicalNote, assertValidNoteName } from '@/lib/practice-core'
 import { clamp } from '@/lib/ui-utils'
 import { logger } from '@/lib/observability/logger'
 
@@ -83,9 +83,9 @@ interface ViolinFingerboardProps {
   /** The note the student should be playing (e.g., "A4"). */
   targetNote: string | null
   /** The note currently detected by the pitch tracker. */
-  detectedPitchName?: string
+  detectedPitchName: string | null
   /** The deviation in cents from the ideal frequency. Used for visual offset. */
-  centsDeviation?: number | null
+  centsDeviation: number | null
   /** The tolerance in cents within which a note is considered "In Tune". @defaultValue 25 */
   centsTolerance?: number
   /** Explicit override for the in-tune state. */
@@ -143,6 +143,7 @@ export function ViolinFingerboard({
     let targetPosition: FingerPosition | null = null
     if (targetNote) {
       try {
+        assertValidNoteName(targetNote)
         const normalizedTarget = MusicalNote.fromName(targetNote)
         targetPosition = FINGER_POSITIONS[normalizedTarget.nameWithOctave]
         if (targetPosition) {
@@ -158,6 +159,7 @@ export function ViolinFingerboard({
     // Normalize and draw the detected note
     if (detectedPitchName) {
       try {
+        assertValidNoteName(detectedPitchName)
         const normalizedDetected = MusicalNote.fromName(detectedPitchName)
         const detectedPosition = FINGER_POSITIONS[normalizedDetected.nameWithOctave]
 

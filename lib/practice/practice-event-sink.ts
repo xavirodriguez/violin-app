@@ -10,10 +10,7 @@ import { useAnalyticsStore } from '@/stores/analytics-store'
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (
-    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean | unknown,
-  ) => void
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => void
 }
 
 /**

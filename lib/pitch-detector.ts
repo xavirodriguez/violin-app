@@ -9,6 +9,8 @@
  * by Alain de Cheveigné and Hideki Kawahara (2002)
  */
 
+import { AppError, ERROR_CODES } from './errors/app-error'
+
 export interface PitchDetectionResult {
   /** Detected frequency in Hz (0 if no pitch detected) */
   pitchHz: number
@@ -203,11 +205,21 @@ export class PitchDetector {
 
   /**
    * Updates the maximum frequency threshold for pitch detection.
-   * Higher values allow detecting notes in higher positions (e.g., E7 ~2637 Hz).
+   *
+   * @param maxHz - Maximum frequency in Hz (must be > MIN_FREQUENCY and <= 20000)
+   * @throws {AppError} CODE: DATA_VALIDATION_ERROR if out of valid range
+   *
+   * @example
+   * detector.setMaxFrequency(2637);  // ✅ E7 for violin
+   * detector.setMaxFrequency(-100);  // ❌ Throws AppError
+   * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
    */
   setMaxFrequency(maxHz: number): void {
-    if (maxHz <= this.MIN_FREQUENCY) {
-      throw new Error(`Max frequency must be greater than min frequency (${this.MIN_FREQUENCY} Hz)`)
+    if (maxHz <= this.MIN_FREQUENCY || maxHz > 20000) {
+      throw new AppError({
+        message: `Invalid max frequency: ${maxHz}. Must be > ${this.MIN_FREQUENCY} and <= 20000`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
     }
     this.MAX_FREQUENCY = maxHz
   }

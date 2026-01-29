@@ -24,8 +24,11 @@ interface Note {
 
 /**
  * Interface for the legacy Exercise object.
+ *
+ * @deprecated Use Exercise from `@/lib/exercises/types` instead.
+ * This type will be removed in v2.0.
  */
-export interface Exercise {
+export interface LegacyExercise {
   /** Unique identifier. */
   id: string
   /** Human-readable name. */
@@ -39,7 +42,7 @@ export interface Exercise {
 /**
  * Example legacy exercise for G Major Scale.
  */
-export const G_MAJOR_SCALE_EXERCISE: Exercise = {
+export const G_MAJOR_SCALE_EXERCISE: LegacyExercise = {
   id: 'g-major-scale',
   name: 'G Major Scale',
   notes: [
@@ -85,7 +88,7 @@ export const G_MAJOR_SCALE_EXERCISE: Exercise = {
 /**
  * Adapts a legacy exercise into the modern Exercise format.
  */
-export function adaptLegacyExercise(legacy: Exercise): ModernExercise {
+export function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise {
   return {
     id: legacy.id,
     name: legacy.name,

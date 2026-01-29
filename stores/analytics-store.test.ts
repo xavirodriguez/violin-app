@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useAnalyticsStore } from './analytics-store'
+import type { NoteTechnique } from '../lib/technique-types'
 
 describe('useAnalyticsStore', () => {
   beforeEach(() => {
