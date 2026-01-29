@@ -148,7 +148,7 @@ function TechniqueInsights({ observations }: { observations: Observation[] }) {
 
   return (
     <div className="mt-4 space-y-3">
-      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
         <Lightbulb className="h-4 w-4 text-yellow-500" />
         <span>Technique Insights</span>
       </div>
@@ -158,10 +158,10 @@ function TechniqueInsights({ observations }: { observations: Observation[] }) {
             key={idx}
             className={`rounded-lg border p-3 ${
               obs.severity === 3
-                ? 'bg-red-500/10 border-red-500/20'
+                ? 'border-red-500/20 bg-red-500/10'
                 : obs.severity === 2
-                  ? 'bg-yellow-500/10 border-yellow-500/20'
-                  : 'bg-blue-500/10 border-blue-500/20'
+                  ? 'border-yellow-500/20 bg-yellow-500/10'
+                  : 'border-blue-500/20 bg-blue-500/10'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -174,7 +174,7 @@ function TechniqueInsights({ observations }: { observations: Observation[] }) {
               )}
               <div className="flex-1">
                 <div className="text-sm font-bold">{obs.message}</div>
-                <div className="text-xs text-muted-foreground">{obs.tip}</div>
+                <div className="text-muted-foreground text-xs">{obs.tip}</div>
               </div>
             </div>
           </div>

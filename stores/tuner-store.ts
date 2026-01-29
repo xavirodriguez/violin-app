@@ -190,7 +190,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
         set({
           state: { kind: 'ERROR', error: appError },
-          permissionState: appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT',
+          permissionState:
+            appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT',
         })
       }
     },

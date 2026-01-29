@@ -46,7 +46,12 @@ describe('createPracticeEventPipeline', () => {
   it('should filter out events with low RMS, emitting NO_NOTE_DETECTED', async () => {
     const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.9, rms: 0.005, timestamp: 0 }]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, testOptions)
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      testOptions,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
@@ -55,7 +60,12 @@ describe('createPracticeEventPipeline', () => {
   it('should filter out events with low confidence, emitting NO_NOTE_DETECTED', async () => {
     const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.5, rms: 0.02, timestamp: 0 }]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, testOptions)
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      testOptions,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
@@ -68,7 +78,12 @@ describe('createPracticeEventPipeline', () => {
     // However, we can simulate an 'invalid' pitchHz of 0 which our code should handle.
     const rawEvents: RawPitchEvent[] = [{ pitchHz: 0, confidence: 0.9, rms: 0.02, timestamp: 0 }]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, testOptions)
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      testOptions,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
@@ -77,7 +92,12 @@ describe('createPracticeEventPipeline', () => {
   it('should transform a valid raw event into a NOTE_DETECTED event', async () => {
     const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: 0 }]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, testOptions)
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      testOptions,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     expect(events).toHaveLength(1)
@@ -130,7 +150,12 @@ describe('createPracticeEventPipeline', () => {
       { pitchHz: 392, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 }, // Incorrect (G4)
     ]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, testOptions)
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      testOptions,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     const noteMatched = events.find((e) => e.type === 'NOTE_MATCHED')

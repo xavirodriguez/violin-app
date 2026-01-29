@@ -35,19 +35,19 @@ export function normalizeAccidental(
 ): CanonicalAccidental {
   const mapping: Record<string, CanonicalAccidental> = {
     '1': 1,
-    'sharp': 1,
+    sharp: 1,
     '#': 1,
     '2': 1,
     'double-sharp': 1,
     '##': 1,
     '-1': -1,
-    'flat': -1,
-    'b': -1,
+    flat: -1,
+    b: -1,
     '-2': -1,
     'double-flat': -1,
-    'bb': -1,
+    bb: -1,
     '0': 0,
-    'natural': 0,
+    natural: 0,
     '': 0,
   }
 

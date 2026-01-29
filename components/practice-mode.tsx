@@ -234,7 +234,7 @@ export function PracticeMode() {
     totalNotes > 0 ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100 : 0
 
   const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
+  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : undefined
 
   const targetPitchName = targetNote
     ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`

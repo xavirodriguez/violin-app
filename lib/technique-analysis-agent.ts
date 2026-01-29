@@ -112,7 +112,9 @@ export class TechniqueAnalysisAgent {
 
     // Settling stability: use frames after configured settling time
     const startTime = frames[0].timestamp
-    const settlingFrames = frames.filter((f) => f.timestamp - startTime > this.options.settlingTimeMs)
+    const settlingFrames = frames.filter(
+      (f) => f.timestamp - startTime > this.options.settlingTimeMs,
+    )
     const settlingCents = settlingFrames.length > 0 ? settlingFrames.map((f) => f.cents) : cents
     const settlingStd = this.calculateStdDev(settlingCents)
 
@@ -154,7 +156,10 @@ export class TechniqueAnalysisAgent {
     const std = this.calculateStdDev(detrended)
     const widthCents = std * 2.828
 
-    const { periodMs, correlation } = this.findPeriod(detrended, frames.map((f) => f.timestamp))
+    const { periodMs, correlation } = this.findPeriod(
+      detrended,
+      frames.map((f) => f.timestamp),
+    )
     const rateHz = periodMs > 0 ? 1000 / periodMs : 0
     const regularity = Math.max(0, correlation)
 
@@ -246,7 +251,8 @@ export class TechniqueAnalysisAgent {
     // 2. Beating (amplitude modulation in the 4-12Hz range)
     // 3. Pitch chaos (unstable frequency)
     const suspectedWolf =
-      (lowConfRatio > 0.3 && rmsBeatingScore > 0.4) || (rmsBeatingScore > 0.6 && pitchChaosScore > 20)
+      (lowConfRatio > 0.3 && rmsBeatingScore > 0.4) ||
+      (rmsBeatingScore > 0.6 && pitchChaosScore > 20)
 
     return {
       suspectedWolf,

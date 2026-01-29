@@ -84,7 +84,10 @@ describe('useAnalyticsStore', () => {
 
   it('should migrate data from version 0/1 to 3', () => {
     const storeOptions = useAnalyticsStore.persist.getOptions()
-    const migrate = storeOptions.migrate as (persisted: unknown, version: number) => Record<string, unknown>
+    const migrate = storeOptions.migrate as (
+      persisted: unknown,
+      version: number,
+    ) => Record<string, unknown>
 
     const oldData = {
       sessions: [
@@ -138,7 +141,10 @@ describe('useAnalyticsStore', () => {
     const migrated = migrate(oldData, 0) as unknown as import('./analytics-store').AnalyticsStore
 
     const firstSession = migrated.sessions[0] as unknown as Record<string, unknown>
-    const firstNoteResult = migrated.sessions[0].noteResults[0] as unknown as Record<string, unknown>
+    const firstNoteResult = migrated.sessions[0].noteResults[0] as unknown as Record<
+      string,
+      unknown
+    >
     const firstAchievement = migrated.progress.achievements[0] as unknown as Record<string, unknown>
     const ex1Stats = migrated.progress.exerciseStats.ex1 as unknown as Record<string, unknown>
 
@@ -173,7 +179,12 @@ describe('useAnalyticsStore', () => {
     recordNoteCompletion(0, 500, {
       rhythm: { onsetErrorMs: 0 },
       vibrato: { present: false, rateHz: 0, widthCents: 0, regularity: 0 },
-      pitchStability: { settlingStdCents: 0, globalStdCents: 0, driftCentsPerSec: 0, inTuneRatio: 1 },
+      pitchStability: {
+        settlingStdCents: 0,
+        globalStdCents: 0,
+        driftCentsPerSec: 0,
+        inTuneRatio: 1,
+      },
       attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
       resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
       transition: {

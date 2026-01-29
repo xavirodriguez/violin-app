@@ -23,8 +23,8 @@ describe('PracticeFeedback', () => {
         severity: 2 as const,
         confidence: 0.9,
         message: 'Slow vibrato detected',
-        tip: 'Try to increase the speed'
-      }
+        tip: 'Try to increase the speed',
+      },
     ]
     render(
       <PracticeFeedback
