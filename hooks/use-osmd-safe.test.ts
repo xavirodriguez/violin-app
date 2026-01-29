@@ -52,7 +52,7 @@ describe('useOSMDSafe', () => {
     )
     act(() => {
       if (result.current.containerRef.current === null) {
-        result.current.containerRef.current = document.createElement('div')
+        ;(result.current.containerRef as any).current = document.createElement('div')
       }
     })
     return { result, rerender, unmount }

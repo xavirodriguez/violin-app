@@ -37,6 +37,15 @@ export interface NoteStreamOptions {
   bpm: number
 }
 
+/**
+ * Immutable snapshot of pipeline context.
+ * Captured once at pipeline creation to prevent state drift.
+ */
+export interface PipelineContext {
+  readonly targetNote: () => TargetNote | null
+  readonly getCurrentIndex: () => number
+}
+
 const defaultOptions: NoteStreamOptions = {
   minRms: 0.01,
   minConfidence: 0.85,
@@ -71,12 +80,18 @@ export async function* createRawPitchStream(
 /**
  * A custom iter-tools operator that implements the note stability validation logic
  * and technical analysis.
+ *
+ * @remarks
+ * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
+ * Ensure they:
+ * 1. Are fast (< 1ms)
+ * 2. Return consistent values for the same underlying state
+ * 3. Use memoized selectors from Zustand stores
  */
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
-  targetNote: () => TargetNote | null,
+  context: PipelineContext,
   options: NoteStreamOptions,
-  getCurrentIndex: () => number,
 ): AsyncGenerator<PracticeEvent> {
   const segmenter = new NoteSegmenter({
     minRms: options.minRms,
@@ -88,7 +103,7 @@ async function* technicalAnalysisWindow(
   let prevSegment: NoteSegment | null = null
 
   for await (const raw of source) {
-    const currentTarget = targetNote()
+    const currentTarget = context.targetNote()
     if (!currentTarget) continue
 
     const { musicalNote, noteName, cents } = parseMusicalNote(raw.pitchHz)
@@ -113,7 +128,7 @@ async function* technicalAnalysisWindow(
         segmentEvent.frames,
         currentTarget,
         options,
-        getCurrentIndex,
+        context.getCurrentIndex,
         firstNoteOnsetTime,
         lastGapFrames,
         prevSegment,
@@ -253,14 +268,27 @@ function calculateRhythmExpectations(
 }
 
 /**
- * Constructs the final practice event pipeline by chaining together signal processing steps.
+ * Creates a practice event processing pipeline.
+ *
+ * @param rawPitchStream - Raw pitch detection events
+ * @param targetNote - **Function called on EVERY event** to get current target.
+ *   Must be idempotent for the same index. Use a store selector.
+ * @param getCurrentIndex - **Function called on EVERY event** to get current position.
+ *   Must be idempotent. Use a store selector.
+ * @param options - Pipeline configuration
+ *
+ * @remarks
+ * This design prevents context drift during async iteration by using a stable context object.
+ * The callbacks `targetNote` and `getCurrentIndex` allow the pipeline to react to state changes
+ * in the store without recreating the entire generator if possible, but they must be consistent.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
   targetNote: () => TargetNote | null,
   getCurrentIndex: () => number,
-  options: Partial<NoteStreamOptions> = {},
+  options: Partial<NoteStreamOptions> & { exercise: Exercise; sessionStartTime: number },
 ): AsyncIterable<PracticeEvent> {
-  const finalOptions = { ...defaultOptions, ...options }
-  return technicalAnalysisWindow(rawPitchStream, targetNote, finalOptions, getCurrentIndex)
+  const finalOptions = { ...defaultOptions, ...options } as NoteStreamOptions
+  const context: PipelineContext = { targetNote, getCurrentIndex }
+  return technicalAnalysisWindow(rawPitchStream, context, finalOptions)
 }

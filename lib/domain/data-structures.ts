@@ -31,10 +31,12 @@ export class FixedRingBuffer<T, N extends number> {
   }
 
   /**
-   * Returns all items currently in the buffer.
+   * Returns a read-only snapshot of the current buffer contents.
+   *
+   * @returns A readonly array of items. Mutations will not affect the buffer.
    */
-  toArray(): T[] {
-    return [...this.items]
+  toArray(): readonly T[] {
+    return [...this.items] // Defensive copy
   }
 
   /**

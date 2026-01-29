@@ -13,9 +13,20 @@ export interface TechniqueFrame {
 
 export interface VibratoMetrics {
   present: boolean
+  /** Vibrato rate in Hz (typical range: 4-8 Hz) */
   rateHz: number
+  /** Vibrato width in cents (typical range: 10-50 cents) */
   widthCents: number
-  regularity: number // 0..1
+  /**
+   * Vibrato regularity score.
+   *
+   * @range 0.0 to 1.0
+   * @remarks
+   * - 0.0: Completely irregular/random oscillation
+   * - 0.5: Moderately regular
+   * - 1.0: Perfect sinusoidal regularity
+   */
+  regularity: number
 }
 
 export interface PitchStability {
@@ -71,9 +82,34 @@ export interface NoteSegment {
 
 export interface Observation {
   type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
-  severity: 1 | 2 | 3 // 1: Info, 2: Warning, 3: Critical
-  confidence: number // 0..1
+
+  /**
+   * Severity level of the technical issue.
+   *
+   * @remarks
+   * - 1: Minor issue (cosmetic, does not affect musicality)
+   * - 2: Moderate issue (noticeable, affects quality)
+   * - 3: Critical issue (fundamental flaw, requires immediate attention)
+   */
+  severity: 1 | 2 | 3
+
+  /**
+   * Confidence in this observation.
+   *
+   * @range 0.0 to 1.0
+   * @remarks
+   * - < 0.5: Low confidence (speculative, may be noise)
+   * - 0.5-0.8: Moderate confidence (likely accurate)
+   * - > 0.8: High confidence (very reliable)
+   */
+  confidence: number
+
+  /** User-facing description of the issue */
   message: string
+
+  /** Actionable pedagogical advice */
   tip: string
+
+  /** Optional raw data supporting this observation (for debugging) */
   evidence?: unknown
 }

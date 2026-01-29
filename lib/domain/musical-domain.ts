@@ -14,12 +14,25 @@
 export type CanonicalAccidental = -1 | 0 | 1
 
 /**
- * Normalizes various accidental formats into a CanonicalAccidental.
+ * Normalizes various accidental representations to canonical format.
  *
- * @param input - The raw accidental value (number, string, or null).
- * @returns A CanonicalAccidental (-1, 0, or 1).
+ * @param input - Accidental in any supported format:
+ *   - Number: -1 (flat), 0 (natural), 1 (sharp)
+ *   - String: "b"/"flat" (-1), "natural"/"" (0), "#"/"sharp" (1)
+ *   - null/undefined: Treated as 0 (natural)
+ *
+ * @returns A CanonicalAccidental (-1, 0, or 1)
+ * @throws {Error} if input is invalid
+ *
+ * @example
+ * normalizeAccidental(1);        // 1
+ * normalizeAccidental("#");      // 1
+ * normalizeAccidental("flat");   // -1
+ * normalizeAccidental("X");      // ❌ Throws Error
  */
-export function normalizeAccidental(input: unknown): CanonicalAccidental {
+export function normalizeAccidental(
+  input: number | string | null | undefined,
+): CanonicalAccidental {
   const mapping: Record<string, CanonicalAccidental> = {
     '1': 1,
     sharp: 1,

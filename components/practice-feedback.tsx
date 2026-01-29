@@ -15,11 +15,11 @@ import { Observation } from '@/lib/technique-types'
  */
 interface PracticeFeedbackProps {
   /** The full name of the note the student should play (e.g., "G3"). */
-  targetNote: string
+  targetNote: string | null
   /** The name of the note currently being detected by the system. */
-  detectedPitchName?: string
+  detectedPitchName: string | null
   /** The deviation from the ideal frequency in cents. */
-  centsOff?: number | null
+  centsOff: number | null
   /** Current status of the practice session (e.g., 'listening', 'validating', 'correct'). */
   status: string
   /** Current duration the note has been held steadily (in ms). */
@@ -73,9 +73,9 @@ function ListeningFeedback({
   centsOff,
   isInTune,
 }: {
-  detectedPitchName?: string
-  targetNote: string
-  centsOff?: number | null
+  detectedPitchName: string | null
+  targetNote: string | null
+  centsOff: number | null
   isInTune: boolean
 }) {
   return (
@@ -119,9 +119,9 @@ function ValidatingFeedback({
 
 function StatusIndicator(props: {
   status: string
-  detectedPitchName?: string
-  targetNote: string
-  centsOff?: number | null
+  detectedPitchName: string | null
+  targetNote: string | null
+  centsOff: number | null
   holdDuration: number
   requiredHoldTime: number
   isInTune: boolean

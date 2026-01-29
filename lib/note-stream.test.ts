@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createPracticeEventPipeline, type RawPitchEvent } from './note-stream'
 import type { TargetNote } from './practice-core'
+import { allExercises } from './exercises'
 
 // Helper to collect all events from an async iterable into an array
 async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]> {
@@ -38,6 +39,8 @@ describe('createPracticeEventPipeline', () => {
     minConfidence: 0.85,
     centsTolerance: 25,
     requiredHoldTime: 100, // Use a shorter hold time for efficient testing
+    exercise: allExercises[0],
+    sessionStartTime: Date.now(),
   }
 
   it('should filter out events with low RMS, emitting NO_NOTE_DETECTED', async () => {

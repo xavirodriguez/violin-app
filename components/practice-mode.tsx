@@ -160,8 +160,8 @@ function PracticeActiveView({
 }: {
   status: string
   targetNote: TargetNote | null
-  targetPitchName: string
-  lastDetectedNote: DetectedNote | undefined
+  targetPitchName: string | null
+  lastDetectedNote: DetectedNote | null
   lastObservations?: Observation[]
 }) {
   if (status !== 'listening' || !targetNote) return null
@@ -171,8 +171,8 @@ function PracticeActiveView({
       <Card className="p-6">
         <PracticeFeedback
           targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch}
-          centsOff={lastDetectedNote?.cents}
+          detectedPitchName={lastDetectedNote?.pitch ?? null}
+          centsOff={lastDetectedNote?.cents ?? null}
           status={status}
           observations={lastObservations}
         />
@@ -180,8 +180,8 @@ function PracticeActiveView({
       <Card className="p-6">
         <ViolinFingerboard
           targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch}
-          centsDeviation={lastDetectedNote?.cents}
+          detectedPitchName={lastDetectedNote?.pitch ?? null}
+          centsDeviation={lastDetectedNote?.cents ?? null}
         />
       </Card>
     </div>
@@ -238,7 +238,7 @@ export function PracticeMode() {
 
   const targetPitchName = targetNote
     ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
-    : ''
+    : null
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 

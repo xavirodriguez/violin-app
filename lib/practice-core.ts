@@ -11,6 +11,26 @@ import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 
 export type { TargetNote }
 
+/**
+ * A valid note name in scientific pitch notation.
+ *
+ * @example "C4", "F#5", "Bb3"
+ * @pattern ^[A-G][#b]?(?:[0-8])$
+ */
+export type NoteName = string & { readonly __brand: unique symbol }
+
+/**
+ * Type guard to validate note name format.
+ *
+ * @param name - The string to validate.
+ * @throws {Error} if the format is invalid.
+ */
+export function assertValidNoteName(name: string): asserts name is NoteName {
+  if (!/^[A-G](?:b{1,2}|#{1,2})?-?\d+$/.test(name)) {
+    throw new Error(`Invalid note name format: "${name}"`)
+  }
+}
+
 // --- MUSICAL NOTE LOGIC (inlined to prevent test runner issues) ---
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
@@ -67,7 +87,18 @@ export class MusicalNote {
     return MusicalNote.fromFrequency(frequency)
   }
 
-  static fromName(fullName: string): MusicalNote {
+  /**
+   * Parses a note name in scientific pitch notation.
+   *
+   * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
+   * @returns A MusicalNote instance
+   * @throws {Error} if format is invalid
+   *
+   * @example
+   * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
+   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws Error
+   */
+  static fromName(fullName: NoteName): MusicalNote {
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
     if (!match) {
       throw new Error(`Invalid note name format: "${fullName}"`)
@@ -91,8 +122,10 @@ export class MusicalNote {
     return MusicalNote.fromMidi(midiNumber)
   }
 
-  get nameWithOctave(): string {
-    return `${this.noteName}${this.octave}`
+  get nameWithOctave(): NoteName {
+    const result = `${this.noteName}${this.octave}`
+    assertValidNoteName(result)
+    return result
   }
 }
 
@@ -130,7 +163,7 @@ export interface PracticeState {
   exercise: Exercise
   currentIndex: number
   // The history of recent detections, used for UI feedback.
-  detectionHistory: DetectedNote[]
+  detectionHistory: readonly DetectedNote[]
   // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
 }
@@ -161,7 +194,7 @@ export type PracticeEvent =
  * @param pitch - The pitch object from a `TargetNote`.
  * @returns A standardized note name string like `"C#4"` or `"Bb3"`.
  */
-export function formatPitchName(pitch: TargetNote['pitch']): string {
+export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
   const canonicalAlter = normalizeAccidental(pitch.alter)
   let alterStr = ''
   switch (canonicalAlter) {
@@ -177,7 +210,9 @@ export function formatPitchName(pitch: TargetNote['pitch']): string {
     default:
       throw new Error(`Unsupported alter value: ${pitch.alter}`)
   }
-  return `${pitch.step}${alterStr}${pitch.octave}`
+  const result = `${pitch.step}${alterStr}${pitch.octave}`
+  assertValidNoteName(result)
+  return result
 }
 
 /**
@@ -207,7 +242,9 @@ export function isMatch(
 
   const targetPitchName = formatPitchName(target.pitch)
   const targetNote = MusicalNote.fromName(targetPitchName)
-  const detectedNote = MusicalNote.fromName(detected.pitch)
+  const detectedPitch = detected.pitch
+  assertValidNoteName(detectedPitch)
+  const detectedNote = MusicalNote.fromName(detectedPitch)
   const isPitchMatch = targetNote.isEnharmonic(detectedNote)
   const isInTune = Math.abs(detected.cents) < actualTolerance
   return isPitchMatch && isInTune

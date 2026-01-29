@@ -16,10 +16,50 @@ const defaultOptions: SegmenterOptions = {
   offsetDebounceMs: 150,
 }
 
+/**
+ * Possible segmenter events emitted during note detection.
+ *
+ * @remarks
+ * Event Sequence:
+ * 1. ONSET: Sound begins → new note detected
+ * 2. NOTE_CHANGE: Pitch changes mid-sound (unusual, may indicate sliding)
+ * 3. OFFSET: Sound ends → note completed with full analysis
+ */
 export type SegmenterEvent =
-  | { type: 'ONSET'; timestamp: number; noteName: string; gapFrames: TechniqueFrame[] }
-  | { type: 'OFFSET'; timestamp: number; frames: TechniqueFrame[] }
-  | { type: 'NOTE_CHANGE'; timestamp: number; noteName: string; frames: TechniqueFrame[] }
+  | {
+      type: 'ONSET'
+      /** Timestamp when note attack was detected (ms) */
+      timestamp: number
+      /** The detected note name (e.g., "A4") */
+      noteName: string
+      /**
+       * Frames captured during silence/transition before this note.
+       * Used for analyzing attack quality and string crossing.
+       */
+      gapFrames: TechniqueFrame[]
+    }
+  | {
+      type: 'OFFSET'
+      /** Timestamp when note release was detected (ms) */
+      timestamp: number
+      /**
+       * All frames captured during this note's sustain phase.
+       * Used for intonation, vibrato, and stability analysis.
+       */
+      frames: TechniqueFrame[]
+    }
+  | {
+      type: 'NOTE_CHANGE'
+      /** Timestamp of pitch change (ms) */
+      timestamp: number
+      /** The new detected note name */
+      noteName: string
+      /**
+       * Frames captured during the pitch transition.
+       * May indicate intentional glissando or unintentional sliding.
+       */
+      frames: TechniqueFrame[]
+    }
 
 export class NoteSegmenter {
   private options: SegmenterOptions
@@ -40,6 +80,20 @@ export class NoteSegmenter {
     this.options = { ...defaultOptions, ...options }
   }
 
+  /**
+   * Processes a single audio analysis frame.
+   *
+   * @param frame - Current pitch detection result
+   * @returns Event if state transition occurred, null otherwise
+   *
+   * @remarks
+   * **State Machine**:
+   * - SILENCE → ONSET (when RMS > minRms)
+   * - ONSET → OFFSET (when RMS < maxRmsSilence for offsetDebounceMs)
+   * - ONSET → NOTE_CHANGE (when detected note changes)
+   *
+   * Uses debouncing to prevent false triggers from noise.
+   */
   processFrame(frame: TechniqueFrame): SegmenterEvent | null {
     const isSignalPresent =
       frame.rms > this.options.minRms && frame.confidence > this.options.minConfidence
@@ -143,6 +197,13 @@ export class NoteSegmenter {
     return null
   }
 
+  /**
+   * Resets segmenter to initial state.
+   *
+   * @remarks
+   * Call between exercises or when audio context is recreated.
+   * Discards all buffered frames and resets internal timers.
+   */
   reset() {
     this.state = 'SILENCE'
     this.currentNoteName = null

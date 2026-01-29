@@ -111,7 +111,7 @@ export function TunerMode() {
             <div className="space-y-6">
               <ViolinFingerboard
                 targetNote={currentNote}
-                detectedPitchName={currentNote ?? undefined}
+                detectedPitchName={currentNote}
                 centsDeviation={centsDeviation}
                 centsTolerance={10}
               />

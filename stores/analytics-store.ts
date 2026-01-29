@@ -120,8 +120,23 @@ function toMs(value: unknown): number {
   return 0
 }
 
+type JsonPrimitive = string | number | boolean | null
+type JsonObject = { [key: string]: JsonValue }
+type JsonArray = JsonValue[]
+type JsonValue = JsonPrimitive | JsonObject | JsonArray
+
+/**
+ * Zustand persistence middleware with typed storage.
+ *
+ * @remarks
+ * The `any` in PersistOptions represents the serialized state type.
+ * To enforce type safety on persisted data:
+ * 1. All store properties must be JSON-serializable
+ * 2. No functions, Dates, or class instances in state
+ * 3. Use partialize option to exclude non-serializable fields
+ */
 export const useAnalyticsStore = create<AnalyticsStore>()(
-  persist(
+  persist<AnalyticsStore, [], [], Pick<AnalyticsStore, 'sessions' | 'progress'>>(
     (set, get) => ({
       currentSession: null,
       sessions: [],

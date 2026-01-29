@@ -9,33 +9,57 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 
 /**
- * Hook that abstracts the complex initialization and cleanup lifecycle of OSMD.
+ * Hook for safely managing OpenSheetMusicDisplay instances.
  *
- * @param musicXML - The MusicXML string to render.
- * @param options - Optional OSMD configuration options.
- * @returns An object containing the container ref, readiness state, error status, and cursor control functions.
+ * @param musicXML - Valid MusicXML 3.1 string
+ * @param options - OSMD configuration
+ *
+ * @returns Object with:
+ * - `containerRef`: Attach to a `<div>` element
+ * - `isReady`: True when OSMD is initialized and rendered
+ * - `error`: Error message if initialization failed
+ * - `resetCursor()`: Resets cursor to start (no-op if !isReady)
+ * - `advanceCursor()`: Moves cursor forward (no-op if !isReady)
  *
  * @remarks
- * OSMD requires a DOM element to be available before instantiation. This hook:
- * 1. Manages a `containerRef` that should be attached to a `div`.
- * 2. Re-initializes OSMD whenever `musicXML` or `options` change.
- * 3. Handles asynchronous loading and rendering of the score.
- * 4. Provides safe wrappers for cursor manipulation (`resetCursor`, `advanceCursor`).
- * 5. Ensures proper cleanup of OSMD resources on unmount to prevent memory leaks.
+ * **Preconditions**:
+ * 1. `containerRef` MUST be attached to a mounted DOM element
+ * 2. Cursor methods are safe to call anytime (no-op when !isReady)
+ * 3. Re-initializes when `musicXML` or `options` change
+ *
+ * **Lifecycle**:
+ * - Mount: Creates OSMD instance when containerRef is available
+ * - Update: Destroys and recreates on musicXML/options change
+ * - Unmount: Cleans up OSMD resources automatically
  *
  * @example
  * ```tsx
- * const { containerRef, isReady, resetCursor } = useOSMDSafe(xmlString);
+ * function SheetMusic({ xml }: { xml: string }) {
+ *   const { containerRef, isReady, resetCursor } = useOSMDSafe(xml);
  *
- * return (
- *   <div>
- *     <button onClick={resetCursor} disabled={!isReady}>Reset</button>
- *     <div ref={containerRef} />
- *   </div>
- * );
+ *   return (
+ *     <>
+ *       <button onClick={resetCursor} disabled={!isReady}>
+ *         Reset
+ *       </button>
+ *       <div ref={containerRef} />
+ *     </>
+ *   );
+ * }
  * ```
  */
-export function useOSMDSafe(musicXML: string, options?: IOSMDOptions) {
+export function useOSMDSafe(
+  musicXML: string,
+  options?: IOSMDOptions,
+): {
+  isReady: boolean
+  error: string | null
+  containerRef: import('react').RefObject<HTMLDivElement | null>
+  /** Safe to call anytime - no-op when !isReady */
+  resetCursor: () => void
+  /** Safe to call anytime - no-op when !isReady */
+  advanceCursor: () => void
+} {
   /** Indicates if the sheet music has been successfully loaded and rendered. */
   const [isReady, setIsReady] = useState(false)
 
