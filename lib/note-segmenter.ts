@@ -88,8 +88,8 @@ export class NoteSegmenter {
    *
    * @remarks
    * **State Machine**:
- * - SILENCE → ONSET (when RMS \> minRms)
- * - ONSET → OFFSET (when RMS \< maxRmsSilence for offsetDebounceMs)
+   * - SILENCE → ONSET (when RMS \> minRms)
+   * - ONSET → OFFSET (when RMS \< maxRmsSilence for offsetDebounceMs)
    * - ONSET → NOTE_CHANGE (when detected note changes)
    *
    * Uses debouncing to prevent false triggers from noise.

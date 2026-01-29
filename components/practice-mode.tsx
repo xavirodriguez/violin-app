@@ -253,7 +253,8 @@ export function PracticeMode() {
 
   const totalNotes = practiceState?.exercise.notes.length ?? 0
   const isCompleted = status === 'completed'
-  const progress = totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+  const progress =
+    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
