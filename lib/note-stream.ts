@@ -120,6 +120,7 @@ async function* technicalAnalysisWindow(
   let lastGapFrames: TechniqueFrame[] = []
   let firstNoteOnsetTime: number | null = null
   let prevSegment: NoteSegment | null = null
+  let currentSegmentStart: number | null = null
 
   for await (const raw of source) {
     if (signal.aborted) break
@@ -138,9 +139,30 @@ async function* technicalAnalysisWindow(
       noteName,
     }
 
+    const lastDetected: DetectedNote = {
+      pitch: noteName,
+      cents: cents,
+      timestamp: raw.timestamp,
+      confidence: raw.confidence,
+    }
+
     const segmentEvent = segmenter.processFrame(frame)
+
     if (segmentEvent?.type === 'ONSET') {
       lastGapFrames = segmentEvent.gapFrames
+      currentSegmentStart = segmentEvent.timestamp
+    } else if (segmentEvent?.type === 'OFFSET') {
+      currentSegmentStart = null
+    } else if (segmentEvent?.type === 'NOTE_CHANGE') {
+      currentSegmentStart = segmentEvent.timestamp
+    }
+
+    // Emit HOLDING_NOTE if we are currently in a matching segment
+    if (currentSegmentStart !== null && noteName) {
+      const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
+      if (match) {
+        yield { type: 'HOLDING_NOTE', payload: { duration: raw.timestamp - currentSegmentStart } }
+      }
     }
 
     if (!segmentEvent || (segmentEvent.type !== 'OFFSET' && segmentEvent.type !== 'NOTE_CHANGE')) {

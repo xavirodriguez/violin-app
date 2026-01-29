@@ -174,6 +174,7 @@ function PracticeActiveView({
           detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
+          holdDuration={practiceState?.holdDuration}
           observations={lastObservations}
         />
       </Card>
@@ -220,17 +221,11 @@ function SheetMusicView({
  * - `completed`: Shows success state and option to restart.
  */
 export function PracticeMode() {
-  const {
-    practiceState,
-    error,
-    currentNoteIndex,
-    targetNote,
-    status,
-    loadExercise,
-    start,
-    stop,
-    reset,
-  } = usePracticeStore()
+  const { practiceState, error, loadExercise, start, stop, reset } = usePracticeStore()
+
+  const status = practiceState?.status ?? 'idle'
+  const currentNoteIndex = practiceState?.currentIndex ?? 0
+  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -277,7 +272,7 @@ export function PracticeMode() {
           disabled={status !== 'idle'}
         />
 
-        {error && <ErrorDisplay error={error} onReset={reset} />}
+        {error && <ErrorDisplay error={error.message} onReset={reset} />}
 
         <PracticeControls
           status={status}

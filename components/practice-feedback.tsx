@@ -196,7 +196,7 @@ export function PracticeFeedback({
   requiredHoldTime = 500,
   observations = [],
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 5
 
   return (
     <div className="space-y-6">
