@@ -15,7 +15,9 @@ export type { TargetNote }
  * A valid note name in scientific pitch notation.
  *
  * @example "C4", "F#5", "Bb3"
- * @pattern ^[A-G][#b]?(?:[0-8])$
+ *
+ * @remarks
+ * Pattern: `^[A-G][#b]?(?:[0-8])$`
  */
 export type NoteName = string & { readonly __brand: unique symbol }
 
@@ -23,7 +25,7 @@ export type NoteName = string & { readonly __brand: unique symbol }
  * Type guard to validate note name format.
  *
  * @param name - The string to validate.
- * @throws {Error} if the format is invalid.
+ * @throws Error - if the format is invalid.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
   if (!/^[A-G](?:b{1,2}|#{1,2})?-?\d+$/.test(name)) {
@@ -92,7 +94,7 @@ export class MusicalNote {
    *
    * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
    * @returns A MusicalNote instance
-   * @throws {Error} if format is invalid
+   * @throws Error - if format is invalid
    *
    * @example
    * MusicalNote.fromName("C#4" as NoteName); // ✅ OK

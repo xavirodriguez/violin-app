@@ -102,7 +102,7 @@ export async function* createRawPitchStream(
  * @remarks
  * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
  * Ensure they:
- * 1. Are fast (< 1ms)
+ * 1. Are fast (\< 1ms)
  * 2. Return consistent values for the same underlying state
  * 3. Use memoized selectors from Zustand stores
  */
@@ -132,7 +132,7 @@ async function* technicalAnalysisWindow(
     const frame: TechniqueFrame = {
       timestamp: raw.timestamp,
       pitchHz: raw.pitchHz,
-      cents: cents,
+      cents,
       rms: raw.rms,
       confidence: raw.confidence,
       noteName,
@@ -143,24 +143,26 @@ async function* technicalAnalysisWindow(
       lastGapFrames = segmentEvent.gapFrames
     }
 
-    if (segmentEvent && (segmentEvent.type === 'OFFSET' || segmentEvent.type === 'NOTE_CHANGE')) {
-      const result = processCompletedSegment(
-        segmentEvent.frames,
-        currentTarget,
-        options,
-        context.getCurrentIndex,
-        firstNoteOnsetTime,
-        lastGapFrames,
-        prevSegment,
-        agent,
-      )
+    if (!segmentEvent || (segmentEvent.type !== 'OFFSET' && segmentEvent.type !== 'NOTE_CHANGE')) {
+      continue
+    }
 
-      if (result) {
-        if (firstNoteOnsetTime === null) firstNoteOnsetTime = result.onsetTime
-        prevSegment = result.segment
-        lastGapFrames = []
-        yield { type: 'NOTE_MATCHED', payload: result.payload }
-      }
+    const result = processCompletedSegment(
+      segmentEvent.frames,
+      currentTarget,
+      options,
+      context.getCurrentIndex,
+      firstNoteOnsetTime,
+      lastGapFrames,
+      prevSegment,
+      agent,
+    )
+
+    if (result) {
+      if (firstNoteOnsetTime === null) firstNoteOnsetTime = result.onsetTime
+      prevSegment = result.segment
+      lastGapFrames = []
+      yield { type: 'NOTE_MATCHED', payload: result.payload }
     }
   }
 }

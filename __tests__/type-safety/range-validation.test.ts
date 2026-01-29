@@ -9,8 +9,9 @@ describe('Range Validation', () => {
       try {
         clamp(5, 10, 0)
         expect.fail('Should have thrown')
-      } catch (err: any) {
-        expect(err.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
+      } catch (err) {
+        const error = err as { code: string }
+        expect(error.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
       }
     })
 
@@ -28,15 +29,17 @@ describe('Range Validation', () => {
       try {
         detector.setMaxFrequency(-100)
         expect.fail('Should have thrown')
-      } catch (err: any) {
-        expect(err.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
+      } catch (err) {
+        const error = err as { code: string }
+        expect(error.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
       }
 
       try {
         detector.setMaxFrequency(25000)
         expect.fail('Should have thrown')
-      } catch (err: any) {
-        expect(err.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
+      } catch (err) {
+        const error = err as { code: string }
+        expect(error.code).toBe(ERROR_CODES.DATA_VALIDATION_ERROR)
       }
     })
 

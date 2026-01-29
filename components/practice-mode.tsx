@@ -188,6 +188,28 @@ function PracticeActiveView({
   )
 }
 
+function SheetMusicView({
+  musicXML,
+  isReady,
+  error,
+  containerRef,
+}: {
+  musicXML?: string
+  isReady: boolean
+  error: string | null
+  containerRef: React.RefObject<HTMLDivElement | null>
+}) {
+  if (!musicXML) return null
+
+  return (
+    <Card className="p-6">
+      <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
+        <SheetMusic containerRef={containerRef} isReady={isReady} error={error} />
+      </ErrorBoundary>
+    </Card>
+  )
+}
+
 /**
  * Renders the practice interface and manages its complex lifecycle.
  *
@@ -229,9 +251,9 @@ export function PracticeMode() {
     }
   }, [currentNoteIndex, status, osmdHook.isReady])
 
-  const totalNotes = practiceState?.exercise.notes.length || 0
-  const progress =
-    totalNotes > 0 ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100 : 0
+  const totalNotes = practiceState?.exercise.notes.length ?? 0
+  const isCompleted = status === 'completed'
+  const progress = totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
@@ -267,17 +289,12 @@ export function PracticeMode() {
           totalNotes={totalNotes}
         />
 
-        {practiceState?.exercise.musicXML && (
-          <Card className="p-6">
-            <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
-              <SheetMusic
-                containerRef={osmdHook.containerRef as React.RefObject<HTMLDivElement>}
-                isReady={osmdHook.isReady}
-                error={osmdHook.error}
-              />
-            </ErrorBoundary>
-          </Card>
-        )}
+        <SheetMusicView
+          musicXML={practiceState?.exercise.musicXML}
+          isReady={osmdHook.isReady}
+          error={osmdHook.error}
+          containerRef={osmdHook.containerRef}
+        />
 
         <PracticeActiveView
           status={status}
@@ -287,7 +304,7 @@ export function PracticeMode() {
           lastObservations={practiceState?.lastObservations}
         />
 
-        {status === 'completed' && <PracticeCompletion onRestart={handleRestart} />}
+        {isCompleted && <PracticeCompletion onRestart={handleRestart} />}
       </div>
     </div>
   )

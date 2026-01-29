@@ -1,25 +1,60 @@
-import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
+import { formatPitchName, type PracticeState } from '@/lib/practice-core'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 import { handlePracticeEvent } from './practice-event-sink'
 import type { PitchDetector } from '@/lib/pitch-detector'
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+import type { Exercise } from '@/lib/exercises/types'
+import { NoteTechnique } from '../technique-types'
+
+interface SessionState {
+  practiceState: PracticeState | null
+  analyser: AnalyserNode | null
+}
 
 interface SessionRunnerDependencies {
   signal: AbortSignal
   sessionId: number
   store: {
-    getState: () => { practiceState: PracticeState | null; analyser: AnalyserNode | null }
-    setState: (fn: (state: any) => any) => void
+    getState: () => SessionState
+    setState: (fn: (state: SessionState) => Partial<SessionState>) => void
     stop: () => Promise<void>
   }
   analytics: {
     recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
-    recordNoteCompletion: (index: number, time: number, technique?: any) => void
+    recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
     endSession: () => void
   }
   detector: PitchDetector
   exercise: Exercise
   sessionStartTime: number
+}
+
+/**
+ * Handles side effects for a matched note, such as updating analytics.
+ */
+function handleMatchedNoteSideEffects(
+  event: Extract<import('@/lib/practice-core').PracticeEvent, { type: 'NOTE_MATCHED' }>,
+  currentState: PracticeState,
+  lastDispatchedNoteIndex: number,
+  currentNoteStartedAt: number,
+  analytics: SessionRunnerDependencies['analytics'],
+): { lastDispatchedNoteIndex: number; currentNoteStartedAt: number } {
+  const noteIndex = currentState.currentIndex
+  const target = currentState.exercise.notes[noteIndex]
+
+  if (target && noteIndex !== lastDispatchedNoteIndex) {
+    const timeToComplete = Date.now() - currentNoteStartedAt
+    const targetPitch = formatPitchName(target.pitch)
+
+    analytics.recordNoteAttempt(noteIndex, targetPitch, 0, true)
+    analytics.recordNoteCompletion(noteIndex, timeToComplete, event.payload?.technique)
+
+    return {
+      lastDispatchedNoteIndex: noteIndex,
+      currentNoteStartedAt: Date.now(),
+    }
+  }
+
+  return { lastDispatchedNoteIndex, currentNoteStartedAt }
 }
 
 /**
@@ -88,19 +123,15 @@ export async function runPracticeSession({
 
       // Handle Note Matched side effects (Analytics)
       if (event.type === 'NOTE_MATCHED') {
-        const noteIndex = currentState.currentIndex
-        const target = currentState.exercise.notes[noteIndex]
-
-        if (target && noteIndex !== lastDispatchedNoteIndex) {
-          const timeToComplete = Date.now() - currentNoteStartedAt
-          const targetPitch = formatPitchName(target.pitch)
-
-          analytics.recordNoteAttempt(noteIndex, targetPitch, 0, true)
-          analytics.recordNoteCompletion(noteIndex, timeToComplete, event.payload?.technique)
-
-          lastDispatchedNoteIndex = noteIndex
-          currentNoteStartedAt = Date.now()
-        }
+        const result = handleMatchedNoteSideEffects(
+          event,
+          currentState,
+          lastDispatchedNoteIndex,
+          currentNoteStartedAt,
+          analytics,
+        )
+        lastDispatchedNoteIndex = result.lastDispatchedNoteIndex
+        currentNoteStartedAt = result.currentNoteStartedAt
       }
 
       // Dispatch event to sink for state reduction
