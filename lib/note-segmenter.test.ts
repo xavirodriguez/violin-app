@@ -52,15 +52,18 @@ describe('NoteSegmenter', () => {
     expect(offset?.type).toBe('OFFSET')
   })
 
-  it('should detect note change immediately', () => {
+  it('should detect note change after 60ms debounce', () => {
     const segmenter = new NoteSegmenter(options)
 
     // Start note A4
     segmenter.processFrame(createFrame(0, 0.03, 0.9, 'A4'))
-    segmenter.processFrame(createFrame(50, 0.03, 0.9, 'A4'))
+    segmenter.processFrame(createFrame(50, 0.03, 0.9, 'A4')) // ONSET
 
-    // Change to B4
-    const change = segmenter.processFrame(createFrame(100, 0.03, 0.9, 'B4'))
+    // Change to B4 - should NOT emit yet (< 60ms)
+    expect(segmenter.processFrame(createFrame(100, 0.03, 0.9, 'B4'))).toBeNull()
+
+    // After 60ms - should emit NOTE_CHANGE
+    const change = segmenter.processFrame(createFrame(160, 0.03, 0.9, 'B4'))
     expect(change?.type).toBe('NOTE_CHANGE')
     if (change?.type === 'NOTE_CHANGE') {
       expect(change.noteName).toBe('B4')

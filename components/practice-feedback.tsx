@@ -15,11 +15,11 @@ import { Observation } from '@/lib/technique-types'
  */
 interface PracticeFeedbackProps {
   /** The full name of the note the student should play (e.g., "G3"). */
-  targetNote: string
+  targetNote: string | null
   /** The name of the note currently being detected by the system. */
-  detectedPitchName?: string
+  detectedPitchName: string | null
   /** The deviation from the ideal frequency in cents. */
-  centsOff?: number | null
+  centsOff: number | null
   /** Current status of the practice session (e.g., 'listening', 'validating', 'correct'). */
   status: string
   /** Current duration the note has been held steadily (in ms). */
@@ -38,7 +38,8 @@ const WIDE_DEVIATION_THRESHOLD_CENTS = 25
 /**
  * Internal component to render specific pedagogical feedback about intonation.
  */
-function IntonationFeedback({ centsOff }: { centsOff: number }) {
+function IntonationFeedback({ centsOff }: { centsOff: number | null | undefined }) {
+  if (centsOff === null || centsOff === undefined) return null
   const isClose = Math.abs(centsOff) < WIDE_DEVIATION_THRESHOLD_CENTS
 
   if (centsOff > 10) {
@@ -66,6 +67,123 @@ function IntonationFeedback({ centsOff }: { centsOff: number }) {
   return null
 }
 
+function ListeningFeedback({
+  detectedPitchName,
+  targetNote,
+  centsOff,
+  isInTune,
+}: {
+  detectedPitchName: string | null
+  targetNote: string | null
+  centsOff: number | null
+  isInTune: boolean
+}) {
+  return (
+    <div className="text-muted-foreground flex items-center gap-2">
+      {!detectedPitchName && (
+        <>
+          <Circle className="h-5 w-5" />
+          <span>Listening...</span>
+        </>
+      )}
+      {detectedPitchName && targetNote !== detectedPitchName && (
+        <div className="text-center">
+          <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
+        </div>
+      )}
+      {detectedPitchName &&
+        targetNote === detectedPitchName &&
+        typeof centsOff === 'number' &&
+        !isInTune && <IntonationFeedback centsOff={centsOff} />}
+    </div>
+  )
+}
+
+function ValidatingFeedback({
+  holdDuration,
+  requiredHoldTime,
+}: {
+  holdDuration: number
+  requiredHoldTime: number
+}) {
+  return (
+    <div className="w-full max-w-xs text-center">
+      <div className="text-primary mb-2 flex items-center justify-center gap-2">
+        <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
+        <span>Hold steady...</span>
+      </div>
+      <Progress value={(holdDuration / requiredHoldTime) * 100} className="h-2" />
+    </div>
+  )
+}
+
+function StatusIndicator(props: {
+  status: string
+  detectedPitchName: string | null
+  targetNote: string | null
+  centsOff: number | null
+  holdDuration: number
+  requiredHoldTime: number
+  isInTune: boolean
+}) {
+  switch (props.status) {
+    case 'listening':
+      return <ListeningFeedback {...props} />
+    case 'validating':
+      return <ValidatingFeedback {...props} />
+    case 'correct':
+      return (
+        <div className="flex items-center gap-2 font-semibold text-green-500">
+          <CheckCircle2 className="h-5 w-5" />
+          <span>Perfect!</span>
+        </div>
+      )
+    default:
+      return null
+  }
+}
+
+function TechniqueInsights({ observations }: { observations: Observation[] }) {
+  if (observations.length === 0) return null
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
+        <Lightbulb className="h-4 w-4 text-yellow-500" />
+        <span>Technique Insights</span>
+      </div>
+      <div className="grid gap-3">
+        {observations.slice(0, 3).map((obs, idx) => (
+          <div
+            key={idx}
+            className={`rounded-lg border p-3 ${
+              obs.severity === 3
+                ? 'border-red-500/20 bg-red-500/10'
+                : obs.severity === 2
+                  ? 'border-yellow-500/20 bg-yellow-500/10'
+                  : 'border-blue-500/20 bg-blue-500/10'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {obs.severity === 3 ? (
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              ) : obs.severity === 2 ? (
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              ) : (
+                <Info className="h-5 w-5 text-blue-500" />
+              )}
+              <div className="flex-1">
+                <div className="text-sm font-bold">{obs.message}</div>
+                <div className="text-muted-foreground text-xs">{obs.tip}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /**
  * Renders feedback during the practice loop.
  */
@@ -78,7 +196,7 @@ export function PracticeFeedback({
   requiredHoldTime = 500,
   observations = [],
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 5
 
   return (
     <div className="space-y-6">
@@ -127,80 +245,19 @@ export function PracticeFeedback({
 
       {/* Status Indicator */}
       <div className="flex items-center justify-center gap-2">
-        {status === 'listening' && !detectedPitchName && (
-          <div className="text-muted-foreground flex items-center gap-2">
-            {detectedPitchName && targetNote !== detectedPitchName && (
-              <div className="text-center">
-                <div className="text-lg font-semibold text-yellow-500">Wrong Note</div>
-              </div>
-            )}
-            {detectedPitchName &&
-              targetNote === detectedPitchName &&
-              centsOff !== null &&
-              !isInTune && <IntonationFeedback centsOff={centsOff} />}
-            {!detectedPitchName && <Circle className="h-5 w-5" />}
-            {!detectedPitchName && <span>Listening...</span>}
-          </div>
-        )}
-        {status === 'listening' &&
-          detectedPitchName &&
-          !isInTune &&
-          centsOff !== null &&
-          centsOff !== undefined && <IntonationFeedback centsOff={centsOff} />}
-        {status === 'validating' && (
-          <div className="w-full max-w-xs text-center">
-            <div className="text-primary mb-2 flex items-center justify-center gap-2">
-              <div className="border-primary h-5 w-5 animate-spin rounded-full border-2 border-t-transparent" />
-              <span>Hold steady...</span>
-            </div>
-            <Progress value={(holdDuration / requiredHoldTime) * 100} className="h-2" />
-          </div>
-        )}
-        {status === 'correct' && (
-          <div className="flex items-center gap-2 font-semibold text-green-500">
-            <CheckCircle2 className="h-5 w-5" />
-            <span>Perfect!</span>
-          </div>
-        )}
+        <StatusIndicator
+          status={status}
+          detectedPitchName={detectedPitchName}
+          targetNote={targetNote}
+          centsOff={centsOff}
+          holdDuration={holdDuration}
+          requiredHoldTime={requiredHoldTime}
+          isInTune={isInTune}
+        />
       </div>
 
       {/* Advanced Observations */}
-      {observations.length > 0 && (
-        <div className="mt-4 space-y-3">
-          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
-            <Lightbulb className="h-4 w-4 text-yellow-500" />
-            <span>Technique Insights</span>
-          </div>
-          <div className="grid gap-3">
-            {observations.slice(0, 2).map((obs, idx) => (
-              <div
-                key={idx}
-                className={`rounded-lg border p-3 ${
-                  obs.severity === 3
-                    ? 'border-red-500/20 bg-red-500/10'
-                    : obs.severity === 2
-                      ? 'border-yellow-500/20 bg-yellow-500/10'
-                      : 'border-blue-500/20 bg-blue-500/10'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {obs.severity === 3 ? (
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
-                  ) : obs.severity === 2 ? (
-                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                  ) : (
-                    <Info className="h-5 w-5 text-blue-500" />
-                  )}
-                  <div className="flex-1">
-                    <div className="text-sm font-bold">{obs.message}</div>
-                    <div className="text-muted-foreground text-xs">{obs.tip}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <TechniqueInsights observations={observations} />
     </div>
   )
 }

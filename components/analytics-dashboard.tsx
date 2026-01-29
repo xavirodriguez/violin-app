@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useAnalyticsStore, PracticeSession, Achievement } from '@/lib/stores/analytics-store'
+import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 /**
@@ -164,7 +164,7 @@ function getLast7DaysData(sessions: PracticeSession[]) {
       return sessionDate.toDateString() === date.toDateString()
     })
 
-    const totalMinutes = daySessions.reduce((sum, s) => sum + s.duration / 60, 0)
+    const totalMinutes = daySessions.reduce((sum, s) => sum + s.durationMs / 60000, 0)
 
     data.push({
       day: dayName,

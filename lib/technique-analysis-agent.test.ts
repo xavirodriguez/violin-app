@@ -65,6 +65,24 @@ describe('TechniqueAnalysisAgent', () => {
     expect(metrics.vibrato.rateHz).toBeLessThan(6.5)
   })
 
+  it('should gate vibrato if pitch stability is low', () => {
+    // Add chaos to the pitch signal (stdDev > 40)
+    const frames = createFrames(
+      1000,
+      (t) => (t % 100 < 50 ? 50 : -50),
+      () => 0.1,
+    )
+    const segment: NoteSegment = {
+      noteIndex: 0,
+      targetPitch: 'A4',
+      startTime: 0,
+      endTime: 1000,
+      frames,
+    }
+    const metrics = agent.analyzeSegment(segment)
+    expect(metrics.vibrato.present).toBe(false)
+  })
+
   it('should detect resonance/wolf-tone evidence', () => {
     const frames = createFrames(
       500,
@@ -99,5 +117,63 @@ describe('TechniqueAnalysisAgent', () => {
     }
     const metrics = agent.analyzeSegment(segment)
     expect(metrics.rhythm.onsetErrorMs).toBe(50)
+  })
+
+  it('should calculate attack and release metrics correctly', () => {
+    // Simulated attack: RMS grows from 0 to 0.1 over 100ms
+    const frames = createFrames(
+      500,
+      (t) => (t < 100 ? -10 : 0), // scoop
+      (t) => Math.min(0.1, (t / 100) * 0.1),
+    )
+    const segment: NoteSegment = {
+      noteIndex: 0,
+      targetPitch: 'A4',
+      startTime: 0,
+      endTime: 500,
+      frames,
+    }
+    const metrics = agent.analyzeSegment(segment)
+
+    expect(metrics.attackRelease.attackTimeMs).toBeGreaterThan(50)
+    expect(metrics.attackRelease.attackTimeMs).toBeLessThan(150)
+    expect(metrics.attackRelease.pitchScoopCents).toBeLessThan(-5)
+
+    // Unstable release: add some noise at the end
+    const lastFrames = frames.slice(-5)
+    lastFrames.forEach((f, i) => {
+      f.cents += Math.sin(i) * 20
+    })
+
+    const metricsWithRelease = agent.analyzeSegment(segment)
+    expect(metricsWithRelease.attackRelease.releaseStability).toBeGreaterThan(5)
+  })
+
+  it('should calculate transition metrics correctly', () => {
+    const gapFrames = createFrames(
+      150,
+      (t) => (t / 150) * 100, // glissando of 100 cents
+      () => 0.05,
+    )
+    const currentFrames = createFrames(
+      500,
+      (t) => (t < 200 ? 15 : 0), // landing with 15 cents error
+      () => 0.1,
+    )
+
+    const metrics = agent.analyzeSegment(
+      {
+        noteIndex: 1,
+        targetPitch: 'A4',
+        startTime: 150,
+        endTime: 650,
+        frames: currentFrames,
+      },
+      gapFrames,
+    )
+
+    expect(metrics.transition.transitionTimeMs).toBeGreaterThan(100)
+    expect(metrics.transition.glissAmountCents).toBeGreaterThan(50)
+    expect(metrics.transition.landingErrorCents).toBeGreaterThan(5)
   })
 })

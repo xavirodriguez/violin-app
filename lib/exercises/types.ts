@@ -4,11 +4,10 @@
  * score metadata, and exercise data structures.
  */
 
+import type { CanonicalAccidental } from '@/lib/domain/musical-domain'
+
 /** Represents the base name of a musical pitch. */
 export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
-
-/** Represents a pitch alteration: '#' for sharp, 'b' for flat, or null for natural. */
-export type Accidental = '#' | 'b' | null
 
 /**
  * Represents a specific note on the musical staff.
@@ -18,14 +17,18 @@ export interface Pitch {
   step: PitchName
   /** The octave number (e.g., 4 for Middle C). */
   octave: number
-  /** The accidental for the pitch. */
-  alter: Accidental
+  /**
+   * The accidental for the pitch in canonical format.
+   * @remarks -1 for flat, 0 for natural, 1 for sharp.
+   */
+  alter: CanonicalAccidental
 }
 
 /**
  * Represents the rhythmic duration of a note in standard musical notation.
+ * 1 = Whole, 2 = Half, 4 = Quarter, 8 = Eighth, 16 = 16th, 32 = 32nd.
  */
-export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | '16th' | '32nd'
+export type NoteDuration = 1 | 2 | 4 | 8 | 16 | 32
 
 /**
  * Represents a single musical note with its pitch and rhythmic duration.

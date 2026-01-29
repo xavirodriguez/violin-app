@@ -5,7 +5,14 @@ import React from 'react'
 
 describe('PracticeFeedback', () => {
   it('renders target note', () => {
-    render(<PracticeFeedback targetNote="A4" status="listening" />)
+    render(
+      <PracticeFeedback
+        targetNote="A4"
+        status="listening"
+        detectedPitchName={null}
+        centsOff={null}
+      />,
+    )
     expect(screen.getByText('A4')).toBeDefined()
   })
 
@@ -19,7 +26,15 @@ describe('PracticeFeedback', () => {
         tip: 'Try to increase the speed',
       },
     ]
-    render(<PracticeFeedback targetNote="A4" status="listening" observations={observations} />)
+    render(
+      <PracticeFeedback
+        targetNote="A4"
+        status="listening"
+        detectedPitchName={null}
+        centsOff={null}
+        observations={observations}
+      />,
+    )
     expect(screen.getByText('Slow vibrato detected')).toBeDefined()
   })
 })

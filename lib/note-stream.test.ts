@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createPracticeEventPipeline, type RawPitchEvent } from './note-stream'
 import type { TargetNote } from './practice-core'
+import { allExercises } from './exercises'
 
 // Helper to collect all events from an async iterable into an array
 async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]> {
@@ -27,7 +28,10 @@ async function* createMockStream(
 }
 
 describe('createPracticeEventPipeline', () => {
-  const mockTargetNote: TargetNote = { pitch: { step: 'A', octave: 4 }, duration: 1 }
+  const mockTargetNote: TargetNote = {
+    pitch: { step: 'A', octave: 4, alter: 0 },
+    duration: 4,
+  }
   const getTargetNote = () => mockTargetNote
 
   const testOptions = {
@@ -35,6 +39,8 @@ describe('createPracticeEventPipeline', () => {
     minConfidence: 0.85,
     centsTolerance: 25,
     requiredHoldTime: 100, // Use a shorter hold time for efficient testing
+    exercise: allExercises[0],
+    sessionStartTime: Date.now(),
   }
 
   it('should filter out events with low RMS, emitting NO_NOTE_DETECTED', async () => {
@@ -45,10 +51,11 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
-    expect(events.some((e) => e.type === 'NO_NOTE_DETECTED')).toBe(true)
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
   })
 
   it('should filter out events with low confidence, emitting NO_NOTE_DETECTED', async () => {
@@ -59,10 +66,11 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
-    expect(events.some((e) => e.type === 'NO_NOTE_DETECTED')).toBe(true)
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
   })
 
   it('should filter out events with high cent deviation, emitting NO_NOTE_DETECTED', async () => {
@@ -77,10 +85,11 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
-    expect(events.some((e) => e.type === 'NO_NOTE_DETECTED')).toBe(true)
+    expect(events).toEqual([{ type: 'NO_NOTE_DETECTED' }])
   })
 
   it('should transform a valid raw event into a NOTE_DETECTED event', async () => {
@@ -91,14 +100,19 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
-    const detectedEvent = events.find((e) => e.type === 'NOTE_DETECTED')
-    expect(detectedEvent).toBeDefined()
-    const payload = (detectedEvent as any).payload
-    expect(payload.pitch).toBe('A4')
-    expect(payload.cents).toBeCloseTo(0)
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('NOTE_DETECTED')
+    const event = events[0]
+    if (event.type === 'NOTE_DETECTED') {
+      expect(event.payload.pitch).toBe('A4')
+      expect(event.payload.cents).toBeCloseTo(0)
+    } else {
+      throw new Error('Expected NOTE_DETECTED event')
+    }
   })
 
   it('should emit NOTE_MATCHED when a correct note is held for the required time', async () => {
@@ -117,10 +131,16 @@ describe('createPracticeEventPipeline', () => {
       { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 510 }, // Offset triggered
     ]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, {
-      ...testOptions,
-      requiredHoldTime: 120,
-    })
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      {
+        ...testOptions,
+        requiredHoldTime: 120,
+      },
+      new AbortController().signal,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     const noteDetectedCount = events.filter((e) => e.type === 'NOTE_DETECTED').length
@@ -145,6 +165,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 

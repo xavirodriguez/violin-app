@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useOSMDSafe } from './use-osmd-safe'
+import { IOSMDOptions } from 'opensheetmusicdisplay'
 
 // Use vi.hoisted to create the mock class and its spies before vi.mock is hoisted
 const { MockOSMD, spies } = vi.hoisted(() => {
@@ -43,15 +44,18 @@ describe('useOSMDSafe', () => {
 
   const setupHook = () => {
     const { result, rerender, unmount } = renderHook(
-      ({ musicXML, options }) => useOSMDSafe(musicXML, options as any),
+      ({ musicXML, options }: { musicXML: string; options?: IOSMDOptions }) =>
+        useOSMDSafe(musicXML, options),
       {
-        initialProps: { musicXML: '', options: undefined },
+        initialProps: { musicXML: '', options: undefined as IOSMDOptions | undefined },
       },
     )
     act(() => {
       if (result.current.containerRef.current === null) {
-        // @ts-ignore - manipulating ref for testing
-        result.current.containerRef.current = document.createElement('div')
+        const ref = result.current.containerRef as {
+          current: HTMLDivElement | null
+        }
+        ref.current = document.createElement('div')
       }
     })
     return { result, rerender, unmount }
@@ -65,7 +69,7 @@ describe('useOSMDSafe', () => {
 
   it('should initialize correctly and render the sheet music', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(
       () => {
         expect(result.current.isReady).toBe(true)
@@ -82,7 +86,7 @@ describe('useOSMDSafe', () => {
     const errorMessage = 'Failed to load music XML'
     spies.load.mockRejectedValue(new Error(errorMessage))
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => {
       expect(result.current.isReady).toBe(false)
       expect(result.current.error).toBe(errorMessage)
@@ -92,7 +96,7 @@ describe('useOSMDSafe', () => {
 
   it('should call cursor methods correctly', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(result.current.isReady).toBe(true))
     act(() => result.current.advanceCursor())
     expect(spies.next).toHaveBeenCalledTimes(1)
@@ -103,7 +107,7 @@ describe('useOSMDSafe', () => {
 
   it('should clean up the OSMD instance on unmount', async () => {
     const { unmount, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(spies.render).toHaveBeenCalledTimes(1))
     unmount()
     expect(spies.clear).toHaveBeenCalledTimes(1)
@@ -111,10 +115,10 @@ describe('useOSMDSafe', () => {
 
   it('should clear and re-render when musicXML changes', async () => {
     const { result, rerender } = setupHook()
-    rerender({ musicXML: VALID_XML })
+    rerender({ musicXML: VALID_XML, options: undefined })
     await waitFor(() => expect(spies.render).toHaveBeenCalledTimes(1))
     expect(spies.load).toHaveBeenCalledWith(VALID_XML)
-    rerender({ musicXML: NEW_XML })
+    rerender({ musicXML: NEW_XML, options: undefined })
     await waitFor(() => {
       expect(spies.clear).toHaveBeenCalledTimes(1)
       expect(spies.render).toHaveBeenCalledTimes(2)

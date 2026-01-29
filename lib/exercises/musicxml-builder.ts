@@ -1,7 +1,6 @@
 /**
  * MusicXMLBuilder
  * Provides logic for generating MusicXML 3.1 strings from structured exercise data.
- * This allows dynamic creation of sheet music for OpenSheetMusicDisplay to render.
  */
 
 import type { ExerciseData, Note, Pitch } from './types'
@@ -10,58 +9,61 @@ import type { ExerciseData, Note, Pitch } from './types'
  * Mapping of rhythmic durations to MusicXML division values.
  * @internal
  */
-const DURATION_TO_VALUE: Record<string, number> = {
-  quarter: 1,
-  half: 2,
-  whole: 4,
+const DURATION_TO_VALUE: Record<number, number> = {
+  4: 1,
+  2: 2,
+  1: 4,
+  8: 0.5,
+  16: 0.25,
+  32: 0.125,
+}
+
+const DURATION_TO_TYPE: Record<number, string> = {
+  1: 'whole',
+  2: 'half',
+  4: 'quarter',
+  8: 'eighth',
+  16: '16th',
+  32: '32nd',
 }
 
 /**
  * Renders a `Pitch` object into its MusicXML `<pitch>` tag representation.
- *
- * @param pitch - The pitch object to render.
- * @returns A string containing the `<pitch>` XML block.
- * @internal
  */
 const renderPitch = (pitch: Pitch): string => {
   const { step, octave, alter } = pitch
-  const alterTag = alter ? `<alter>${alter === '#' ? 1 : -1}</alter>` : ''
+  const alterTag = alter !== 0 ? `<alter>${alter}</alter>` : ''
   return `<pitch><step>${step}</step>${alterTag}<octave>${octave}</octave></pitch>`
 }
 
 /**
  * Renders a `Note` object into its MusicXML `<note>` tag representation.
- *
- * @param note - The note object to render.
- * @returns A string containing the `<note>` XML block.
- * @internal
  */
 const renderNote = (note: Note): string => {
   const durationValue = DURATION_TO_VALUE[note.duration] || 1
+  const typeString = DURATION_TO_TYPE[note.duration] || 'quarter'
   return `
     <note>
       ${renderPitch(note.pitch)}
       <duration>${durationValue}</duration>
-      <type>${note.duration}</type>
+      <type>${typeString}</type>
     </note>`
 }
 
 /**
+ * Simple validation for MusicXML well-formedness.
+ */
+function validateMusicXML(xml: string): void {
+  const requiredTags = ['<score-partwise', '<part-list', '<measure', '<note']
+  for (const tag of requiredTags) {
+    if (!xml.includes(tag)) {
+      throw new Error(`Generated MusicXML is missing required tag: ${tag}`)
+    }
+  }
+}
+
+/**
  * Generates a complete MusicXML string from an ExerciseData object.
- *
- * @param exercise - The raw data for the exercise.
- * @returns A valid MusicXML 3.1 score string.
- *
- * @remarks
- * Current implementation limitations:
- * - Assumes a single part named "Violin".
- * - Consolidates all notes into a single measure (Measure 1).
- * - Fixed division value of 1.
- *
- * @example
- * ```ts
- * const xml = generateMusicXML(myExerciseData);
- * ```
  */
 export const generateMusicXML = (exercise: ExerciseData): string => {
   const { scoreMetadata, notes } = exercise
@@ -69,8 +71,7 @@ export const generateMusicXML = (exercise: ExerciseData): string => {
 
   const notesXML = notes.map(renderNote).join('')
 
-  // For now, we assume a single measure. A more advanced builder could handle measure grouping.
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1">
   <part-list>
     <score-part id="P1">
@@ -89,4 +90,7 @@ export const generateMusicXML = (exercise: ExerciseData): string => {
     </measure>
   </part>
 </score-partwise>`
+
+  validateMusicXML(xml)
+  return xml
 }

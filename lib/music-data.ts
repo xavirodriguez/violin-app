@@ -6,6 +6,9 @@
  * Use the new exercise system in `lib/exercises/` for new features.
  */
 
+import type { Exercise as ModernExercise, NoteDuration } from './exercises/types'
+import { parsePitch } from './exercises/utils'
+
 /**
  * Represents a single musical note in the legacy system.
  * @internal
@@ -21,8 +24,11 @@ interface Note {
 
 /**
  * Interface for the legacy Exercise object.
+ *
+ * @deprecated Use Exercise from `@/lib/exercises/types` instead.
+ * This type will be removed in v2.0.
  */
-export interface Exercise {
+export interface LegacyExercise {
   /** Unique identifier. */
   id: string
   /** Human-readable name. */
@@ -36,7 +42,7 @@ export interface Exercise {
 /**
  * Example legacy exercise for G Major Scale.
  */
-export const G_MAJOR_SCALE_EXERCISE: Exercise = {
+export const G_MAJOR_SCALE_EXERCISE: LegacyExercise = {
   id: 'g-major-scale',
   name: 'G Major Scale',
   notes: [
@@ -77,4 +83,37 @@ export const G_MAJOR_SCALE_EXERCISE: Exercise = {
     </measure>
   </part>
 </score-partwise>`,
+}
+
+/**
+ * Adapts a legacy exercise into the modern Exercise format.
+ */
+export function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise {
+  return {
+    id: legacy.id,
+    name: legacy.name,
+    description: 'Legacy exercise',
+    category: 'Scales', // Default category for legacy
+    difficulty: 'Beginner',
+    scoreMetadata: {
+      clef: 'G',
+      timeSignature: { beats: 4, beatType: 4 },
+      keySignature: 0,
+    },
+    notes: legacy.notes.map((n) => {
+      let duration: NoteDuration = 4
+      if (n.duration === 'whole') duration = 1
+      else if (n.duration === 'half') duration = 2
+      else if (n.duration === 'quarter') duration = 4
+      else if (n.duration === 'eighth') duration = 8
+      else if (n.duration === 'sixteenth') duration = 16
+      else if (n.duration === 'thirty-second') duration = 32
+
+      return {
+        pitch: parsePitch(n.pitch),
+        duration,
+      }
+    }),
+    musicXML: legacy.musicXML,
+  }
 }

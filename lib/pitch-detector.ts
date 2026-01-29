@@ -9,6 +9,8 @@
  * by Alain de Cheveigné and Hideki Kawahara (2002)
  */
 
+import { AppError, ERROR_CODES } from './errors/app-error'
+
 export interface PitchDetectionResult {
   /** Detected frequency in Hz (0 if no pitch detected) */
   pitchHz: number
@@ -37,9 +39,9 @@ export class PitchDetector {
   /**
    * The maximum frequency we care about (in Hz).
    * For violin, the highest common note is around E7 at ~2637 Hz.
-   * We set this to 700 Hz to focus on the practical range for beginners.
+   * We set this to 700 Hz by default to focus on the practical range for beginners.
    */
-  private readonly MAX_FREQUENCY = 700
+  private MAX_FREQUENCY = 700
 
   /**
    * The threshold for the YIN algorithm.
@@ -82,94 +84,18 @@ export class PitchDetector {
    */
   detectPitch(buffer: Float32Array): PitchDetectionResult {
     const SIZE = buffer.length
+    if (SIZE < 4) return { pitchHz: 0, confidence: 0 }
 
-    // Early return for invalid buffers
-    if (SIZE < 4) {
-      return { pitchHz: 0, confidence: 0 }
-    }
-
-    // Calculate the maximum lag (tau) we need to check
     const maxTau = Math.floor(this.sampleRate / this.MIN_FREQUENCY)
-    const halfSize = Math.floor(SIZE / 2)
-    const searchSize = Math.min(maxTau, halfSize)
+    const searchSize = Math.min(maxTau, Math.floor(SIZE / 2))
 
-    // Step 1: Difference function
-    const yinBuffer = new Float32Array(searchSize)
-    yinBuffer[0] = 1
+    const yinBuffer = this.difference(buffer, searchSize)
+    this.cumulativeMeanNormalizedDifference(yinBuffer)
+    const tauEstimate = this.absoluteThreshold(yinBuffer)
 
-    for (let tau = 1; tau < searchSize; tau++) {
-      let sum = 0
-      const maxI = Math.min(halfSize, SIZE - tau)
+    if (tauEstimate <= 0) return { pitchHz: 0, confidence: 0 }
 
-      for (let i = 0; i < maxI; i++) {
-        const delta = buffer[i] - buffer[i + tau]
-        sum += delta * delta
-      }
-
-      yinBuffer[tau] = sum
-    }
-
-    // Step 2: Cumulative mean normalized difference function
-    let runningSum = 0
-    yinBuffer[0] = 1
-
-    for (let tau = 1; tau < searchSize; tau++) {
-      runningSum += yinBuffer[tau]
-
-      if (runningSum === 0) {
-        yinBuffer[tau] = 1
-      } else {
-        yinBuffer[tau] = (yinBuffer[tau] * tau) / runningSum
-      }
-    }
-
-    // Step 3: Absolute threshold
-    let tauEstimate = -1
-
-    for (let tau = 2; tau < searchSize; tau++) {
-      if (yinBuffer[tau] < this.YIN_THRESHOLD) {
-        while (tau + 1 < searchSize && yinBuffer[tau + 1] < yinBuffer[tau]) {
-          tau++
-        }
-        tauEstimate = tau
-        break
-      }
-    }
-
-    if (tauEstimate === -1) {
-      let minValue = 1
-      let minTau = -1
-
-      for (let tau = 2; tau < searchSize; tau++) {
-        if (yinBuffer[tau] < minValue) {
-          minValue = yinBuffer[tau]
-          minTau = tau
-        }
-      }
-
-      tauEstimate = minTau
-    }
-
-    if (tauEstimate === -1 || tauEstimate === 0) {
-      return { pitchHz: 0, confidence: 0 }
-    }
-
-    // Step 4: Parabolic interpolation
-    let betterTau = tauEstimate
-
-    if (tauEstimate > 0 && tauEstimate < searchSize - 1) {
-      const s0 = yinBuffer[tauEstimate - 1]
-      const s1 = yinBuffer[tauEstimate]
-      const s2 = yinBuffer[tauEstimate + 1]
-
-      const denominator = 2 * (2 * s1 - s2 - s0)
-
-      if (Math.abs(denominator) > 1e-10) {
-        const adjustment = (s2 - s0) / denominator
-        betterTau = tauEstimate + adjustment
-      }
-    }
-
+    const betterTau = this.parabolicInterpolation(yinBuffer, tauEstimate)
     const pitchHz = this.sampleRate / betterTau
 
     if (pitchHz < this.MIN_FREQUENCY || pitchHz > this.MAX_FREQUENCY) {
@@ -177,8 +103,75 @@ export class PitchDetector {
     }
 
     const confidence = Math.max(0, Math.min(1, 1 - yinBuffer[tauEstimate]))
-
     return { pitchHz, confidence }
+  }
+
+  /** Step 1: Difference function */
+  private difference(buffer: Float32Array, searchSize: number): Float32Array {
+    const yinBuffer = new Float32Array(searchSize)
+    const SIZE = buffer.length
+    const halfSize = Math.floor(SIZE / 2)
+
+    for (let tau = 1; tau < searchSize; tau++) {
+      let sum = 0
+      const maxI = Math.min(halfSize, SIZE - tau)
+      for (let i = 0; i < maxI; i++) {
+        const delta = buffer[i] - buffer[i + tau]
+        sum += delta * delta
+      }
+      yinBuffer[tau] = sum
+    }
+    return yinBuffer
+  }
+
+  /** Step 2: Cumulative mean normalized difference function */
+  private cumulativeMeanNormalizedDifference(yinBuffer: Float32Array): void {
+    let runningSum = 0
+    yinBuffer[0] = 1
+    for (let tau = 1; tau < yinBuffer.length; tau++) {
+      runningSum += yinBuffer[tau]
+      yinBuffer[tau] = runningSum === 0 ? 1 : (yinBuffer[tau] * tau) / runningSum
+    }
+  }
+
+  /** Step 3: Absolute threshold */
+  private absoluteThreshold(yinBuffer: Float32Array): number {
+    const size = yinBuffer.length
+    for (let tau = 2; tau < size; tau++) {
+      if (yinBuffer[tau] < this.YIN_THRESHOLD) {
+        let t = tau
+        while (t + 1 < size && yinBuffer[t + 1] < yinBuffer[t]) {
+          t++
+        }
+        return t
+      }
+    }
+
+    // Fallback: find global minimum
+    let minValue = 1
+    let minTau = -1
+    for (let tau = 2; tau < size; tau++) {
+      if (yinBuffer[tau] < minValue) {
+        minValue = yinBuffer[tau]
+        minTau = tau
+      }
+    }
+    return minTau
+  }
+
+  /** Step 4: Parabolic interpolation */
+  private parabolicInterpolation(yinBuffer: Float32Array, tau: number): number {
+    if (tau <= 0 || tau >= yinBuffer.length - 1) return tau
+
+    const s0 = yinBuffer[tau - 1]
+    const s1 = yinBuffer[tau]
+    const s2 = yinBuffer[tau + 1]
+
+    const denominator = 2 * (2 * s1 - s2 - s0)
+    if (Math.abs(denominator) > 1e-10) {
+      return tau + (s2 - s0) / denominator
+    }
+    return tau
   }
 
   /**
@@ -256,6 +249,27 @@ export class PitchDetector {
       min: this.MIN_FREQUENCY,
       max: this.MAX_FREQUENCY,
     }
+  }
+
+  /**
+   * Updates the maximum frequency threshold for pitch detection.
+   *
+   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
+   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
+   *
+   * @example
+   * detector.setMaxFrequency(2637);  // ✅ E7 for violin
+   * detector.setMaxFrequency(-100);  // ❌ Throws AppError
+   * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
+   */
+  setMaxFrequency(maxHz: number): void {
+    if (maxHz <= this.MIN_FREQUENCY || maxHz > 20000) {
+      throw new AppError({
+        message: `Invalid max frequency: ${maxHz}. Must be > ${this.MIN_FREQUENCY} and <= 20000`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
+    }
+    this.MAX_FREQUENCY = maxHz
   }
 }
 

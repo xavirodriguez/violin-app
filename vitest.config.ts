@@ -8,7 +8,13 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['lib/**/*.test.ts', 'hooks/**/*.test.ts', 'components/**/*.test.tsx'],
+    include: [
+      'lib/**/*.test.ts',
+      'hooks/**/*.test.ts',
+      'components/**/*.test.tsx',
+      'stores/**/*.test.ts',
+      '__tests__/**/*.test.ts',
+    ],
     exclude: ['node_modules', 'e2e/**'],
   },
   resolve: {

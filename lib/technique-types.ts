@@ -136,14 +136,34 @@ export interface NoteSegment {
 export interface Observation {
   /** The category of the observation. */
   type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
-  /** The severity level of the issue (1: Info, 2: Warning, 3: Critical). */
+
+  /**
+   * Severity level of the technical issue.
+   *
+   * @remarks
+   * - 1: Minor issue (cosmetic, does not affect musicality)
+   * - 2: Moderate issue (noticeable, affects quality)
+   * - 3: Critical issue (fundamental flaw, requires immediate attention)
+   */
   severity: 1 | 2 | 3
-  /** The confidence of the analysis agent in this observation (0-1). */
+
+  /**
+   * Confidence in this observation.
+   *
+   * @remarks
+   * Range: 0.0 to 1.0.
+   * - \< 0.5: Low confidence (speculative, may be noise)
+   * - 0.5-0.8: Moderate confidence (likely accurate)
+   * - \> 0.8: High confidence (very reliable)
+   */
   confidence: number
-  /** A short, user-facing message describing the observation. */
+
+  /** User-facing description of the issue */
   message: string
-  /** A helpful tip for the user to address the issue. */
+
+  /** Actionable pedagogical advice */
   tip: string
-  /** Optional data providing context or evidence for the observation. */
+
+  /** Optional raw data supporting this observation (for debugging) */
   evidence?: unknown
 }
