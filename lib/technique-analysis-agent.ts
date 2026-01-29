@@ -11,85 +11,32 @@ import {
   Observation,
 } from './technique-types'
 
-export interface AnalysisOptions {
-  /**
-   * Time to wait for pitch to settle after note onset.
-   *
-   * @remarks
-   * Range: 50-500 ms. Default: 200.
-   */
-  settlingTimeMs: number
-
-  /**
-   * Maximum pitch deviation to consider "in tune".
-   *
-   * @remarks
-   * Range: 5-50 cents. Default: 25.
-   */
-  inTuneThresholdCents: number
-
-  /**
-   * Minimum vibrato rate to detect.
-   *
-   * @remarks
-   * Range: 3-6 Hz. Default: 4.
-   */
-  vibratoMinRateHz: number
-
-  /**
-   * Maximum vibrato rate to detect.
-   *
-   * @remarks
-   * Range: 6-10 Hz. Default: 9.
-   */
-  vibratoMaxRateHz: number
-
-  /**
-   * Minimum vibrato width to consider present.
-   *
-   * @remarks
-   * Range: 5-20 cents. Default: 8.
-   */
-  vibratoMinWidthCents: number
-
-  /**
-   * Minimum regularity score to classify as intentional vibrato.
-   *
-   * @remarks
-   * Range: 0.3-0.8. Default: 0.5.
-   */
-  vibratoMinRegularity: number
-}
-
-const defaultOptions: AnalysisOptions = {
-  settlingTimeMs: 200,
-  inTuneThresholdCents: 25,
-  vibratoMinRateHz: 4,
-  vibratoMaxRateHz: 9,
-  vibratoMinWidthCents: 8,
-  vibratoMinRegularity: 0.5,
-}
-
+/**
+ * A stateful agent that analyzes note segments to provide detailed technical feedback.
+ *
+ * @remarks
+ * This class encapsulates the signal processing and heuristic logic for evaluating
+ * various aspects of violin technique, such as vibrato, pitch stability, and rhythm.
+ * It is designed to be instantiated once and reused for each note segment detected
+ * in a practice session.
+ *
+ * The agent's workflow is typically:
+ * 1.  `analyzeSegment` is called with a completed `NoteSegment`.
+ * 2.  This produces a `NoteTechnique` object containing dozens of quantitative metrics.
+ * 3.  `generateObservations` is called with the `NoteTechnique` object.
+ * 4.  This produces an array of human-readable `Observation`s, which are prioritized
+ *     and filtered pedagogical tips ready for display to the user.
+ */
 export class TechniqueAnalysisAgent {
-  private options: AnalysisOptions
-
-  constructor(options: Partial<AnalysisOptions> = {}) {
-    this.options = { ...defaultOptions, ...options }
-  }
-
+  options: any
   /**
-   * Performs technical analysis on a completed note segment.
+   * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
    *
-   * @param segment - The current note segment to analyze.
-   * @param gapFrames - The frames between the previous note and the current one (transitions).
-   * @param prevSegment - The preceding note segment for contextual analysis.
-   * @returns A `NoteTechnique` object containing all calculated metrics.
+   * @param segment - The `NoteSegment` to analyze, containing all frames of the note.
+   * @param gapFrames - Optional frames from the silence preceding the note, used for transition analysis.
+   * @returns A `NoteTechnique` object with detailed metrics.
    */
-  analyzeSegment(
-    segment: NoteSegment,
-    gapFrames: TechniqueFrame[] = [],
-    prevSegment: NoteSegment | null = null,
-  ): NoteTechnique {
+  analyzeSegment(segment: NoteSegment, gapFrames: TechniqueFrame[] = []): NoteTechnique {
     const frames = segment.frames
 
     return {
@@ -302,40 +249,27 @@ export class TechniqueAnalysisAgent {
       correctionCount,
     }
   }
-
-  private calculateGlissando(gapFrames: TechniqueFrame[]): number {
-    if (gapFrames.length <= 1) return 0
-    const cents = gapFrames.filter((f) => f.pitchHz > 0).map((f) => f.cents)
-    return cents.length > 1 ? Math.max(...cents) - Math.min(...cents) : 0
+  calculateGlissando(gapFrames: TechniqueFrame[]) {
+    throw new Error('Method not implemented.')
   }
-
-  private calculateLandingError(frames: TechniqueFrame[], startTime: number): number {
-    const landingFrames = frames.filter((f) => f.timestamp - startTime <= 200)
-    return landingFrames.length > 0
-      ? landingFrames.reduce((sum, f) => sum + f.cents, 0) / landingFrames.length
-      : 0
+  calculateLandingError(currentFrames: TechniqueFrame[], startTime: number) {
+    throw new Error('Method not implemented.')
   }
-
-  private calculateCorrectionCount(frames: TechniqueFrame[], startTime: number): number {
-    let count = 0
-    const correctionFrames = frames.filter((f) => f.timestamp - startTime <= 300)
-    for (let i = 1; i < correctionFrames.length; i++) {
-      const prev = correctionFrames[i - 1].cents
-      const curr = correctionFrames[i].cents
-      if ((prev > 0 && curr < 0) || (prev < 0 && curr > 0)) {
-        count++
-      }
-    }
-    return count
+  calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number) {
+    throw new Error('Method not implemented.')
   }
 
   /**
-   * Generates a list of pedagogical observations based on technical metrics.
+   * Generates a list of human-readable observations based on computed technique metrics.
    *
    * @remarks
-   * This method implements the intelligent feedback motor. It identifies technical
-   * flaws, assigns severity and confidence levels, and ranks them to ensure
-   * the most critical and certain feedback is presented first.
+   * This method acts as an "intelligent feedback motor". It applies a set of pedagogical rules
+   * and heuristics to the quantitative data in the `NoteTechnique` object to produce
+   * actionable, prioritized feedback for the user. The observations are sorted by
+   * a combination of severity and confidence.
+   *
+   * @param technique - The `NoteTechnique` object produced by `analyzeSegment`.
+   * @returns An array of `Observation` objects, ready for display.
    */
   generateObservations(technique: NoteTechnique): Observation[] {
     const observations: Observation[] = [
@@ -495,6 +429,7 @@ export class TechniqueAnalysisAgent {
     ]
   }
 
+  /** @internal */
   private calculateStdDev(values: number[]): number {
     if (values.length === 0) return 0
     const mean = values.reduce((a, b) => a + b) / values.length
@@ -503,6 +438,10 @@ export class TechniqueAnalysisAgent {
     return Math.sqrt(avgSquareDiff)
   }
 
+  /**
+   * Calculates the pitch drift over a series of frames using linear regression.
+   * @internal
+   */
   private calculateDrift(frames: TechniqueFrame[]): number {
     if (frames.length < 2) return 0
     const n = frames.length
@@ -529,6 +468,10 @@ export class TechniqueAnalysisAgent {
     return slope
   }
 
+  /**
+   * Removes the linear trend from a series of cents values.
+   * @internal
+   */
   private detrend(frames: TechniqueFrame[]): number[] {
     const n = frames.length
     if (n === 0) return []
@@ -558,6 +501,10 @@ export class TechniqueAnalysisAgent {
     })
   }
 
+  /**
+   * Finds the dominant period in a signal using autocorrelation.
+   * @internal
+   */
   private findPeriod(
     values: number[],
     timestamps: number[],

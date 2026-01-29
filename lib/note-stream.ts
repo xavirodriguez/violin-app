@@ -18,22 +18,37 @@ import { TechniqueFrame, NoteSegment } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'
 
-/** The raw data coming from the pitch detector on each animation frame. */
+/**
+ * The raw data yielded from the pitch detector on each animation frame.
+ */
 export interface RawPitchEvent {
+  /** The detected fundamental frequency in Hertz. */
   pitchHz: number
+  /** The pitch detector's confidence in the result (0-1). */
   confidence: number
+  /** The Root Mean Square (volume) of the audio buffer. */
   rms: number
+  /** The timestamp when the event was generated. */
   timestamp: number
 }
 
-/** Configuration options for the note stream pipeline. */
+/**
+ * Configuration options for the note stream pipeline.
+ */
 export interface NoteStreamOptions {
+  /** The minimum RMS (volume) to consider as a valid signal. */
   minRms: number
+  /** The minimum confidence score from the pitch detector to trust the result. */
   minConfidence: number
+  /** The allowable pitch deviation in cents for a note to be considered a match. */
   centsTolerance: number
+  /** The duration in milliseconds a note must be held to be considered "matched". */
   requiredHoldTime: number
+  /** The full exercise object, used for rhythm analysis. */
   exercise?: Exercise
+  /** The start time of the session, used as a reference for rhythm calculations. */
   sessionStartTime?: number
+  /** The beats per minute (BPM) of the exercise, for rhythm analysis. */
   bpm: number
 }
 
@@ -96,15 +111,27 @@ export async function* createRawPitchStream(
 }
 
 /**
- * A custom iter-tools operator that implements the note stability validation logic
- * and technical analysis.
+ * A custom `iter-tools` operator that implements note stability validation and technical analysis.
  *
  * @remarks
- * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
- * Ensure they:
- * 1. Are fast (\< 1ms)
- * 2. Return consistent values for the same underlying state
- * 3. Use memoized selectors from Zustand stores
+ * This operator is the core of the practice pipeline. It consumes a stream of raw pitch events,
+ * segments them into discrete notes using `NoteSegmenter`, and performs technical analysis on each
+ * completed note segment via `TechniqueAnalysisAgent`.
+ *
+ * It emits a variety of `PracticeEvent`s:
+ * - `NOTE_DETECTED`: For immediate UI feedback on what the user is playing.
+ * - `NOTE_HOLD_PROGRESS`: To drive UI elements showing note stability.
+ * - `NOTE_MATCHED`: The final event for a successfully held note, containing detailed technique analysis.
+ *
+ * This function is marked as `@internal` because it's a specialized component of the exported
+ * `createPracticeEventPipeline` and not intended for direct use.
+ *
+ * @internal
+ * @param source - An async iterable of `RawPitchEvent`.
+ * @param targetNote - A selector function that returns the current `TargetNote` to match against.
+ * @param options - Configuration for the stability check and segmentation.
+ * @param getCurrentIndex - A selector function to get the current note's index for rhythm analysis.
+ * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
  */
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
@@ -312,19 +339,19 @@ function calculateRhythmExpectations(
 }
 
 /**
- * Creates a practice event processing pipeline.
- *
- * @param rawPitchStream - Raw pitch detection events
- * @param targetNote - **Function called on EVERY event** to get current target.
- *   Must be idempotent for the same index. Use a store selector.
- * @param getCurrentIndex - **Function called on EVERY event** to get current position.
- *   Must be idempotent. Use a store selector.
- * @param options - Pipeline configuration
+ * Constructs the final practice event pipeline by connecting the raw pitch stream
+ * to the technical analysis and note stability window.
  *
  * @remarks
- * This design prevents context drift during async iteration by using a stable context object.
- * The callbacks `targetNote` and `getCurrentIndex` allow the pipeline to react to state changes
- * in the store without recreating the entire generator if possible, but they must be consistent.
+ * This function serves as the main factory for creating a fully configured practice event stream.
+ * It encapsulates the complexity of the underlying `iter-tools` pipeline and provides a simple
+ * interface for the consumer.
+ *
+ * @param rawPitchStream - The source `AsyncIterable` of raw pitch events, typically from `createRawPitchStream`.
+ * @param targetNote - A selector function that returns the current `TargetNote` to match against.
+ * @param getCurrentIndex - A selector function to get the current note's index for rhythm analysis.
+ * @param options - Optional configuration overrides for the pipeline.
+ * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,

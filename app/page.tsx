@@ -11,10 +11,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 /**
- * El componente principal de la página de inicio.
- * @remarks Renderiza la cabecera, el pie de página y el contenido principal,
- * que cambia dinámicamente según el modo seleccionado (`Tuner`, `Practice`, o `Dashboard`).
- * También gestiona la visibilidad del diálogo de configuración.
+ * The main component for the home page.
+ * @remarks Renders the header, footer, and main content, which dynamically
+ * changes based on the selected mode (`Tuner`, `Practice`, or `Dashboard`).
+ * It also manages the visibility of the settings dialog.
  */
 export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')

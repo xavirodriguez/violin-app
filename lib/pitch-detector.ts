@@ -21,6 +21,11 @@ export interface PitchDetectionResult {
 /**
  * Pure JavaScript pitch detector optimized for violin.
  * Uses the YIN algorithm for accurate fundamental frequency detection.
+ *
+ * @remarks
+ * This class encapsulates the YIN algorithm implementation and its configuration.
+ * It is designed to be instantiated once per audio stream and reused for each audio buffer.
+ * The core logic is based on the original paper by de Cheveigné and Kawahara.
  */
 export class PitchDetector {
   private readonly sampleRate: number
@@ -53,6 +58,12 @@ export class PitchDetector {
    */
   private readonly DEFAULT_RMS_THRESHOLD = 0.01
 
+  /**
+   * Constructs a new PitchDetector instance.
+   *
+   * @param sampleRate - The sample rate of the audio context in which the detector will be used.
+   * @throws Will throw an error if the sample rate is not a positive number.
+   */
   constructor(sampleRate: number) {
     if (sampleRate <= 0) {
       throw new Error(`Invalid sample rate: ${sampleRate}. Must be > 0`)
@@ -61,7 +72,15 @@ export class PitchDetector {
   }
 
   /**
-   * Detects the pitch of an audio buffer using the YIN algorithm.
+   * Detects the pitch of an audio buffer using the full YIN algorithm.
+   *
+   * @remarks
+   * This is the core method of the class. It processes a raw audio buffer and returns the
+   * detected frequency and a confidence level. For performance, it's recommended to use
+   * `detectPitchWithValidation` to avoid running the algorithm on silent buffers.
+   *
+   * @param buffer - A `Float32Array` of raw audio data.
+   * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
    */
   detectPitch(buffer: Float32Array): PitchDetectionResult {
     const SIZE = buffer.length
@@ -156,7 +175,10 @@ export class PitchDetector {
   }
 
   /**
-   * Calculates the Root Mean Square (RMS) of an audio buffer.
+   * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
+   *
+   * @param buffer - The audio data to analyze.
+   * @returns The RMS value, a non-negative number.
    */
   calculateRMS(buffer: Float32Array): number {
     if (buffer.length === 0) {
@@ -173,13 +195,31 @@ export class PitchDetector {
 
   /**
    * Utility method to detect if there's enough signal to attempt pitch detection.
+   *
+   * @remarks
+   * This is used as a performance optimization to avoid running the expensive YIN algorithm
+   * on buffers that are essentially silent.
+   *
+   * @param buffer - The audio data to check.
+   * @param threshold - The RMS threshold above which a signal is considered present.
+   * @returns `true` if the buffer's RMS exceeds the threshold, `false` otherwise.
+   * @defaultValue `threshold` is `this.DEFAULT_RMS_THRESHOLD`.
    */
   hasSignal(buffer: Float32Array, threshold = this.DEFAULT_RMS_THRESHOLD): boolean {
     return this.calculateRMS(buffer) > threshold
   }
 
   /**
-   * Advanced pitch detection with built-in signal validation.
+   * A wrapper around `detectPitch` that first validates if the signal is strong enough.
+   *
+   * @remarks
+   * This is the recommended method for real-time pitch detection, as it prevents
+   * unnecessary computation on silent audio frames.
+   *
+   * @param buffer - The audio data to analyze.
+   * @param rmsThreshold - The RMS threshold to use for the signal check.
+   * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
+   * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
    */
   detectPitchWithValidation(
     buffer: Float32Array,
@@ -192,10 +232,18 @@ export class PitchDetector {
     return this.detectPitch(buffer)
   }
 
+  /**
+   * Gets the sample rate the detector was configured with.
+   * @returns The sample rate in Hz.
+   */
   getSampleRate(): number {
     return this.sampleRate
   }
 
+  /**
+   * Gets the effective frequency range the detector is configured to find.
+   * @returns An object containing the min and max frequencies in Hz.
+   */
   getFrequencyRange(): { min: number; max: number } {
     return {
       min: this.MIN_FREQUENCY,
@@ -226,7 +274,14 @@ export class PitchDetector {
 }
 
 /**
- * Helper function to create a PitchDetector from an AudioContext.
+ * Helper function to create a PitchDetector from a Web Audio API `AudioContext`.
+ *
+ * @remarks
+ * This is a convenience factory function that extracts the correct sample rate from
+ * the audio context, ensuring the `PitchDetector` is properly configured.
+ *
+ * @param audioContext - The `AudioContext` of the current audio pipeline.
+ * @returns A new, correctly configured `PitchDetector` instance.
  */
 export function createPitchDetectorFromContext(audioContext: AudioContext): PitchDetector {
   return new PitchDetector(audioContext.sampleRate)

@@ -31,9 +31,9 @@ export const metadata: Metadata = {
 }
 
 /**
- * El diseño raíz de la aplicación.
- * @remarks Este componente envuelve a todas las páginas y establece los elementos
- * base del `<html>` y `<body>`, incluyendo las fuentes y los análisis de Vercel.
+ * The root layout for the application.
+ * @remarks This component wraps all pages and sets up the base `<html>` and `<body>`
+ * elements, including fonts and Vercel analytics.
  */
 export default function RootLayout({
   children,
