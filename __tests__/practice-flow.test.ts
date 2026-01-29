@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 
 // Mock dependencies BEFORE other imports
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -14,7 +14,11 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
 
 vi.mock('@/lib/pitch-detector', () => {
   return {
-    PitchDetector: vi.fn().mockImplementation(function (this: any) {
+    PitchDetector: vi.fn().mockImplementation(function (this: {
+      setMaxFrequency: Mock
+      detectPitch: Mock
+      calculateRMS: Mock
+    }) {
       this.setMaxFrequency = vi.fn()
       this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
       this.calculateRMS = vi.fn(() => 0)
@@ -31,6 +35,7 @@ import { allExercises } from '../lib/exercises'
 import { audioManager } from '../lib/infrastructure/audio-manager'
 import { ERROR_CODES } from '../lib/errors/app-error'
 import { handlePracticeEvent } from '../lib/practice/practice-event-sink'
+import { type NoteTechnique } from '@/lib/technique-types'
 
 describe('Practice Mode Integration Flow', () => {
   beforeEach(async () => {
@@ -55,8 +60,11 @@ describe('Practice Mode Integration Flow', () => {
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
     }
-    ;(audioManager.initialize as any).mockResolvedValue({ context: mockContext, analyser: mockAnalyser })
-    ;(audioManager.getAnalyser as any).mockReturnValue(mockAnalyser)
+    ;(audioManager.initialize as Mock).mockResolvedValue({
+      context: mockContext,
+      analyser: mockAnalyser,
+    })
+    ;(audioManager.getAnalyser as Mock).mockReturnValue(mockAnalyser)
 
     await usePracticeStore.getState().start()
 
@@ -68,15 +76,19 @@ describe('Practice Mode Integration Flow', () => {
     expect(targetNote).toBeDefined()
 
     const storeApi = {
-        getState: usePracticeStore.getState,
-        setState: usePracticeStore.setState
+      getState: usePracticeStore.getState,
+      setState: usePracticeStore.setState,
     }
 
     // Simulate NOTE_DETECTED
-    handlePracticeEvent({
+    handlePracticeEvent(
+      {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 10, timestamp: Date.now(), confidence: 0.9 }
-    }, storeApi, () => {})
+        payload: { pitch: 'A4', cents: 10, timestamp: Date.now(), confidence: 0.9 },
+      },
+      storeApi,
+      () => {},
+    )
     expect(usePracticeStore.getState().practiceState?.detectionHistory.length).toBeGreaterThan(0)
 
     // Simulate HOLDING_NOTE
@@ -85,10 +97,14 @@ describe('Practice Mode Integration Flow', () => {
     expect(usePracticeStore.getState().practiceState?.holdDuration).toBe(250)
 
     // Simulate NOTE_MATCHED
-    handlePracticeEvent({
+    handlePracticeEvent(
+      {
         type: 'NOTE_MATCHED',
-        payload: { technique: {} as any, observations: [] }
-    }, storeApi, () => {})
+        payload: { technique: {} as unknown as NoteTechnique, observations: [] },
+      },
+      storeApi,
+      () => {},
+    )
 
     // Status should be 'correct' (transiently) and index should increment
     expect(usePracticeStore.getState().practiceState?.status).toBe('correct')
@@ -96,40 +112,60 @@ describe('Practice Mode Integration Flow', () => {
     expect(usePracticeStore.getState().practiceState?.holdDuration).toBe(0)
 
     // Simulate next note detection (should reset status to listening)
-    handlePracticeEvent({
+    handlePracticeEvent(
+      {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 }
-    }, storeApi, () => {})
+        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+      },
+      storeApi,
+      () => {},
+    )
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
 
     // 4. PHASE 5: Completion
     // Move to the last note
     const totalNotes = exercise.notes.length
     for (let i = 1; i < totalNotes - 1; i++) {
-         // Reset status to listening by detecting a note
-         handlePracticeEvent({
-             type: 'NOTE_DETECTED',
-             payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 }
-         }, storeApi, () => {})
+      // Reset status to listening by detecting a note
+      handlePracticeEvent(
+        {
+          type: 'NOTE_DETECTED',
+          payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+        },
+        storeApi,
+        () => {},
+      )
 
-         handlePracticeEvent({
-             type: 'NOTE_MATCHED',
-             payload: { technique: {} as any, observations: [] }
-         }, storeApi, () => {})
+      handlePracticeEvent(
+        {
+          type: 'NOTE_MATCHED',
+          payload: { technique: {} as unknown as NoteTechnique, observations: [] },
+        },
+        storeApi,
+        () => {},
+      )
     }
 
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(totalNotes - 1)
 
     // Final note match
-    handlePracticeEvent({
+    handlePracticeEvent(
+      {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 }
-    }, storeApi, () => {})
+        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+      },
+      storeApi,
+      () => {},
+    )
 
-    handlePracticeEvent({
+    handlePracticeEvent(
+      {
         type: 'NOTE_MATCHED',
-        payload: { technique: {} as any, observations: [] }
-    }, storeApi, () => {})
+        payload: { technique: {} as unknown as NoteTechnique, observations: [] },
+      },
+      storeApi,
+      () => {},
+    )
     expect(usePracticeStore.getState().practiceState?.status).toBe('completed')
   })
 
@@ -139,7 +175,7 @@ describe('Practice Mode Integration Flow', () => {
 
     const permissionError = new Error('Permission denied')
     permissionError.name = 'NotAllowedError'
-    ;(audioManager.initialize as any).mockRejectedValue(permissionError)
+    ;(audioManager.initialize as Mock).mockRejectedValue(permissionError)
 
     await usePracticeStore.getState().start()
 
@@ -155,7 +191,7 @@ describe('Practice Mode Integration Flow', () => {
 
     const notFoundError = new Error('Device not found')
     notFoundError.name = 'NotFoundError'
-    ;(audioManager.initialize as any).mockRejectedValue(notFoundError)
+    ;(audioManager.initialize as Mock).mockRejectedValue(notFoundError)
 
     await usePracticeStore.getState().start()
 

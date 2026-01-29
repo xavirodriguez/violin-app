@@ -15,7 +15,7 @@ interface SheetMusicProps {
    * A ref to the div element where OSMD will render the score.
    * This should be the `containerRef` returned by `useOSMDSafe`.
    */
-  containerRef: React.RefObject<HTMLDivElement>
+  containerRef: React.RefObject<HTMLDivElement | null>
   /** Indicates if the sheet music has finished rendering. */
   isReady: boolean
   /** Error message to display if rendering fails. */

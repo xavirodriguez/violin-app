@@ -5,7 +5,7 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>)) => void
+  setState: (fn: (state: T) => T | Partial<T>) => void
 }
 
 /**
@@ -45,6 +45,6 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
       }, 0)
     }
 
-    return { practiceState: nextState }
+    return { ...state, practiceState: nextState }
   })
 }
