@@ -28,7 +28,7 @@ import {
  *     and filtered pedagogical tips ready for display to the user.
  */
 export class TechniqueAnalysisAgent {
-  options: any
+  options: unknown
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
    *
