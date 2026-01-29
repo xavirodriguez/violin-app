@@ -51,6 +51,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
@@ -65,6 +66,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
@@ -83,6 +85,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
@@ -97,6 +100,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 
@@ -127,10 +131,16 @@ describe('createPracticeEventPipeline', () => {
       { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 510 }, // Offset triggered
     ]
     const rawPitchStream = createMockStream(rawEvents)
-    const pipeline = createPracticeEventPipeline(rawPitchStream, getTargetNote, () => 0, {
-      ...testOptions,
-      requiredHoldTime: 120,
-    })
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      getTargetNote,
+      () => 0,
+      {
+        ...testOptions,
+        requiredHoldTime: 120,
+      },
+      new AbortController().signal,
+    )
     const events = await collectAsyncIterable(pipeline)
 
     const noteDetectedCount = events.filter((e) => e.type === 'NOTE_DETECTED').length
@@ -155,6 +165,7 @@ describe('createPracticeEventPipeline', () => {
       getTargetNote,
       () => 0,
       testOptions,
+      new AbortController().signal,
     )
     const events = await collectAsyncIterable(pipeline)
 

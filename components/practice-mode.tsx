@@ -10,7 +10,7 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
-import { type TargetNote, type DetectedNote } from '@/lib/practice-core'
+import { type TargetNote, type DetectedNote, formatPitchName } from '@/lib/practice-core'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -234,11 +234,9 @@ export function PracticeMode() {
     totalNotes > 0 ? ((currentNoteIndex + (status === 'completed' ? 1 : 0)) / totalNotes) * 100 : 0
 
   const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : undefined
+  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
 
-  const targetPitchName = targetNote
-    ? `${targetNote.pitch.step}${targetNote.pitch.alter ?? ''}${targetNote.pitch.octave}`
-    : null
+  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 

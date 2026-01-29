@@ -1,5 +1,4 @@
 import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
-import { useAnalyticsStore } from '@/stores/analytics-store'
 
 /**
  * A type representing the core state management functions of a Zustand store.
@@ -16,21 +15,36 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
   event: PracticeEvent,
   store: StoreApi<T>,
   onCompleted: () => void,
+  analytics?: { endSession: () => void },
 ) => {
+  if (!event) {
+    console.warn('[EVENT SINK] Received null event')
+    return
+  }
+
   const currentState = store.getState().practiceState
-  if (!currentState) return
+  if (!currentState) {
+    console.error('[EVENT SINK] State is null during event processing', event)
+    return
+  }
 
   // 1. Pure state transition
-  const newState = reducePracticeEvent(currentState, event)
-  store.setState({ practiceState: newState } as Partial<T>)
+  store.setState((state) => {
+    if (!state.practiceState) return state
+    const nextState = reducePracticeEvent(state.practiceState, event)
 
-  // 2. Side effects
-  try {
-    if (newState.status === 'completed' && currentState.status !== 'completed') {
-      useAnalyticsStore.getState().endSession()
-      onCompleted()
+    // 2. Side effects (triggered by state change)
+    if (nextState.status === 'completed' && state.practiceState.status !== 'completed') {
+      setTimeout(() => {
+        try {
+          analytics?.endSession()
+          onCompleted()
+        } catch (error) {
+          console.error('Failed to handle practice completion side effect:', error)
+        }
+      }, 0)
     }
-  } catch (error) {
-    console.error('Failed to handle practice event side effect:', error)
-  }
+
+    return { practiceState: nextState }
+  })
 }

@@ -6,11 +6,10 @@
  */
 
 import { create } from 'zustand'
-import { type PracticeState, reducePracticeEvent, formatPitchName } from '@/lib/practice-core'
-import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
+import { type PracticeState, reducePracticeEvent } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { useAnalyticsStore } from './analytics-store'
-import { handlePracticeEvent } from '../lib/practice/practice-event-sink'
+import { runPracticeSession } from '@/lib/practice/session-runner'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 
 import type { Exercise } from '@/lib/exercises/types'
@@ -85,16 +84,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   loadExercise: async (exercise) => {
     await get().stop()
-    set({
+    set(() => ({
       practiceState: getInitialState(exercise),
       error: null,
-    })
+    }))
   },
 
   start: async () => {
     if (get().practiceState?.status === 'listening') return
     if (!get().practiceState) {
-      set({ error: 'No exercise loaded.' })
+      set(() => ({ error: 'No exercise loaded.' }))
       return
     }
 
@@ -107,78 +106,50 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     try {
       const { context } = await audioManager.initialize()
       const detector = new PitchDetector(context.sampleRate)
-      // Increase max frequency to support high violin positions (up to ~E7)
       detector.setMaxFrequency(2700)
-      set({ detector, error: null })
+      set(() => ({ detector, error: null }))
 
       const initialState = get().practiceState!
       const listeningState = reducePracticeEvent(initialState, { type: 'START' })
-      set({ practiceState: listeningState })
+      set(() => ({ practiceState: listeningState }))
 
       const sessionStartTime = Date.now()
-      // Analytics and the pipeline should be initialized with the definitive state *after* the START event.
       const { exercise } = get().practiceState!
-      useAnalyticsStore.getState().startSession(exercise.id, exercise.name, 'practice')
+      const analyticsStore = useAnalyticsStore.getState()
+      analyticsStore.startSession(exercise.id, exercise.name, 'practice')
 
-      const rawPitchStream = createRawPitchStream(get().analyser!, detector, () => !signal.aborted)
-      const practiceEventPipeline = createPracticeEventPipeline(
-        rawPitchStream,
-        () => get().targetNote,
-        () => get().currentNoteIndex,
-        {
-          exercise,
-          sessionStartTime,
-          bpm: 60,
+      runPracticeSession({
+        signal,
+        sessionId,
+        store: {
+          getState: get,
+          setState: set,
+          stop: get().stop,
         },
-      )
-
-      ;(async () => {
-        const localController = practiceLoopController
-        const localSessionId = sessionId
-        let lastDispatchedNoteIndex = -1
-        let currentNoteStartedAt = Date.now()
-
-        for await (const event of practiceEventPipeline) {
-          if (practiceLoopController !== localController || sessionId !== localSessionId) break
-
-          const currentState = get().practiceState
-          if (!currentState) continue
-
-          if (event.type === 'NOTE_MATCHED') {
-            const noteIndex = currentState.currentIndex
-            const target = currentState.exercise.notes[noteIndex]
-
-            if (target && noteIndex !== lastDispatchedNoteIndex) {
-              const timeToComplete = Date.now() - currentNoteStartedAt
-              const analytics = useAnalyticsStore.getState()
-              const targetPitch = formatPitchName(target.pitch)
-
-              analytics.recordNoteAttempt(noteIndex, targetPitch, 0, true)
-              analytics.recordNoteCompletion(noteIndex, timeToComplete, event.payload?.technique)
-
-              lastDispatchedNoteIndex = noteIndex
-              currentNoteStartedAt = Date.now()
-            }
-          }
-
-          handlePracticeEvent(event, { getState: get, setState: set }, () => void get().stop())
-        }
-      })().catch((err) => {
-        // AbortErrors are expected during normal operation (e.g., calling stop), so we don't treat them as errors.
+        analytics: {
+          recordNoteAttempt: analyticsStore.recordNoteAttempt,
+          recordNoteCompletion: analyticsStore.recordNoteCompletion,
+          endSession: analyticsStore.endSession,
+        },
+        detector,
+        exercise,
+        sessionStartTime,
+      }).catch((err) => {
         const name = err instanceof Error ? err.name : ''
         if (name !== 'AbortError') {
-          set({
+          console.error('[PRACTICE LOOP ERROR]', err)
+          set(() => ({
             error:
               err instanceof Error
                 ? err.message
                 : 'An unexpected error occurred in the practice loop.',
-          })
+          }))
         }
-        // Always ensure cleanup happens, even if the error was just an abort.
         void get().stop()
       })
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Audio hardware error.' })
+      console.error('[PRACTICE START ERROR]', err)
+      set(() => ({ error: err instanceof Error ? err.message : 'Audio hardware error.' }))
       void get().stop()
     }
   },
@@ -194,18 +165,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
     await audioManager.cleanup()
 
-    const currentState = get().practiceState
-    if (currentState && currentState.status !== 'idle') {
-      set({ practiceState: reducePracticeEvent(currentState, { type: 'STOP' }) })
-    }
-
-    set({
-      detector: null,
+    set((state) => {
+      if (!state.practiceState || state.practiceState.status === 'idle') return state
+      return { practiceState: reducePracticeEvent(state.practiceState, { type: 'STOP' }) }
     })
+
+    set(() => ({
+      detector: null,
+    }))
   },
 
   reset: async () => {
     await get().stop()
-    set({ practiceState: null, error: null })
+    set(() => ({ practiceState: null, error: null }))
   },
 }))
