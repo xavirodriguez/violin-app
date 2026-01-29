@@ -60,10 +60,10 @@ const defaultOptions: NoteStreamOptions = {
 export async function* createRawPitchStream(
   analyser: AnalyserNode,
   detector: PitchDetector,
-  isActive: () => boolean,
+  signal: AbortSignal,
 ): AsyncGenerator<RawPitchEvent> {
   const buffer = new Float32Array(analyser.fftSize)
-  while (isActive()) {
+  while (!signal.aborted) {
     analyser.getFloatTimeDomainData(buffer)
     const result = detector.detectPitch(buffer)
     const rms = detector.calculateRMS(buffer)
@@ -73,7 +73,25 @@ export async function* createRawPitchStream(
       rms: rms,
       timestamp: Date.now(),
     }
-    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const rafId = requestAnimationFrame(() => {
+          signal.removeEventListener('abort', abortHandler)
+          resolve()
+        })
+
+        function abortHandler() {
+          cancelAnimationFrame(rafId)
+          reject(new DOMException('Aborted', 'AbortError'))
+        }
+
+        signal.addEventListener('abort', abortHandler, { once: true })
+      })
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
+      throw e
+    }
   }
 }
 
@@ -84,7 +102,7 @@ export async function* createRawPitchStream(
  * @remarks
  * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
  * Ensure they:
- * 1. Are fast (< 1ms)
+ * 1. Are fast (\< 1ms)
  * 2. Return consistent values for the same underlying state
  * 3. Use memoized selectors from Zustand stores
  */
@@ -92,6 +110,7 @@ async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
   context: PipelineContext,
   options: NoteStreamOptions,
+  signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
   const segmenter = new NoteSegmenter({
     minRms: options.minRms,
@@ -103,6 +122,7 @@ async function* technicalAnalysisWindow(
   let prevSegment: NoteSegment | null = null
 
   for await (const raw of source) {
+    if (signal.aborted) break
     const currentTarget = context.targetNote()
     if (!currentTarget) continue
 
@@ -112,7 +132,7 @@ async function* technicalAnalysisWindow(
     const frame: TechniqueFrame = {
       timestamp: raw.timestamp,
       pitchHz: raw.pitchHz,
-      cents: cents,
+      cents,
       rms: raw.rms,
       confidence: raw.confidence,
       noteName,
@@ -123,24 +143,26 @@ async function* technicalAnalysisWindow(
       lastGapFrames = segmentEvent.gapFrames
     }
 
-    if (segmentEvent && (segmentEvent.type === 'OFFSET' || segmentEvent.type === 'NOTE_CHANGE')) {
-      const result = processCompletedSegment(
-        segmentEvent.frames,
-        currentTarget,
-        options,
-        context.getCurrentIndex,
-        firstNoteOnsetTime,
-        lastGapFrames,
-        prevSegment,
-        agent,
-      )
+    if (!segmentEvent || (segmentEvent.type !== 'OFFSET' && segmentEvent.type !== 'NOTE_CHANGE')) {
+      continue
+    }
 
-      if (result) {
-        if (firstNoteOnsetTime === null) firstNoteOnsetTime = result.onsetTime
-        prevSegment = result.segment
-        lastGapFrames = []
-        yield { type: 'NOTE_MATCHED', payload: result.payload }
-      }
+    const result = processCompletedSegment(
+      segmentEvent.frames,
+      currentTarget,
+      options,
+      context.getCurrentIndex,
+      firstNoteOnsetTime,
+      lastGapFrames,
+      prevSegment,
+      agent,
+    )
+
+    if (result) {
+      if (firstNoteOnsetTime === null) firstNoteOnsetTime = result.onsetTime
+      prevSegment = result.segment
+      lastGapFrames = []
+      yield { type: 'NOTE_MATCHED', payload: result.payload }
     }
   }
 }
@@ -287,8 +309,9 @@ export function createPracticeEventPipeline(
   targetNote: () => TargetNote | null,
   getCurrentIndex: () => number,
   options: Partial<NoteStreamOptions> & { exercise: Exercise; sessionStartTime: number },
+  signal: AbortSignal,
 ): AsyncIterable<PracticeEvent> {
   const finalOptions = { ...defaultOptions, ...options } as NoteStreamOptions
   const context: PipelineContext = { targetNote, getCurrentIndex }
-  return technicalAnalysisWindow(rawPitchStream, context, finalOptions)
+  return technicalAnalysisWindow(rawPitchStream, context, finalOptions, signal)
 }

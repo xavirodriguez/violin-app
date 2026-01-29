@@ -206,8 +206,8 @@ export class PitchDetector {
   /**
    * Updates the maximum frequency threshold for pitch detection.
    *
-   * @param maxHz - Maximum frequency in Hz (must be > MIN_FREQUENCY and <= 20000)
-   * @throws {AppError} CODE: DATA_VALIDATION_ERROR if out of valid range
+   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
+   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
    *
    * @example
    * detector.setMaxFrequency(2637);  // ✅ E7 for violin

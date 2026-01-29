@@ -20,8 +20,8 @@ export interface VibratoMetrics {
   /**
    * Vibrato regularity score.
    *
-   * @range 0.0 to 1.0
    * @remarks
+   * Range: 0.0 to 1.0.
    * - 0.0: Completely irregular/random oscillation
    * - 0.5: Moderately regular
    * - 1.0: Perfect sinusoidal regularity
@@ -96,11 +96,11 @@ export interface Observation {
   /**
    * Confidence in this observation.
    *
-   * @range 0.0 to 1.0
    * @remarks
-   * - < 0.5: Low confidence (speculative, may be noise)
+   * Range: 0.0 to 1.0.
+   * - \< 0.5: Low confidence (speculative, may be noise)
    * - 0.5-0.8: Moderate confidence (likely accurate)
-   * - > 0.8: High confidence (very reliable)
+   * - \> 0.8: High confidence (very reliable)
    */
   confidence: number
 

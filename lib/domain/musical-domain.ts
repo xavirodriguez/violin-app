@@ -22,7 +22,7 @@ export type CanonicalAccidental = -1 | 0 | 1
  *   - null/undefined: Treated as 0 (natural)
  *
  * @returns A CanonicalAccidental (-1, 0, or 1)
- * @throws {Error} if input is invalid
+ * @throws Error - if input is invalid
  *
  * @example
  * normalizeAccidental(1);        // 1

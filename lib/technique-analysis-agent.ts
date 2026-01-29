@@ -15,48 +15,48 @@ export interface AnalysisOptions {
   /**
    * Time to wait for pitch to settle after note onset.
    *
-   * @range 50-500 ms
-   * @default 200
+   * @remarks
+   * Range: 50-500 ms. Default: 200.
    */
   settlingTimeMs: number
 
   /**
    * Maximum pitch deviation to consider "in tune".
    *
-   * @range 5-50 cents
-   * @default 25
+   * @remarks
+   * Range: 5-50 cents. Default: 25.
    */
   inTuneThresholdCents: number
 
   /**
    * Minimum vibrato rate to detect.
    *
-   * @range 3-6 Hz
-   * @default 4
+   * @remarks
+   * Range: 3-6 Hz. Default: 4.
    */
   vibratoMinRateHz: number
 
   /**
    * Maximum vibrato rate to detect.
    *
-   * @range 6-10 Hz
-   * @default 9
+   * @remarks
+   * Range: 6-10 Hz. Default: 9.
    */
   vibratoMaxRateHz: number
 
   /**
    * Minimum vibrato width to consider present.
    *
-   * @range 5-20 cents
-   * @default 8
+   * @remarks
+   * Range: 5-20 cents. Default: 8.
    */
   vibratoMinWidthCents: number
 
   /**
    * Minimum regularity score to classify as intentional vibrato.
    *
-   * @range 0.3-0.8
-   * @default 0.5
+   * @remarks
+   * Range: 0.3-0.8. Default: 0.5.
    */
   vibratoMinRegularity: number
 }
