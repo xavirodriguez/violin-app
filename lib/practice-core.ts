@@ -264,72 +264,96 @@ export function isMatch(
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
   switch (event.type) {
     case 'START':
-      return {
-        ...state,
-        status: 'listening',
-        currentIndex: 0,
-        detectionHistory: [],
-        holdDuration: 0,
-        lastObservations: [],
-      }
+      return handleStart(state)
 
     case 'STOP':
     case 'RESET':
-      return {
-        ...state,
-        status: 'idle',
-        currentIndex: 0,
-        detectionHistory: [],
-        holdDuration: 0,
-        lastObservations: [],
-      }
+      return handleReset(state)
 
-    case 'NOTE_DETECTED': {
-      const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-      buffer.push(...[event.payload, ...state.detectionHistory])
-      // Transition back to listening if we were validating/correct and received a detection
-      const status =
-        state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
-      return {
-        ...state,
-        detectionHistory: buffer.toArray(),
-        status,
-        holdDuration: status === 'listening' ? 0 : state.holdDuration,
-      }
-    }
+    case 'NOTE_DETECTED':
+      return handleNoteDetected(state, event.payload)
 
-    case 'HOLDING_NOTE': {
-      if (state.status !== 'listening' && state.status !== 'validating') return state
-      return { ...state, status: 'validating', holdDuration: event.payload.duration }
-    }
+    case 'HOLDING_NOTE':
+      return handleHoldingNote(state, event.payload.duration)
 
     case 'NO_NOTE_DETECTED':
-      return { ...state, detectionHistory: [], status: 'listening', holdDuration: 0 }
+      return handleNoNoteDetected(state)
 
-    case 'NOTE_MATCHED': {
-      if (state.status !== 'listening' && state.status !== 'validating') return state
-
-      const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
-      if (isLastNote) {
-        return {
-          ...state,
-          status: 'completed',
-          holdDuration: 0,
-          lastObservations: event.payload?.observations ?? [],
-        }
-      } else {
-        return {
-          ...state,
-          currentIndex: state.currentIndex + 1,
-          status: 'correct',
-          detectionHistory: [],
-          holdDuration: 0,
-          lastObservations: event.payload?.observations ?? [],
-        }
-      }
-    }
+    case 'NOTE_MATCHED':
+      return handleNoteMatched(state, event.payload)
 
     default:
       return state
+  }
+}
+
+function handleStart(state: PracticeState): PracticeState {
+  return {
+    ...state,
+    status: 'listening',
+    currentIndex: 0,
+    detectionHistory: [],
+    holdDuration: 0,
+    lastObservations: [],
+  }
+}
+
+function handleReset(state: PracticeState): PracticeState {
+  return {
+    ...state,
+    status: 'idle',
+    currentIndex: 0,
+    detectionHistory: [],
+    holdDuration: 0,
+    lastObservations: [],
+  }
+}
+
+function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
+  const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
+  buffer.push(...[payload, ...state.detectionHistory])
+  // Transition back to listening if we were validating/correct and received a detection
+  const status =
+    state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
+  return {
+    ...state,
+    detectionHistory: buffer.toArray(),
+    status,
+    holdDuration: status === 'listening' ? 0 : state.holdDuration,
+  }
+}
+
+function handleHoldingNote(state: PracticeState, duration: number): PracticeState {
+  if (state.status !== 'listening' && state.status !== 'validating') return state
+  return { ...state, status: 'validating', holdDuration: duration }
+}
+
+function handleNoNoteDetected(state: PracticeState): PracticeState {
+  return { ...state, detectionHistory: [], status: 'listening', holdDuration: 0 }
+}
+
+function handleNoteMatched(
+  state: PracticeState,
+  payload?: { observations?: Observation[] },
+): PracticeState {
+  if (state.status !== 'listening' && state.status !== 'validating') return state
+
+  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
+  if (isLastNote) {
+    return {
+      ...state,
+      status: 'completed',
+      holdDuration: 0,
+      lastObservations: payload?.observations ?? [],
+    }
+  } else {
+    return {
+      ...state,
+      currentIndex: state.currentIndex + 1,
+      status: 'correct',
+      detectionHistory: [],
+      holdDuration: 0,
+      lastObservations: payload?.observations ?? [],
+    }
   }
 }

@@ -12,7 +12,7 @@ import {
   type TargetNote,
 } from '@/lib/practice-core'
 import type { PitchDetector } from '@/lib/pitch-detector'
-import { NoteSegmenter } from './note-segmenter'
+import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import { TechniqueFrame, NoteSegment } from './technique-types'
 import { getDurationMs } from './exercises/utils'
@@ -144,10 +144,12 @@ async function* technicalAnalysisWindow(
     minConfidence: options.minConfidence,
   })
   const agent = new TechniqueAnalysisAgent()
-  let lastGapFrames: TechniqueFrame[] = []
-  let firstNoteOnsetTime: number | null = null
-  let prevSegment: NoteSegment | null = null
-  let currentSegmentStart: number | null = null
+  const state = {
+    lastGapFrames: [] as TechniqueFrame[],
+    firstNoteOnsetTime: null as number | null,
+    prevSegment: null as NoteSegment | null,
+    currentSegmentStart: null as number | null,
+  }
 
   for await (const raw of source) {
     if (signal.aborted) break
@@ -175,22 +177,17 @@ async function* technicalAnalysisWindow(
 
     const segmentEvent = segmenter.processFrame(frame)
 
-    if (segmentEvent?.type === 'ONSET') {
-      lastGapFrames = segmentEvent.gapFrames
-      currentSegmentStart = segmentEvent.timestamp
-    } else if (segmentEvent?.type === 'OFFSET') {
-      currentSegmentStart = null
-    } else if (segmentEvent?.type === 'NOTE_CHANGE') {
-      currentSegmentStart = segmentEvent.timestamp
-    }
+    updateLocalSegmentState(segmentEvent, state)
 
-    // Emit HOLDING_NOTE if we are currently in a matching segment
-    if (currentSegmentStart !== null && noteName) {
-      const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
-      if (match) {
-        yield { type: 'HOLDING_NOTE', payload: { duration: raw.timestamp - currentSegmentStart } }
-      }
-    }
+    const holdingEvent = getHoldingEvent(
+      state.currentSegmentStart,
+      noteName,
+      currentTarget,
+      lastDetected,
+      options,
+      raw.timestamp,
+    )
+    if (holdingEvent) yield holdingEvent
 
     if (!segmentEvent || (segmentEvent.type !== 'OFFSET' && segmentEvent.type !== 'NOTE_CHANGE')) {
       continue
@@ -201,19 +198,49 @@ async function* technicalAnalysisWindow(
       currentTarget,
       options,
       context.getCurrentIndex,
-      firstNoteOnsetTime,
-      lastGapFrames,
-      prevSegment,
+      state.firstNoteOnsetTime,
+      state.lastGapFrames,
+      state.prevSegment,
       agent,
     )
 
     if (result) {
-      if (firstNoteOnsetTime === null) firstNoteOnsetTime = result.onsetTime
-      prevSegment = result.segment
-      lastGapFrames = []
+      if (state.firstNoteOnsetTime === null) state.firstNoteOnsetTime = result.onsetTime
+      state.prevSegment = result.segment
+      state.lastGapFrames = []
       yield { type: 'NOTE_MATCHED', payload: result.payload }
     }
   }
+}
+
+function updateLocalSegmentState(
+  event: SegmenterEvent | null,
+  state: { lastGapFrames: TechniqueFrame[]; currentSegmentStart: number | null },
+) {
+  if (event?.type === 'ONSET') {
+    state.lastGapFrames = event.gapFrames
+    state.currentSegmentStart = event.timestamp
+  } else if (event?.type === 'OFFSET') {
+    state.currentSegmentStart = null
+  } else if (event?.type === 'NOTE_CHANGE') {
+    state.currentSegmentStart = event.timestamp
+  }
+}
+
+function getHoldingEvent(
+  currentSegmentStart: number | null,
+  noteName: string,
+  currentTarget: TargetNote,
+  lastDetected: DetectedNote,
+  options: NoteStreamOptions,
+  timestamp: number,
+): PracticeEvent | null {
+  if (currentSegmentStart !== null && noteName) {
+    if (isMatch(currentTarget, lastDetected, options.centsTolerance)) {
+      return { type: 'HOLDING_NOTE', payload: { duration: timestamp - currentSegmentStart } }
+    }
+  }
+  return null
 }
 
 /** Helper to parse a frequency into musical note components. */
