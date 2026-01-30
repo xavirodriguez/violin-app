@@ -102,7 +102,13 @@ describe('Full Flow Verification Checklist', () => {
     }
 
     // 3.2 Pipeline Events - NOTE_DETECTED
-    const detectedNote = { pitch: 'A4', cents: 2, timestamp: Date.now(), confidence: 0.95 }
+    const detectedNote = {
+      pitch: 'A4',
+      pitchHz: 440,
+      cents: 2,
+      timestamp: Date.now(),
+      confidence: 0.95,
+    }
 
     // In actual app, runPracticeSession would call handlePracticeEvent AND update TunerStore
     handlePracticeEvent({ type: 'NOTE_DETECTED', payload: detectedNote }, storeApi, () => {})

@@ -85,7 +85,7 @@ describe('Practice Mode Integration Flow', () => {
     handlePracticeEvent(
       {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 10, timestamp: Date.now(), confidence: 0.9 },
+        payload: { pitch: 'A4', pitchHz: 440, cents: 10, timestamp: Date.now(), confidence: 0.9 },
       },
       storeApi,
       () => {},
@@ -116,7 +116,7 @@ describe('Practice Mode Integration Flow', () => {
     handlePracticeEvent(
       {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+        payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
       },
       storeApi,
       () => {},
@@ -131,7 +131,7 @@ describe('Practice Mode Integration Flow', () => {
       handlePracticeEvent(
         {
           type: 'NOTE_DETECTED',
-          payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+          payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
         },
         storeApi,
         () => {},
@@ -153,7 +153,7 @@ describe('Practice Mode Integration Flow', () => {
     handlePracticeEvent(
       {
         type: 'NOTE_DETECTED',
-        payload: { pitch: 'A4', cents: 0, timestamp: Date.now(), confidence: 1 },
+        payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
       },
       storeApi,
       () => {},
