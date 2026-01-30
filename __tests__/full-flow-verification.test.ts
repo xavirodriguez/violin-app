@@ -3,9 +3,7 @@ import { usePracticeStore } from '../stores/practice-store'
 import { useTunerStore } from '../stores/tuner-store'
 import { allExercises } from '../lib/exercises'
 import { audioManager } from '../lib/infrastructure/audio-manager'
-import { ERROR_CODES } from '../lib/errors/app-error'
 import { handlePracticeEvent } from '../lib/practice/practice-event-sink'
-import { type NoteTechnique } from '@/lib/technique-types'
 
 // Mock dependencies
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -142,7 +140,8 @@ describe('Full Flow Verification Checklist', () => {
       handlePracticeEvent(
         {
           type: 'NOTE_MATCHED',
-          payload: { technique: {} as any, observations: [] },
+          // @ts-expect-error - Mocking payload for test
+          payload: { technique: {}, observations: [] },
         },
         storeApi,
         () => {},
