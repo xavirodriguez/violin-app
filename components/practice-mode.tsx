@@ -10,11 +10,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises, type Exercise } from '@/lib/exercises'
-import {
-  formatPitchName,
-  type PracticeState,
-  type DetectedNote,
-} from '@/lib/practice-core'
+import { formatPitchName, type PracticeState, type DetectedNote } from '@/lib/practice-core'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -177,7 +173,10 @@ function usePracticeSession(status: string, currentNoteIndex: number) {
   return { sessionDuration, currentStreak }
 }
 
-function useExerciseAutoLoad(practiceState: PracticeState | null, loadExercise: (ex: Exercise) => void) {
+function useExerciseAutoLoad(
+  practiceState: PracticeState | null,
+  loadExercise: (ex: Exercise) => void,
+) {
   const loadedRef = useRef(false)
   useEffect(() => {
     if (!loadedRef.current && !practiceState) {
@@ -270,11 +269,17 @@ export function PracticeMode() {
   const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
   const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
 
-  const handleRestart = useCallback(() => practiceState && loadExercise(practiceState.exercise), [practiceState, loadExercise])
-  const handleSelectExercise = useCallback((exerciseId: string) => {
-    const exercise = allExercises.find((ex) => ex.id === exerciseId)
-    if (exercise) loadExercise(exercise)
-  }, [loadExercise])
+  const handleRestart = useCallback(
+    () => practiceState && loadExercise(practiceState.exercise),
+    [practiceState, loadExercise],
+  )
+  const handleSelectExercise = useCallback(
+    (exerciseId: string) => {
+      const exercise = allExercises.find((ex) => ex.id === exerciseId)
+      if (exercise) loadExercise(exercise)
+    },
+    [loadExercise],
+  )
 
   return (
     <>

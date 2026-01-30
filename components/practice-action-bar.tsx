@@ -108,9 +108,7 @@ function PracticeStats({
       {sessionDuration > 0 && (
         <div className="flex items-center gap-2">
           <Clock className="text-muted-foreground h-4 w-4" />
-          <span className="font-mono text-sm font-medium">
-            {formatDuration(sessionDuration)}
-          </span>
+          <span className="font-mono text-sm font-medium">{formatDuration(sessionDuration)}</span>
         </div>
       )}
 
