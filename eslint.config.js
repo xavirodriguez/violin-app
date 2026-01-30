@@ -7,7 +7,7 @@ import sonarjs from 'eslint-plugin-sonarjs'
 
 export default tseslint.config(
   {
-    ignores: ['.next/**', 'types-docs/**', 'docs/**'],
+    ignores: ['.next/**', 'types-docs/**', 'docs/**', 'total.d.ts'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

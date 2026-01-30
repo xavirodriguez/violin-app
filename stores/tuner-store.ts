@@ -12,7 +12,7 @@ import { PitchDetector } from '@/lib/pitch-detector'
 import { toAppError, ERROR_CODES } from '@/lib/errors/app-error'
 import { logger } from '@/lib/observability/logger'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import type { TunerState, PermissionState, TunerStore } from '@/lib/domain/musical-types'
+import type { TunerStore } from '@/lib/domain/musical-types'
 
 /**
  * Hook for accessing the tuner store.
