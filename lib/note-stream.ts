@@ -246,6 +246,7 @@ function checkHoldingStatus(
   if (state.currentSegmentStart !== null && frame && frame.noteName) {
     const lastDetected: DetectedNote = {
       pitch: frame.noteName,
+      pitchHz: frame.pitchHz,
       cents: frame.cents,
       timestamp: frame.timestamp,
       confidence: frame.confidence,
@@ -292,6 +293,7 @@ function* emitDetectionEvent(
       type: 'NOTE_DETECTED',
       payload: {
         pitch: noteName,
+        pitchHz: raw.pitchHz,
         cents: cents,
         timestamp: raw.timestamp,
         confidence: raw.confidence,
@@ -320,6 +322,7 @@ function processCompletedSegment(
 
   const lastDetected: DetectedNote = {
     pitch: segmentNoteName,
+    pitchHz: frames[frames.length - 1].pitchHz,
     cents: frames[frames.length - 1].cents,
     timestamp: frames[frames.length - 1].timestamp,
     confidence: frames[frames.length - 1].confidence,

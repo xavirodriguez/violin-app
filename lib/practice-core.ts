@@ -148,6 +148,7 @@ export interface MatchHysteresis {
 /** Represents a note detected from the user's microphone input. */
 export interface DetectedNote {
   pitch: string // e.g., "G4"
+  pitchHz: number
   cents: number
   timestamp: number
   confidence: number

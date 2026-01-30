@@ -23,6 +23,7 @@ interface SessionRunnerDependencies {
     recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
     endSession: () => void
   }
+  updatePitch?: (pitch: number, confidence: number) => void
   detector: PitchDetector
   exercise: Exercise
   sessionStartTime: number
@@ -58,6 +59,50 @@ function handleMatchedNoteSideEffects(
 }
 
 /**
+ * Processes a single practice event and handles side effects.
+ * @internal
+ */
+function processSessionEvent(
+  event: import('@/lib/practice-core').PracticeEvent,
+  deps: SessionRunnerDependencies,
+  state: { lastDispatchedNoteIndex: number; currentNoteStartedAt: number },
+): { lastDispatchedNoteIndex: number; currentNoteStartedAt: number } {
+  console.debug('[PIPELINE]', event)
+
+  if (event.type === 'NOTE_DETECTED') {
+    deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+  } else if (event.type === 'NO_NOTE_DETECTED') {
+    deps.updatePitch?.(0, 0)
+  }
+
+  if (deps.signal.aborted || !event.type) return state
+
+  const currentState = deps.store.getState().practiceState
+  if (!currentState) {
+    console.error('[STATE NULL]', { event })
+    return state
+  }
+
+  let newState = { ...state }
+
+  if (event.type === 'NOTE_MATCHED') {
+    newState = handleMatchedNoteSideEffects(
+      event,
+      currentState,
+      state.lastDispatchedNoteIndex,
+      state.currentNoteStartedAt,
+      deps.analytics,
+    )
+  }
+
+  if (!deps.signal.aborted) {
+    handlePracticeEvent(event, deps.store, () => void deps.store.stop(), deps.analytics)
+  }
+
+  return newState
+}
+
+/**
  * Runs the asynchronous practice loop, processing audio events and updating the store.
  *
  * @remarks
@@ -65,86 +110,37 @@ function handleMatchedNoteSideEffects(
  * relying instead on a minimal dependency interface. This allows for better
  * testability and prevents closure-related memory leaks or race conditions.
  */
-export async function runPracticeSession({
-  signal,
-  sessionId,
-  store,
-  analytics,
-  detector,
-  exercise,
-  sessionStartTime,
-}: SessionRunnerDependencies) {
-  const localSessionId = sessionId
-  let lastDispatchedNoteIndex = -1
-  let currentNoteStartedAt = Date.now()
+export async function runPracticeSession(deps: SessionRunnerDependencies) {
+  const { signal, sessionId, detector, exercise, sessionStartTime } = deps
+  let loopState = { lastDispatchedNoteIndex: -1, currentNoteStartedAt: Date.now() }
 
   const targetNoteSelector = () => {
     if (signal.aborted) return null
-    const state = store.getState().practiceState
-    if (!state) {
-      console.warn('[PIPELINE] targetNoteSelector: State is null')
-      return null
-    }
+    const state = deps.store.getState().practiceState
+    if (!state) return null
     return state.exercise.notes[state.currentIndex] ?? null
   }
 
   const currentIndexSelector = () => {
     if (signal.aborted) return 0
-    return store.getState().practiceState?.currentIndex ?? 0
+    return deps.store.getState().practiceState?.currentIndex ?? 0
   }
 
-  const rawPitchStream = createRawPitchStream(store.getState().analyser!, detector, signal)
+  const rawPitchStream = createRawPitchStream(deps.store.getState().analyser!, detector, signal)
   const practiceEventPipeline = createPracticeEventPipeline(
     rawPitchStream,
     targetNoteSelector,
     currentIndexSelector,
-    {
-      exercise,
-      sessionStartTime,
-      bpm: 60,
-    },
+    { exercise, sessionStartTime, bpm: 60 },
     signal,
   )
 
-  console.debug('[PIPELINE] Loop started', { sessionId, localSessionId })
+  console.debug('[PIPELINE] Loop started', { sessionId })
 
   try {
     for await (const event of practiceEventPipeline) {
-      console.debug('[PIPELINE]', event)
-
-      if (signal.aborted) {
-        console.debug('[PIPELINE] Loop terminated via AbortSignal', { sessionId })
-        break
-      }
-
-      if (!event || !event.type) {
-        console.warn('[INVALID EVENT]', event)
-        continue
-      }
-
-      const currentState = store.getState().practiceState
-      if (!currentState) {
-        console.error('[STATE NULL]', { event })
-        continue
-      }
-
-      // Handle Note Matched side effects (Analytics)
-      if (event.type === 'NOTE_MATCHED') {
-        const result = handleMatchedNoteSideEffects(
-          event,
-          currentState,
-          lastDispatchedNoteIndex,
-          currentNoteStartedAt,
-          analytics,
-        )
-        lastDispatchedNoteIndex = result.lastDispatchedNoteIndex
-        currentNoteStartedAt = result.currentNoteStartedAt
-      }
-
-      // Dispatch event to sink for state reduction
-      if (!signal.aborted) {
-        handlePracticeEvent(event, store, () => void store.stop(), analytics)
-      }
+      if (signal.aborted) break
+      loopState = processSessionEvent(event, deps, loopState)
     }
   } catch (err) {
     const name = err instanceof Error ? err.name : ''
