@@ -1,0 +1,5 @@
+.next
+types-docs
+node_modules
+dist
+build
