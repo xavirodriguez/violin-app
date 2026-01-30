@@ -1,19 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
-
-// Data Models
-interface Note {
-  pitch: string
-  duration: string
-  measure: number
-}
-
-interface Exercise {
-  id: string
-  name: string
-  notes: Note[]
-}
+import type { Exercise } from '@/lib/domain/musical-types'
 
 /** Represents a single, completed practice session. */
 export interface PracticeSession {

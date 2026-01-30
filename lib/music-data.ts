@@ -13,7 +13,7 @@ import { parsePitch } from './exercises/utils'
  * Represents a single musical note in the legacy system.
  * @internal
  */
-interface Note {
+interface LegacyNote {
   /** Note name with octave (e.g., "G4"). */
   pitch: string
   /** Rhythmic duration (e.g., "quarter"). */
@@ -34,7 +34,7 @@ export interface LegacyExercise {
   /** Human-readable name. */
   name: string
   /** List of notes in the exercise. */
-  notes: Note[]
+  notes: LegacyNote[]
   /** Pre-generated MusicXML string. */
   musicXML: string
 }
