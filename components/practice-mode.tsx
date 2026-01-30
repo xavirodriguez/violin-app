@@ -162,7 +162,7 @@ function PracticeActiveView({
   status: string
   targetNote: TargetNote | null
   targetPitchName: string | null
-  lastDetectedNote: DetectedNote | null
+  lastDetectedNote: DetectedNote | null | undefined
   holdDuration?: number
   lastObservations?: Observation[]
 }) {
