@@ -214,6 +214,34 @@ function SheetMusicView({
 }
 
 /**
+ * Computes derived values from the practice state to keep the main component simple.
+ * @internal
+ */
+function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
+  const status = practiceState?.status ?? 'idle'
+  const currentNoteIndex = practiceState?.currentIndex ?? 0
+  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
+  const totalNotes = practiceState?.exercise.notes.length ?? 0
+  const isCompleted = status === 'completed'
+  const progress = totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+
+  const history = practiceState?.detectionHistory ?? []
+  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
+  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
+
+  return {
+    status,
+    currentNoteIndex,
+    targetNote,
+    totalNotes,
+    isCompleted,
+    progress,
+    lastDetectedNote,
+    targetPitchName,
+  }
+}
+
+/**
  * Renders the practice interface and manages its complex lifecycle.
  *
  * @remarks
@@ -224,10 +252,7 @@ function SheetMusicView({
  */
 export function PracticeMode() {
   const { practiceState, error, loadExercise, start, stop, reset } = usePracticeStore()
-
-  const status = practiceState?.status ?? 'idle'
-  const currentNoteIndex = practiceState?.currentIndex ?? 0
-  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
+  const derived = derivePracticeState(practiceState)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -241,22 +266,13 @@ export function PracticeMode() {
 
   useEffect(() => {
     if (!osmdHook.isReady) return
+    const { status, currentNoteIndex } = derived
     if (status === 'listening' && currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else if (status === 'listening' && currentNoteIndex > 0) {
       osmdHook.advanceCursor()
     }
-  }, [currentNoteIndex, status, osmdHook.isReady])
-
-  const totalNotes = practiceState?.exercise.notes.length ?? 0
-  const isCompleted = status === 'completed'
-  const progress =
-    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
-
-  const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
-
-  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
+  }, [derived.currentNoteIndex, derived.status, osmdHook.isReady])
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 
@@ -277,14 +293,14 @@ export function PracticeMode() {
         {error && <ErrorDisplay error={error.message} onReset={reset} />}
 
         <PracticeControls
-          status={status}
+          status={derived.status}
           hasExercise={!!practiceState}
           onStart={start}
           onStop={stop}
           onRestart={handleRestart}
-          progress={progress}
-          currentNoteIndex={currentNoteIndex}
-          totalNotes={totalNotes}
+          progress={derived.progress}
+          currentNoteIndex={derived.currentNoteIndex}
+          totalNotes={derived.totalNotes}
         />
 
         <SheetMusicView
@@ -295,15 +311,15 @@ export function PracticeMode() {
         />
 
         <PracticeActiveView
-          status={status}
-          targetNote={targetNote}
-          targetPitchName={targetPitchName}
-          lastDetectedNote={lastDetectedNote}
+          status={derived.status}
+          targetNote={derived.targetNote}
+          targetPitchName={derived.targetPitchName}
+          lastDetectedNote={derived.lastDetectedNote}
           holdDuration={practiceState?.holdDuration}
           lastObservations={practiceState?.lastObservations}
         />
 
-        {isCompleted && <PracticeCompletion onRestart={handleRestart} />}
+        {derived.isCompleted && <PracticeCompletion onRestart={handleRestart} />}
       </div>
     </div>
   )
