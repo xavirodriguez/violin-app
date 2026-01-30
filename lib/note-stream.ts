@@ -12,7 +12,7 @@ import {
   type TargetNote,
 } from '@/lib/practice-core'
 import type { PitchDetector } from '@/lib/pitch-detector'
-import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
+import { NoteSegmenter } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import { TechniqueFrame, NoteSegment } from './technique-types'
 import { getDurationMs } from './exercises/utils'

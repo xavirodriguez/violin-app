@@ -128,23 +128,19 @@ export async function runPracticeSession({
         continue
       }
 
-      // Handle Note Matched side effects (Analytics)
-      if (event.type === 'NOTE_MATCHED') {
-        const result = handleMatchedNoteSideEffects(
-          event,
-          currentState,
-          lastDispatchedNoteIndex,
-          currentNoteStartedAt,
-          analytics,
-        )
-        lastDispatchedNoteIndex = result.lastDispatchedNoteIndex
-        currentNoteStartedAt = result.currentNoteStartedAt
-      }
+      // 1. Analytics side effects
+      const analyticsResult = processAnalytics(
+        event,
+        currentState,
+        lastDispatchedNoteIndex,
+        currentNoteStartedAt,
+        analytics,
+      )
+      lastDispatchedNoteIndex = analyticsResult.lastDispatchedNoteIndex
+      currentNoteStartedAt = analyticsResult.currentNoteStartedAt
 
-      // Dispatch event to sink for state reduction
-      if (!signal.aborted) {
-        handlePracticeEvent(event, store, () => void store.stop(), analytics)
-      }
+      // 2. Dispatch to sink
+      processEvent(event, store, analytics, signal)
     }
   } catch (err) {
     const name = err instanceof Error ? err.name : ''
@@ -154,4 +150,40 @@ export async function runPracticeSession({
   } finally {
     console.debug('[PIPELINE] Loop exited', { sessionId })
   }
+}
+
+/**
+ * Dispatches an event to the state sink if the session is still active.
+ */
+function processEvent(
+  event: import('@/lib/practice-core').PracticeEvent,
+  store: SessionRunnerDependencies['store'],
+  analytics: SessionRunnerDependencies['analytics'],
+  signal: AbortSignal,
+) {
+  if (!signal.aborted) {
+    handlePracticeEvent(event, store, () => void store.stop(), analytics)
+  }
+}
+
+/**
+ * Handles analytics updates for specific events.
+ */
+function processAnalytics(
+  event: import('@/lib/practice-core').PracticeEvent,
+  currentState: PracticeState,
+  lastDispatchedNoteIndex: number,
+  currentNoteStartedAt: number,
+  analytics: SessionRunnerDependencies['analytics'],
+) {
+  if (event.type === 'NOTE_MATCHED') {
+    return handleMatchedNoteSideEffects(
+      event,
+      currentState,
+      lastDispatchedNoteIndex,
+      currentNoteStartedAt,
+      analytics,
+    )
+  }
+  return { lastDispatchedNoteIndex, currentNoteStartedAt }
 }
