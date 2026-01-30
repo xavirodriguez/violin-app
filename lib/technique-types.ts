@@ -89,6 +89,24 @@ export interface TransitionMetrics {
 }
 
 /**
+ * Configuration options for the technique analysis agent.
+ */
+export interface AnalysisOptions {
+  /** The time in milliseconds to wait after note onset before measuring stable pitch. */
+  settlingTimeMs: number
+  /** The tolerance in cents to consider a frame "in-tune" for the ratio calculation. */
+  inTuneThresholdCents: number
+  /** Minimum vibrato rate in Hz. */
+  vibratoMinRateHz: number
+  /** Maximum vibrato rate in Hz. */
+  vibratoMaxRateHz: number
+  /** Minimum vibrato width in cents. */
+  vibratoMinWidthCents: number
+  /** Minimum vibrato regularity score (0-1). */
+  vibratoMinRegularity: number
+}
+
+/**
  * Metrics related to rhythmic accuracy.
  */
 export interface RhythmMetrics {

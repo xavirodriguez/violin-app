@@ -12,7 +12,7 @@ import {
   type TargetNote,
 } from '@/lib/practice-core'
 import type { PitchDetector } from '@/lib/pitch-detector'
-import { NoteSegmenter } from './note-segmenter'
+import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import { TechniqueFrame, NoteSegment } from './technique-types'
 import { getDurationMs } from './exercises/utils'
@@ -254,6 +254,36 @@ function checkHoldingStatus(
         type: 'HOLDING_NOTE',
         payload: { duration: frame.timestamp - state.currentSegmentStart },
       }
+    }
+  }
+  return null
+}
+
+function updateLocalSegmentState(
+  event: SegmenterEvent | null,
+  state: { lastGapFrames: TechniqueFrame[]; currentSegmentStart: number | null },
+) {
+  if (event?.type === 'ONSET') {
+    state.lastGapFrames = event.gapFrames
+    state.currentSegmentStart = event.timestamp
+  } else if (event?.type === 'OFFSET') {
+    state.currentSegmentStart = null
+  } else if (event?.type === 'NOTE_CHANGE') {
+    state.currentSegmentStart = event.timestamp
+  }
+}
+
+function getHoldingEvent(
+  currentSegmentStart: number | null,
+  noteName: string,
+  currentTarget: TargetNote,
+  lastDetected: DetectedNote,
+  options: NoteStreamOptions,
+  timestamp: number,
+): PracticeEvent | null {
+  if (currentSegmentStart !== null && noteName) {
+    if (isMatch(currentTarget, lastDetected, options.centsTolerance)) {
+      return { type: 'HOLDING_NOTE', payload: { duration: timestamp - currentSegmentStart } }
     }
   }
   return null
