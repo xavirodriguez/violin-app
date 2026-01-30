@@ -258,28 +258,25 @@ export function PracticeMode() {
       <div className="space-y-6">
         {error && <ErrorDisplay error={error.message} onReset={reset} />}
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="p-6">
-            <ExerciseSelector
-              value={practiceState?.exercise.id}
-              onValueChange={(id) => {
-                const exercise = allExercises.find((ex) => ex.id === id)
-                if (exercise) loadExercise(exercise)
-              }}
-              disabled={status !== 'idle'}
-            />
-          </div>
-          <div className="p-6">
-            <PracticeControls
-              status={status}
-              hasExercise={!!practiceState}
-              onStart={start}
-              onStop={stop}
-              onRestart={handleRestart}
-              progress={progress}
-              currentNoteIndex={currentNoteIndex}
-              totalNotes={totalNotes}
-            />
-          </div>
+          <ExerciseSelector
+            value={practiceState?.exercise.id}
+            onValueChange={(id) => {
+              const exercise = allExercises.find((ex) => ex.id === id)
+              if (exercise) loadExercise(exercise)
+            }}
+            disabled={status !== 'idle'}
+          />
+
+          <PracticeControls
+            status={status}
+            hasExercise={!!practiceState}
+            onStart={start}
+            onStop={stop}
+            onRestart={handleRestart}
+            progress={progress}
+            currentNoteIndex={currentNoteIndex}
+            totalNotes={totalNotes}
+          />
         </div>
         <SheetMusicView
           musicXML={practiceState?.exercise.musicXML}
