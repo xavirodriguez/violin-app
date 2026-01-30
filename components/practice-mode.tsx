@@ -33,15 +33,6 @@ import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 
-function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
-  return (
-    <div className="text-center">
-      <h2 className="text-foreground mb-2 text-3xl font-bold">{exerciseName}</h2>
-      <p className="text-muted-foreground">Play each note in tune to advance.</p>
-    </div>
-  )
-}
-
 function ExerciseSelector({
   value,
   onValueChange,

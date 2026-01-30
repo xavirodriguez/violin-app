@@ -8,7 +8,7 @@
  * - Intonation accuracy across strings
  * - String crossing technique
  * - Bow distribution and control
- * 
+ *
  * This module follows the Suzuki method progression, starting with
  * tetrachords (4-note patterns) before progressing to full octaves.
  */
@@ -16,9 +16,9 @@
 import type { ExerciseData, ScoreMetadata } from '../types'
 import { parsePitch } from '../utils'
 
-/** 
+/**
  * Standard time signature for scale exercises.
- * @internal 
+ * @internal
  */
 const STANDARD_TIME_SIGNATURE = { beats: 4, beatType: 4 } as const
 
@@ -52,12 +52,6 @@ const DURATION = {
 } as const
 
 /**
- * Type-safe scale degree labels for pedagogical clarity.
- */
-type ScaleDegree = 'Tonic' | 'Supertonic' | 'Mediant' | 'Subdominant' | 
-                   'Dominant' | 'Submediant' | 'Leading Tone' | 'Octave'
-
-/**
  * Enhanced exercise data with violin-specific pedagogical information.
  */
 interface ViolinExerciseData extends ExerciseData {
@@ -73,7 +67,7 @@ interface ViolinExerciseData extends ExerciseData {
 
 /**
  * Creates a tetrachord (4-note scale segment) exercise.
- * 
+ *
  * @param config - Configuration for the tetrachord exercise
  * @returns Complete exercise data with pedagogical metadata
  * @internal
@@ -99,7 +93,7 @@ const createTetrachordExercise = (config: {
     category: 'Scales',
     difficulty: 'Beginner',
     scoreMetadata: scaleMetadataMap[config.key],
-    notes: config.notes.map(pitch => ({
+    notes: config.notes.map((pitch) => ({
       pitch: parsePitch(pitch),
       duration: DURATION.QUARTER,
     })),
@@ -117,7 +111,7 @@ const createTetrachordExercise = (config: {
 
 /**
  * Creates a full one-octave scale exercise.
- * 
+ *
  * @param config - Configuration for the full scale exercise
  * @returns Complete exercise data with pedagogical metadata
  * @internal
@@ -144,7 +138,9 @@ const createFullScaleExercise = (config: {
   ]
 
   if (config.crossingString) {
-    objectives.push(`Execute smooth transition from ${config.startingString} to ${config.crossingString} string`)
+    objectives.push(
+      `Execute smooth transition from ${config.startingString} to ${config.crossingString} string`,
+    )
   }
 
   return {
@@ -154,7 +150,7 @@ const createFullScaleExercise = (config: {
     category: 'Scales',
     difficulty: 'Intermediate',
     scoreMetadata: scaleMetadataMap[config.key],
-    notes: config.notes.map(pitch => ({
+    notes: config.notes.map((pitch) => ({
       pitch: parsePitch(pitch),
       duration: DURATION.QUARTER,
     })),
@@ -234,17 +230,15 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
  * Useful for progressive lesson planning.
  */
 export const getExercisesByDifficulty = (
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced',
 ): ViolinExerciseData[] => {
-  return scalesExercises.filter(ex => ex.difficulty === difficulty)
+  return scalesExercises.filter((ex) => ex.difficulty === difficulty)
 }
 
 /**
  * Utility to get exercises by starting string.
  * Useful for focusing practice on specific strings.
  */
-export const getExercisesByString = (
-  string: 'G' | 'D' | 'A' | 'E'
-): ViolinExerciseData[] => {
-  return scalesExercises.filter(ex => ex.startingString === string)
+export const getExercisesByString = (string: 'G' | 'D' | 'A' | 'E'): ViolinExerciseData[] => {
+  return scalesExercises.filter((ex) => ex.startingString === string)
 }
