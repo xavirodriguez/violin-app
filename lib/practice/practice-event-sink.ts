@@ -18,21 +18,30 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
   onCompleted: () => void,
   analytics?: { endSession: () => void },
 ) => {
-  if (!event) {
-    console.warn('[EVENT SINK] Received null event')
+  if (!event || !event.type) {
+    console.warn('[INVALID EVENT]', event)
     return
   }
 
   const currentState = store.getState().practiceState
   if (!currentState) {
-    console.error('[EVENT SINK] State is null during event processing', event)
+    console.error('[STATE NULL]', { event })
     return
   }
 
   // 1. Pure state transition
   store.setState((state) => {
-    if (!state.practiceState) return state
+    if (!state || !state.practiceState) {
+      console.warn('[EVENT SINK] Cannot reduce event: State or practiceState is null')
+      return state
+    }
+
     const nextState = reducePracticeEvent(state.practiceState, event)
+
+    if (!nextState) {
+      console.error('[EVENT SINK] Reducer returned null state', { event })
+      return state
+    }
 
     // 2. Side effects (triggered by state change)
     if (nextState.status === 'completed' && state.practiceState.status !== 'completed') {
