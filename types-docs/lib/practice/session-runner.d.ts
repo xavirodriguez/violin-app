@@ -2,6 +2,7 @@ import { type PracticeState } from '@/lib/practice-core';
 import type { PitchDetector } from '@/lib/pitch-detector';
 import type { Exercise } from '@/lib/exercises/types';
 import { NoteTechnique } from '../technique-types';
+import { type StoreApi as ZustandStoreApi } from 'zustand';
 interface SessionState {
     practiceState: PracticeState | null;
     analyser: AnalyserNode | null;
@@ -11,7 +12,7 @@ interface SessionRunnerDependencies {
     sessionId: number;
     store: {
         getState: () => SessionState;
-        setState: (fn: (state: SessionState) => Partial<SessionState>) => void;
+        setState: ZustandStoreApi<SessionState>['setState'];
         stop: () => Promise<void>;
     };
     analytics: {

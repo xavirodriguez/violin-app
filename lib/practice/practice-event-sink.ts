@@ -1,13 +1,11 @@
 import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
+import { type StoreApi as ZustandStoreApi } from 'zustand'
 
 /**
  * A type representing the core state management functions of a Zustand store,
  * generic over the state type `T`.
  */
-type StoreApi<T> = {
-  getState: () => T
-  setState: (fn: (state: T) => T | Partial<T>) => void
-}
+type StoreApi<T> = Pick<ZustandStoreApi<T>, 'getState' | 'setState'>
 
 /**
  * Handles all state transitions and side effects for a given practice event.

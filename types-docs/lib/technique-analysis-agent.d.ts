@@ -15,8 +15,17 @@ import { TechniqueFrame, NoteSegment, NoteTechnique, Observation } from './techn
  * 4.  This produces an array of human-readable `Observation`s, which are prioritized
  *     and filtered pedagogical tips ready for display to the user.
  */
+export interface TechniqueAnalysisOptions {
+    settlingTimeMs: number;
+    inTuneThresholdCents: number;
+    vibratoMinRateHz: number;
+    vibratoMaxRateHz: number;
+    vibratoMinWidthCents: number;
+    vibratoMinRegularity: number;
+}
 export declare class TechniqueAnalysisAgent {
-    options: unknown;
+    options: TechniqueAnalysisOptions;
+    constructor(options?: Partial<TechniqueAnalysisOptions>);
     /**
      * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
      *
