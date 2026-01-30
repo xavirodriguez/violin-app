@@ -79,12 +79,17 @@ export async function runPracticeSession({
   let currentNoteStartedAt = Date.now()
 
   const targetNoteSelector = () => {
+    if (signal.aborted) return null
     const state = store.getState().practiceState
-    if (!state) return null
+    if (!state) {
+      console.warn('[PIPELINE] targetNoteSelector: State is null')
+      return null
+    }
     return state.exercise.notes[state.currentIndex] ?? null
   }
 
   const currentIndexSelector = () => {
+    if (signal.aborted) return 0
     return store.getState().practiceState?.currentIndex ?? 0
   }
 
@@ -105,19 +110,21 @@ export async function runPracticeSession({
 
   try {
     for await (const event of practiceEventPipeline) {
+      console.debug('[PIPELINE]', event)
+
       if (signal.aborted) {
         console.debug('[PIPELINE] Loop terminated via AbortSignal', { sessionId })
         break
       }
 
-      if (!event) {
-        console.warn('[PIPELINE] Received null event')
+      if (!event || !event.type) {
+        console.warn('[INVALID EVENT]', event)
         continue
       }
 
       const currentState = store.getState().practiceState
       if (!currentState) {
-        console.error('[PIPELINE] State is null during event processing', event)
+        console.error('[STATE NULL]', { event })
         continue
       }
 
@@ -135,7 +142,9 @@ export async function runPracticeSession({
       }
 
       // Dispatch event to sink for state reduction
-      handlePracticeEvent(event, store, () => void store.stop(), analytics)
+      if (!signal.aborted) {
+        handlePracticeEvent(event, store, () => void store.stop(), analytics)
+      }
     }
   } catch (err) {
     const name = err instanceof Error ? err.name : ''

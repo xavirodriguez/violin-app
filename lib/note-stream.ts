@@ -190,12 +190,14 @@ function updateSegmentState(
   state: { lastGapFrames: TechniqueFrame[]; currentSegmentStart: number | null },
   event: ReturnType<NoteSegmenter['processFrame']>,
 ) {
-  if (event?.type === 'ONSET') {
+  if (!event) return
+
+  if (event.type === 'ONSET') {
     state.lastGapFrames = event.gapFrames
     state.currentSegmentStart = event.timestamp
-  } else if (event?.type === 'OFFSET') {
+  } else if (event.type === 'OFFSET') {
     state.currentSegmentStart = null
-  } else if (event?.type === 'NOTE_CHANGE') {
+  } else if (event.type === 'NOTE_CHANGE') {
     state.currentSegmentStart = event.timestamp
   }
 }
@@ -212,7 +214,7 @@ function handleSegmentCompletion(
   getCurrentIndex: () => number,
   agent: TechniqueAnalysisAgent,
 ): PracticeEvent | null {
-  if (event?.type !== 'OFFSET' && event?.type !== 'NOTE_CHANGE') return null
+  if (!event || (event.type !== 'OFFSET' && event.type !== 'NOTE_CHANGE')) return null
 
   const result = processCompletedSegment(
     event.frames,
@@ -241,7 +243,7 @@ function checkHoldingStatus(
   frame: TechniqueFrame,
   options: NoteStreamOptions,
 ): PracticeEvent | null {
-  if (state.currentSegmentStart !== null && frame.noteName) {
+  if (state.currentSegmentStart !== null && frame && frame.noteName) {
     const lastDetected: DetectedNote = {
       pitch: frame.noteName,
       cents: frame.cents,
@@ -254,36 +256,6 @@ function checkHoldingStatus(
         type: 'HOLDING_NOTE',
         payload: { duration: frame.timestamp - state.currentSegmentStart },
       }
-    }
-  }
-  return null
-}
-
-function updateLocalSegmentState(
-  event: SegmenterEvent | null,
-  state: { lastGapFrames: TechniqueFrame[]; currentSegmentStart: number | null },
-) {
-  if (event?.type === 'ONSET') {
-    state.lastGapFrames = event.gapFrames
-    state.currentSegmentStart = event.timestamp
-  } else if (event?.type === 'OFFSET') {
-    state.currentSegmentStart = null
-  } else if (event?.type === 'NOTE_CHANGE') {
-    state.currentSegmentStart = event.timestamp
-  }
-}
-
-function getHoldingEvent(
-  currentSegmentStart: number | null,
-  noteName: string,
-  currentTarget: TargetNote,
-  lastDetected: DetectedNote,
-  options: NoteStreamOptions,
-  timestamp: number,
-): PracticeEvent | null {
-  if (currentSegmentStart !== null && noteName) {
-    if (isMatch(currentTarget, lastDetected, options.centsTolerance)) {
-      return { type: 'HOLDING_NOTE', payload: { duration: timestamp - currentSegmentStart } }
     }
   }
   return null

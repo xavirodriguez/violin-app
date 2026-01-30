@@ -65,13 +65,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (current.isStarting || current.practiceState?.status === 'listening') return
 
     if (!current.practiceState) {
-      set({
+      set(() => ({
         error: toAppError('No exercise loaded.', ERROR_CODES.STATE_INVALID_TRANSITION),
-      })
+      }))
       return
     }
 
-    set({ isStarting: true, error: null })
+    set(() => ({ isStarting: true, error: null }))
 
     try {
       // 2. Kill any existing session before starting new one
@@ -92,12 +92,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const listeningState = reducePracticeEvent(initialState, { type: 'START' })
 
       // 4. Update state to listening
-      set({
+      set(() => ({
         detector,
         analyser,
         practiceState: listeningState,
         isStarting: false,
-      })
+      }))
 
       const sessionStartTime = Date.now()
       const { exercise } = get().practiceState!
@@ -106,7 +106,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
       // 5. Session-guarded setState wrapper for the runner
       const guardedSetState: typeof set = (updater) => {
-        if (sessionId !== localSessionId) return
+        if (sessionId !== localSessionId) {
+          console.warn('[PIPELINE] Stale session update ignored', {
+            sessionId,
+            localSessionId,
+          })
+          return
+        }
         set(updater)
       }
 
@@ -116,7 +122,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         store: {
           getState: get,
           setState: guardedSetState,
-          stop: get().stop,
+          stop: async () => {
+            if (sessionId === localSessionId) {
+              await get().stop()
+            }
+          },
         },
         analytics: {
           recordNoteAttempt: analyticsStore.recordNoteAttempt,
@@ -131,14 +141,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         if (name !== 'AbortError' && sessionId === localSessionId) {
           const appError = toAppError(err, ERROR_CODES.UNKNOWN)
           console.error('[PRACTICE LOOP ERROR]', appError)
-          set({ error: appError })
+          set(() => ({ error: appError }))
           void get().stop()
         }
       })
     } catch (err) {
       const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
       console.error('[PRACTICE START ERROR]', appError)
-      set({ error: appError, isStarting: false })
+      set(() => ({ error: appError, isStarting: false }))
       void get().stop()
     }
   },
