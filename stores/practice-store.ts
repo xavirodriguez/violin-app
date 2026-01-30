@@ -14,6 +14,7 @@ import { type AppError, toAppError, ERROR_CODES } from '@/lib/errors/app-error'
 import { useAnalyticsStore } from './analytics-store'
 import { runPracticeSession } from '@/lib/practice/session-runner'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
+import { useTunerStore } from './tuner-store'
 
 import type { Exercise } from '@/lib/exercises/types'
 
@@ -83,7 +84,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       const signal = practiceLoopController.signal
 
       // 3. Resource initialization
-      const { context } = await audioManager.initialize()
+      const tunerState = useTunerStore.getState()
+      const { context } = await audioManager.initialize(tunerState.deviceId ?? undefined)
+
+      // Apply sensitivity from tuner store
+      audioManager.setGain(tunerState.sensitivity / 50)
+
       const detector = new PitchDetector(context.sampleRate)
       detector.setMaxFrequency(2700)
       const analyser = audioManager.getAnalyser()
@@ -98,6 +104,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         practiceState: listeningState,
         isStarting: false,
       }))
+
+      // Sync with TunerStore
+      useTunerStore.setState({
+        detector,
+        state: { kind: 'LISTENING', sessionToken: sessionId },
+      })
 
       const sessionStartTime = Date.now()
       const { exercise } = get().practiceState!
@@ -119,6 +131,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       runPracticeSession({
         signal,
         sessionId: localSessionId,
+        updatePitch: useTunerStore.getState().updatePitch,
         store: {
           getState: get,
           setState: guardedSetState,

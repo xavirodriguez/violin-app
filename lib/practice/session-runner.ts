@@ -23,6 +23,7 @@ interface SessionRunnerDependencies {
     recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
     endSession: () => void
   }
+  updatePitch?: (pitch: number, confidence: number) => void
   detector: PitchDetector
   exercise: Exercise
   sessionStartTime: number
@@ -73,6 +74,7 @@ export async function runPracticeSession({
   detector,
   exercise,
   sessionStartTime,
+  updatePitch,
 }: SessionRunnerDependencies) {
   const localSessionId = sessionId
   let lastDispatchedNoteIndex = -1
@@ -111,6 +113,12 @@ export async function runPracticeSession({
   try {
     for await (const event of practiceEventPipeline) {
       console.debug('[PIPELINE]', event)
+
+      if (event.type === 'NOTE_DETECTED') {
+        updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+      } else if (event.type === 'NO_NOTE_DETECTED') {
+        updatePitch?.(0, 0)
+      }
 
       if (signal.aborted) {
         console.debug('[PIPELINE] Loop terminated via AbortSignal', { sessionId })

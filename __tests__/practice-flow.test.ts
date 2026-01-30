@@ -9,6 +9,7 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
     })),
+    setGain: vi.fn(),
   },
 }))
 
