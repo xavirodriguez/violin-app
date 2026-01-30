@@ -123,7 +123,7 @@ describe('Full Flow Verification Checklist', () => {
 
     // Set to listening
     usePracticeStore.setState({
-        practiceState: { ...usePracticeStore.getState().practiceState!, status: 'listening' }
+      practiceState: { ...usePracticeStore.getState().practiceState!, status: 'listening' },
     })
 
     const storeApi = {
@@ -134,15 +134,19 @@ describe('Full Flow Verification Checklist', () => {
     // Simulate matching all notes
     const totalNotes = exercise.notes.length
     for (let i = 0; i < totalNotes; i++) {
-        // Must be in listening/validating state to match
-        usePracticeStore.setState((s) => ({
-            practiceState: { ...s.practiceState!, status: 'listening' }
-        }))
+      // Must be in listening/validating state to match
+      usePracticeStore.setState((s) => ({
+        practiceState: { ...s.practiceState!, status: 'listening' },
+      }))
 
-        handlePracticeEvent({
-            type: 'NOTE_MATCHED',
-            payload: { technique: {} as any, observations: [] }
-        }, storeApi, () => {})
+      handlePracticeEvent(
+        {
+          type: 'NOTE_MATCHED',
+          payload: { technique: {} as any, observations: [] },
+        },
+        storeApi,
+        () => {},
+      )
     }
 
     expect(usePracticeStore.getState().practiceState?.status).toBe('completed')
