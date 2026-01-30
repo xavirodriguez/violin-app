@@ -29,7 +29,17 @@ interface TunerDisplayProps {
  * - Color-coded zones (green for in-tune, yellow for close, red for far).
  * - Accessibility: Includes a screen-reader-only live region for pitch updates.
  */
-function TunerStatusRegion({ note, cents, isInTune, isClose }: { note: string | null; cents: number | null; isInTune: boolean; isClose: boolean }) {
+function TunerStatusRegion({
+  note,
+  cents,
+  isInTune,
+  isClose,
+}: {
+  note: string | null
+  cents: number | null
+  isInTune: boolean
+  isClose: boolean
+}) {
   const getStatusText = () => {
     if (!note || cents === null) return 'Play a note'
     if (isInTune) return `${note}, In Tune`
@@ -44,7 +54,19 @@ function TunerStatusRegion({ note, cents, isInTune, isClose }: { note: string | 
   )
 }
 
-function TunerNoteInfo({ note, cents, confidence, isInTune, isClose }: { note: string | null; cents: number | null; confidence: number; isInTune: boolean; isClose: boolean }) {
+function TunerNoteInfo({
+  note,
+  cents,
+  confidence,
+  isInTune,
+  isClose,
+}: {
+  note: string | null
+  cents: number | null
+  confidence: number
+  isInTune: boolean
+  isClose: boolean
+}) {
   if (!note) {
     return (
       <div className="text-center">
@@ -105,7 +127,15 @@ function TunerMeter({ cents }: { cents: number | null }) {
   )
 }
 
-function TunerDirectionalFeedback({ cents, isInTune, isClose }: { cents: number; isInTune: boolean; isClose: boolean }) {
+function TunerDirectionalFeedback({
+  cents,
+  isInTune,
+  isClose,
+}: {
+  cents: number
+  isInTune: boolean
+  isClose: boolean
+}) {
   if (isInTune) return <div className="text-lg font-semibold text-green-500">✓ In Tune</div>
   if (isClose) {
     return (
@@ -128,7 +158,13 @@ export function TunerDisplay({ note, cents, confidence }: TunerDisplayProps) {
   return (
     <div className="space-y-6">
       <TunerStatusRegion note={note} cents={cents} isInTune={isInTune} isClose={isClose} />
-      <TunerNoteInfo note={note} cents={cents} confidence={confidence} isInTune={isInTune} isClose={isClose} />
+      <TunerNoteInfo
+        note={note}
+        cents={cents}
+        confidence={confidence}
+        isInTune={isInTune}
+        isClose={isClose}
+      />
       <TunerMeter cents={cents} />
       {note && cents !== null && (
         <div className="text-center" aria-hidden="true">

@@ -186,7 +186,10 @@ function processFrameAndEmit(
       confidence: raw.confidence,
     }
     if (isMatch(currentTarget, lastDetected, options.centsTolerance)) {
-      events.push({ type: 'HOLDING_NOTE', payload: { duration: raw.timestamp - state.currentSegmentStart } })
+      events.push({
+        type: 'HOLDING_NOTE',
+        payload: { duration: raw.timestamp - state.currentSegmentStart },
+      })
     }
   }
 
@@ -199,7 +202,10 @@ async function* technicalAnalysisWindow(
   options: NoteStreamOptions,
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
-  const segmenter = new NoteSegmenter({ minRms: options.minRms, minConfidence: options.minConfidence })
+  const segmenter = new NoteSegmenter({
+    minRms: options.minRms,
+    minConfidence: options.minConfidence,
+  })
   const agent = new TechniqueAnalysisAgent()
   const state: PipelineState = {
     lastGapFrames: [],
