@@ -259,7 +259,6 @@ function checkHoldingStatus(
   return null
 }
 
-
 /** Helper to parse a frequency into musical note components. */
 function parseMusicalNote(pitchHz: number) {
   let musicalNote: MusicalNote | null = null
