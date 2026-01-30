@@ -41,7 +41,6 @@ export class TechniqueAnalysisAgent {
     gapFrames: TechniqueFrame[] = [],
     prevSegment: NoteSegment | null = null,
   ): NoteTechnique {
-  
     const frames = segment.frames
 
     return {
@@ -51,7 +50,6 @@ export class TechniqueAnalysisAgent {
       resonance: this.calculateResonance(frames),
       rhythm: this.calculateRhythm(segment),
       transition: this.calculateTransition(gapFrames, frames, prevSegment),
-
     }
   }
 
@@ -257,15 +255,15 @@ export class TechniqueAnalysisAgent {
   }
   calculateGlissando(gapFrames: TechniqueFrame[]): number {
     if (gapFrames.length < 2) return 0
-  
+
     const deltas = []
     for (let i = 1; i < gapFrames.length; i++) {
       deltas.push(Math.abs(gapFrames[i].cents - gapFrames[i - 1].cents))
     }
-  
+
     return deltas.reduce((a, b) => a + b, 0)
   }
-  
+
   calculateLandingError(currentFrames: TechniqueFrame[], startTime: number): number {
     const firstStable = currentFrames.find(
       (f) => f.timestamp - startTime > this.options.settlingTimeMs,
@@ -273,7 +271,7 @@ export class TechniqueAnalysisAgent {
     if (!firstStable) return 0
     return Math.abs(firstStable.cents)
   }
-  
+
   calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number): number {
     const window = currentFrames.filter(
       (f) => f.timestamp - startTime < this.options.settlingTimeMs,
@@ -286,7 +284,6 @@ export class TechniqueAnalysisAgent {
     }
     return count
   }
-  
 
   /**
    * Generates a list of human-readable observations based on computed technique metrics.
