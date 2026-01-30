@@ -13,10 +13,10 @@ import {
 } from './technique-types'
 
 const DEFAULT_OPTIONS: AnalysisOptions = {
-  settlingTimeMs: 100,
+  settlingTimeMs: 150,
   inTuneThresholdCents: 15,
-  vibratoMinRateHz: 4.0,
-  vibratoMaxRateHz: 10.0,
+  vibratoMinRateHz: 4,
+  vibratoMaxRateHz: 10,
   vibratoMinWidthCents: 10,
   vibratoMinRegularity: 0.5,
 }
@@ -38,8 +38,12 @@ const DEFAULT_OPTIONS: AnalysisOptions = {
  *     and filtered pedagogical tips ready for display to the user.
  */
 export class TechniqueAnalysisAgent {
-  private readonly options: AnalysisOptions
+  private options: AnalysisOptions
 
+  /**
+   * Constructs a new TechniqueAnalysisAgent with optional configuration.
+   * @param options - Configuration overrides for the analysis heuristics.
+   */
   constructor(options: Partial<AnalysisOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
   }

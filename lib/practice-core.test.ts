@@ -125,8 +125,18 @@ describe('formatPitchName', () => {
   })
 
   it('should handle string alter values correctly', () => {
-    const pitch = { step: 'D', octave: 4, alter: 'flat' } as unknown as TargetNote['pitch']
-    expect(formatPitchName(pitch)).toBe('Db4')
+    const pitchFlat = { step: 'D', octave: 4, alter: 'flat' } as unknown as TargetNote['pitch']
+    expect(formatPitchName(pitchFlat)).toBe('Db4')
+
+    const pitchSharp = { step: 'F', octave: 4, alter: 'sharp' } as unknown as TargetNote['pitch']
+    expect(formatPitchName(pitchSharp)).toBe('F#4')
+
+    const pitchNatural = {
+      step: 'G',
+      octave: 4,
+      alter: 'natural',
+    } as unknown as TargetNote['pitch']
+    expect(formatPitchName(pitchNatural)).toBe('G4')
   })
 
   it('should handle double sharp/flat values', () => {

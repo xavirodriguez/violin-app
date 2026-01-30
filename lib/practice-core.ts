@@ -265,23 +265,17 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
   switch (event.type) {
     case 'START':
       return handleStart(state)
-
     case 'STOP':
     case 'RESET':
-      return handleReset(state)
-
+      return handleStopReset(state)
     case 'NOTE_DETECTED':
       return handleNoteDetected(state, event.payload)
-
     case 'HOLDING_NOTE':
       return handleHoldingNote(state, event.payload.duration)
-
     case 'NO_NOTE_DETECTED':
       return handleNoNoteDetected(state)
-
     case 'NOTE_MATCHED':
       return handleNoteMatched(state, event.payload)
-
     default:
       return state
   }
@@ -298,7 +292,7 @@ function handleStart(state: PracticeState): PracticeState {
   }
 }
 
-function handleReset(state: PracticeState): PracticeState {
+function handleStopReset(state: PracticeState): PracticeState {
   return {
     ...state,
     status: 'idle',
@@ -334,7 +328,7 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 
 function handleNoteMatched(
   state: PracticeState,
-  payload?: { observations?: Observation[] },
+  payload: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload'],
 ): PracticeState {
   if (state.status !== 'listening' && state.status !== 'validating') return state
 

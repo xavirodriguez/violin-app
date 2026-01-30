@@ -26,8 +26,10 @@ export class FixedRingBuffer<T, N extends number> {
    * @param items - The items to add.
    */
   push(...items: T[]): void {
-    // We add to the front to match the existing pattern in PracticeState
-    this.items = [...items, ...this.items].slice(0, this.maxSize)
+    // We add to the front to match the existing pattern in PracticeState.
+    // If multiple items are pushed, we assume the last one in the arguments is the newest.
+    const reversedNewItems = [...items].reverse()
+    this.items = [...reversedNewItems, ...this.items].slice(0, this.maxSize)
   }
 
   /**

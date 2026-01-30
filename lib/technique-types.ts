@@ -117,6 +117,24 @@ export interface RhythmMetrics {
 }
 
 /**
+ * Configuration options for the technique analysis heuristics.
+ */
+export interface AnalysisOptions {
+  /** The time in milliseconds to ignore after note onset for "stable" pitch calculations (50-500ms). */
+  settlingTimeMs: number
+  /** The tolerance in cents for considering a frame "in-tune" for statistics. */
+  inTuneThresholdCents: number
+  /** Minimum rate in Hz for valid vibrato. */
+  vibratoMinRateHz: number
+  /** Maximum rate in Hz for valid vibrato. */
+  vibratoMaxRateHz: number
+  /** Minimum peak-to-peak width in cents for valid vibrato. */
+  vibratoMinWidthCents: number
+  /** Minimum regularity score (0.0-1.0) for valid vibrato. */
+  vibratoMinRegularity: number
+}
+
+/**
  * A comprehensive collection of all technique metrics calculated for a single note.
  */
 export interface NoteTechnique {
