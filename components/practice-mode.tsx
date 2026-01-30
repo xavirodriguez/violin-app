@@ -174,8 +174,8 @@ function PracticeActiveView({
   if (status !== 'listening' || !targetNote) return null
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card className="p-6">
+    <>
+      <Card className="p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch ?? null}
@@ -185,14 +185,14 @@ function PracticeActiveView({
           observations={lastObservations}
         />
       </Card>
-      <Card className="p-6">
+      <Card className="p-12">
         <ViolinFingerboard
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsDeviation={lastDetectedNote?.cents ?? null}
         />
       </Card>
-    </div>
+    </>
   )
 }
 
@@ -256,30 +256,31 @@ export function PracticeMode() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        <PracticeHeader exerciseName={practiceState?.exercise.name} />
-
-        <ExerciseSelector
-          value={practiceState?.exercise.id}
-          onValueChange={(id) => {
-            const exercise = allExercises.find((ex) => ex.id === id)
-            if (exercise) loadExercise(exercise)
-          }}
-          disabled={status !== 'idle'}
-        />
-
         {error && <ErrorDisplay error={error.message} onReset={reset} />}
-
-        <PracticeControls
-          status={status}
-          hasExercise={!!practiceState}
-          onStart={start}
-          onStop={stop}
-          onRestart={handleRestart}
-          progress={progress}
-          currentNoteIndex={currentNoteIndex}
-          totalNotes={totalNotes}
-        />
-
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="p-6">
+            <ExerciseSelector
+              value={practiceState?.exercise.id}
+              onValueChange={(id) => {
+                const exercise = allExercises.find((ex) => ex.id === id)
+                if (exercise) loadExercise(exercise)
+              }}
+              disabled={status !== 'idle'}
+            />
+          </div>
+          <div className="p-6">
+            <PracticeControls
+              status={status}
+              hasExercise={!!practiceState}
+              onStart={start}
+              onStop={stop}
+              onRestart={handleRestart}
+              progress={progress}
+              currentNoteIndex={currentNoteIndex}
+              totalNotes={totalNotes}
+            />
+          </div>
+        </div>
         <SheetMusicView
           musicXML={practiceState?.exercise.musicXML}
           isReady={osmdHook.isReady}
