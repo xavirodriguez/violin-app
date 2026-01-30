@@ -52,12 +52,6 @@ const DURATION = {
 } as const
 
 /**
- * Type-safe scale degree labels for pedagogical clarity.
- */
-type ScaleDegree = 'Tonic' | 'Supertonic' | 'Mediant' | 'Subdominant' | 
-                   'Dominant' | 'Submediant' | 'Leading Tone' | 'Octave'
-
-/**
  * Enhanced exercise data with violin-specific pedagogical information.
  */
 interface ViolinExerciseData extends ExerciseData {
