@@ -7,8 +7,9 @@ describe('MusicXMLBuilder', () => {
     const exercise: ExerciseData = {
       id: 'test-scale',
       name: 'Test Scale',
-      difficulty: 'beginner',
-      category: 'scales',
+      description: 'Test description',
+      difficulty: 'Beginner',
+      category: 'Scales',
       scoreMetadata: {
         keySignature: 0, // C major
         timeSignature: { beats: 4, beatType: 4 },
@@ -35,8 +36,9 @@ describe('MusicXMLBuilder', () => {
     const exercise: ExerciseData = {
       id: 'accidental-test',
       name: 'Accidental Test',
-      difficulty: 'beginner',
-      category: 'scales',
+      description: 'Test description',
+      difficulty: 'Beginner',
+      category: 'Scales',
       scoreMetadata: {
         keySignature: 0,
         timeSignature: { beats: 4, beatType: 4 },

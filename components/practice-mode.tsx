@@ -10,7 +10,7 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
-import { type TargetNote, type DetectedNote, formatPitchName } from '@/lib/practice-core'
+import { type TargetNote, type DetectedNote, formatPitchName, type PracticeState } from '@/lib/practice-core'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -297,7 +297,7 @@ export function PracticeMode() {
   )
 }
 
-function derivePracticeState(practiceState: ReturnType<typeof usePracticeStore>['practiceState']) {
+function derivePracticeState(practiceState: PracticeState | null) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
   const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
