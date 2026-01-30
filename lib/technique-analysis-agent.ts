@@ -9,18 +9,17 @@ import {
   RhythmMetrics,
   TransitionMetrics,
   Observation,
+  AnalysisOptions,
 } from './technique-types'
 
-export interface TechniqueAnalysisOptions {
-  settlingTimeMs: number
-  inTuneThresholdCents: number
-
-  vibratoMinRateHz: number
-  vibratoMaxRateHz: number
-  vibratoMinWidthCents: number
-  vibratoMinRegularity: number
+const DEFAULT_OPTIONS: AnalysisOptions = {
+  settlingTimeMs: 100,
+  inTuneThresholdCents: 15,
+  vibratoMinRateHz: 4.0,
+  vibratoMaxRateHz: 10.0,
+  vibratoMinWidthCents: 10,
+  vibratoMinRegularity: 0.5,
 }
-
 
 /**
  * A stateful agent that analyzes note segments to provide detailed technical feedback.
@@ -39,11 +38,12 @@ export interface TechniqueAnalysisOptions {
  *     and filtered pedagogical tips ready for display to the user.
  */
 export class TechniqueAnalysisAgent {
-  options: TechniqueAnalysisOptions
+  private readonly options: AnalysisOptions
 
-  constructor(options: TechniqueAnalysisOptions) {
-    this.options = options
+  constructor(options: Partial<AnalysisOptions> = {}) {
+    this.options = { ...DEFAULT_OPTIONS, ...options }
   }
+
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
    *
@@ -56,7 +56,6 @@ export class TechniqueAnalysisAgent {
     gapFrames: TechniqueFrame[] = [],
     prevSegment: NoteSegment | null = null,
   ): NoteTechnique {
-  
     const frames = segment.frames
 
     return {
@@ -66,7 +65,6 @@ export class TechniqueAnalysisAgent {
       resonance: this.calculateResonance(frames),
       rhythm: this.calculateRhythm(segment),
       transition: this.calculateTransition(gapFrames, frames, prevSegment),
-
     }
   }
 
@@ -272,15 +270,15 @@ export class TechniqueAnalysisAgent {
   }
   calculateGlissando(gapFrames: TechniqueFrame[]): number {
     if (gapFrames.length < 2) return 0
-  
+
     const deltas = []
     for (let i = 1; i < gapFrames.length; i++) {
       deltas.push(Math.abs(gapFrames[i].cents - gapFrames[i - 1].cents))
     }
-  
+
     return deltas.reduce((a, b) => a + b, 0)
   }
-  
+
   calculateLandingError(currentFrames: TechniqueFrame[], startTime: number): number {
     const firstStable = currentFrames.find(
       (f) => f.timestamp - startTime > this.options.settlingTimeMs,
@@ -288,7 +286,7 @@ export class TechniqueAnalysisAgent {
     if (!firstStable) return 0
     return Math.abs(firstStable.cents)
   }
-  
+
   calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number): number {
     const window = currentFrames.filter(
       (f) => f.timestamp - startTime < this.options.settlingTimeMs,
@@ -301,7 +299,6 @@ export class TechniqueAnalysisAgent {
     }
     return count
   }
-  
 
   /**
    * Generates a list of human-readable observations based on computed technique metrics.
