@@ -54,7 +54,9 @@ describe('AudioManager', () => {
     const mockStream = {
       getTracks: vi.fn().mockReturnValue([mockTrack]),
     }
-    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(mockStream as unknown as MediaStream)
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(
+      mockStream as unknown as MediaStream,
+    )
 
     const resources = await audioManager.initialize()
     expect(resources.stream).toBe(mockStream)
@@ -82,7 +84,9 @@ describe('AudioManager', () => {
     const mockStream = {
       getTracks: vi.fn().mockReturnValue([mockTrack]),
     }
-    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(mockStream as unknown as MediaStream)
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(
+      mockStream as unknown as MediaStream,
+    )
 
     await audioManager.initialize()
     await audioManager.cleanup()

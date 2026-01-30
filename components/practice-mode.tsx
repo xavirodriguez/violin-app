@@ -10,7 +10,12 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
-import { type TargetNote, type DetectedNote, formatPitchName, type PracticeState } from '@/lib/practice-core'
+import {
+  type TargetNote,
+  type DetectedNote,
+  formatPitchName,
+  type PracticeState,
+} from '@/lib/practice-core'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
