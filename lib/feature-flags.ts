@@ -95,6 +95,26 @@ export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
     riskLevel: 'LOW',
     affectedFiles: ['components/practice-feedback.tsx'],
     rollbackStrategy: 'Disable advanced observations display.'
+  },
+  FEATURE_SOCIAL_PRACTICE_ROOMS: {
+    name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
+    key: 'socialPracticeRooms',
+    type: 'EXPERIMENTAL',
+    description: 'Real-time synchronization for group practice or teacher-led sessions.',
+    defaultValue: false,
+    riskLevel: 'HIGH',
+    affectedFiles: [],
+    rollbackStrategy: 'Disable real-time synchronization features.'
+  },
+  FEATURE_TELEMETRY_ACCURACY: {
+    name: 'FEATURE_TELEMETRY_ACCURACY',
+    key: 'telemetryAccuracy',
+    type: 'INTEGRATION',
+    description: 'Track detection confidence via Vercel Analytics to identify environment issues.',
+    defaultValue: false,
+    riskLevel: 'LOW',
+    affectedFiles: [],
+    rollbackStrategy: 'Disable accuracy telemetry tracking.'
   }
 }
 
@@ -119,6 +139,10 @@ class FeatureFlagsManager {
         return process.env.FEATURE_PRACTICE_ASSISTANT ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ASSISTANT
       case 'FEATURE_TECHNICAL_FEEDBACK':
         return process.env.FEATURE_TECHNICAL_FEEDBACK ?? process.env.NEXT_PUBLIC_FEATURE_TECHNICAL_FEEDBACK
+      case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
+        return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
+      case 'FEATURE_TELEMETRY_ACCURACY':
+        return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
       default:
         return undefined
     }
