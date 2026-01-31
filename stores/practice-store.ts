@@ -37,6 +37,8 @@ interface PracticeStore {
   detector: PitchDetector | null
   /** True if the session is in the middle of an asynchronous startup sequence. */
   isStarting: boolean
+  /** The current session ID, used to prevent stale updates from previous loops. */
+  sessionId: number
   /** Loads an exercise and prepares the store, stopping any active session. */
   loadExercise: (exercise: Exercise) => Promise<void>
   /** Starts the audio pipeline and begins the pitch detection loop. */
@@ -56,8 +58,8 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
 
 export const usePracticeStore = create<PracticeStore>((set, get) => {
   // Private closure state to avoid global module contamination (SSR/Test safety)
+  // Non-serializable resources stay in the closure, while primitives move to state.
   let practiceLoopController: AbortController | null = null
-  let sessionId = 0
 
   return {
     practiceState: null,
@@ -65,8 +67,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     detector: null,
     analyser: null,
     isStarting: false,
+    sessionId: 0,
 
     loadExercise: async (exercise) => {
+      // Always stop any existing session before loading a new exercise
       await get().stop()
       set(() => ({
         practiceState: getInitialState(exercise),
@@ -75,7 +79,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
 
     start: async () => {
-      // 1. Synchronous guards for concurrency
+      // 1. Synchronous guards for concurrency: prevents double start and overlapping loops
       if (get().isStarting || get().practiceState?.status === 'listening') return
 
       if (!get().practiceState) {
@@ -87,21 +91,25 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       set({ isStarting: true, error: null })
 
+      let localSessionId: number | null = null
+
       try {
-        // 2. Resource-first cleanup of any existing session
+        // 2. Resource-first cleanup: kill any existing session/loop
         await get().stop()
 
-        // Re-lock isStarting as stop() might have cleared it
-        set({ isStarting: true })
+        // Re-lock isStarting and increment sessionId atomically
+        set((state) => ({ isStarting: true, sessionId: state.sessionId + 1 }))
 
-        sessionId += 1
-        const localSessionId = sessionId
+        localSessionId = get().sessionId
         practiceLoopController = new AbortController()
         const signal = practiceLoopController.signal
 
         // 3. Audio resource initialization
         const tunerState = useTunerStore.getState()
         const { context } = await audioManager.initialize(tunerState.deviceId ?? undefined)
+
+        // Post-await check: has the session been aborted or superseded?
+        if (signal.aborted || get().sessionId !== localSessionId) return
 
         // Apply sensitivity from tuner store
         audioManager.setGain(tunerState.sensitivity / 50)
@@ -113,18 +121,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const initialState = get().practiceState!
         const listeningState = reducePracticeEvent(initialState, { type: 'START' })
 
-        // 4. Update state to listening
-        set(() => ({
-          detector,
-          analyser,
-          practiceState: listeningState,
-          isStarting: false,
-        }))
+        // 4. Atomic state update to transition to listening mode
+        set((state) => {
+          // Final check before committing state changes
+          if (state.sessionId !== localSessionId) return state
+
+          return {
+            detector,
+            analyser,
+            practiceState: listeningState,
+            isStarting: false,
+          }
+        })
 
         // Sync with TunerStore
         useTunerStore.setState({
           detector,
-          state: { kind: 'LISTENING', sessionToken: sessionId },
+          state: { kind: 'LISTENING', sessionToken: localSessionId },
         })
 
         const sessionStartTime = Date.now()
@@ -133,12 +146,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         analyticsStore.startSession(exercise.id, exercise.name, 'practice')
 
         // 5. Session-guarded setState wrapper for the runner to avoid stale updates
+        // This ensures the asynchronous loop only updates the session it belongs to.
         const guardedSetState: typeof set = (updater) => {
           set((state) => {
-            if (sessionId !== localSessionId) {
+            if (state.sessionId !== localSessionId) {
               console.warn('[PIPELINE] Stale session update ignored', {
-                sessionId,
-                localSessionId,
+                current: state.sessionId,
+                local: localSessionId,
               })
               return state
             }
@@ -162,7 +176,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             getState: get,
             setState: guardedSetState,
             stop: async () => {
-              if (sessionId === localSessionId) {
+              if (get().sessionId === localSessionId) {
                 await get().stop()
               }
             },
@@ -177,7 +191,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           sessionStartTime,
         }).catch((err) => {
           const name = err instanceof Error ? err.name : ''
-          if (name !== 'AbortError' && sessionId === localSessionId) {
+          if (name !== 'AbortError' && get().sessionId === localSessionId) {
             const appError = toAppError(err, ERROR_CODES.UNKNOWN)
             console.error('[PRACTICE LOOP ERROR]', appError)
             set(() => ({ error: appError }))
@@ -187,14 +201,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       } catch (err) {
         const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
         console.error('[PRACTICE START ERROR]', appError)
+
         // Ensure state is cleaned up on error
-        set(() => ({ error: appError, isStarting: false }))
+        if (localSessionId !== null) {
+          set((state) => {
+            if (state.sessionId !== localSessionId) return state
+            return { error: appError, isStarting: false }
+          })
+        } else {
+          set({ error: appError, isStarting: false })
+        }
+
         void get().stop()
       }
     },
 
     stop: async () => {
-      // 1. Resource cleanup (always, regardless of FSM state)
+      // 1. Resource-first cleanup: always abort and cleanup audio regardless of state
       if (practiceLoopController) {
         practiceLoopController.abort()
         practiceLoopController = null
@@ -206,13 +229,20 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         console.warn('[PRACTICE STOP] Audio cleanup failed:', err)
       }
 
+      // Invalidate current session to block any pending updates
+      const nextSessionId = get().sessionId + 1
+
       // 2. Guarantee analytics closure
-      const analyticsStore = useAnalyticsStore.getState()
-      if (analyticsStore.currentSession) {
-        analyticsStore.endSession()
+      try {
+        const analyticsStore = useAnalyticsStore.getState()
+        if (analyticsStore.currentSession) {
+          analyticsStore.endSession()
+        }
+      } catch (err) {
+        console.warn('[PRACTICE STOP] Analytics closure failed:', err)
       }
 
-      // 3. Unified state update (idempotent)
+      // 3. Unified state update (idempotent and atomic)
       set((state) => ({
         practiceState:
           state.practiceState && state.practiceState.status !== 'idle'
@@ -221,12 +251,17 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         detector: null,
         analyser: null,
         isStarting: false,
+        sessionId: nextSessionId,
       }))
     },
 
     reset: async () => {
+      // Full cleanup: stop audio, loops, and reset domain state
       await get().stop()
-      set(() => ({ practiceState: null, error: null }))
+      set(() => ({
+        practiceState: null,
+        error: null,
+      }))
     },
   }
 })
