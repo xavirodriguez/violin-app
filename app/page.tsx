@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
@@ -9,6 +9,8 @@ import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { AchievementNotificationManager } from '@/components/achievement-toast'
+import { OnboardingFlow } from '@/components/onboarding/onboarding-flow'
 
 /**
  * The main component for the home page.
@@ -19,9 +21,25 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    // Verificar si es la primera vez del usuario
+    const hasCompletedOnboarding = localStorage.getItem('onboarding-completed')
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true)
+    }
+  }, [])
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('onboarding-completed', 'true')
+    setShowOnboarding(false)
+  }
 
   return (
     <>
+      {showOnboarding && <OnboardingFlow onComplete={handleOnboardingComplete} />}
+
       <div className="bg-background flex min-h-screen flex-col">
         {/* Header */}
         <header className="border-border bg-card border-b">
@@ -92,6 +110,9 @@ export default function Home() {
 
       {/* Settings Dialog */}
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {/* NUEVO: Achievement Notification Manager */}
+      <AchievementNotificationManager />
     </>
   )
 }
