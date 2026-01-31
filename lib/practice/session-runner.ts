@@ -67,21 +67,30 @@ function processSessionEvent(
   deps: SessionRunnerDependencies,
   state: { lastDispatchedNoteIndex: number; currentNoteStartedAt: number },
 ): { lastDispatchedNoteIndex: number; currentNoteStartedAt: number } {
-  console.debug('[PIPELINE]', event)
-
-  if (event.type === 'NOTE_DETECTED') {
-    deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
-  } else if (event.type === 'NO_NOTE_DETECTED') {
-    deps.updatePitch?.(0, 0)
+  if (!event || !event.type) {
+    console.warn('[INVALID EVENT]', event)
+    return state
   }
-
-  if (deps.signal.aborted || !event.type) return state
 
   const currentState = deps.store.getState().practiceState
   if (!currentState) {
     console.error('[STATE NULL]', { event })
     return state
   }
+
+  console.debug('[PIPELINE]', event)
+
+  try {
+    if (event.type === 'NOTE_DETECTED') {
+      deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+    } else if (event.type === 'NO_NOTE_DETECTED') {
+      deps.updatePitch?.(0, 0)
+    }
+  } catch (err) {
+    console.warn('[PIPELINE] updatePitch failed', err)
+  }
+
+  if (deps.signal.aborted) return state
 
   let newState = { ...state }
 
