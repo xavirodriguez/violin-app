@@ -387,19 +387,34 @@ function calculateRhythmExpectations(
 }
 
 /**
- * Constructs the final practice event pipeline by connecting the raw pitch stream
- * to the technical analysis and note stability window.
+ * Creates a practice event processing pipeline.
+ *
+ * @param rawPitchStream - Raw pitch detection events
+ * @param targetNote - **Function called on EVERY event** to get current target.
+ *   Must be idempotent for the same index. Use a store selector.
+ * @param getCurrentIndex - **Function called on EVERY event** to get current position.
+ *   Must be idempotent. Use a store selector.
+ * @param options - Pipeline configuration
+ * @param signal - AbortSignal to stop the pipeline
+ * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  *
  * @remarks
- * This function serves as the main factory for creating a fully configured practice event stream.
- * It encapsulates the complexity of the underlying `iter-tools` pipeline and provides a simple
- * interface for the consumer.
+ * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
+ * Ensure they:
+ * 1. Are fast (\< 1ms)
+ * 2. Return consistent values for the same underlying state
+ * 3. Use memoized selectors from Zustand stores
  *
- * @param rawPitchStream - The source `AsyncIterable` of raw pitch events, typically from `createRawPitchStream`.
- * @param targetNote - A selector function that returns the current `TargetNote` to match against.
- * @param getCurrentIndex - A selector function to get the current note's index for rhythm analysis.
- * @param options - Optional configuration overrides for the pipeline.
- * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
+ * @example
+ * ```ts
+ * const pipeline = createPracticeEventPipeline(
+ *   rawStream,
+ *   () => usePracticeStore.getState().targetNote,  // ✅ Store selector
+ *   () => usePracticeStore.getState().currentNoteIndex,
+ *   options,
+ *   signal
+ * );
+ * ```
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,

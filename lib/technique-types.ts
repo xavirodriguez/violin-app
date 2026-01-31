@@ -26,11 +26,19 @@ export interface TechniqueFrame {
 export interface VibratoMetrics {
   /** `true` if vibrato is detected in the note segment. */
   present: boolean
-  /** The speed of the vibrato in Hertz (oscillations per second). */
+  /** Vibrato rate in Hz (typical range: 4-8 Hz) */
   rateHz: number
-  /** The average pitch modulation width of the vibrato in cents. */
+  /** Vibrato width in cents (typical range: 10-50 cents) */
   widthCents: number
-  /** A score from 0 to 1 indicating the consistency of the vibrato's rate and width. */
+  /**
+   * Vibrato regularity score.
+   *
+   * @remarks
+   * Range: 0.0 to 1.0.
+   * - 0.0: Completely irregular/random oscillation
+   * - 0.5: Moderately regular
+   * - 1.0: Perfect sinusoidal regularity
+   */
   regularity: number
 }
 
@@ -92,17 +100,58 @@ export interface TransitionMetrics {
  * Configuration options for the technique analysis agent.
  */
 export interface AnalysisOptions {
-  /** The time in milliseconds to wait after note onset before measuring stable pitch. */
+  /**
+   * Time to wait for pitch to settle after note onset.
+   *
+   * @remarks
+   * Range: 50-500 ms.
+   * Default: 150.
+   */
   settlingTimeMs: number
-  /** The tolerance in cents to consider a frame "in-tune" for the ratio calculation. */
+
+  /**
+   * Maximum pitch deviation to consider "in tune".
+   *
+   * @remarks
+   * Range: 5-50 cents.
+   * Default: 25.
+   */
   inTuneThresholdCents: number
-  /** Minimum vibrato rate in Hz. */
+
+  /**
+   * Minimum vibrato rate to detect.
+   *
+   * @remarks
+   * Range: 3-6 Hz.
+   * Default: 4.
+   */
   vibratoMinRateHz: number
-  /** Maximum vibrato rate in Hz. */
+
+  /**
+   * Maximum vibrato rate to detect.
+   *
+   * @remarks
+   * Range: 6-10 Hz.
+   * Default: 8.
+   */
   vibratoMaxRateHz: number
-  /** Minimum vibrato width in cents. */
+
+  /**
+   * Minimum vibrato width to consider present.
+   *
+   * @remarks
+   * Range: 5-20 cents.
+   * Default: 10.
+   */
   vibratoMinWidthCents: number
-  /** Minimum vibrato regularity score (0-1). */
+
+  /**
+   * Minimum regularity score to classify as intentional vibrato.
+   *
+   * @remarks
+   * Range: 0.3-0.8.
+   * Default: 0.5.
+   */
   vibratoMinRegularity: number
 }
 
@@ -114,24 +163,6 @@ export interface RhythmMetrics {
   onsetErrorMs: number
   /** The error in milliseconds of the note's total duration compared to the expected duration. */
   durationErrorMs?: number
-}
-
-/**
- * Configuration options for the technique analysis heuristics.
- */
-export interface AnalysisOptions {
-  /** The time in milliseconds to ignore after note onset for "stable" pitch calculations (50-500ms). */
-  settlingTimeMs: number
-  /** The tolerance in cents for considering a frame "in-tune" for statistics. */
-  inTuneThresholdCents: number
-  /** Minimum rate in Hz for valid vibrato. */
-  vibratoMinRateHz: number
-  /** Maximum rate in Hz for valid vibrato. */
-  vibratoMaxRateHz: number
-  /** Minimum peak-to-peak width in cents for valid vibrato. */
-  vibratoMinWidthCents: number
-  /** Minimum regularity score (0.0-1.0) for valid vibrato. */
-  vibratoMinRegularity: number
 }
 
 /**
