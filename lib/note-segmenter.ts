@@ -25,10 +25,13 @@ const defaultOptions: SegmenterOptions = {
 }
 
 /**
- * Represents the union of all possible events that can be emitted by the `NoteSegmenter`.
- * - `ONSET`: A new note has started.
- * - `OFFSET`: The current note has ended.
- * - `NOTE_CHANGE`: The pitch has changed mid-note without an intervening silence.
+ * Possible segmenter events emitted during note detection.
+ *
+ * @remarks
+ * Event Sequence:
+ * 1. ONSET: Sound begins -\> new note detected
+ * 2. NOTE_CHANGE: Pitch changes mid-sound (unusual, may indicate sliding)
+ * 3. OFFSET: Sound ends -\> note completed with full analysis
  */
 export type SegmenterEvent =
   | {
@@ -103,14 +106,18 @@ export class NoteSegmenter {
   }
 
   /**
-   * Processes a single `TechniqueFrame` and returns a `SegmenterEvent` if a note boundary is detected.
+   * Processes a single audio analysis frame.
+   *
+   * @param frame - Current pitch detection result
+   * @returns Event if state transition occurred, null otherwise
    *
    * @remarks
-   * This method should be called for each new frame of audio analysis. It updates the internal state
-   * and returns an event object (`ONSET`, `OFFSET`, `NOTE_CHANGE`) or `null` if no significant event occurred.
+   * **State Machine**:
+   * - SILENCE -\> ONSET (when RMS \> minRms)
+   * - ONSET -\> OFFSET (when RMS \< maxRmsSilence for offsetDebounceMs)
+   * - ONSET -\> NOTE_CHANGE (when detected note changes)
    *
-   * @param frame - The `TechniqueFrame` to process.
-   * @returns A `SegmenterEvent` or `null`.
+   * Uses debouncing to prevent false triggers from noise.
    */
   processFrame(frame: TechniqueFrame): SegmenterEvent | null {
     const isSignalPresent =
@@ -216,13 +223,13 @@ export class NoteSegmenter {
   }
 
   /**
-   * Resets the segmenter to its initial state.
+   * Resets segmenter to initial state.
    *
    * @remarks
-   * This should be called when the audio stream is stopped or interrupted, ensuring that
-   * the segmenter is ready for a new stream without carrying over any stale state.
+   * Call between exercises or when audio context is recreated.
+   * Discards all buffered frames and resets internal timers.
    */
-  reset() {
+  reset(): void {
     this.state = 'SILENCE'
     this.currentNoteName = null
     this.frames = []

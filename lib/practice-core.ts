@@ -7,6 +7,7 @@
 import { NoteTechnique, Observation } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { FixedRingBuffer } from './domain/data-structures'
+import { AppError, ERROR_CODES } from './errors/app-error'
 import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 
 export type { TargetNote }
@@ -17,7 +18,7 @@ export type { TargetNote }
  * @example "C4", "F#5", "Bb3"
  *
  * @remarks
- * Pattern: `^[A-G][#b]?(?:[0-8])$`
+ * Pattern: `^[A-G][#b]?[0-8]$`
  */
 export type NoteName = string & { readonly __brand: unique symbol }
 
@@ -25,11 +26,16 @@ export type NoteName = string & { readonly __brand: unique symbol }
  * Type guard to validate note name format.
  *
  * @param name - The string to validate.
- * @throws Error - if the format is invalid.
+ *
+ * @remarks
+ * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
   if (!/^[A-G](?:b{1,2}|#{1,2})?-?\d+$/.test(name)) {
-    throw new Error(`Invalid note name format: "${name}"`)
+    throw new AppError({
+      message: `Invalid note name format: "${name}"`,
+      code: ERROR_CODES.NOTE_PARSING_FAILED,
+    })
   }
 }
 
@@ -94,23 +100,33 @@ export class MusicalNote {
    *
    * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
    * @returns A MusicalNote instance
-   * @throws Error - if format is invalid
+   *
+   * @remarks
+   * Throws `AppError` CODE: `NOTE_PARSING_FAILED` if format is invalid.
    *
    * @example
+   * ```ts
    * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
-   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws Error
+   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
+   * ```
    */
   static fromName(fullName: NoteName): MusicalNote {
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
     if (!match) {
-      throw new Error(`Invalid note name format: "${fullName}"`)
+      throw new AppError({
+        message: `Invalid note name format: "${fullName}"`,
+        code: ERROR_CODES.NOTE_PARSING_FAILED,
+      })
     }
 
     const [, step, accidental = '', octaveStr] = match
     const octave = parseInt(octaveStr, 10)
 
     if (!Number.isInteger(octave)) {
-      throw new Error(`Invalid octave: "${octaveStr}" in note "${fullName}"`)
+      throw new AppError({
+        message: `Invalid octave: "${octaveStr}" in note "${fullName}"`,
+        code: ERROR_CODES.NOTE_PARSING_FAILED,
+      })
     }
 
     const stepValue = STEP_VALUES[step]
@@ -217,7 +233,10 @@ export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
       alterStr = ''
       break
     default:
-      throw new Error(`Unsupported alter value: ${pitch.alter}`)
+      throw new AppError({
+        message: `Unsupported alter value: ${pitch.alter}`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
   }
   const result = `${pitch.step}${alterStr}${pitch.octave}`
   assertValidNoteName(result)
