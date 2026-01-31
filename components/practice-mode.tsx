@@ -33,6 +33,7 @@ import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   return (
     <div className="text-center">
