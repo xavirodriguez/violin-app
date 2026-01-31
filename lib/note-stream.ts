@@ -91,9 +91,18 @@ export async function* createRawPitchStream(
 
     try {
       await new Promise<void>((resolve, reject) => {
+        if (signal.aborted) {
+          reject(new DOMException('Aborted', 'AbortError'))
+          return
+        }
+
         const rafId = requestAnimationFrame(() => {
           signal.removeEventListener('abort', abortHandler)
-          resolve()
+          if (signal.aborted) {
+            reject(new DOMException('Aborted', 'AbortError'))
+          } else {
+            resolve()
+          }
         })
 
         function abortHandler() {
@@ -105,6 +114,11 @@ export async function* createRawPitchStream(
       })
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return
+      // Handle potential null/undefined errors explicitly
+      if (!e) {
+        console.warn('[PIPELINE] Caught null error in createRawPitchStream')
+        return
+      }
       throw e
     }
   }
@@ -133,6 +147,16 @@ export async function* createRawPitchStream(
  * @param getCurrentIndex - A selector function to get the current note's index for rhythm analysis.
  * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
  */
+/**
+ * Internal state for the technical analysis window.
+ */
+interface TechnicalAnalysisState {
+  lastGapFrames: TechniqueFrame[]
+  firstNoteOnsetTime: number | null
+  prevSegment: NoteSegment | null
+  currentSegmentStart: number | null
+}
+
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
   context: PipelineContext,
@@ -144,45 +168,112 @@ async function* technicalAnalysisWindow(
     minConfidence: options.minConfidence,
   })
   const agent = new TechniqueAnalysisAgent()
-  const state = {
-    lastGapFrames: [] as TechniqueFrame[],
-    firstNoteOnsetTime: null as number | null,
-    prevSegment: null as NoteSegment | null,
-    currentSegmentStart: null as number | null,
+  const state: TechnicalAnalysisState = {
+    lastGapFrames: [],
+    firstNoteOnsetTime: null,
+    prevSegment: null,
+    currentSegmentStart: null,
   }
 
   for await (const raw of source) {
     if (signal.aborted) break
-    const currentTarget = context.targetNote()
-    if (!currentTarget) continue
+    yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
+  }
+}
 
-    const { musicalNote, noteName, cents } = parseMusicalNote(raw.pitchHz)
-    yield* emitDetectionEvent(raw, musicalNote, noteName, cents, options)
+/**
+ * Processes a single raw pitch event and yields any resulting practice events.
+ * @internal
+ */
+function* processRawPitchEvent(
+  raw: RawPitchEvent,
+  state: TechnicalAnalysisState,
+  segmenter: NoteSegmenter,
+  agent: TechniqueAnalysisAgent,
+  context: PipelineContext,
+  options: NoteStreamOptions,
+): Generator<PracticeEvent> {
+  if (!raw) {
+    console.warn('[PIPELINE] Source yielded null raw event')
+    return
+  }
 
-    const frame: TechniqueFrame = {
-      timestamp: raw.timestamp,
-      pitchHz: raw.pitchHz,
-      cents,
-      rms: raw.rms,
-      confidence: raw.confidence,
-      noteName,
+  const currentTarget = context.targetNote()
+  if (!currentTarget) return
+
+  const { musicalNote, noteName, cents } = parseMusicalNote(raw.pitchHz)
+  yield* validateAndEmitDetections(raw, musicalNote, noteName, cents, options)
+
+  const frame: TechniqueFrame = {
+    timestamp: raw.timestamp,
+    pitchHz: raw.pitchHz,
+    cents,
+    rms: raw.rms,
+    confidence: raw.confidence,
+    noteName,
+  }
+
+  const segmentEvent = segmenter.processFrame(frame)
+  updateSegmentState(state, segmentEvent)
+
+  yield* validateAndEmitHolding(state, currentTarget, frame, options)
+  yield* validateAndEmitCompletion(state, segmentEvent, currentTarget, options, context, agent)
+}
+
+function* validateAndEmitDetections(
+  raw: RawPitchEvent,
+  musicalNote: MusicalNote | null,
+  noteName: string,
+  cents: number,
+  options: NoteStreamOptions,
+): Generator<PracticeEvent> {
+  for (const event of emitDetectionEvent(raw, musicalNote, noteName, cents, options)) {
+    if (!event) {
+      console.warn('[INVALID EVENT] emitDetectionEvent yielded null')
+      continue
     }
+    yield event
+  }
+}
 
-    const segmentEvent = segmenter.processFrame(frame)
-    updateSegmentState(state, segmentEvent)
+function* validateAndEmitHolding(
+  state: TechnicalAnalysisState,
+  currentTarget: TargetNote,
+  frame: TechniqueFrame,
+  options: NoteStreamOptions,
+): Generator<PracticeEvent> {
+  const holdingEvent = checkHoldingStatus(state, currentTarget, frame, options)
+  if (holdingEvent) {
+    if (!holdingEvent.type) {
+      console.warn('[INVALID EVENT] holdingEvent missing type', holdingEvent)
+    } else {
+      yield holdingEvent
+    }
+  }
+}
 
-    const holdingEvent = checkHoldingStatus(state, currentTarget, frame, options)
-    if (holdingEvent) yield holdingEvent
-
-    const completionEvent = handleSegmentCompletion(
-      state,
-      segmentEvent,
-      currentTarget,
-      options,
-      context.getCurrentIndex,
-      agent,
-    )
-    if (completionEvent) yield completionEvent
+function* validateAndEmitCompletion(
+  state: TechnicalAnalysisState,
+  segmentEvent: ReturnType<NoteSegmenter['processFrame']>,
+  currentTarget: TargetNote,
+  options: NoteStreamOptions,
+  context: PipelineContext,
+  agent: TechniqueAnalysisAgent,
+): Generator<PracticeEvent> {
+  const completionEvent = handleSegmentCompletion(
+    state,
+    segmentEvent,
+    currentTarget,
+    options,
+    context.getCurrentIndex,
+    agent,
+  )
+  if (completionEvent) {
+    if (!completionEvent.type) {
+      console.warn('[INVALID EVENT] completionEvent missing type', completionEvent)
+    } else {
+      yield completionEvent
+    }
   }
 }
 

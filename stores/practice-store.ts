@@ -76,24 +76,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     start: async () => {
       // 1. Synchronous guards for concurrency
-      const current = get()
-      if (current.isStarting || current.practiceState?.status === 'listening') return
+      if (get().isStarting || get().practiceState?.status === 'listening') return
 
-      if (!current.practiceState) {
-        set(() => ({
+      if (!get().practiceState) {
+        set({
           error: toAppError('No exercise loaded.', ERROR_CODES.STATE_INVALID_TRANSITION),
-        }))
+        })
         return
       }
 
-      set(() => ({ isStarting: true, error: null }))
+      set({ isStarting: true, error: null })
 
       try {
         // 2. Resource-first cleanup of any existing session
         await get().stop()
 
         // Re-lock isStarting as stop() might have cleared it
-        set(() => ({ isStarting: true }))
+        set({ isStarting: true })
 
         sessionId += 1
         const localSessionId = sessionId
@@ -135,14 +134,24 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
         // 5. Session-guarded setState wrapper for the runner to avoid stale updates
         const guardedSetState: typeof set = (updater) => {
-          if (sessionId !== localSessionId) {
-            console.warn('[PIPELINE] Stale session update ignored', {
-              sessionId,
-              localSessionId,
-            })
-            return
-          }
-          set(updater)
+          set((state) => {
+            if (sessionId !== localSessionId) {
+              console.warn('[PIPELINE] Stale session update ignored', {
+                sessionId,
+                localSessionId,
+              })
+              return state
+            }
+
+            if (!state.practiceState) {
+              console.error('[STATE NULL]', { sessionId: localSessionId })
+              return state
+            }
+
+            // Support both functional and object updaters
+            const nextState = typeof updater === 'function' ? updater(state) : updater
+            return { ...state, ...nextState }
+          })
         }
 
         runPracticeSession({
