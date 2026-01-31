@@ -6,6 +6,7 @@
  */
 
 import type { Exercise, ExerciseData } from './types'
+export type { Exercise }
 import { generateMusicXML } from './musicxml-builder'
 import { openStringsExercises } from './categories/open-strings'
 import { scalesExercises } from './categories/scales'
