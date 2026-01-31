@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
+import { useFeatureFlag } from '@/lib/feature-flags'
 import {
   type TargetNote,
   type DetectedNote,
@@ -172,6 +173,8 @@ function PracticeActiveView({
   holdDuration?: number
   lastObservations?: Observation[]
 }) {
+  const isFingerboardEnabled = useFeatureFlag('FEATURE_UI_VIOLIN_FINGERBOARD')
+
   if (status !== 'listening' || !targetNote) return null
 
   return (
@@ -186,13 +189,15 @@ function PracticeActiveView({
           observations={lastObservations}
         />
       </Card>
-      <Card className="p-12">
-        <ViolinFingerboard
-          targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch ?? null}
-          centsDeviation={lastDetectedNote?.cents ?? null}
-        />
-      </Card>
+      {isFingerboardEnabled && (
+        <Card className="p-12">
+          <ViolinFingerboard
+            targetNote={targetPitchName}
+            detectedPitchName={lastDetectedNote?.pitch ?? null}
+            centsDeviation={lastDetectedNote?.cents ?? null}
+          />
+        </Card>
+      )}
     </>
   )
 }
