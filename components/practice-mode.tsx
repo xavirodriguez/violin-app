@@ -239,7 +239,7 @@ export function PracticeMode() {
   }, [currentNoteIndex, status, osmdHook])
 
   const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[history.length - 1] : null
+  const lastDetectedNote = history.length > 0 ? history[0] : null
   const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)

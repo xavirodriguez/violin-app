@@ -37,4 +37,18 @@ describe('PracticeFeedback', () => {
     )
     expect(screen.getByText('Slow vibrato detected')).toBeDefined()
   })
+
+  it('renders "Hold steady..." when validating', () => {
+    render(
+      <PracticeFeedback
+        targetNote="A4"
+        status="validating"
+        detectedPitchName="A4"
+        centsOff={0}
+        holdDuration={250}
+        requiredHoldTime={500}
+      />,
+    )
+    expect(screen.getByText('Hold steady...')).toBeDefined()
+  })
 })
