@@ -32,7 +32,7 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return false when the flag is set to "false" in environment', () => {
-    const flagName = 'FEATURE_UI_VIOLIN_FINGERBOARD' // Default is true in metadata
+    const flagName = 'FEATURE_PRACTICE_ASSISTANT' // Default is true in metadata
     process.env[flagName] = 'false'
 
     expect(featureFlags.isEnabled(flagName)).toBe(false)
@@ -58,12 +58,12 @@ describe('FeatureFlagsManager', () => {
 
   it('should return all flags with their current values', () => {
     process.env['FEATURE_ANALYTICS_DASHBOARD'] = 'true'
-    process.env['FEATURE_UI_VIOLIN_FINGERBOARD'] = 'false'
+    process.env['FEATURE_AUDIO_WEB_WORKER'] = 'true'
 
     const allFlags = featureFlags.getAll()
 
     expect(allFlags['FEATURE_ANALYTICS_DASHBOARD']).toBe(true)
-    expect(allFlags['FEATURE_UI_VIOLIN_FINGERBOARD']).toBe(false)
+    expect(allFlags['FEATURE_AUDIO_WEB_WORKER']).toBe(true)
     expect(Object.keys(allFlags)).toEqual(Object.keys(FEATURE_FLAGS_METADATA))
   })
 

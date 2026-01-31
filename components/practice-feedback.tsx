@@ -9,7 +9,6 @@ import { CheckCircle2, Circle, Music, Lightbulb, AlertTriangle, Info } from 'luc
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
 import { Observation } from '@/lib/technique-types'
-import { useFeatureFlag } from '@/lib/feature-flags'
 
 /**
  * Props for the PracticeFeedback component.
@@ -198,7 +197,6 @@ export function PracticeFeedback({
   observations = [],
 }: PracticeFeedbackProps) {
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 5
-  const isTechnicalFeedbackEnabled = useFeatureFlag('FEATURE_TECHNICAL_FEEDBACK')
 
   return (
     <div className="space-y-6">
@@ -259,7 +257,7 @@ export function PracticeFeedback({
       </div>
 
       {/* Advanced Observations */}
-      {isTechnicalFeedbackEnabled && <TechniqueInsights observations={observations} />}
+      <TechniqueInsights observations={observations} />
     </div>
   )
 }
