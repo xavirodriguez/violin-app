@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
 import type { Exercise } from '@/lib/domain/musical-types'
+import { checkAchievements } from '@/lib/achievements/achievement-checker'
+import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 
 /** Represents a single, completed practice session. */
 export interface PracticeSession {
@@ -71,6 +73,8 @@ export interface AnalyticsStore {
   currentSession: PracticeSession | null
   sessions: PracticeSession[]
   progress: UserProgress
+  currentPerfectStreak: number
+  onAchievementUnlocked?: (achievement: Achievement) => void
   startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
   endSession: () => void
   recordNoteAttempt: (
@@ -88,6 +92,8 @@ export interface AnalyticsStore {
   getExerciseStats: (exerciseId: string) => ExerciseStats | null
   getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
   getStreakInfo: () => { current: number; longest: number }
+  checkAndUnlockAchievements: () => void
+  reset: () => void
 }
 
 const DAY_MS = 86_400_000
@@ -128,6 +134,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     (set, get) => ({
       currentSession: null,
       sessions: [],
+      currentPerfectStreak: 0,
+      onAchievementUnlocked: undefined,
       progress: {
         userId: 'default',
         totalPracticeSessions: 0,
@@ -191,14 +199,14 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         updateStreak(newProgress, sessions)
         calculateSkills(newProgress, newSessions)
 
-        const newAchievements = checkAchievements(newProgress, completedSession, newSessions)
-        newProgress.achievements = [...progress.achievements, ...newAchievements]
-
         set({
           currentSession: null,
           sessions: newSessions.slice(0, 100),
           progress: newProgress,
         })
+
+        // Verificar logros al final de la sesión
+        get().checkAndUnlockAchievements()
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
@@ -233,6 +241,15 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       recordNoteCompletion: (noteIndex, timeToCompleteMs, technique) => {
+        const state = get()
+        if (!state.currentSession) return
+
+        const noteResult = state.currentSession.noteResults.find((nr) => nr.noteIndex === noteIndex)
+        const wasPerfect = noteResult && Math.abs(noteResult.averageCents) < 5
+
+        // Actualizar streak
+        const newStreak = wasPerfect ? state.currentPerfectStreak + 1 : 0
+
         set((state) => {
           const prevSession = state.currentSession
           if (!prevSession) return state
@@ -240,6 +257,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             nr.noteIndex === noteIndex ? { ...nr, timeToCompleteMs, technique } : nr,
           )
           return {
+            currentPerfectStreak: newStreak,
             currentSession: {
               ...prevSession,
               notesCompleted: prevSession.notesCompleted + 1,
@@ -247,6 +265,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             },
           }
         })
+
+        // Verificar logros después de cada nota completada
+        get().checkAndUnlockAchievements()
       },
 
       getSessionHistory: (days = 7) => {
@@ -282,6 +303,69 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const { currentStreak, longestStreak } = get().progress
         return { current: currentStreak, longest: longestStreak }
       },
+
+      checkAndUnlockAchievements: () => {
+        const state = get()
+        if (!state.currentSession) return
+
+        // Construir estadísticas para checker
+        const stats: AchievementCheckStats = {
+          currentSession: {
+            correctNotes: state.currentSession.notesCompleted,
+            perfectNoteStreak: state.currentPerfectStreak,
+            accuracy: state.currentSession.accuracy,
+            durationMs: Date.now() - state.currentSession.startTimeMs,
+            exerciseId: state.currentSession.exerciseId,
+          },
+          totalSessions: state.sessions.length,
+          totalPracticeDays: calculatePracticeDays(state.sessions),
+          currentStreak: state.progress.currentStreak,
+          longestStreak: state.progress.longestStreak,
+          exercisesCompleted: state.progress.exercisesCompleted || [],
+          totalPracticeTimeMs: state.progress.totalPracticeTime,
+          averageAccuracy: state.progress.overallSkill,
+        }
+
+        // Obtener IDs de logros ya desbloqueados
+        const unlockedIds = state.progress.achievements.map((a) => a.id)
+
+        // Verificar nuevos logros
+        const newAchievements = checkAchievements(stats, unlockedIds)
+
+        if (newAchievements.length > 0) {
+          set({
+            progress: {
+              ...state.progress,
+              achievements: [...state.progress.achievements, ...newAchievements],
+            },
+          })
+
+          // Notificar cada logro nuevo
+          newAchievements.forEach((achievement) => {
+            state.onAchievementUnlocked?.(achievement)
+          })
+        }
+      },
+
+      reset: () =>
+        set({
+          sessions: [],
+          currentSession: null,
+          currentPerfectStreak: 0,
+          progress: {
+            userId: 'default',
+            totalPracticeSessions: 0,
+            totalPracticeTime: 0,
+            exercisesCompleted: [],
+            currentStreak: 0,
+            longestStreak: 0,
+            intonationSkill: 0,
+            rhythmSkill: 0,
+            overallSkill: 0,
+            achievements: [],
+            exerciseStats: {},
+          },
+        }),
     }),
     {
       name: 'violin-analytics',
@@ -438,6 +522,11 @@ function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
   progress.overallSkill = Math.round((progress.intonationSkill + progress.rhythmSkill) / 2)
 }
 
+function calculatePracticeDays(sessions: PracticeSession[]): number {
+  const uniqueDays = new Set(sessions.map((s) => new Date(s.endTimeMs).toDateString()))
+  return uniqueDays.size
+}
+
 function updateNoteResults(
   noteResults: NoteResult[],
   noteIndex: number,
@@ -495,44 +584,4 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
   const maeScore = Math.max(0, 100 - mae / 4)
   const score = (maeScore + percentInWindow) / 2
   return Math.round(score)
-}
-
-function checkAchievements(
-  progress: UserProgress,
-  session: PracticeSession,
-  allSessions: PracticeSession[],
-): Achievement[] {
-  const achievements: Achievement[] = []
-  if (session.accuracy === 100 && !progress.achievements.find((a) => a.id === 'first-perfect')) {
-    achievements.push({
-      id: 'first-perfect',
-      name: 'First Perfect Scale',
-      description: 'Completed a scale with 100% accuracy!',
-      icon: '🎯',
-      unlockedAtMs: Date.now(),
-    })
-  }
-  if (progress.currentStreak === 7 && !progress.achievements.find((a) => a.id === 'week-streak')) {
-    achievements.push({
-      id: 'week-streak',
-      name: '7-Day Streak',
-      description: 'Practiced for 7 days in a row!',
-      icon: '🔥',
-      unlockedAtMs: Date.now(),
-    })
-  }
-  const totalNotesCompleted = allSessions.reduce(
-    (sum: number, s: PracticeSession) => sum + s.notesCompleted,
-    0,
-  )
-  if (totalNotesCompleted >= 100 && !progress.achievements.find((a) => a.id === '100-notes')) {
-    achievements.push({
-      id: '100-notes',
-      name: '100 Notes Mastered',
-      description: 'Successfully played 100 notes in tune!',
-      icon: '📈',
-      unlockedAtMs: Date.now(),
-    })
-  }
-  return achievements
 }

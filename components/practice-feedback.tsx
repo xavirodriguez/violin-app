@@ -9,6 +9,10 @@ import { CheckCircle2, Circle, Music, Lightbulb, AlertTriangle, Info } from 'luc
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
 import { Observation } from '@/lib/technique-types'
+import { Card } from '@/components/ui/card'
+import { EmotionalFeedback } from './emotional-feedback'
+import { usePreferencesStore } from '@/stores/preferences-store'
+import { FEEDBACK_CONFIGS } from '@/lib/user-preferences'
 
 /**
  * Props for the PracticeFeedback component.
@@ -196,52 +200,46 @@ export function PracticeFeedback({
   requiredHoldTime = 500,
   observations = [],
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 5
+  const { feedbackLevel, showTechnicalDetails } = usePreferencesStore()
+  const config = FEEDBACK_CONFIGS[feedbackLevel]
+  const isInTune = centsOff !== null && Math.abs(centsOff) < config.centsTolerance
+  const noteMatches = targetNote === detectedPitchName
 
   return (
     <div className="space-y-6">
       {/* Target Note */}
       <div className="text-center">
-        <div className="text-muted-foreground mb-2 text-sm">Target Note</div>
+        <div className="text-muted-foreground mb-2 text-sm">Nota Objetivo</div>
         <div className="text-foreground text-5xl font-bold">{targetNote}</div>
       </div>
 
-      {/* Detected Note */}
-      <div className="text-center">
-        <div className="text-muted-foreground mb-2 text-sm">Detected</div>
-        {detectedPitchName ? (
-          <>
-            <div
-              className={`text-3xl font-semibold ${
-                targetNote === detectedPitchName && isInTune ? 'text-green-500' : 'text-yellow-500'
-              }`}
-            >
-              {detectedPitchName}
+      {/* NUEVA SECCIÓN: Emotional Feedback */}
+      <Card className="p-8">
+        <EmotionalFeedback
+          centsOff={centsOff}
+          isInTune={isInTune}
+          noteMatches={noteMatches}
+          status={status}
+        />
+      </Card>
+
+      {/* Detalles técnicos - solo si está habilitado */}
+      {showTechnicalDetails && (
+        <Card className="p-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Detectado:</span>
+              <span className="ml-2 font-semibold">{detectedPitchName || '-'}</span>
             </div>
-            {centsOff !== null && centsOff !== undefined && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="text-muted-foreground text-lg">
-                      {centsOff > 0 ? '+' : ''}
-                      {centsOff.toFixed(1)}¢
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    A cent is 1/100th of a semitone. A deviation of less than ±10 cents is
-                    considered in tune.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </>
-        ) : (
-          <div className="text-muted-foreground flex items-center justify-center gap-2">
-            <Music className="h-6 w-6" />
-            <span>Play the note</span>
+            <div>
+              <span className="text-muted-foreground">Desviación:</span>
+              <span className="ml-2 font-semibold">
+                {centsOff !== null ? `${centsOff.toFixed(1)}¢` : '-'}
+              </span>
+            </div>
           </div>
-        )}
-      </div>
+        </Card>
+      )}
 
       {/* Status Indicator */}
       <div className="flex items-center justify-center gap-2">
