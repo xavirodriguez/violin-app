@@ -325,7 +325,9 @@ function handleStopReset(state: PracticeState): PracticeState {
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-  buffer.push(...[payload, ...state.detectionHistory])
+  // To maintain newest at index 0, we push existing items in reverse order before the new payload.
+  // FixedRingBuffer.push then reverses the entire argument list, putting payload at index 0.
+  buffer.push(...state.detectionHistory.slice().reverse(), payload)
   // Transition back to listening if we were validating/correct and received a detection
   const status =
     state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
