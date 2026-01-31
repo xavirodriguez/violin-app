@@ -1,0 +1,110 @@
+{
+  "discovery": {
+    "discovery_timestamp": "2026-01-31T14:40:00Z",
+    "total_features_detected": 9,
+    "features": [
+      {
+        "id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+        "name": "Violin Fingerboard Visualization",
+        "type": "UI_UX",
+        "current_state": "stable",
+        "locations": ["components/practice-mode.tsx"],
+        "enabled": true,
+        "riskLevel": "LOW",
+        "maturity": 10
+      },
+      {
+        "id": "FEATURE_ANALYTICS_DASHBOARD",
+        "name": "Progress Analytics Dashboard",
+        "type": "BETA",
+        "current_state": "beta",
+        "locations": ["app/page.tsx", "components/analytics-dashboard.tsx"],
+        "enabled": false,
+        "riskLevel": "LOW",
+        "maturity": 7
+      },
+      {
+        "id": "FEATURE_TECHNICAL_FEEDBACK",
+        "name": "Advanced Technical Feedback",
+        "type": "UI_UX",
+        "current_state": "stable",
+        "locations": ["components/practice-feedback.tsx"],
+        "enabled": true,
+        "riskLevel": "LOW",
+        "maturity": 9
+      },
+      {
+        "id": "FEATURE_PRACTICE_ASSISTANT",
+        "name": "Contextual Practice Assistant (cmdk)",
+        "type": "BETA",
+        "current_state": "alpha",
+        "locations": ["app/layout.tsx"],
+        "enabled": false,
+        "riskLevel": "MEDIUM",
+        "maturity": 4
+      },
+      {
+        "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+        "name": "Adaptive Difficulty Engine",
+        "type": "EXPERIMENTAL",
+        "current_state": "alpha",
+        "locations": ["lib/practice-core.ts"],
+        "enabled": false,
+        "riskLevel": "MEDIUM",
+        "maturity": 3
+      },
+      {
+        "id": "FEATURE_AUDIO_WEB_WORKER",
+        "name": "Web Worker Audio Processing",
+        "type": "PERFORMANCE",
+        "current_state": "alpha",
+        "locations": ["lib/pitch-detector.ts", "lib/note-stream.ts"],
+        "enabled": false,
+        "riskLevel": "HIGH",
+        "maturity": 2
+      }
+    ]
+  },
+  "scoring": [
+    {
+      "feature_id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+      "composite_score": {
+        "growth_readiness": 10,
+        "recommendation": "FAST_TRACK"
+      }
+    },
+    {
+      "feature_id": "FEATURE_TECHNICAL_FEEDBACK",
+      "composite_score": {
+        "growth_readiness": 9,
+        "recommendation": "FAST_TRACK"
+      }
+    },
+    {
+      "feature_id": "FEATURE_PRACTICE_ASSISTANT",
+      "composite_score": {
+        "growth_readiness": 6,
+        "recommendation": "GRADUAL"
+      }
+    }
+  ],
+  "decision": {
+    "selected_for_growth": [
+      {
+        "feature_id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+        "action": "PROMOTE_TO_STABLE",
+        "rationale": "High maturity and universal positive impact. No longer needs to be a toggle."
+      },
+      {
+        "feature_id": "FEATURE_TECHNICAL_FEEDBACK",
+        "action": "PROMOTE_TO_STABLE",
+        "rationale": "Core pedagogical value, stable implementation."
+      },
+      {
+        "feature_id": "FEATURE_PRACTICE_ASSISTANT",
+        "action": "INTEGRATE_AND_BETA_TEST",
+        "rationale": "High potential for navigation efficiency. Needs initial integration to gather feedback."
+      }
+    ]
+  }
+}

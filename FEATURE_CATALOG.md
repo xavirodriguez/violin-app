@@ -6,13 +6,13 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 
 | Flag | Category | Status | Risk |
 | :--- | :--- | :--- | :--- |
-| `FEATURE_UI_VIOLIN_FINGERBOARD` | UI_UX | ACTIVE | LOW |
+| `FEATURE_UI_VIOLIN_FINGERBOARD` | UI_UX | PERMANENT | LOW |
+| `FEATURE_TECHNICAL_FEEDBACK` | UI_UX | PERMANENT | LOW |
+| `FEATURE_PRACTICE_ASSISTANT` | BETA | ACTIVE | MEDIUM |
 | `FEATURE_ANALYTICS_DASHBOARD` | BETA | ACTIVE | LOW |
-| `FEATURE_TECHNICAL_FEEDBACK` | UI_UX | ACTIVE | LOW |
 | `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | EXPERIMENTAL | DEFINED | MEDIUM |
 | `FEATURE_AUDIO_WEB_WORKER` | PERFORMANCE | DEFINED | HIGH |
 | `FEATURE_UI_INTONATION_HEATMAPS` | EXPERIMENTAL | DEFINED | LOW |
-| `FEATURE_PRACTICE_ASSISTANT` | BETA | DEFINED | MEDIUM |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS` | EXPERIMENTAL | PLANNED | HIGH |
 | `FEATURE_TELEMETRY_ACCURACY` | INTEGRATION | PLANNED | LOW |
 
@@ -21,10 +21,15 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 ## 🛠 Active Features
 
 ### Violin Fingerboard Visualization
-- **ID**: `FEATURE_UI_VIOLIN_FINGERBOARD`
+- **ID**: `FEATURE_UI_VIOLIN_FINGERBOARD` (Promoted to Stable)
 - **Description**: Displays a virtual violin fingerboard that highlights notes as they are played.
 - **Impact**: Provides immediate visual reference for finger placement.
-- **How to test**: Open Practice mode and ensure the fingerboard is visible at the bottom.
+- **Status**: Permanent part of the UI.
+
+### Contextual Practice Assistant
+- **ID**: `FEATURE_PRACTICE_ASSISTANT`
+- **Description**: A command-palette style assistant (powered by `cmdk`) for quick navigation and drill selection.
+- **Status**: Integrated and active. Accessible via `Meta+K` or `Ctrl+K`.
 
 ### Progress Analytics Dashboard
 - **ID**: `FEATURE_ANALYTICS_DASHBOARD`
@@ -33,10 +38,10 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 - **How to test**: Toggle the 'Dashboard' tab in the main header.
 
 ### Advanced Technical Feedback
-- **ID**: `FEATURE_TECHNICAL_FEEDBACK`
+- **ID**: `FEATURE_TECHNICAL_FEEDBACK` (Promoted to Stable)
 - **Description**: Shows pedagogical tips and technical observations (e.g., "Keep it steady!") during practice.
 - **Impact**: Provides qualitative feedback beyond simple pitch accuracy.
-- **How to test**: Perform a practice session and look for text observations in the feedback panel.
+- **Status**: Permanent part of the UI.
 
 ---
 
@@ -57,10 +62,6 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 - **Description**: Visualizes pitch accuracy patterns over time on a staff or fingerboard overlay.
 - **Status**: UI components being designed.
 
-### Contextual Practice Assistant
-- **ID**: `FEATURE_PRACTICE_ASSISTANT`
-- **Description**: A command-palette style assistant (powered by `cmdk`) for quick navigation and drill selection.
-- **Status**: Integration in `app/layout.tsx` pending.
 
 ---
 

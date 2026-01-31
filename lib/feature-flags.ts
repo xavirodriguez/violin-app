@@ -26,16 +26,6 @@ export interface FeatureFlagMetadata {
 }
 
 export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
-  FEATURE_UI_VIOLIN_FINGERBOARD: {
-    name: 'FEATURE_UI_VIOLIN_FINGERBOARD',
-    key: 'uiViolinFingerboard',
-    type: 'UI_UX',
-    description: 'Toggle the violin fingerboard visualization in practice mode.',
-    defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/practice-mode.tsx'],
-    rollbackStrategy: 'Disable the flag to hide the fingerboard visualization.'
-  },
   FEATURE_ANALYTICS_DASHBOARD: {
     name: 'FEATURE_ANALYTICS_DASHBOARD',
     key: 'analyticsDashboard',
@@ -81,20 +71,10 @@ export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
     key: 'practiceAssistant',
     type: 'BETA',
     description: 'Enable the contextual practice assistant (cmdk).',
-    defaultValue: false,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['app/layout.tsx'],
-    rollbackStrategy: 'Disable the practice assistant component.'
-  },
-  FEATURE_TECHNICAL_FEEDBACK: {
-    name: 'FEATURE_TECHNICAL_FEEDBACK',
-    key: 'technicalFeedback',
-    type: 'UI_UX',
-    description: 'Show advanced technical observations and pedagogical tips.',
     defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/practice-feedback.tsx'],
-    rollbackStrategy: 'Disable advanced observations display.'
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['app/layout.tsx', 'components/practice-assistant.tsx'],
+    rollbackStrategy: 'Disable the practice assistant component.'
   },
   FEATURE_SOCIAL_PRACTICE_ROOMS: {
     name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
@@ -125,8 +105,6 @@ class FeatureFlagsManager {
    */
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
-      case 'FEATURE_UI_VIOLIN_FINGERBOARD':
-        return process.env.FEATURE_UI_VIOLIN_FINGERBOARD ?? process.env.NEXT_PUBLIC_FEATURE_UI_VIOLIN_FINGERBOARD
       case 'FEATURE_ANALYTICS_DASHBOARD':
         return process.env.FEATURE_ANALYTICS_DASHBOARD ?? process.env.NEXT_PUBLIC_FEATURE_ANALYTICS_DASHBOARD
       case 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY':
@@ -137,8 +115,6 @@ class FeatureFlagsManager {
         return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
       case 'FEATURE_PRACTICE_ASSISTANT':
         return process.env.FEATURE_PRACTICE_ASSISTANT ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ASSISTANT
-      case 'FEATURE_TECHNICAL_FEEDBACK':
-        return process.env.FEATURE_TECHNICAL_FEEDBACK ?? process.env.NEXT_PUBLIC_FEATURE_TECHNICAL_FEEDBACK
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
