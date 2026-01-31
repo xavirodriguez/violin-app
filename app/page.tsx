@@ -5,6 +5,7 @@ import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import SettingsDialog from '@/components/settings-dialog'
+import { useFeatureFlag } from '@/lib/feature-flags'
 import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const isAnalyticsEnabled = useFeatureFlag('FEATURE_ANALYTICS_DASHBOARD')
 
   return (
     <>
@@ -48,10 +50,12 @@ export default function Home() {
                         <Music className="h-4 w-4" />
                         Practice
                       </TabsTrigger>
-                      <TabsTrigger value="dashboard" className="gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                      </TabsTrigger>
+                      {isAnalyticsEnabled && (
+                        <TabsTrigger value="dashboard" className="gap-2">
+                          <LayoutDashboard className="h-4 w-4" />
+                          Dashboard
+                        </TabsTrigger>
+                      )}
                     </TabsList>
                   </Tabs>
 
@@ -81,7 +85,7 @@ export default function Home() {
         <main className="flex-1">
           {mode === 'tuner' && <TunerMode />}
           {mode === 'practice' && <PracticeMode />}
-          {mode === 'dashboard' && <AnalyticsDashboard />}
+          {mode === 'dashboard' && isAnalyticsEnabled && <AnalyticsDashboard />}
         </main>
 
         {/* Footer */}
