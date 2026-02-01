@@ -26,17 +26,17 @@ Some features require others to be enabled or have infrastructure dependencies:
 - **Web Worker vs. Main Thread**: If `FEATURE_AUDIO_WEB_WORKER` is toggled without proper fallbacks, the entire practice engine could fail.
 - **Adaptive Difficulty vs. Manual Settings**: There might be conflicts if a user tries to manually set difficulty while the adaptive engine is trying to override it.
 
-## 🧹 Abandoned or Cleanup Candidates
+## 🧹 Cleanup and Promotion History
 
-| Feature ID | Current Status | Recommendation |
+| Feature ID | Current Status | Action Taken |
 | :--- | :--- | :--- |
-| `FEATURE_UI_VIOLIN_FINGERBOARD` | Stable / Universal | Consider removing the flag and making it a permanent part of the UI. |
-| `FEATURE_TECHNICAL_FEEDBACK` | Stable | Consider making this the default behavior and removing the toggle. |
-| `FEATURE_UI_NEW_THEME` | Example only | Remove from documentation if no plans to implement, or move to a separate 'Design System' task. |
+| `FEATURE_UI_VIOLIN_FINGERBOARD` | Stable / Universal | **PROMOTED**: Flag removed, component is now permanent. |
+| `FEATURE_TECHNICAL_FEEDBACK` | Stable | **PROMOTED**: Flag removed, feedback system is now permanent. |
+| `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
 
 ## 🚀 Architectural Recommendations
 
-1. **Automate Client Mapping**: The `getClientValue` switch-case in `lib/feature-flags.ts` is prone to human error (forgetting to add a new flag). Consider a way to automate this or use a centralized configuration that generates both the metadata and the client-side mapping.
+1. **Automate Client Mapping**: The `getClientValue` switch-case in `lib/feature-flags.ts` is prone to human error. Consider a way to automate this.
 2. **Type-Safe Flags**: Ensure that `featureFlags.isEnabled()` only accepts keys defined in `FEATURE_FLAGS_METADATA` using TypeScript's `keyof typeof FEATURE_FLAGS_METADATA`.
-3. **Rollout Metrics**: Integrate feature flags with analytics to track how often features are used when enabled, helping decide when to move from 'BETA' to 'ACTIVE'.
+3. **Rollout Metrics**: Integrate feature flags with analytics to track how often features are used when enabled.
 4. **Environment Consistency Check**: Add a startup check (or CI check) to ensure all flags defined in metadata have a corresponding entry in `.env.example`.
