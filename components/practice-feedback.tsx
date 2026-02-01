@@ -1,7 +1,11 @@
 'use client'
 
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { Info, AlertTriangle } from 'lucide-react'
 import { Observation } from '@/lib/technique-types'
+import { EmotionalFeedback } from './emotional-feedback'
+import { usePreferencesStore } from '@/stores/preferences-store'
+import { FEEDBACK_CONFIGS } from '@/lib/user-preferences'
+import { Card } from '@/components/ui/card'
 
 interface PracticeFeedbackProps {
   /** The full name of the note the student should play (e.g., "G3"). */
@@ -14,123 +18,6 @@ interface PracticeFeedbackProps {
   status: string
   /** Technical observations for real-time feedback. */
   liveObservations?: Observation[]
-}
-
-function ListeningStatus({ targetNote }: { targetNote: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-6xl mb-4" role="img" aria-label="violin">🎻</div>
-      <div className="text-2xl text-muted-foreground font-medium">
-        Play {targetNote}
-      </div>
-    </div>
-  )
-}
-
-function PerfectStatus() {
-  return (
-    <div className="text-center">
-      <CheckCircle2 className="w-32 h-32 text-green-500 mx-auto mb-4" />
-      <div className="text-4xl font-bold text-green-500">Perfect!</div>
-    </div>
-  )
-}
-
-function AdjustStatus({ centsOff }: { centsOff: number }) {
-  const color = Math.abs(centsOff) < 15 ? '#F59E0B' : '#EF4444'
-  return (
-    <div className="text-center">
-      <div className="text-8xl font-bold mb-4" style={{ color }}>
-        {centsOff > 0 ? '↑' : '↓'}
-      </div>
-      <div className="text-3xl font-semibold" style={{ color }}>
-        {Math.abs(centsOff) < 15 ? 'Almost!' : 'Adjust'}
-      </div>
-      <div className="text-xl text-muted-foreground mt-2">
-        {centsOff > 0 ? 'Move finger down' : 'Move finger up'}
-      </div>
-    </div>
-  )
-}
-
-function WrongNoteStatus({ detectedPitchName, targetNote }: { detectedPitchName?: string, targetNote: string }) {
-  return (
-    <div className="text-center">
-      <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
-      <div className="text-3xl font-bold text-yellow-500 mb-2">
-        Wrong Note
-      </div>
-      <div className="text-xl text-muted-foreground">
-        Playing: <span className="font-mono">{detectedPitchName}</span>
-      </div>
-      <div className="text-xl text-muted-foreground">
-        Need: <span className="font-mono">{targetNote}</span>
-      </div>
-    </div>
-  )
-}
-
-interface Level1Props {
-  status: string
-  targetNote: string
-  isPlaying: boolean
-  isCorrectNote: boolean
-  isInTune: boolean
-  centsOff?: number | null
-  detectedPitchName?: string
-}
-
-function Level1Status({
-  status,
-  targetNote,
-  isPlaying,
-  isCorrectNote,
-  isInTune,
-  centsOff,
-  detectedPitchName
-}: Level1Props) {
-  if (status === 'listening' && !isPlaying) {
-    return <ListeningStatus targetNote={targetNote} />
-  }
-
-  if (isPlaying && isCorrectNote) {
-    if (isInTune) {
-      return <PerfectStatus />
-    }
-    return <AdjustStatus centsOff={centsOff ?? 0} />
-  }
-
-  if (isPlaying && !isCorrectNote) {
-    return <WrongNoteStatus detectedPitchName={detectedPitchName} targetNote={targetNote} />
-  }
-
-  return null
-}
-
-function Level2TechnicalDetails({ isPlaying, centsOff }: { isPlaying: boolean, centsOff?: number | null }) {
-  if (!isPlaying || centsOff === null || centsOff === undefined) return null
-
-  return (
-    <details className="text-center">
-      <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-        Show Technical Details
-      </summary>
-      <div className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-center gap-8">
-          <div>
-            <div className="text-muted-foreground">Deviation</div>
-            <div className="font-mono text-lg">
-              {centsOff > 0 ? '+' : ''}{centsOff.toFixed(1)}¢
-            </div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">Tolerance</div>
-            <div className="font-mono text-lg">±10¢</div>
-          </div>
-        </div>
-      </div>
-    </details>
-  )
 }
 
 function Level3LiveFeedback({ liveObservations }: { liveObservations: Observation[] }) {
@@ -180,29 +67,49 @@ export function PracticeFeedback({
   status,
   liveObservations = [],
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
-  const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
-  const isCorrectNote = detectedPitchName === targetNote
+  const { feedbackLevel, showTechnicalDetails } = usePreferencesStore()
+  const config = FEEDBACK_CONFIGS[feedbackLevel]
+
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < config.centsTolerance
+  const noteMatches = detectedPitchName === targetNote
 
   return (
-    <div className="space-y-8">
-      {/* LEVEL 1: Primary State */}
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Level1Status
-          status={status}
-          targetNote={targetNote}
-          isPlaying={isPlaying}
-          isCorrectNote={isCorrectNote}
-          isInTune={isInTune}
-          centsOff={centsOff}
-          detectedPitchName={detectedPitchName}
-        />
+    <div className="space-y-6">
+      {/* Target Note */}
+      <div className="text-center">
+        <div className="text-muted-foreground mb-2 text-sm">Target Note</div>
+        <div className="text-foreground text-5xl font-bold">{targetNote}</div>
       </div>
 
-      {/* LEVEL 2: Precise Metrics */}
-      <Level2TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} />
+      {/* Emotional Feedback Section */}
+      <Card className="p-8">
+        <EmotionalFeedback
+          centsOff={centsOff ?? null}
+          isInTune={isInTune}
+          noteMatches={noteMatches}
+          status={status}
+        />
+      </Card>
 
-      {/* LEVEL 3: Live Observations */}
+      {/* Technical Details - only if enabled */}
+      {showTechnicalDetails && (
+        <Card className="p-4">
+          <div className="grid grid-cols-2 gap-4 text-sm text-center">
+            <div>
+              <span className="text-muted-foreground">Detected:</span>
+              <span className="ml-2 font-mono font-semibold">{detectedPitchName || '-'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Deviation:</span>
+              <span className="ml-2 font-mono font-semibold">
+                {centsOff !== null && centsOff !== undefined ? `${centsOff.toFixed(1)}¢` : '-'}
+              </span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Live Observations */}
       <Level3LiveFeedback liveObservations={liveObservations} />
     </div>
   )
