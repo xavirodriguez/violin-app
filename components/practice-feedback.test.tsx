@@ -59,6 +59,7 @@ describe('PracticeFeedback', () => {
         detectedPitchName="A4"
         centsOff={12} // Within 25 cents tolerance for beginner
         status="listening"
+        centsTolerance={10}
       />
     )
     expect(screen.getByText('Great!')).toBeDefined()
