@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
 import type { Exercise } from '@/lib/domain/musical-types'
+import { checkAchievements } from '@/lib/achievements/achievement-checker'
+import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
+import { analytics } from '@/lib/analytics-tracker'
 
 /** Represents a single, completed practice session. */
 export interface PracticeSession {
@@ -71,6 +74,8 @@ export interface AnalyticsStore {
   currentSession: PracticeSession | null
   sessions: PracticeSession[]
   progress: UserProgress
+  currentPerfectStreak: number
+  onAchievementUnlocked?: (achievement: Achievement) => void
   startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
   endSession: () => void
   recordNoteAttempt: (
@@ -84,6 +89,7 @@ export interface AnalyticsStore {
     timeToCompleteMs: number,
     technique?: NoteTechnique,
   ) => void
+  checkAndUnlockAchievements: () => void
   getSessionHistory: (days?: number) => PracticeSession[]
   getExerciseStats: (exerciseId: string) => ExerciseStats | null
   getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
@@ -128,6 +134,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
     (set, get) => ({
       currentSession: null,
       sessions: [],
+      currentPerfectStreak: 0,
+      onAchievementUnlocked: undefined,
       progress: {
         userId: 'default',
         totalPracticeSessions: 0,
@@ -144,6 +152,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       startSession: (exerciseId, exerciseName, mode) => {
         const nowMs = Date.now()
+        analytics.track('practice_session_started', { exerciseId, exerciseName, mode })
         const session: PracticeSession = {
           id: crypto.randomUUID(),
           startTimeMs: nowMs,
@@ -191,7 +200,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         updateStreak(newProgress, sessions)
         calculateSkills(newProgress, newSessions)
 
-        const newAchievements = checkAchievements(newProgress, completedSession, newSessions)
+        analytics.track('practice_session_completed', {
+          exerciseId: currentSession.exerciseId,
+          durationMs,
+          accuracy: completedSession.accuracy,
+        })
+
+        const newAchievements = checkLegacyAchievements(newProgress, completedSession, newSessions)
         newProgress.achievements = [...progress.achievements, ...newAchievements]
 
         set({
@@ -233,6 +248,19 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       recordNoteCompletion: (noteIndex, timeToCompleteMs, technique) => {
+        const state = get()
+        if (!state.currentSession) return
+
+        const noteResult = state.currentSession.noteResults.find((nr) => nr.noteIndex === noteIndex)
+        // Pedagogy: a "perfect" note is within 5 cents
+        const wasPerfect = noteResult && Math.abs(noteResult.averageCents) < 5
+
+        // Update streak
+        const newStreak = wasPerfect ? state.currentPerfectStreak + 1 : 0
+        if (newStreak > 0 && newStreak % 5 === 0) {
+          analytics.track('perfect_note_streak', { streak_length: newStreak })
+        }
+
         set((state) => {
           const prevSession = state.currentSession
           if (!prevSession) return state
@@ -240,6 +268,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             nr.noteIndex === noteIndex ? { ...nr, timeToCompleteMs, technique } : nr,
           )
           return {
+            currentPerfectStreak: newStreak,
             currentSession: {
               ...prevSession,
               notesCompleted: prevSession.notesCompleted + 1,
@@ -247,6 +276,56 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             },
           }
         })
+
+        // Check achievements after each completed note
+        get().checkAndUnlockAchievements()
+      },
+
+      checkAndUnlockAchievements: () => {
+        const state = get()
+        if (!state.currentSession) return
+
+        // Build stats for checker
+        const stats: AchievementCheckStats = {
+          currentSession: {
+            correctNotes: state.currentSession.notesCompleted,
+            perfectNoteStreak: state.currentPerfectStreak,
+            accuracy: state.currentSession.accuracy,
+            durationMs: Date.now() - state.currentSession.startTimeMs,
+            exerciseId: state.currentSession.exerciseId,
+          },
+          totalSessions: state.sessions.length,
+          totalPracticeDays: calculatePracticeDays(state.sessions),
+          currentStreak: state.progress.currentStreak,
+          longestStreak: state.progress.longestStreak,
+          exercisesCompleted: state.progress.exercisesCompleted || [],
+          totalPracticeTimeMs: state.progress.totalPracticeTime * 1000,
+          averageAccuracy: state.progress.overallSkill,
+        }
+
+        // Get IDs of already unlocked achievements
+        const unlockedIds = state.progress.achievements.map((a) => a.id)
+
+        // Check for new achievements
+        const newAchievements = checkAchievements(stats, unlockedIds)
+
+        if (newAchievements.length > 0) {
+          set((state) => ({
+            progress: {
+              ...state.progress,
+              achievements: [...state.progress.achievements, ...newAchievements],
+            },
+          }))
+
+          // Notify each newly unlocked achievement
+          newAchievements.forEach((achievement) => {
+            state.onAchievementUnlocked?.(achievement)
+            analytics.track('achievement_unlocked', {
+              achievementId: achievement.id,
+              achievementName: achievement.name
+            })
+          })
+        }
       },
 
       getSessionHistory: (days = 7) => {
@@ -438,6 +517,11 @@ function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
   progress.overallSkill = Math.round((progress.intonationSkill + progress.rhythmSkill) / 2)
 }
 
+function calculatePracticeDays(sessions: PracticeSession[]): number {
+  const uniqueDays = new Set(sessions.map((s) => new Date(s.endTimeMs).toDateString()))
+  return uniqueDays.size
+}
+
 function updateNoteResults(
   noteResults: NoteResult[],
   noteIndex: number,
@@ -497,7 +581,7 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
   return Math.round(score)
 }
 
-function checkAchievements(
+function checkLegacyAchievements(
   progress: UserProgress,
   session: PracticeSession,
   allSessions: PracticeSession[],

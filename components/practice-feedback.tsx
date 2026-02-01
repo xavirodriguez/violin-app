@@ -1,7 +1,11 @@
 'use client'
 
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { Info, AlertTriangle } from 'lucide-react'
 import { Observation } from '@/lib/technique-types'
+import { EmotionalFeedback } from './emotional-feedback'
+import { usePreferencesStore } from '@/stores/preferences-store'
+import { FEEDBACK_CONFIGS } from '@/lib/user-preferences'
+import { Card } from '@/components/ui/card'
 
 interface PracticeFeedbackProps {
   /** The full name of the note the student should play (e.g., "G3"). */
@@ -198,18 +202,11 @@ export function PracticeFeedback({
   const isCorrectNote = detectedPitchName === targetNote
 
   return (
-    <div className="space-y-8">
-      {/* LEVEL 1: Primary State */}
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Level1Status
-          status={status}
-          targetNote={targetNote}
-          isPlaying={isPlaying}
-          isCorrectNote={isCorrectNote}
-          isInTune={isInTune}
-          centsOff={centsOff}
-          detectedPitchName={detectedPitchName}
-        />
+    <div className="space-y-6">
+      {/* Target Note */}
+      <div className="text-center">
+        <div className="text-muted-foreground mb-2 text-sm">Target Note</div>
+        <div className="text-foreground text-5xl font-bold">{targetNote}</div>
       </div>
 
       {/* LEVEL 2: Precise Metrics */}
@@ -219,7 +216,7 @@ export function PracticeFeedback({
         centsTolerance={centsTolerance}
       />
 
-      {/* LEVEL 3: Live Observations */}
+      {/* Live Observations */}
       <Level3LiveFeedback liveObservations={liveObservations} />
     </div>
   )
