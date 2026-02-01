@@ -98,17 +98,25 @@ function processSessionEvent(
   let newState = { ...state }
 
   if (event.type === 'NOTE_MATCHED') {
-    newState = handleMatchedNoteSideEffects(
-      event,
-      currentState,
-      state.lastDispatchedNoteIndex,
-      state.currentNoteStartedAt,
-      deps.analytics,
-    )
+    try {
+      newState = handleMatchedNoteSideEffects(
+        event,
+        currentState,
+        state.lastDispatchedNoteIndex,
+        state.currentNoteStartedAt,
+        deps.analytics,
+      )
+    } catch (err) {
+      console.error('[PIPELINE] handleMatchedNoteSideEffects failed', err)
+    }
   }
 
   if (!deps.signal.aborted) {
-    handlePracticeEvent(event, deps.store, () => void deps.store.stop(), deps.analytics)
+    try {
+      handlePracticeEvent(event, deps.store, () => void deps.store.stop(), deps.analytics)
+    } catch (err) {
+      console.error('[PIPELINE] handlePracticeEvent failed', err)
+    }
   }
 
   return newState
@@ -126,6 +134,12 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
   const { signal, sessionId, detector, exercise, sessionStartTime } = deps
   let loopState = { lastDispatchedNoteIndex: -1, currentNoteStartedAt: Date.now() }
 
+  const analyser = deps.store.getState().analyser
+  if (!analyser) {
+    console.error('[PIPELINE] Aborting: Analyser is null at start', { sessionId })
+    return
+  }
+
   const targetNoteSelector = () => {
     if (signal.aborted) return null
     const state = deps.store.getState().practiceState
@@ -138,7 +152,7 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
     return deps.store.getState().practiceState?.currentIndex ?? 0
   }
 
-  const rawPitchStream = createRawPitchStream(deps.store.getState().analyser!, detector, signal)
+  const rawPitchStream = createRawPitchStream(analyser, detector, signal)
   const practiceEventPipeline = createPracticeEventPipeline(
     rawPitchStream,
     targetNoteSelector,
@@ -152,6 +166,10 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
   try {
     for await (const event of practiceEventPipeline) {
       if (signal.aborted) break
+      if (!event) {
+        console.warn('[PIPELINE] Null event yielded from pipeline', { sessionId })
+        continue
+      }
       loopState = processSessionEvent(event, deps, loopState)
     }
   } catch (err) {

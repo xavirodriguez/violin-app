@@ -95,10 +95,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       try {
         // 2. Resource-first cleanup: kill any existing session/loop
+        // stop() already increments sessionId, so we don't need another increment here.
         await get().stop()
 
-        // Re-lock isStarting and increment sessionId atomically
-        set((state) => ({ isStarting: true, sessionId: state.sessionId + 1 }))
+        // Re-lock isStarting since stop() sets it to false
+        set({ isStarting: true })
 
         localSessionId = get().sessionId
         practiceLoopController = new AbortController()
@@ -109,7 +110,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const { context } = await audioManager.initialize(tunerState.deviceId ?? undefined)
 
         // Post-await check: has the session been aborted or superseded?
-        if (signal.aborted || get().sessionId !== localSessionId) return
+        if (signal.aborted || get().sessionId !== localSessionId) {
+          set((state) => {
+            if (state.sessionId !== localSessionId) return state
+            return { isStarting: false }
+          })
+          return
+        }
 
         // Apply sensitivity from tuner store
         audioManager.setGain(tunerState.sensitivity / 50)
@@ -122,10 +129,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const listeningState = reducePracticeEvent(initialState, { type: 'START' })
 
         // 4. Atomic state update to transition to listening mode
+        let updateCommitted = false
         set((state) => {
           // Final check before committing state changes
-          if (state.sessionId !== localSessionId) return state
+          if (state.sessionId !== localSessionId) {
+            console.warn('[PIPELINE] Session superseded before listening transition', {
+              local: localSessionId,
+              current: state.sessionId,
+            })
+            return state
+          }
 
+          updateCommitted = true
           return {
             detector,
             analyser,
@@ -133,6 +148,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             isStarting: false,
           }
         })
+
+        if (!updateCommitted) {
+          console.warn('[PIPELINE] Aborting start: Session superseded during initialization', {
+            localSessionId,
+          })
+          return
+        }
 
         // Sync with TunerStore
         useTunerStore.setState({
@@ -194,7 +216,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           if (name !== 'AbortError' && get().sessionId === localSessionId) {
             const appError = toAppError(err, ERROR_CODES.UNKNOWN)
             console.error('[PRACTICE LOOP ERROR]', appError)
-            set(() => ({ error: appError }))
+            set((state) => {
+              if (state.sessionId !== localSessionId) return state
+              return { error: appError }
+            })
             void get().stop()
           }
         })
