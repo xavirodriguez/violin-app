@@ -14,7 +14,6 @@ import {
   type TargetNote,
   type DetectedNote,
   formatPitchName,
-  type PracticeState,
 } from '@/lib/practice-core'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
@@ -32,6 +31,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
+import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
 const DEFAULT_CENTS_TOLERANCE = 25
 
@@ -164,13 +164,13 @@ function PracticeActiveView({
   targetNote,
   targetPitchName,
   lastDetectedNote,
-  lastObservations,
+  liveObservations,
 }: {
   status: string
   targetNote: TargetNote | null
   targetPitchName: string | null
   lastDetectedNote: DetectedNote | null | undefined
-  lastObservations?: Observation[]
+  liveObservations: Observation[]
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
   if (!isActive || !targetNote || !targetPitchName) return null
@@ -183,8 +183,7 @@ function PracticeActiveView({
           detectedPitchName={lastDetectedNote?.pitch}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
-          liveObservations={lastObservations}
-          centsTolerance={DEFAULT_CENTS_TOLERANCE}
+          liveObservations={liveObservations}
         />
       </Card>
       <Card className="p-12">
@@ -223,15 +222,20 @@ function SheetMusicView({
 
 /**
  * Renders the practice interface and manages its complex lifecycle.
- *
- * @remarks
- * State flow:
- * - `idle`: Shows exercise selector and "Start" button.
- * - `listening`: Audio loop is active, providing real-time feedback.
- * - `completed`: Shows success state and option to restart.
  */
 export function PracticeMode() {
-  const { practiceState, error, loadExercise, start, stop, reset } = usePracticeStore()
+  const {
+    practiceState,
+    error,
+    loadExercise,
+    start,
+    stop,
+    reset,
+    analyser,
+    detector,
+    consumePipelineEvents,
+    liveObservations
+  } = usePracticeStore()
 
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
@@ -249,6 +253,64 @@ export function PracticeMode() {
   useEffect(() => {
     syncCursorWithNote(osmdHook, status, currentNoteIndex)
   }, [currentNoteIndex, status, osmdHook])
+
+  // NEW: Audio loop connected to the pipeline
+  useEffect(() => {
+    // Only execute if in listening mode
+    if (status !== 'listening') return
+    if (!analyser || !detector) return
+
+    const abortController = new AbortController()
+
+    const runPipeline = async () => {
+      try {
+        // 1. Create raw pitch stream
+        const rawPitchStream = createRawPitchStream(
+          analyser,
+          detector,
+          abortController.signal
+        )
+
+        // 2. Create event pipeline
+        const eventPipeline = createPracticeEventPipeline(
+          rawPitchStream,
+          () => practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
+          () => practiceState?.currentIndex ?? 0,
+          {
+            minRms: 0.015,
+            minConfidence: 0.85,
+            centsTolerance: 20, // Stricter than default 25
+            requiredHoldTime: 500,
+            exercise: practiceState?.exercise,
+            bpm: 60,
+            sessionStartTime: Date.now()
+          },
+          abortController.signal
+        )
+
+        // 3. Consume events (updates store automatically)
+        await consumePipelineEvents(eventPipeline)
+
+      } catch (error) {
+        if ((error as any).name !== 'AbortError') {
+          console.error('[PracticeMode] Pipeline error:', error)
+        }
+      }
+    }
+
+    runPipeline()
+
+    return () => {
+      abortController.abort()
+    }
+  }, [
+    status,
+    currentNoteIndex,
+    analyser,
+    detector,
+    consumePipelineEvents,
+    practiceState?.exercise, // Added to restart pipeline if exercise changes
+  ])
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[0] : null
@@ -293,7 +355,7 @@ export function PracticeMode() {
           targetNote={targetNote}
           targetPitchName={targetPitchName}
           lastDetectedNote={lastDetectedNote}
-          lastObservations={practiceState?.lastObservations}
+          liveObservations={liveObservations}
         />
 
         {status === 'completed' && <PracticeCompletion onRestart={handleRestart} />}

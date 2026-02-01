@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
   audioManager: {
     initialize: vi.fn(),
-    cleanup: vi.fn(),
+    cleanup: vi.fn().mockResolvedValue(undefined),
     getAnalyser: vi.fn(() => ({
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
