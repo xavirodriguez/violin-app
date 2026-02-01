@@ -1,7 +1,11 @@
 'use client'
 
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { useEffect } from 'react'
+import { CheckCircle2, AlertTriangle, Info, Check } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Observation } from '@/lib/technique-types'
+import { PitchAccuracyMeter } from '@/components/ui/pitch-accuracy-meter'
+import { cn } from '@/lib/utils'
 
 interface PracticeFeedbackProps {
   /** The full name of the note the student should play (e.g., "G3"). */
@@ -14,6 +18,12 @@ interface PracticeFeedbackProps {
   status: string
   /** Technical observations for real-time feedback. */
   liveObservations?: Observation[]
+  /** Current duration the note has been held. */
+  holdDuration?: number
+  /** Required duration to hold the note. */
+  requiredHoldTime?: number
+  /** Number of consecutive perfect notes. */
+  perfectNoteStreak?: number
 }
 
 function ListeningStatus({ targetNote }: { targetNote: string }) {
@@ -30,8 +40,39 @@ function ListeningStatus({ targetNote }: { targetNote: string }) {
 function PerfectStatus() {
   return (
     <div className="text-center">
-      <CheckCircle2 className="w-32 h-32 text-green-500 mx-auto mb-4" />
-      <div className="text-4xl font-bold text-green-500">Perfect!</div>
+      <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1.1, opacity: 1 }} transition={{ duration: 0.3, type: "spring" }}>
+        <CheckCircle2 className="w-32 h-32 text-[var(--pitch-perfect)] mx-auto mb-4" />
+      </motion.div>
+      <div className="text-4xl font-bold text-[var(--pitch-perfect)]">Perfect!</div>
+    </div>
+  )
+}
+
+function ValidatingFeedback({ holdDuration = 0, requiredHoldTime = 1000 }: { holdDuration?: number; requiredHoldTime?: number }) {
+  const progress = Math.min(100, (holdDuration / requiredHoldTime) * 100)
+  const isHalfway = holdDuration > requiredHoldTime * 0.5
+  useEffect(() => { if (holdDuration >= requiredHoldTime && typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(200) }, [holdDuration, requiredHoldTime])
+
+  return (
+    <div className="text-center relative">
+      <div className="relative w-48 h-48 mx-auto mb-4 flex items-center justify-center">
+        <svg className="w-full h-full transform -rotate-90">
+          <circle cx="96" cy="96" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-muted/20" />
+          <motion.circle cx="96" cy="96" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={2 * Math.PI * 80} animate={{ strokeDashoffset: 2 * Math.PI * 80 * (1 - progress / 100) }} className="text-[var(--pitch-perfect)]" />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+           <AnimatePresence mode="wait">
+             {isHalfway ? (
+               <motion.div key="pulse" initial={{ scale: 0.8 }} animate={{ scale: [0.8, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="bg-[var(--pitch-perfect)]/20 rounded-full w-32 h-32 flex items-center justify-center">
+                 <Check className="w-16 h-16 text-[var(--pitch-perfect)]" />
+               </motion.div>
+             ) : (
+               <motion.div key="text" className="text-2xl font-bold">HOLD...</motion.div>
+             )}
+           </AnimatePresence>
+        </div>
+      </div>
+      <div className="text-2xl font-semibold text-[var(--pitch-perfect)]">Keep it steady!</div>
     </div>
   )
 }
@@ -80,30 +121,17 @@ interface Level1Props {
   detectedPitchName?: string
 }
 
-function Level1Status({
-  status,
-  targetNote,
-  isPlaying,
-  isCorrectNote,
-  isInTune,
-  centsOff,
-  detectedPitchName
-}: Level1Props) {
-  if (status === 'listening' && !isPlaying) {
-    return <ListeningStatus targetNote={targetNote} />
-  }
+interface Level1Props extends Level1PropsBase { holdDuration?: number; requiredHoldTime?: number; }
+interface Level1PropsBase { status: string; targetNote: string; isPlaying: boolean; isCorrectNote: boolean; isInTune: boolean; centsOff?: number | null; detectedPitchName?: string; }
 
-  if (isPlaying && isCorrectNote) {
-    if (isInTune) {
-      return <PerfectStatus />
-    }
-    return <AdjustStatus centsOff={centsOff ?? 0} />
+function Level1Status({ status, targetNote, isPlaying, isCorrectNote, isInTune, centsOff, detectedPitchName, holdDuration, requiredHoldTime }: Level1Props) {
+  if (status === 'listening' && !isPlaying) return <ListeningStatus targetNote={targetNote} />
+  if (status === 'validating' || (isPlaying && isCorrectNote && isInTune)) {
+    if (status === 'validating') return <ValidatingFeedback holdDuration={holdDuration} requiredHoldTime={requiredHoldTime} />
+    return <PerfectStatus />
   }
-
-  if (isPlaying && !isCorrectNote) {
-    return <WrongNoteStatus detectedPitchName={detectedPitchName} targetNote={targetNote} />
-  }
-
+  if (isPlaying && isCorrectNote && !isInTune) return <AdjustStatus centsOff={centsOff ?? 0} />
+  if (isPlaying && !isCorrectNote) return <WrongNoteStatus detectedPitchName={detectedPitchName} targetNote={targetNote} />
   return null
 }
 
@@ -170,39 +198,60 @@ function Level3LiveFeedback({ liveObservations }: { liveObservations: Observatio
   )
 }
 
-/**
- * Renders hierarchical feedback during the practice loop.
- */
-export function PracticeFeedback({
-  targetNote,
-  detectedPitchName,
-  centsOff,
-  status,
-  liveObservations = [],
-}: PracticeFeedbackProps) {
+const playSuccessSound = () => {
+  if (typeof window === 'undefined') return
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+  const oscillator = audioContext.createOscillator()
+  const gainNode = audioContext.createGain()
+  oscillator.connect(gainNode); gainNode.connect(audioContext.destination)
+  oscillator.frequency.value = 800
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
+  oscillator.start(); oscillator.stop(audioContext.currentTime + 0.1)
+}
+
+export function PracticeFeedback({ targetNote, detectedPitchName, centsOff, status, liveObservations = [], holdDuration = 0, requiredHoldTime = 1000, perfectNoteStreak = 0 }: PracticeFeedbackProps) {
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   const isCorrectNote = detectedPitchName === targetNote
 
+  useEffect(() => { if (status === 'correct') playSuccessSound() }, [status])
+
   return (
-    <div className="space-y-8">
-      {/* LEVEL 1: Primary State */}
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Level1Status
-          status={status}
-          targetNote={targetNote}
-          isPlaying={isPlaying}
-          isCorrectNote={isCorrectNote}
-          isInTune={isInTune}
-          centsOff={centsOff}
-          detectedPitchName={detectedPitchName}
-        />
+    <div className="space-y-8 relative">
+      <AnimatePresence>
+        {perfectNoteStreak >= 3 && (
+          <motion.div initial={{ scale: 0, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} className="absolute -top-12 right-0 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1 rounded-full font-bold shadow-lg flex items-center gap-2 z-20">
+            <span className="text-lg">🔥</span><span>{perfectNoteStreak} Streak</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {detectedPitchName && detectedPitchName !== targetNote && status === 'listening' && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute top-0 right-0 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 backdrop-blur-md z-10 max-w-[150px]">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold text-yellow-600 uppercase tracking-tighter">Note Mismatch</span>
+              <span className="text-sm font-mono">{detectedPitchName}</span>
+              <span className="text-[10px] text-muted-foreground">Try playing {targetNote}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-center justify-center min-h-[240px]">
+        <AnimatePresence mode="wait">
+          <motion.div key={status + (isCorrectNote ? 'correct' : 'wrong') + (isInTune ? 'intune' : 'out')} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Level1Status status={status} targetNote={targetNote} isPlaying={isPlaying} isCorrectNote={isCorrectNote} isInTune={isInTune} centsOff={centsOff} detectedPitchName={detectedPitchName} holdDuration={holdDuration} requiredHoldTime={requiredHoldTime} />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* LEVEL 2: Precise Metrics */}
-      <Level2TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} />
+      <div className="max-w-md mx-auto">
+        <PitchAccuracyMeter centsOff={centsOff ?? null} isInTune={isInTune} />
+      </div>
 
-      {/* LEVEL 3: Live Observations */}
+      <Level2TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} />
       <Level3LiveFeedback liveObservations={liveObservations} />
     </div>
   )

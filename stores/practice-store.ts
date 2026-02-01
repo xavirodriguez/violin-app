@@ -37,10 +37,16 @@ interface PracticeStore {
   detector: PitchDetector | null
   /** True if the session is in the middle of an asynchronous startup sequence. */
   isStarting: boolean
+  /** Whether exercises should start listening automatically upon loading. */
+  autoStartEnabled: boolean
   /** The current session ID, used to prevent stale updates from previous loops. */
   sessionId: number
   /** Loads an exercise and prepares the store, stopping any active session. */
   loadExercise: (exercise: Exercise) => Promise<void>
+  /** Toggles the auto-start feature. */
+  setAutoStart: (enabled: boolean) => void
+  /** Resets the current note to the previous one or specific index. */
+  setNoteIndex: (index: number) => void
   /** Starts the audio pipeline and begins the pitch detection loop. */
   start: () => Promise<void>
   /** Stops the session, cleans up resources, and guarantees analytics closure. */
@@ -54,6 +60,7 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   exercise: exercise,
   currentIndex: 0,
   detectionHistory: [],
+  perfectNoteStreak: 0,
 })
 
 export const usePracticeStore = create<PracticeStore>((set, get) => {
@@ -67,6 +74,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     detector: null,
     analyser: null,
     isStarting: false,
+    autoStartEnabled: false,
     sessionId: 0,
 
     loadExercise: async (exercise) => {
@@ -239,6 +247,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
         void get().stop()
       }
+    },
+
+    setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
+
+    setNoteIndex: (index) => {
+      set((state) => {
+        if (!state.practiceState) return state
+        return {
+          practiceState: {
+            ...state.practiceState,
+            currentIndex: Math.max(0, Math.min(index, state.practiceState.exercise.notes.length - 1)),
+            status: 'listening',
+            holdDuration: 0,
+            detectionHistory: [],
+          },
+        }
+      })
     },
 
     stop: async () => {

@@ -15,7 +15,7 @@ describe('MusicXMLBuilder', () => {
         timeSignature: { beats: 4, beatType: 4 },
         clef: 'G',
       },
-      notes: [
+      technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
         { pitch: { step: 'C', octave: 4, alter: 0 }, duration: 4 },
         { pitch: { step: 'D', octave: 4, alter: 0 }, duration: 4 },
       ],
@@ -44,7 +44,7 @@ describe('MusicXMLBuilder', () => {
         timeSignature: { beats: 4, beatType: 4 },
         clef: 'G',
       },
-      notes: [
+      technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
         { pitch: { step: 'F', octave: 4, alter: 1 }, duration: 4 }, // F#4
         { pitch: { step: 'B', octave: 4, alter: -1 }, duration: 4 }, // Bb4
       ],

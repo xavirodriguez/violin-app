@@ -59,6 +59,10 @@ export function useOSMDSafe(
   resetCursor: () => void
   /** Safe to call anytime - no-op when !isReady */
   advanceCursor: () => void
+  /** Highlights the note at the given index */
+  highlightCurrentNote: (noteIndex: number) => void
+  /** Reference to the OSMD instance for advanced interactions */
+  osmd: OpenSheetMusicDisplay | null
 } {
   /** Indicates if the sheet music has been successfully loaded and rendered. */
   const [isReady, setIsReady] = useState(false)
@@ -156,11 +160,31 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
+  /** Highlights the current note under the cursor or by index */
+  const highlightCurrentNote = useCallback(() => {
+    if (!isReady || !osmdRef.current || !containerRef.current) return
+
+    // Clear previous highlights
+    const highlighted = containerRef.current.querySelectorAll('.note-current')
+    highlighted.forEach((el) => el.classList.remove('note-current'))
+
+    // Highlight notes under cursor
+    const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
+    if (gNotes) {
+      gNotes.forEach((gn) => {
+        // @ts-ignore - getSVGGElement exists at runtime for SVG backend
+        gn.getSVGGElement()?.classList.add('note-current')
+      })
+    }
+  }, [isReady])
+
   return {
     isReady,
     error,
     containerRef,
     resetCursor,
     advanceCursor,
+    highlightCurrentNote,
+    osmd: osmdRef.current,
   }
 }
