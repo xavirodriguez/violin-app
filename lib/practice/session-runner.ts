@@ -15,7 +15,10 @@ interface SessionRunnerDependencies {
   sessionId: number
   store: {
     getState: () => SessionState
-    setState: (fn: (state: SessionState) => Partial<SessionState>) => void
+    setState: (
+      partial: SessionState | Partial<SessionState> | ((state: SessionState) => Partial<SessionState>),
+      replace?: false,
+    ) => void
     stop: () => Promise<void>
   }
   analytics: {
@@ -67,15 +70,10 @@ function processSessionEvent(
   deps: SessionRunnerDependencies,
   state: { lastDispatchedNoteIndex: number; currentNoteStartedAt: number },
 ): { lastDispatchedNoteIndex: number; currentNoteStartedAt: number } {
-  console.debug('[PIPELINE]', event)
-
-  if (event.type === 'NOTE_DETECTED') {
-    deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
-  } else if (event.type === 'NO_NOTE_DETECTED') {
-    deps.updatePitch?.(0, 0)
+  if (!event || !event.type) {
+    console.warn('[INVALID EVENT]', event)
+    return state
   }
-
-  if (deps.signal.aborted || !event.type) return state
 
   const currentState = deps.store.getState().practiceState
   if (!currentState) {
@@ -83,20 +81,42 @@ function processSessionEvent(
     return state
   }
 
+  console.debug('[PIPELINE]', event)
+
+  try {
+    if (event.type === 'NOTE_DETECTED') {
+      deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+    } else if (event.type === 'NO_NOTE_DETECTED') {
+      deps.updatePitch?.(0, 0)
+    }
+  } catch (err) {
+    console.warn('[PIPELINE] updatePitch failed', err)
+  }
+
+  if (deps.signal.aborted) return state
+
   let newState = { ...state }
 
   if (event.type === 'NOTE_MATCHED') {
-    newState = handleMatchedNoteSideEffects(
-      event,
-      currentState,
-      state.lastDispatchedNoteIndex,
-      state.currentNoteStartedAt,
-      deps.analytics,
-    )
+    try {
+      newState = handleMatchedNoteSideEffects(
+        event,
+        currentState,
+        state.lastDispatchedNoteIndex,
+        state.currentNoteStartedAt,
+        deps.analytics,
+      )
+    } catch (err) {
+      console.error('[PIPELINE] handleMatchedNoteSideEffects failed', err)
+    }
   }
 
   if (!deps.signal.aborted) {
-    handlePracticeEvent(event, deps.store, () => void deps.store.stop(), deps.analytics)
+    try {
+      handlePracticeEvent(event, deps.store, () => void deps.store.stop(), deps.analytics)
+    } catch (err) {
+      console.error('[PIPELINE] handlePracticeEvent failed', err)
+    }
   }
 
   return newState
@@ -114,6 +134,12 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
   const { signal, sessionId, detector, exercise, sessionStartTime } = deps
   let loopState = { lastDispatchedNoteIndex: -1, currentNoteStartedAt: Date.now() }
 
+  const analyser = deps.store.getState().analyser
+  if (!analyser) {
+    console.error('[PIPELINE] Aborting: Analyser is null at start', { sessionId })
+    return
+  }
+
   const targetNoteSelector = () => {
     if (signal.aborted) return null
     const state = deps.store.getState().practiceState
@@ -126,7 +152,7 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
     return deps.store.getState().practiceState?.currentIndex ?? 0
   }
 
-  const rawPitchStream = createRawPitchStream(deps.store.getState().analyser!, detector, signal)
+  const rawPitchStream = createRawPitchStream(analyser, detector, signal)
   const practiceEventPipeline = createPracticeEventPipeline(
     rawPitchStream,
     targetNoteSelector,
@@ -140,6 +166,10 @@ export async function runPracticeSession(deps: SessionRunnerDependencies) {
   try {
     for await (const event of practiceEventPipeline) {
       if (signal.aborted) break
+      if (!event) {
+        console.warn('[PIPELINE] Null event yielded from pipeline', { sessionId })
+        continue
+      }
       loopState = processSessionEvent(event, deps, loopState)
     }
   } catch (err) {

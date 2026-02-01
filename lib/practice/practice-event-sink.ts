@@ -6,7 +6,10 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (fn: (state: T) => T | Partial<T>) => void
+  setState: (
+    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
+    replace?: false,
+  ) => void
 }
 
 /**
@@ -29,32 +32,40 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
     return
   }
 
-  // 1. Pure state transition
+  // 1. Pure state transition and side effect detection
+  let shouldTriggerCompletion = false
+
   store.setState((state) => {
     if (!state || !state.practiceState) {
-      console.warn('[EVENT SINK] Cannot reduce event: State or practiceState is null')
+      console.warn('[EVENT SINK] Cannot reduce event: State or practiceState is null', {
+        type: event.type,
+      })
       return state
     }
 
-    const nextState = reducePracticeEvent(state.practiceState, event)
+    const currentState = state.practiceState
+    const nextState = reducePracticeEvent(currentState, event)
 
     if (!nextState) {
       console.error('[EVENT SINK] Reducer returned null state', { event })
       return state
     }
 
-    // 2. Side effects (triggered by state change)
-    if (nextState.status === 'completed' && state.practiceState.status !== 'completed') {
-      setTimeout(() => {
-        try {
-          analytics?.endSession()
-          onCompleted()
-        } catch (error) {
-          console.error('Failed to handle practice completion side effect:', error)
-        }
-      }, 0)
+    // Detect transition to completed
+    if (nextState.status === 'completed' && currentState.status !== 'completed') {
+      shouldTriggerCompletion = true
     }
 
     return { ...state, practiceState: nextState }
   })
+
+  // 2. Side effects (executed outside of the reducer/updater)
+  if (shouldTriggerCompletion) {
+    try {
+      analytics?.endSession()
+      onCompleted()
+    } catch (error) {
+      console.error('[EVENT SINK] Failed to handle practice completion side effect:', error)
+    }
+  }
 }

@@ -156,6 +156,18 @@ export interface TunerStore {
 
   /**
    * Initializes audio pipeline with automatic session management.
+   *
+   * @remarks
+   * **Concurrency Safety**:
+   * - Multiple calls are safe: previous sessions are automatically invalidated
+   * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
+   * - If a previous initialization is pending, it will be cancelled
+   *
+   * **State Transitions**:
+   * - IDLE → INITIALIZING → READY (success)
+   * - IDLE → INITIALIZING → ERROR (failure)
+   *
+   * @throws Never throws - errors are captured in state.error
    */
   initialize: () => Promise<void>
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { assertValidNoteName, MusicalNote, formatPitchName } from '@/lib/practice-core'
+import { AppError } from '@/lib/errors/app-error'
 
 describe('Branded Types Validation', () => {
   it('should validate correct note names', () => {
@@ -11,11 +12,12 @@ describe('Branded Types Validation', () => {
     expect(() => assertValidNoteName('Ebb2')).not.toThrow()
   })
 
-  it('should throw on invalid note names', () => {
+  it('should throw AppError on invalid note names', () => {
+    expect(() => assertValidNoteName('H9')).toThrow(AppError)
     expect(() => assertValidNoteName('H9')).toThrow(/Invalid note name format/)
-    expect(() => assertValidNoteName('C')).toThrow(/Invalid note name format/)
-    expect(() => assertValidNoteName('4C')).toThrow(/Invalid note name format/)
-    expect(() => assertValidNoteName('')).toThrow(/Invalid note name format/)
+    expect(() => assertValidNoteName('C')).toThrow(AppError)
+    expect(() => assertValidNoteName('4C')).toThrow(AppError)
+    expect(() => assertValidNoteName('')).toThrow(AppError)
   })
 
   it('formatPitchName should return a valid NoteName', () => {

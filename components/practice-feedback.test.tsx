@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PracticeFeedback } from './practice-feedback'
 import React from 'react'
+import { Observation } from '@/lib/technique-types'
 
 describe('PracticeFeedback', () => {
   it('renders waiting state (Level 1)', () => {
@@ -9,9 +10,7 @@ describe('PracticeFeedback', () => {
       <PracticeFeedback
         targetNote="A4"
         status="listening"
-        detectedPitchName={null}
-        centsOff={null}
-      />,
+      />
     )
     expect(screen.getByText('Play A4')).toBeDefined()
     expect(screen.getByText('🎻')).toBeDefined()
@@ -82,6 +81,22 @@ describe('PracticeFeedback', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
+        detectedPitchName="A4"
+        centsOff={12}
+        status="listening"
+        liveObservations={liveObservations}
+      />
+    )
+    expect(screen.getByText('Live Feedback')).toBeDefined()
+    expect(screen.getByText('Consistently sharp')).toBeDefined()
+  })
+
+  it('technical details are inside collapsible element', () => {
+    render(
+      <PracticeFeedback
+        targetNote="A4"
+        detectedPitchName="A4"
+        centsOff={12}
         status="listening"
         detectedPitchName="A4"
         centsOff={15}

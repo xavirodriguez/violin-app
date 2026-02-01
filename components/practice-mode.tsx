@@ -33,6 +33,7 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   return (
     <div className="text-center">
@@ -172,8 +173,8 @@ function PracticeActiveView({
   if (status !== 'listening' || !targetNote) return null
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card className="p-6">
+    <>
+      <Card className="p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch}
@@ -182,14 +183,14 @@ function PracticeActiveView({
           liveObservations={liveObservations}
         />
       </Card>
-      <Card className="p-6">
+      <Card className="p-12">
         <ViolinFingerboard
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsDeviation={lastDetectedNote?.cents ?? null}
         />
       </Card>
-    </div>
+    </>
   )
 }
 
@@ -325,17 +326,17 @@ export function PracticeMode() {
 
         {error && <ErrorDisplay error={error} onReset={reset} />}
 
-        <PracticeControls
-          status={status}
-          hasExercise={!!practiceState}
-          onStart={start}
-          onStop={stop}
-          onRestart={handleRestart}
-          progress={progress}
-          currentNoteIndex={currentNoteIndex}
-          totalNotes={totalNotes}
-        />
-
+          <PracticeControls
+            status={status}
+            hasExercise={!!practiceState}
+            onStart={start}
+            onStop={stop}
+            onRestart={handleRestart}
+            progress={progress}
+            currentNoteIndex={currentNoteIndex}
+            totalNotes={totalNotes}
+          />
+        </div>
         <SheetMusicView
           musicXML={practiceState?.exercise.musicXML}
           isReady={osmdHook.isReady}
