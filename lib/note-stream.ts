@@ -82,6 +82,7 @@ export async function* createRawPitchStream(
     analyser.getFloatTimeDomainData(buffer)
     const result = detector.detectPitch(buffer)
     const rms = detector.calculateRMS(buffer)
+
     yield {
       pitchHz: result.pitchHz,
       confidence: result.confidence,
