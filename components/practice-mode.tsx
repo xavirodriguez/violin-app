@@ -162,28 +162,25 @@ function PracticeActiveView({
   targetNote,
   targetPitchName,
   lastDetectedNote,
-  holdDuration,
   lastObservations,
 }: {
   status: string
   targetNote: TargetNote | null
   targetPitchName: string | null
   lastDetectedNote: DetectedNote | null | undefined
-  holdDuration?: number
   lastObservations?: Observation[]
 }) {
-  if (status !== 'listening' || !targetNote) return null
+  if (status !== 'listening' || !targetNote || !targetPitchName) return null
 
   return (
     <>
       <Card className="p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch ?? null}
+          detectedPitchName={lastDetectedNote?.pitch}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
-          holdDuration={holdDuration}
-          observations={lastObservations}
+          liveObservations={lastObservations}
         />
       </Card>
       <Card className="p-12">
@@ -291,7 +288,6 @@ export function PracticeMode() {
           targetNote={targetNote}
           targetPitchName={targetPitchName}
           lastDetectedNote={lastDetectedNote}
-          holdDuration={practiceState?.holdDuration}
           lastObservations={practiceState?.lastObservations}
         />
 
