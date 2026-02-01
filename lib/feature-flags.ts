@@ -26,16 +26,6 @@ export interface FeatureFlagMetadata {
 }
 
 export const FEATURE_FLAGS_METADATA = {
-  FEATURE_ANALYTICS_DASHBOARD: {
-    name: 'FEATURE_ANALYTICS_DASHBOARD',
-    key: 'analyticsDashboard',
-    type: 'BETA',
-    description: 'Toggle the progress analytics dashboard.',
-    defaultValue: false,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/analytics-dashboard.tsx'],
-    rollbackStrategy: 'Disable the flag to hide the analytics dashboard.'
-  },
   FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
     name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
     key: 'practiceAdaptiveDifficulty',
@@ -65,16 +55,6 @@ export const FEATURE_FLAGS_METADATA = {
     riskLevel: 'LOW',
     affectedFiles: ['components/analytics-dashboard.tsx'],
     rollbackStrategy: 'Disable the heatmap visualization.'
-  },
-  FEATURE_PRACTICE_ASSISTANT: {
-    name: 'FEATURE_PRACTICE_ASSISTANT',
-    key: 'practiceAssistant',
-    type: 'BETA',
-    description: 'Enable the contextual practice assistant (cmdk).',
-    defaultValue: true,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['app/layout.tsx', 'components/practice-assistant.tsx'],
-    rollbackStrategy: 'Disable the practice assistant component.'
   },
   FEATURE_SOCIAL_PRACTICE_ROOMS: {
     name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
@@ -110,16 +90,12 @@ class FeatureFlagsManager {
    */
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
-      case 'FEATURE_ANALYTICS_DASHBOARD':
-        return process.env.FEATURE_ANALYTICS_DASHBOARD ?? process.env.NEXT_PUBLIC_FEATURE_ANALYTICS_DASHBOARD
       case 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY':
         return process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY
       case 'FEATURE_AUDIO_WEB_WORKER':
         return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
       case 'FEATURE_UI_INTONATION_HEATMAPS':
         return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
-      case 'FEATURE_PRACTICE_ASSISTANT':
-        return process.env.FEATURE_PRACTICE_ASSISTANT ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ASSISTANT
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
