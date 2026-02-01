@@ -8,15 +8,10 @@ import { PitchAccuracyMeter } from '@/components/ui/pitch-accuracy-meter'
 import { cn } from '@/lib/utils'
 
 interface PracticeFeedbackProps {
-  /** The full name of the note the student should play (e.g., "G3"). */
   targetNote: string
-  /** The name of the note currently being detected by the system. */
   detectedPitchName?: string
-  /** The deviation from the ideal frequency in cents. */
   centsOff?: number | null
-  /** Current status of the practice session. */
   status: string
-  /** Technical observations for real-time feedback. */
   liveObservations?: Observation[]
   /** Current duration the note has been held. */
   holdDuration?: number

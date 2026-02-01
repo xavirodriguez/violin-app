@@ -19,7 +19,6 @@ import {
   type TargetNote,
   type DetectedNote,
   formatPitchName,
-  type PracticeState,
 } from '@/lib/practice-core'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
@@ -220,7 +219,8 @@ function PracticeActiveView({
   holdDuration?: number
   perfectNoteStreak?: number
 }) {
-  if (status !== 'listening' || !targetNote || !targetPitchName) return null
+  const isActive = status === 'listening' || status === 'validating' || status === 'correct'
+  if (!isActive || !targetNote || !targetPitchName) return null
 
   return (
     <>
@@ -241,6 +241,7 @@ function PracticeActiveView({
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsDeviation={lastDetectedNote?.cents ?? null}
+          centsTolerance={DEFAULT_CENTS_TOLERANCE}
         />
       </Card>
     </>
@@ -271,12 +272,6 @@ function SheetMusicView({
 
 /**
  * Renders the practice interface and manages its complex lifecycle.
- *
- * @remarks
- * State flow:
- * - `idle`: Shows exercise selector and "Start" button.
- * - `listening`: Audio loop is active, providing real-time feedback.
- * - `completed`: Shows success state and option to restart.
  */
 export function PracticeMode() {
   const {

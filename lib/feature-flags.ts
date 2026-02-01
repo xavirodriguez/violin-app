@@ -25,7 +25,7 @@ export interface FeatureFlagMetadata {
   rollbackStrategy?: string
 }
 
-export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
+export const FEATURE_FLAGS_METADATA = {
   FEATURE_ANALYTICS_DASHBOARD: {
     name: 'FEATURE_ANALYTICS_DASHBOARD',
     key: 'analyticsDashboard',
@@ -96,7 +96,12 @@ export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
     affectedFiles: [],
     rollbackStrategy: 'Disable accuracy telemetry tracking.'
   }
-}
+} as const satisfies Record<string, FeatureFlagMetadata>
+
+/**
+ * Type representing all valid feature flag names.
+ */
+export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA
 
 class FeatureFlagsManager {
   /**
@@ -132,7 +137,7 @@ class FeatureFlagsManager {
    * they must be prefixed with NEXT_PUBLIC_. This manager checks both
    * the provided name and its NEXT_PUBLIC_ prefixed version.
    */
-  isEnabled(flagName: string): boolean {
+  isEnabled(flagName: FeatureFlagName): boolean {
     const metadata = FEATURE_FLAGS_METADATA[flagName]
     if (!metadata) {
       console.warn(`Feature flag "${flagName}" is not defined in FEATURE_FLAGS_METADATA.`)
@@ -141,7 +146,10 @@ class FeatureFlagsManager {
 
     // Check direct env var (works on server)
     // or prefixed version (works on client if explicitly mapped)
-    const val = process.env[flagName] ?? this.getClientValue(flagName) ?? process.env[`NEXT_PUBLIC_${flagName}`]
+    const val =
+      process.env[flagName] ??
+      this.getClientValue(flagName) ??
+      process.env[`NEXT_PUBLIC_${flagName}`]
 
     if (val === undefined) {
       return metadata.defaultValue
@@ -150,18 +158,27 @@ class FeatureFlagsManager {
     return val === 'true'
   }
 
-  get<T = unknown>(flagName: string, defaultValue?: T): T | string | boolean | undefined {
-    const val = process.env[flagName] ?? this.getClientValue(flagName) ?? process.env[`NEXT_PUBLIC_${flagName}`]
+  get<T = unknown>(flagName: FeatureFlagName, defaultValue?: T): T | string | boolean | undefined {
+    const val =
+      process.env[flagName] ??
+      this.getClientValue(flagName) ??
+      process.env[`NEXT_PUBLIC_${flagName}`]
     if (val !== undefined) return val
 
     const metadata = FEATURE_FLAGS_METADATA[flagName]
-    return defaultValue !== undefined ? defaultValue : (metadata ? metadata.defaultValue as unknown as T : undefined)
+    if (!metadata) {
+      return defaultValue
+    }
+    return defaultValue !== undefined
+      ? defaultValue
+      : (metadata.defaultValue as unknown as T)
   }
 
   getAll(): Record<string, boolean> {
     const allFlags: Record<string, boolean> = {}
     for (const flagName in FEATURE_FLAGS_METADATA) {
-      allFlags[flagName] = this.isEnabled(flagName)
+      const name = flagName as FeatureFlagName
+      allFlags[name] = this.isEnabled(name)
     }
     return allFlags
   }
@@ -178,7 +195,7 @@ export const featureFlags = new FeatureFlagsManager()
 /**
  * Hook to use a feature flag in a React component.
  */
-export function useFeatureFlag(flagName: string): boolean {
+export function useFeatureFlag(flagName: FeatureFlagName): boolean {
   // In a real app, this might subscribe to a store or use useSyncExternalStore
   // for real-time updates, but for now we'll just return the value.
   return featureFlags.isEnabled(flagName)
@@ -187,9 +204,9 @@ export function useFeatureFlag(flagName: string): boolean {
 /**
  * Hook to use multiple feature flags in a React component.
  */
-export function useFeatureFlags(flagNames: string[]): Record<string, boolean> {
+export function useFeatureFlags(flagNames: FeatureFlagName[]): Record<string, boolean> {
   const result: Record<string, boolean> = {}
-  flagNames.forEach(name => {
+  flagNames.forEach((name) => {
     result[name] = featureFlags.isEnabled(name)
   })
   return result
