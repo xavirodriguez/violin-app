@@ -11,7 +11,6 @@ import { Command } from 'cmdk'
 import { Search, Music, Sparkles, X } from 'lucide-react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
-import { useFeatureFlag } from '@/lib/feature-flags'
 
 /**
  * PracticeAssistant component.
@@ -22,7 +21,6 @@ import { useFeatureFlag } from '@/lib/feature-flags'
  */
 export function PracticeAssistant() {
   const [open, setOpen] = useState(false)
-  const isEnabled = useFeatureFlag('FEATURE_PRACTICE_ASSISTANT')
   const { loadExercise } = usePracticeStore()
 
   // Toggle the menu when ⌘K is pressed
@@ -37,8 +35,6 @@ export function PracticeAssistant() {
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [])
-
-  if (!isEnabled) return null
 
   return (
     <div

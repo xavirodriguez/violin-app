@@ -35,7 +35,7 @@ describe('Practice Mode - E2E Integration', () => {
     const exercise = allExercises[0]
 
     // 1. Setup: Load exercise
-    store.loadExercise(exercise)
+    await store.loadExercise(exercise)
     expect(usePracticeStore.getState().practiceState?.status).toBe('idle')
 
     // 2. Start practice

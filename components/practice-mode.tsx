@@ -18,8 +18,11 @@ import { allExercises } from '@/lib/exercises'
 import {
   type TargetNote,
   type DetectedNote,
+  type PracticeState,
   formatPitchName,
 } from '@/lib/practice-core'
+
+const DEFAULT_CENTS_TOLERANCE = 25
 import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'

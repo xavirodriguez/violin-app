@@ -32,11 +32,18 @@ Some features require others to be enabled or have infrastructure dependencies:
 | :--- | :--- | :--- |
 | `FEATURE_UI_VIOLIN_FINGERBOARD` | Stable / Universal | **PROMOTED**: Flag removed, component is now permanent. |
 | `FEATURE_TECHNICAL_FEEDBACK` | Stable | **PROMOTED**: Flag removed, feedback system is now permanent. |
+| `FEATURE_ANALYTICS_DASHBOARD` | Stable | **PROMOTED**: Flag removed, analytics is now a core view. |
+| `FEATURE_PRACTICE_ASSISTANT` | Stable | **PROMOTED**: Flag removed, cmdk assistant is now permanent. |
 | `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
 
-## 🚀 Architectural Recommendations
+## 🚀 Architectural Improvements
 
-1. **Automate Client Mapping**: The `getClientValue` switch-case in `lib/feature-flags.ts` is prone to human error. Consider a way to automate this.
-2. **Type-Safe Flags**: Ensure that `featureFlags.isEnabled()` only accepts keys defined in `FEATURE_FLAGS_METADATA` using TypeScript's `keyof typeof FEATURE_FLAGS_METADATA`.
-3. **Rollout Metrics**: Integrate feature flags with analytics to track how often features are used when enabled.
-4. **Environment Consistency Check**: Add a startup check (or CI check) to ensure all flags defined in metadata have a corresponding entry in `.env.example`.
+1. **Automate Client Mapping**: Validated and enforced via `verification/check-feature-flags.sh`.
+2. **Type-Safe Flags**: Strictly enforced using `keyof typeof FEATURE_FLAGS_METADATA`.
+3. **Robust Evaluation**: `isEnabled` now handles multiple value formats (boolean, string 'true', '1').
+4. **Environment Consistency Check**: Implemented automated bash verification script.
+
+## 📅 Remaining Recommendations
+
+1. **Rollout Metrics**: Integrate feature flags with analytics to track how often features are used when enabled.
+2. **Dynamic Overrides**: Consider supporting user-level overrides via persistent storage for beta testers.

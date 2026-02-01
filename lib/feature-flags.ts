@@ -26,16 +26,6 @@ export interface FeatureFlagMetadata {
 }
 
 export const FEATURE_FLAGS_METADATA = {
-  FEATURE_ANALYTICS_DASHBOARD: {
-    name: 'FEATURE_ANALYTICS_DASHBOARD',
-    key: 'analyticsDashboard',
-    type: 'BETA',
-    description: 'Toggle the progress analytics dashboard.',
-    defaultValue: false,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/analytics-dashboard.tsx'],
-    rollbackStrategy: 'Disable the flag to hide the analytics dashboard.'
-  },
   FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
     name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
     key: 'practiceAdaptiveDifficulty',
@@ -65,16 +55,6 @@ export const FEATURE_FLAGS_METADATA = {
     riskLevel: 'LOW',
     affectedFiles: ['components/analytics-dashboard.tsx'],
     rollbackStrategy: 'Disable the heatmap visualization.'
-  },
-  FEATURE_PRACTICE_ASSISTANT: {
-    name: 'FEATURE_PRACTICE_ASSISTANT',
-    key: 'practiceAssistant',
-    type: 'BETA',
-    description: 'Enable the contextual practice assistant (cmdk).',
-    defaultValue: true,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['app/layout.tsx', 'components/practice-assistant.tsx'],
-    rollbackStrategy: 'Disable the practice assistant component.'
   },
   FEATURE_SOCIAL_PRACTICE_ROOMS: {
     name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
@@ -110,16 +90,12 @@ class FeatureFlagsManager {
    */
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
-      case 'FEATURE_ANALYTICS_DASHBOARD':
-        return process.env.FEATURE_ANALYTICS_DASHBOARD ?? process.env.NEXT_PUBLIC_FEATURE_ANALYTICS_DASHBOARD
       case 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY':
         return process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY
       case 'FEATURE_AUDIO_WEB_WORKER':
         return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
       case 'FEATURE_UI_INTONATION_HEATMAPS':
         return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
-      case 'FEATURE_PRACTICE_ASSISTANT':
-        return process.env.FEATURE_PRACTICE_ASSISTANT ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ASSISTANT
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
@@ -144,8 +120,9 @@ class FeatureFlagsManager {
       return false
     }
 
-    // Check direct env var (works on server)
-    // or prefixed version (works on client if explicitly mapped)
+    // Priority 1: Direct environment variable (Server-side)
+    // Priority 2: Client-side mapping (Literal substitution)
+    // Priority 3: Prefixed environment variable
     const val =
       process.env[flagName] ??
       this.getClientValue(flagName) ??
@@ -155,7 +132,9 @@ class FeatureFlagsManager {
       return metadata.defaultValue
     }
 
-    return val === 'true'
+    // Handle both string and boolean representations
+    if (typeof val === 'boolean') return val
+    return val === 'true' || val === '1'
   }
 
   get<T = unknown>(flagName: FeatureFlagName, defaultValue?: T): T | string | boolean | undefined {
@@ -183,10 +162,36 @@ class FeatureFlagsManager {
     return allFlags
   }
 
-  validateFlags(): { valid: boolean; errors: string[] } {
+  /**
+   * Validates that all defined feature flags are correctly configured
+   * and accessible in the current environment.
+   */
+  validateFlags(): { valid: boolean; errors: string[]; warnings: string[] } {
     const errors: string[] = []
-    // Add validation logic if needed
-    return { valid: errors.length === 0, errors }
+    const warnings: string[] = []
+
+    for (const flagName in FEATURE_FLAGS_METADATA) {
+      const name = flagName as FeatureFlagName
+      const metadata = FEATURE_FLAGS_METADATA[name]
+
+      // Check if flag is reachable on client (if applicable)
+      const clientVal = this.getClientValue(name)
+      if (clientVal === undefined && typeof window !== 'undefined') {
+        // On client, if it's not handled in getClientValue, it might be a configuration gap
+        warnings.push(`Flag "${name}" might not be reachable on the client. Ensure it's in getClientValue and next.config.mjs.`)
+      }
+
+      // Check if metadata is missing basic info
+      if (!metadata.description) {
+        warnings.push(`Flag "${name}" is missing a description.`)
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings
+    }
   }
 }
 
