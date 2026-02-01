@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useAnalyticsStore } from './analytics-store'
-import type { NoteTechnique } from '../lib/technique-types'
+import { useAnalyticsStore, type AnalyticsStore } from './analytics-store'
+import { type NoteTechnique } from '../lib/technique-types'
 
 describe('useAnalyticsStore', () => {
   beforeEach(() => {
@@ -138,7 +138,7 @@ describe('useAnalyticsStore', () => {
       },
     }
 
-    const migrated = migrate(oldData, 0) as unknown as import('./analytics-store').AnalyticsStore
+    const migrated = migrate(oldData, 0) as unknown as AnalyticsStore
 
     const firstSession = migrated.sessions[0] as unknown as Record<string, unknown>
     const firstNoteResult = migrated.sessions[0].noteResults[0] as unknown as Record<
