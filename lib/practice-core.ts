@@ -189,6 +189,8 @@ export interface PracticeState {
   holdDuration?: number
   // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
+  // Count of consecutive notes played with high precision.
+  perfectNoteStreak: number
 }
 
 /** Events that can modify the practice state. */
@@ -309,6 +311,7 @@ function handleStart(state: PracticeState): PracticeState {
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
+    perfectNoteStreak: 0,
   }
 }
 
@@ -320,6 +323,7 @@ function handleStopReset(state: PracticeState): PracticeState {
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
+    perfectNoteStreak: 0,
   }
 }
 
@@ -354,6 +358,10 @@ function handleNoteMatched(
 ): PracticeState {
   if (state.status !== 'listening' && state.status !== 'validating') return state
 
+  const lastDetection = state.detectionHistory[0]
+  const isPerfect = lastDetection && Math.abs(lastDetection.cents) < 5
+  const newStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
+
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
   if (isLastNote) {
     return {
@@ -361,6 +369,7 @@ function handleNoteMatched(
       status: 'completed',
       holdDuration: 0,
       lastObservations: payload?.observations ?? [],
+      perfectNoteStreak: newStreak,
     }
   } else {
     return {
@@ -370,6 +379,7 @@ function handleNoteMatched(
       detectionHistory: [],
       holdDuration: 0,
       lastObservations: payload?.observations ?? [],
+      perfectNoteStreak: newStreak,
     }
   }
 }

@@ -100,7 +100,7 @@ export function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise {
       timeSignature: { beats: 4, beatType: 4 },
       keySignature: 0,
     },
-    notes: legacy.notes.map((n) => {
+    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: legacy.notes.map((n) => {
       let duration: NoteDuration = 4
       if (n.duration === 'whole') duration = 1
       else if (n.duration === 'half') duration = 2

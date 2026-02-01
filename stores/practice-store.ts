@@ -26,9 +26,17 @@ interface PracticeStore {
   error: AppError | null
   liveObservations: Observation[]
   isStarting: boolean
+  /** Whether exercises should start listening automatically upon loading. */
+  autoStartEnabled: boolean
+  /** The current session ID, used to prevent stale updates from previous loops. */
   sessionId: number
-
-  loadExercise: (exercise: Exercise) => void
+  /** Loads an exercise and prepares the store, stopping any active session. */
+  loadExercise: (exercise: Exercise) => Promise<void>
+  /** Toggles the auto-start feature. */
+  setAutoStart: (enabled: boolean) => void
+  /** Resets the current note to the previous one or specific index. */
+  setNoteIndex: (index: number) => void
+  /** Starts the audio pipeline and begins the pitch detection loop. */
   start: () => Promise<void>
   stop: () => void
   reset: () => void
@@ -41,51 +49,35 @@ const getInitialState = (exercise: Exercise): PracticeState => ({
   exercise: exercise,
   currentIndex: 0,
   detectionHistory: [],
+  perfectNoteStreak: 0,
 })
 
-export const usePracticeStore = create<PracticeStore>((set, get) => ({
-  practiceState: null,
-  analyser: null,
-  detector: null,
-  error: null,
-  liveObservations: [],
-  isStarting: false,
-  sessionId: 0,
+export const usePracticeStore = create<PracticeStore>((set, get) => {
+  // Private closure state to avoid global module contamination (SSR/Test safety)
+  // Non-serializable resources stay in the closure, while primitives move to state.
+  let practiceLoopController: AbortController | null = null
 
-  loadExercise: (exercise: Exercise) => {
-    get().stop()
-    set({
-      practiceState: getInitialState(exercise),
-      error: null,
-      liveObservations: [],
-    })
-  },
+  return {
+    practiceState: null,
+    error: null,
+    detector: null,
+    analyser: null,
+    isStarting: false,
+    autoStartEnabled: false,
+    sessionId: 0,
 
-  initializeAudio: async () => {
-    const tunerState = useTunerStore.getState()
-    const { context, analyser } = await audioManager.initialize(tunerState.deviceId ?? undefined)
-    const detector = new PitchDetector(context.sampleRate)
-    detector.setMaxFrequency(2700)
+    loadExercise: async (exercise) => {
+      // Always stop any existing session before loading a new exercise
+      await get().stop()
+      set(() => ({
+        practiceState: getInitialState(exercise),
+        error: null,
+      }))
+    },
 
-    set({ analyser, detector })
-
-    // Sync with TunerStore
-    useTunerStore.setState({
-      detector,
-      analyser,
-      state: { kind: 'LISTENING', sessionToken: get().sessionId },
-    })
-  },
-
-  start: async () => {
-    if (get().isStarting || get().practiceState?.status === 'listening') return
-
-    set({ isStarting: true, error: null })
-
-    try {
-      if (!get().analyser || !get().detector) {
-        await get().initializeAudio()
-      }
+    start: async () => {
+      // 1. Synchronous guards for concurrency: prevents double start and overlapping loops
+      if (get().isStarting || get().practiceState?.status === 'listening') return
 
       const currentState = get().practiceState
       if (!currentState) {
@@ -172,12 +164,46 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           console.log('[PracticeStore] Exercise completed!')
         }
       }
-    } catch (error) {
-      // Only set error if it's not an abort error and session is still active
-      if (get().sessionId === localSessionId) {
-        const appErr = toAppError(error)
-        if (appErr.name !== 'AbortError') {
-          set({ error: appErr })
+    },
+
+    setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
+
+    setNoteIndex: (index) => {
+      set((state) => {
+        if (!state.practiceState) return state
+        return {
+          practiceState: {
+            ...state.practiceState,
+            currentIndex: Math.max(0, Math.min(index, state.practiceState.exercise.notes.length - 1)),
+            status: 'listening',
+            holdDuration: 0,
+            detectionHistory: [],
+          },
+        }
+      })
+    },
+
+    stop: async () => {
+      // 1. Resource-first cleanup: always abort and cleanup audio regardless of state
+      if (practiceLoopController) {
+        practiceLoopController.abort()
+        practiceLoopController = null
+      }
+
+      try {
+        await audioManager.cleanup()
+      } catch (err) {
+        console.warn('[PRACTICE STOP] Audio cleanup failed:', err)
+      }
+
+      // Invalidate current session to block any pending updates
+      const nextSessionId = get().sessionId + 1
+
+      // 2. Guarantee analytics closure
+      try {
+        const analyticsStore = useAnalyticsStore.getState()
+        if (analyticsStore.currentSession) {
+          analyticsStore.endSession()
         }
       }
     }

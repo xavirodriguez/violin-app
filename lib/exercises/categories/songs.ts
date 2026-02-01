@@ -36,7 +36,7 @@ export const songsExercises: ExerciseData[] = [
     category: 'Songs',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_C_MAJOR,
-    notes: [
+    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
@@ -50,7 +50,7 @@ export const songsExercises: ExerciseData[] = [
     category: 'Songs',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_G_MAJOR,
-    notes: [
+    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 4 },
@@ -64,7 +64,7 @@ export const songsExercises: ExerciseData[] = [
     category: 'Songs',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_G_MAJOR,
-    notes: [
+    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('C5'), duration: 4 },

@@ -84,6 +84,14 @@ export interface ExerciseData {
   scoreMetadata: ScoreMetadata
   /** Ordered array of notes in the exercise. */
   notes: Note[]
+  /** Technical goals for the exercise. */
+  technicalGoals: string[]
+  /** Estimated duration of the exercise. */
+  estimatedDuration: string
+  /** Primary technique focused on. */
+  technicalTechnique: string
+  /** Whether this exercise is recommended. */
+  recommended?: boolean
 }
 
 /**

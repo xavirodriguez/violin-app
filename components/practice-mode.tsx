@@ -7,33 +7,43 @@
 
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
+import { useAnalyticsStore } from '@/stores/analytics-store'
+import { cn } from '@/lib/utils'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { allExercises } from '@/lib/exercises'
 import {
   type TargetNote,
   type DetectedNote,
   formatPitchName,
 } from '@/lib/practice-core'
+import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Play, Square, RotateCcw, Trophy, AlertCircle } from 'lucide-react'
+  Play,
+  Square,
+  RotateCcw,
+  AlertCircle,
+  List,
+  Maximize2,
+  Minimize2
+} from 'lucide-react'
 import { SheetMusic } from '@/components/sheet-music'
+import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { PracticeFeedback } from '@/components/practice-feedback'
+import { PracticeCompletion } from '@/components/practice-completion'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
-import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
-
-const DEFAULT_CENTS_TOLERANCE = 25
+import { ExerciseCard } from '@/components/exercise-card'
+import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
+import { getRecommendedExercise } from '@/lib/exercise-recommender'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
@@ -45,30 +55,75 @@ function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   )
 }
 
-function ExerciseSelector({
-  value,
-  onValueChange,
+function ExerciseLibrary({
+  selectedId,
+  onSelect,
   disabled,
 }: {
-  value?: string
-  onValueChange: (val: string) => void
+  selectedId?: string
+  onSelect: (exercise: Exercise) => void
   disabled: boolean
 }) {
+  const [activeTab, setActiveTab] = useState('all')
+  const { progress, sessions } = useAnalyticsStore()
+
+  const recommended = useMemo(() =>
+    getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId),
+    [progress, sessions]
+  )
+
+  const filteredExercises = useMemo(() => {
+    return allExercises.filter((ex) => {
+      if (activeTab === 'all') return true
+      if (activeTab === 'beginner') return ex.difficulty === 'Beginner'
+      if (activeTab === 'intermediate') return ex.difficulty === 'Intermediate'
+      if (activeTab === 'inProgress') {
+        const stats = progress.exerciseStats[ex.id]
+        return stats && stats.timesCompleted > 0 && stats.bestAccuracy < 100
+      }
+      return true
+    })
+  }, [activeTab, progress.exerciseStats])
+
   return (
-    <Card className="p-4">
-      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an exercise" />
-        </SelectTrigger>
-        <SelectContent>
-          {allExercises.map((exercise) => (
-            <SelectItem key={exercise.id} value={exercise.id}>
-              {exercise.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Card>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h3 className="text-xl font-bold flex items-center gap-2">
+          <List className="h-5 w-5" />
+          Exercise Library
+        </h3>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+          <TabsList className="grid grid-cols-4 w-full md:w-auto">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="beginner">Beginner</TabsTrigger>
+            <TabsTrigger value="intermediate">Int.</TabsTrigger>
+            <TabsTrigger value="inProgress">In Progress</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredExercises.map((exercise) => (
+          <ExerciseCard
+            key={exercise.id}
+            exercise={exercise}
+            isRecommended={recommended?.id === exercise.id}
+            isSelected={selectedId === exercise.id}
+            onClick={() => onSelect(exercise)}
+            lastAttempt={progress.exerciseStats[exercise.id] ? {
+              accuracy: progress.exerciseStats[exercise.id].bestAccuracy,
+              timestamp: progress.exerciseStats[exercise.id].lastPracticedMs
+            } : undefined}
+          />
+        ))}
+      </div>
+
+      {filteredExercises.length === 0 && (
+        <div className="text-center py-12 border-2 border-dashed rounded-xl">
+          <p className="text-muted-foreground">No exercises found for this filter.</p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -146,31 +201,23 @@ function PracticeControls({
   )
 }
 
-function PracticeCompletion({ onRestart }: { onRestart: () => void }) {
-  return (
-    <Card className="bg-primary/10 p-8 text-center">
-      <Trophy className="text-primary mx-auto mb-4 h-20 w-20" />
-      <h3 className="mb-2 text-2xl font-bold">🎉 Exercise Complete!</h3>
-      <p className="text-muted-foreground mb-6">Excellent work!</p>
-      <Button onClick={onRestart} size="lg" className="gap-2">
-        <RotateCcw className="h-4 w-4" /> Practice Again
-      </Button>
-    </Card>
-  )
-}
 
 function PracticeActiveView({
   status,
   targetNote,
   targetPitchName,
   lastDetectedNote,
-  liveObservations,
+  lastObservations,
+  holdDuration,
+  perfectNoteStreak,
 }: {
   status: string
   targetNote: TargetNote | null
   targetPitchName: string | null
   lastDetectedNote: DetectedNote | null | undefined
-  liveObservations: Observation[]
+  lastObservations?: Observation[]
+  holdDuration?: number
+  perfectNoteStreak?: number
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
   if (!isActive || !targetNote || !targetPitchName) return null
@@ -183,7 +230,10 @@ function PracticeActiveView({
           detectedPitchName={lastDetectedNote?.pitch}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
-          liveObservations={liveObservations}
+          liveObservations={lastObservations}
+          holdDuration={holdDuration}
+          requiredHoldTime={500}
+          perfectNoteStreak={perfectNoteStreak}
         />
       </Card>
       <Card className="p-12">
@@ -231,21 +281,26 @@ export function PracticeMode() {
     start,
     stop,
     reset,
-    analyser,
-    detector,
-    consumePipelineEvents,
-    liveObservations
+    autoStartEnabled,
+    setAutoStart,
+    setNoteIndex
   } = usePracticeStore()
+
+  const { sessions } = useAnalyticsStore()
 
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
+
+  const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
+  const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
+  const [zenMode, setZenMode] = useState(false)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
   useEffect(() => {
     if (!loadedRef.current && !practiceState) {
-      loadExercise(allExercises[0])
+      // Don't auto-load first exercise into store, let user select from library
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
@@ -254,63 +309,30 @@ export function PracticeMode() {
     syncCursorWithNote(osmdHook, status, currentNoteIndex)
   }, [currentNoteIndex, status, osmdHook])
 
-  // NEW: Audio loop connected to the pipeline
   useEffect(() => {
-    // Only execute if in listening mode
-    if (status !== 'listening') return
-    if (!analyser || !detector) return
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (status === 'idle') return
 
-    const abortController = new AbortController()
-
-    const runPipeline = async () => {
-      try {
-        // 1. Create raw pitch stream
-        const rawPitchStream = createRawPitchStream(
-          analyser,
-          detector,
-          abortController.signal
-        )
-
-        // 2. Create event pipeline
-        const eventPipeline = createPracticeEventPipeline(
-          rawPitchStream,
-          () => practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
-          () => practiceState?.currentIndex ?? 0,
-          {
-            minRms: 0.015,
-            minConfidence: 0.85,
-            centsTolerance: 20, // Stricter than default 25
-            requiredHoldTime: 500,
-            exercise: practiceState?.exercise,
-            bpm: 60,
-            sessionStartTime: Date.now()
-          },
-          abortController.signal
-        )
-
-        // 3. Consume events (updates store automatically)
-        await consumePipelineEvents(eventPipeline)
-
-      } catch (error) {
-        if ((error as any).name !== 'AbortError') {
-          console.error('[PracticeMode] Pipeline error:', error)
-        }
+      switch (e.key.toLowerCase()) {
+        case ' ': // Spacebar
+          e.preventDefault()
+          status === 'listening' ? stop() : start()
+          break
+        case 'r':
+          setNoteIndex(currentNoteIndex)
+          break
+        case 'c':
+          setNoteIndex(currentNoteIndex + 1)
+          break
+        case 'z':
+          setZenMode(v => !v)
+          break
       }
     }
 
-    runPipeline()
-
-    return () => {
-      abortController.abort()
-    }
-  }, [
-    status,
-    currentNoteIndex,
-    analyser,
-    detector,
-    consumePipelineEvents,
-    practiceState?.exercise, // Added to restart pipeline if exercise changes
-  ])
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [status, currentNoteIndex, start, stop, setNoteIndex])
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[0] : null
@@ -322,43 +344,125 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         {error && <ErrorDisplay error={error.message} onReset={reset} />}
-        <div className="grid gap-6 md:grid-cols-2">
-          <ExerciseSelector
-            value={practiceState?.exercise.id}
-            onValueChange={(id) => {
-              const exercise = allExercises.find((ex) => ex.id === id)
-              if (exercise) loadExercise(exercise)
-            }}
-            disabled={status !== 'idle'}
-          />
 
-          <PracticeControls
-            status={status}
-            hasExercise={!!practiceState}
-            onStart={start}
-            onStop={stop}
-            onRestart={handleRestart}
-            progress={progress}
-            currentNoteIndex={currentNoteIndex}
-            totalNotes={totalNotes}
-          />
-        </div>
-        <SheetMusicView
-          musicXML={practiceState?.exercise.musicXML}
-          isReady={osmdHook.isReady}
-          error={osmdHook.error}
-          containerRef={osmdHook.containerRef}
+        {status === 'idle' ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="auto-start"
+                  checked={autoStartEnabled}
+                  onCheckedChange={setAutoStart}
+                />
+                <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
+              </div>
+            </div>
+            <ExerciseLibrary
+              selectedId={practiceState?.exercise.id}
+              onSelect={(exercise) => setPreviewExercise(exercise)}
+              disabled={false}
+            />
+          </div>
+        ) : (
+          !zenMode && (
+            <PracticeControls
+              status={status}
+              hasExercise={!!practiceState}
+              onStart={start}
+              onStop={stop}
+              onRestart={handleRestart}
+              progress={progress}
+              currentNoteIndex={currentNoteIndex}
+              totalNotes={totalNotes}
+            />
+          )
+        )}
+
+        <ExercisePreviewModal
+          exercise={previewExercise}
+          isOpen={!!previewExercise}
+          onOpenChange={(open) => !open && setPreviewExercise(null)}
+          onStart={() => {
+            if (previewExercise) {
+              loadExercise(previewExercise).then(() => {
+                setPreviewExercise(null)
+                start()
+              })
+            }
+          }}
         />
+
+        <div className="relative">
+          {status !== 'idle' && (
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSheetMusicView((v) => (v === 'focused' ? 'full' : 'focused'))}
+                className="bg-background/80 backdrop-blur-sm shadow-sm"
+              >
+                {sheetMusicView === 'focused' ? (
+                  <Maximize2 className="h-4 w-4 mr-2" />
+                ) : (
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                )}
+                {sheetMusicView === 'focused' ? 'Full View' : 'Focused View'}
+              </Button>
+            </div>
+          )}
+
+          <div className={cn(
+            "transition-all duration-500 overflow-hidden",
+            sheetMusicView === 'focused' ? "max-h-[300px]" : "max-h-[800px]"
+          )}>
+            <SheetMusicView
+              musicXML={practiceState?.exercise.musicXML}
+              isReady={osmdHook.isReady}
+              error={osmdHook.error}
+              containerRef={osmdHook.containerRef}
+            />
+            {practiceState && (
+              <SheetMusicAnnotations
+                annotations={{
+                  // Sample annotation for demo purposes
+                  [currentNoteIndex]: { fingerNumber: 1, bowDirection: 'down' }
+                }}
+                currentNoteIndex={currentNoteIndex}
+                osmd={osmdHook.osmd}
+                containerRef={osmdHook.containerRef}
+              />
+            )}
+          </div>
+        </div>
 
         <PracticeActiveView
           status={status}
           targetNote={targetNote}
           targetPitchName={targetPitchName}
           lastDetectedNote={lastDetectedNote}
-          liveObservations={liveObservations}
+          lastObservations={practiceState?.lastObservations}
+          holdDuration={practiceState?.holdDuration}
+          perfectNoteStreak={practiceState?.perfectNoteStreak}
         />
 
-        {status === 'completed' && <PracticeCompletion onRestart={handleRestart} />}
+        {status === 'completed' && (
+          <PracticeCompletion
+            onRestart={handleRestart}
+            sessionData={sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : null}
+          />
+        )}
+
+        {status !== 'idle' && (
+          <PracticeQuickActions
+            status={status}
+            onRepeatNote={() => setNoteIndex(currentNoteIndex)}
+            onRepeatMeasure={() => setNoteIndex(Math.max(0, currentNoteIndex - 4))}
+            onContinue={() => setNoteIndex(currentNoteIndex + 1)}
+            onTogglePause={() => (status === 'listening' ? stop() : start())}
+            onToggleZen={() => setZenMode((v) => !v)}
+            isZen={zenMode}
+          />
+        )}
       </div>
     </div>
   )
@@ -383,14 +487,26 @@ function syncCursorWithNote(
 ) {
   if (!osmdHook.isReady) return
 
-  // We only advance the cursor when the status is 'listening'.
-  // This avoids double-advancing when transitioning through 'validating' or 'correct'
-  // for the same note index.
   if (status === 'listening') {
     if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else {
+      // OSMD cursor might need multiple advances if there are rests,
+      // but for this simple app, we assume 1 advance = 1 note.
       osmdHook.advanceCursor()
     }
+
+    // Auto-scroll suave para mantener 2-3 compases visibles
+    const cursorElement = osmdHook.containerRef.current?.querySelector('.osmd-cursor')
+    if (cursorElement) {
+      cursorElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      })
+    }
+
+    // Apply highlight
+    osmdHook.highlightCurrentNote(currentNoteIndex)
   }
 }
