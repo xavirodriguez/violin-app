@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import SettingsDialog from '@/components/settings-dialog'
+import { AchievementNotificationManager } from '@/components/achievement-toast'
+import { OnboardingFlow } from '@/components/onboarding/onboarding-flow'
+import { analytics } from '@/lib/analytics-tracker'
 import { useFeatureFlag } from '@/lib/feature-flags'
 import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,10 +23,28 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const isAnalyticsEnabled = useFeatureFlag('FEATURE_ANALYTICS_DASHBOARD')
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const hasCompletedOnboarding = localStorage.getItem('onboarding-completed')
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true)
+      analytics.track('onboarding_started')
+    }
+  }, [])
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('onboarding-completed', 'true')
+    setShowOnboarding(false)
+    analytics.track('onboarding_completed')
+  }
 
   return (
     <>
+      {showOnboarding && <OnboardingFlow onComplete={handleOnboardingComplete} />}
+
       <div className="bg-background flex min-h-screen flex-col">
         {/* Header */}
         <header className="border-border bg-card border-b">
@@ -96,6 +117,9 @@ export default function Home() {
 
       {/* Settings Dialog */}
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {/* Achievement Notification Manager */}
+      <AchievementNotificationManager />
     </>
   )
 }
