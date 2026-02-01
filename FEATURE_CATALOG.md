@@ -2,12 +2,28 @@
 
 This catalog provides a comprehensive list of all feature flags, their purpose, status, and usage instructions.
 
-## 📋 Feature Index
+## ✅ Stable Features (Permanent)
+
+These features were previously behind flags but are now a permanent part of the core experience.
+
+### Violin Fingerboard Visualization
+- **ID**: `FEATURE_UI_VIOLIN_FINGERBOARD` (Promoted)
+- **Description**: Displays a virtual violin fingerboard that highlights notes as they are played.
+- **Impact**: Provides immediate visual reference for finger placement.
+- **Status**: Stable.
+
+### Advanced Technical Feedback
+- **ID**: `FEATURE_TECHNICAL_FEEDBACK` (Promoted)
+- **Description**: Shows pedagogical tips and technical observations (e.g., "Keep it steady!") during practice.
+- **Impact**: Provides qualitative feedback beyond simple pitch accuracy.
+- **Status**: Stable.
+
+---
+
+## 📋 Active Feature Flags
 
 | Flag | Category | Status | Risk |
 | :--- | :--- | :--- | :--- |
-| `FEATURE_UI_VIOLIN_FINGERBOARD` | UI_UX | PERMANENT | LOW |
-| `FEATURE_TECHNICAL_FEEDBACK` | UI_UX | PERMANENT | LOW |
 | `FEATURE_PRACTICE_ASSISTANT` | BETA | ACTIVE | MEDIUM |
 | `FEATURE_ANALYTICS_DASHBOARD` | BETA | ACTIVE | LOW |
 | `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | EXPERIMENTAL | DEFINED | MEDIUM |
@@ -18,13 +34,7 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 
 ---
 
-## 🛠 Active Features
-
-### Violin Fingerboard Visualization
-- **ID**: `FEATURE_UI_VIOLIN_FINGERBOARD` (Promoted to Stable)
-- **Description**: Displays a virtual violin fingerboard that highlights notes as they are played.
-- **Impact**: Provides immediate visual reference for finger placement.
-- **Status**: Permanent part of the UI.
+## 🛠 Feature Details
 
 ### Contextual Practice Assistant
 - **ID**: `FEATURE_PRACTICE_ASSISTANT`
@@ -36,12 +46,6 @@ This catalog provides a comprehensive list of all feature flags, their purpose, 
 - **Description**: A dedicated view for tracking practice time, streaks, and skill progression.
 - **Impact**: Increases user engagement and motivation.
 - **How to test**: Toggle the 'Dashboard' tab in the main header.
-
-### Advanced Technical Feedback
-- **ID**: `FEATURE_TECHNICAL_FEEDBACK` (Promoted to Stable)
-- **Description**: Shows pedagogical tips and technical observations (e.g., "Keep it steady!") during practice.
-- **Impact**: Provides qualitative feedback beyond simple pitch accuracy.
-- **Status**: Permanent part of the UI.
 
 ---
 

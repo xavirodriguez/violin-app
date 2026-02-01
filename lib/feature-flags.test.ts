@@ -50,7 +50,7 @@ describe('FeatureFlagsManager', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const flagName = 'NON_EXISTENT_FLAG'
 
-    expect(featureFlags.isEnabled(flagName)).toBe(false)
+    expect(featureFlags.isEnabled(flagName as any)).toBe(false)
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(flagName))
 
     consoleSpy.mockRestore()
@@ -72,7 +72,7 @@ describe('FeatureFlagsManager', () => {
     // Since it's not in metadata, it should still return the env value if we use get()
     // Wait, the implementation of get() checks metadata too.
 
-    expect(featureFlags.get('SOME_RANDOM_FLAG')).toBe('some-value')
+    expect(featureFlags.get('SOME_RANDOM_FLAG' as any)).toBe('some-value')
   })
 
   it('should return default value from get() when env is missing', () => {
@@ -84,6 +84,6 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return provided default value from get() when both env and metadata are missing', () => {
-    expect(featureFlags.get('TOTALLY_MISSING', 'custom-default')).toBe('custom-default')
+    expect(featureFlags.get('TOTALLY_MISSING' as any, 'custom-default')).toBe('custom-default')
   })
 })
