@@ -15,7 +15,10 @@ interface SessionRunnerDependencies {
   sessionId: number
   store: {
     getState: () => SessionState
-    setState: (fn: (state: SessionState) => Partial<SessionState>) => void
+    setState: (
+      partial: SessionState | Partial<SessionState> | ((state: SessionState) => Partial<SessionState>),
+      replace?: false,
+    ) => void
     stop: () => Promise<void>
   }
   analytics: {

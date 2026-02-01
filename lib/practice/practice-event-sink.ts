@@ -6,7 +6,10 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
  */
 type StoreApi<T> = {
   getState: () => T
-  setState: (fn: (state: T) => T | Partial<T>) => void
+  setState: (
+    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
+    replace?: false,
+  ) => void
 }
 
 /**
