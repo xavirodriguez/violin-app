@@ -275,6 +275,7 @@ function SheetMusicView({
  */
 export function PracticeMode() {
   const {
+    state,
     practiceState,
     error,
     loadExercise,
@@ -343,9 +344,10 @@ export function PracticeMode() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        {error && <ErrorDisplay error={error.message} onReset={reset} />}
+        {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
+        {state.status === 'initializing' && <Card className="p-12 text-center">Initializing Audio...</Card>}
 
-        {status === 'idle' ? (
+        {state.status === 'idle' ? (
           <div className="space-y-6">
             <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
               <div className="flex items-center gap-2">

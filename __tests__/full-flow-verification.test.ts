@@ -32,9 +32,18 @@ vi.mock('@/lib/pitch-detector', () => {
   }
 })
 
-vi.mock('@/lib/practice/session-runner', () => ({
-  runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
-}))
+vi.mock('@/lib/practice/session-runner', () => {
+  const mockRunner = {
+    run: vi.fn().mockImplementation(() => new Promise(() => {})),
+    cancel: vi.fn()
+  }
+  return {
+    PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+      return mockRunner
+    }),
+    runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
+  }
+})
 
 describe('Full Flow Verification Checklist', () => {
   beforeEach(async () => {
@@ -59,9 +68,11 @@ describe('Full Flow Verification Checklist', () => {
     const exercise = allExercises[0]
     await usePracticeStore.getState().loadExercise(exercise)
 
+    const mockContext = { sampleRate: 44100 }
     const mockAnalyser = {
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
+      context: mockContext
     }
     ;(audioManager.initialize as Mock).mockResolvedValue({
       context: { sampleRate: 44100 },

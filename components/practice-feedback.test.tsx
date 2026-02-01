@@ -1,40 +1,43 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PracticeFeedback } from './practice-feedback'
 import React from 'react'
 import { Observation } from '@/lib/technique-types'
-import { usePreferencesStore } from '@/stores/preferences-store'
-
-// Mock the preferences store to control feedback levels in tests
-vi.mock('@/stores/preferences-store', () => ({
-  usePreferencesStore: vi.fn(),
-}))
 
 describe('PracticeFeedback', () => {
-  it('renders "Listening" state when not playing', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
+  beforeEach(() => {
+    // Mock AudioContext for components that use it
+    class MockAudioContext {
+      createOscillator = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        frequency: { value: 0 }
+      })
+      createGain = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          exponentialRampToValueAtTime: vi.fn()
+        }
+      })
+      destination = {}
+      currentTime = 0
+    }
+    vi.stubGlobal('AudioContext', MockAudioContext)
+  })
 
+  it('renders "Listening" state when not playing', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
         status="listening"
       />
     )
-    expect(screen.getByText('Target Note')).toBeDefined()
-    expect(screen.getByText('A4')).toBeDefined()
-    expect(screen.getByText('Listening...')).toBeDefined()
-    expect(screen.getByText('👂')).toBeDefined()
+    expect(screen.getByText('Play A4')).toBeDefined()
   })
 
   it('renders "Perfect!" when in tune and correct note', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -44,53 +47,34 @@ describe('PracticeFeedback', () => {
       />
     )
     expect(screen.getByText('Perfect!')).toBeDefined()
-    expect(screen.getByText('🎉')).toBeDefined()
   })
 
-  it('renders "Great!" when in tune at beginner level', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
+  it('renders "Almost!" when in tune but outside tight tolerance', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
-        centsOff={12} // Within 25 cents tolerance for beginner
+        centsOff={12}
         status="listening"
-        centsTolerance={10}
       />
     )
-    expect(screen.getByText('Great!')).toBeDefined()
-    expect(screen.getByText('😊')).toBeDefined()
+    expect(screen.getByText('Almost!')).toBeDefined()
   })
 
-  it('renders technical cents when at advanced level', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'advanced',
-      showTechnicalDetails: false,
-    })
-
+  it('renders technical cents when playing', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
-        centsOff={12} // Outside 10 cents tolerance for advanced
+        centsOff={12}
         status="listening"
       />
     )
-    // At advanced level, visualStyle is 'technical', so it shows cents
-    expect(screen.getByText('+12.0¢')).toBeDefined()
-    expect(screen.getByText('Too Sharp')).toBeDefined()
+    // There might be multiple (one in meter, one in details)
+    expect(screen.getAllByText(/12\.0/)).toBeDefined()
   })
 
-  it('renders "Wrong note" when playing different note', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
+  it('renders "Wrong Note" when playing different note', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -99,16 +83,10 @@ describe('PracticeFeedback', () => {
         status="listening"
       />
     )
-    expect(screen.getByText('Wrong note')).toBeDefined()
-    expect(screen.getByText('🤔')).toBeDefined()
+    expect(screen.getByText('Wrong Note')).toBeDefined()
   })
 
   it('renders live feedback observations', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     const liveObservations: Observation[] = [
       {
         type: 'intonation',

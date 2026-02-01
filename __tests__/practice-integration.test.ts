@@ -18,8 +18,8 @@ vi.mock('@/lib/pitch-detector', () => {
   return {
     PitchDetector: vi.fn().mockImplementation(function (this: any) {
       this.setMaxFrequency = vi.fn()
-      this.detectPitch = vi.fn()
-      this.calculateRMS = vi.fn()
+      this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
+      this.calculateRMS = vi.fn(() => 0)
     }),
   }
 })
@@ -35,12 +35,16 @@ describe('Practice Mode - E2E Integration', () => {
     const exercise = allExercises[0]
 
     // 1. Setup: Load exercise
-    store.loadExercise(exercise)
+    await store.loadExercise(exercise)
     expect(usePracticeStore.getState().practiceState?.status).toBe('idle')
 
     // 2. Start practice
     const mockContext = { sampleRate: 44100 }
-    const mockAnalyser = { fftSize: 2048 }
+    const mockAnalyser = {
+      fftSize: 2048,
+      getFloatTimeDomainData: vi.fn(),
+      context: mockContext
+    }
     ;(audioManager.initialize as Mock).mockResolvedValue({
       context: mockContext,
       analyser: mockAnalyser,
@@ -48,7 +52,6 @@ describe('Practice Mode - E2E Integration', () => {
 
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
-    expect(usePracticeStore.getState().analyser).toBe(mockAnalyser)
 
     // 3. Simulate events through consumePipelineEvents
     const events: PracticeEvent[] = []
