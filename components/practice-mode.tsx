@@ -33,6 +33,8 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
+const DEFAULT_CENTS_TOLERANCE = 25
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   return (
@@ -170,7 +172,8 @@ function PracticeActiveView({
   lastDetectedNote: DetectedNote | null | undefined
   liveObservations: Observation[]
 }) {
-  if (status !== 'listening' || !targetNote || !targetPitchName) return null
+  const isActive = status === 'listening' || status === 'validating' || status === 'correct'
+  if (!isActive || !targetNote || !targetPitchName) return null
 
   return (
     <>
@@ -188,6 +191,7 @@ function PracticeActiveView({
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsDeviation={lastDetectedNote?.cents ?? null}
+          centsTolerance={DEFAULT_CENTS_TOLERANCE}
         />
       </Card>
     </>
@@ -378,9 +382,15 @@ function syncCursorWithNote(
   currentNoteIndex: number,
 ) {
   if (!osmdHook.isReady) return
-  if (status === 'listening' && currentNoteIndex === 0) {
-    osmdHook.resetCursor()
-  } else if (status === 'listening' && currentNoteIndex > 0) {
-    osmdHook.advanceCursor()
+
+  // We only advance the cursor when the status is 'listening'.
+  // This avoids double-advancing when transitioning through 'validating' or 'correct'
+  // for the same note index.
+  if (status === 'listening') {
+    if (currentNoteIndex === 0) {
+      osmdHook.resetCursor()
+    } else {
+      osmdHook.advanceCursor()
+    }
   }
 }

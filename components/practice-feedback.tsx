@@ -1,7 +1,11 @@
 'use client'
 
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { Info, AlertTriangle } from 'lucide-react'
 import { Observation } from '@/lib/technique-types'
+import { EmotionalFeedback } from './emotional-feedback'
+import { usePreferencesStore } from '@/stores/preferences-store'
+import { FEEDBACK_CONFIGS } from '@/lib/user-preferences'
+import { Card } from '@/components/ui/card'
 
 interface PracticeFeedbackProps {
   targetNote: string
@@ -9,6 +13,8 @@ interface PracticeFeedbackProps {
   centsOff?: number | null
   status: string
   liveObservations?: Observation[]
+  /** The allowable pitch deviation in cents for a note to be considered "In Tune". @defaultValue 25 */
+  centsTolerance?: number
 }
 
 export function PracticeFeedback({
@@ -17,8 +23,10 @@ export function PracticeFeedback({
   centsOff,
   status,
   liveObservations = [],
+  centsTolerance = 25,
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+  const isInTune =
+    centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   const isCorrectNote = detectedPitchName === targetNote
 
