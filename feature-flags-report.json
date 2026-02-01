@@ -23,20 +23,29 @@
     {
       "id": "FEATURE_ANALYTICS_DASHBOARD",
       "name": "Progress Analytics Dashboard",
-      "type": "BETA",
-      "status": "ACTIVE",
-      "description": "Toggle the progress analytics dashboard.",
+      "type": "UI_UX",
+      "status": "STABLE",
+      "description": "Permanent progress analytics dashboard.",
       "affectedFiles": ["components/analytics-dashboard.tsx", "app/page.tsx"],
       "riskLevel": "LOW"
     },
     {
       "id": "FEATURE_PRACTICE_ASSISTANT",
       "name": "Contextual Practice Assistant (cmdk)",
-      "type": "BETA",
-      "status": "ACTIVE",
-      "description": "Enable the contextual practice assistant (cmdk).",
+      "type": "UI_UX",
+      "status": "STABLE",
+      "description": "Permanent contextual practice assistant (cmdk).",
       "affectedFiles": ["app/layout.tsx", "components/practice-assistant.tsx"],
-      "riskLevel": "MEDIUM"
+      "riskLevel": "LOW"
+    },
+    {
+      "id": "FEATURE_TELEMETRY_ACCURACY",
+      "name": "Accuracy Telemetry",
+      "type": "INTEGRATION",
+      "status": "ACTIVE_LOGGING",
+      "description": "Track detection confidence via console logging to identify environment issues.",
+      "affectedFiles": ["lib/practice/session-runner.ts"],
+      "riskLevel": "LOW"
     },
     {
       "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
@@ -55,38 +64,11 @@
       "description": "Offload audio processing to a Web Worker.",
       "affectedFiles": ["lib/pitch-detector.ts", "lib/note-stream.ts"],
       "riskLevel": "HIGH"
-    },
-    {
-      "id": "FEATURE_UI_INTONATION_HEATMAPS",
-      "name": "Intonation Heatmaps",
-      "type": "EXPERIMENTAL",
-      "status": "DEFINED_NOT_IMPLEMENTED",
-      "description": "Show intonation heatmaps in the analytics dashboard.",
-      "affectedFiles": ["components/analytics-dashboard.tsx"],
-      "riskLevel": "LOW"
-    },
-    {
-      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
-      "name": "Social Practice Rooms",
-      "type": "EXPERIMENTAL",
-      "status": "PLANNED",
-      "description": "Real-time synchronization for group practice or teacher-led sessions.",
-      "affectedFiles": [],
-      "riskLevel": "HIGH"
-    },
-    {
-      "id": "FEATURE_TELEMETRY_ACCURACY",
-      "name": "Accuracy Telemetry",
-      "type": "INTEGRATION",
-      "status": "PLANNED",
-      "description": "Track detection confidence via Vercel Analytics to identify environment issues.",
-      "affectedFiles": [],
-      "riskLevel": "LOW"
     }
   ],
   "recommendations": [
-    "Refactor lib/feature-flags.ts to use keyof typeof FEATURE_FLAGS_METADATA for better type safety.",
-    "Ensure all flags in lib/feature-flags.ts are exposed in next.config.mjs.",
+    "Refactor lib/feature-flags.ts to use keyof typeof FEATURE_FLAGS_METADATA for better type safety (Completed).",
+    "Continue evolving Accuracy Telemetry into a proper Vercel Analytics integration.",
     "Implement the Web Worker offloading to improve performance on mid-range devices.",
     "Complete the integration of the Adaptive Difficulty Engine in lib/practice-core.ts."
   ]

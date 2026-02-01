@@ -1,48 +1,49 @@
 {
   "execution_plan": {
-    "feature_id": "FEATURE_EVOLUTION_CYCLE_2",
+    "feature_id": "STABILIZATION_CYCLE_2025_05",
     "plan_version": 1.0,
-    "generated_date": "2026-01-31T15:00:00Z",
-    "planning_horizon": "8 weeks",
+    "generated_date": "2025-05-22T15:10:00Z",
+    "planning_horizon": "2 weeks",
     "workstreams": [
       {
-        "workstream_id": "performance_scaling",
+        "workstream_id": "feature_promotion",
         "items": [
           {
-            "task_id": "PERF001",
-            "description": "Implement Web Worker for Pitch Detection",
-            "priority": "critical",
-            "effort_estimate_hours": 40
+            "task_id": "PROM001",
+            "description": "Remove FEATURE_ANALYTICS_DASHBOARD flag and logic",
+            "acceptance_criteria": ["Dashboard always available in Tabs", "No useFeatureFlag call for analytics"],
+            "priority": "critical"
+          },
+          {
+            "task_id": "PROM002",
+            "description": "Remove FEATURE_PRACTICE_ASSISTANT flag and logic",
+            "acceptance_criteria": ["Assistant always active", "No useFeatureFlag call for assistant"],
+            "priority": "critical"
           }
         ]
       },
       {
-        "workstream_id": "pedagogical_evolution",
+        "workstream_id": "documentation",
         "items": [
           {
-            "task_id": "PED001",
-            "description": "Integrate Adaptive Difficulty Engine with Practice Loop",
-            "priority": "high",
-            "effort_estimate_hours": 60
+            "task_id": "DOC001",
+            "description": "Update FEATURE_CATALOG.md and FEATURE_ANALYSIS.md",
+            "acceptance_criteria": ["Features moved to Stable section", "Risk analysis updated"],
+            "priority": "high"
+          }
+        ]
+      },
+      {
+        "workstream_id": "new_capability",
+        "items": [
+          {
+            "task_id": "TELE001",
+            "description": "Implement basic stub for FEATURE_TELEMETRY_ACCURACY",
+            "acceptance_criteria": ["Event emitted in practice loop when flag is on"],
+            "priority": "medium"
           }
         ]
       }
-    ],
-    "rollout_schedule": {
-      "phases": [
-        {
-          "phase_number": 1,
-          "name": "Internal Alpha",
-          "duration_days": 14,
-          "target_users": "Employees"
-        },
-        {
-          "phase_number": 2,
-          "name": "Public Beta",
-          "duration_days": 30,
-          "target_users": "10% Beta Segment"
-        }
-      ]
-    }
+    ]
   }
 }

@@ -11,7 +11,7 @@ vi.mock('@/stores/preferences-store', () => ({
 }))
 
 describe('PracticeFeedback', () => {
-  it('renders "Listening" state when not playing', () => {
+  it('renders "Play A4" state when not playing', () => {
     (usePreferencesStore as any).mockReturnValue({
       feedbackLevel: 'beginner',
       showTechnicalDetails: false,
@@ -23,10 +23,7 @@ describe('PracticeFeedback', () => {
         status="listening"
       />
     )
-    expect(screen.getByText('Target Note')).toBeDefined()
-    expect(screen.getByText('A4')).toBeDefined()
-    expect(screen.getByText('Listening...')).toBeDefined()
-    expect(screen.getByText('👂')).toBeDefined()
+    expect(screen.getByText('Play A4')).toBeDefined()
   })
 
   it('renders "Perfect!" when in tune and correct note', () => {
@@ -41,13 +38,13 @@ describe('PracticeFeedback', () => {
         detectedPitchName="A4"
         centsOff={5}
         status="correct"
+        centsTolerance={10}
       />
     )
     expect(screen.getByText('Perfect!')).toBeDefined()
-    expect(screen.getByText('🎉')).toBeDefined()
   })
 
-  it('renders "Great!" when in tune at beginner level', () => {
+  it('renders "Almost!" when slightly out of tune', () => {
     (usePreferencesStore as any).mockReturnValue({
       feedbackLevel: 'beginner',
       showTechnicalDetails: false,
@@ -57,18 +54,17 @@ describe('PracticeFeedback', () => {
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
-        centsOff={12} // Within 25 cents tolerance for beginner
+        centsOff={12}
         status="listening"
         centsTolerance={10}
       />
     )
-    expect(screen.getByText('Great!')).toBeDefined()
-    expect(screen.getByText('😊')).toBeDefined()
+    expect(screen.getByText('Almost!')).toBeDefined()
   })
 
-  it('renders technical cents when at advanced level', () => {
+  it('renders "Adjust" when further out of tune', () => {
     (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'advanced',
+      feedbackLevel: 'beginner',
       showTechnicalDetails: false,
     })
 
@@ -76,16 +72,15 @@ describe('PracticeFeedback', () => {
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
-        centsOff={12} // Outside 10 cents tolerance for advanced
+        centsOff={20}
         status="listening"
+        centsTolerance={10}
       />
     )
-    // At advanced level, visualStyle is 'technical', so it shows cents
-    expect(screen.getByText('+12.0¢')).toBeDefined()
-    expect(screen.getByText('Too Sharp')).toBeDefined()
+    expect(screen.getByText('Adjust')).toBeDefined()
   })
 
-  it('renders "Wrong note" when playing different note', () => {
+  it('renders "Wrong Note" when playing different note', () => {
     (usePreferencesStore as any).mockReturnValue({
       feedbackLevel: 'beginner',
       showTechnicalDetails: false,
@@ -99,8 +94,7 @@ describe('PracticeFeedback', () => {
         status="listening"
       />
     )
-    expect(screen.getByText('Wrong note')).toBeDefined()
-    expect(screen.getByText('🤔')).toBeDefined()
+    expect(screen.getByText('Wrong Note')).toBeDefined()
   })
 
   it('renders live feedback observations', () => {

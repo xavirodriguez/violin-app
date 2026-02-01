@@ -93,6 +93,9 @@ const createTetrachordExercise = (config: {
   notes: string[]
   fingerPattern: string
   startingString: 'G' | 'D' | 'A' | 'E'
+  technicalGoals?: string[]
+  estimatedDuration?: string
+  technicalTechnique?: string
 }): ViolinExerciseData => {
   const scaleMetadataMap = {
     G: SCALE_METADATA.G_MAJOR,
@@ -114,6 +117,9 @@ const createTetrachordExercise = (config: {
     startingString: config.startingString,
     fingerPattern: config.fingerPattern,
     tempoRange: { min: 60, max: 120 },
+    technicalGoals: config.technicalGoals ?? [],
+    estimatedDuration: config.estimatedDuration ?? '2 min',
+    technicalTechnique: config.technicalTechnique ?? 'Tetrachord',
     learningObjectives: [
       `Establish correct finger spacing for ${config.key} major`,
       'Develop even tone production across four notes',
@@ -137,6 +143,9 @@ const createFullScaleExercise = (config: {
   fingerPattern: string
   startingString: 'G' | 'D' | 'A' | 'E'
   crossingString?: 'D' | 'A' | 'E'
+  technicalGoals?: string[]
+  estimatedDuration?: string
+  technicalTechnique?: string
 }): ViolinExerciseData => {
   const scaleMetadataMap = {
     G: SCALE_METADATA.G_MAJOR,
@@ -172,6 +181,9 @@ const createFullScaleExercise = (config: {
     fingerPattern: config.fingerPattern,
     tempoRange: { min: 80, max: 144 },
     learningObjectives: objectives,
+    technicalGoals: config.technicalGoals ?? [],
+    estimatedDuration: config.estimatedDuration ?? '3 min',
+    technicalTechnique: config.technicalTechnique ?? 'Scale',
   }
 }
 
@@ -185,7 +197,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
     id: 'g-major-tetrachord-lower',
     key: 'G',
     startNote: 'G4',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['G4', 'A4', 'B4', 'C5'],
+    notes: ['G4', 'A4', 'B4', 'C5'],
     fingerPattern: '0-1-2-3',
     startingString: 'D',
   }),
@@ -195,7 +207,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
     id: 'd-major-tetrachord-lower',
     key: 'D',
     startNote: 'D4',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['D4', 'E4', 'F#4', 'G4'],
+    notes: ['D4', 'E4', 'F#4', 'G4'],
     fingerPattern: '0-1-2-3',
     startingString: 'A',
   }),
@@ -205,7 +217,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
     id: 'a-major-tetrachord-lower',
     key: 'A',
     startNote: 'A4',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['A4', 'B4', 'C#5', 'D5'],
+    notes: ['A4', 'B4', 'C#5', 'D5'],
     fingerPattern: '0-1-2-3',
     startingString: 'E',
   }),
@@ -214,7 +226,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
   createFullScaleExercise({
     id: 'g-major-scale-one-octave',
     key: 'G',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F#5', 'G5'],
+    notes: ['G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F#5', 'G5'],
     fingerPattern: '0-1-2-3 / 0-1-2-3',
     startingString: 'D',
     crossingString: 'A',
@@ -223,7 +235,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
   createFullScaleExercise({
     id: 'd-major-scale-one-octave',
     key: 'D',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C#5', 'D5'],
+    notes: ['D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C#5', 'D5'],
     fingerPattern: '0-1-2-3 / 0-1-2-3',
     startingString: 'A',
     crossingString: 'E',
@@ -232,7 +244,7 @@ export const scalesExercises: readonly ViolinExerciseData[] = [
   createFullScaleExercise({
     id: 'a-major-scale-one-octave',
     key: 'A',
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: ['A3', 'B3', 'C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
+    notes: ['A3', 'B3', 'C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
     fingerPattern: '0-1-2-3 / 0-1-2-3',
     startingString: 'G',
     crossingString: 'D',

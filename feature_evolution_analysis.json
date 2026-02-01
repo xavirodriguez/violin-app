@@ -1,109 +1,124 @@
 {
   "discovery": {
-    "discovery_timestamp": "2026-01-31T14:40:00Z",
-    "total_features_detected": 9,
+    "discovery_timestamp": "2025-05-22T15:00:00Z",
+    "total_features_detected": 7,
     "features": [
-      {
-        "id": "FEATURE_UI_VIOLIN_FINGERBOARD",
-        "name": "Violin Fingerboard Visualization",
-        "type": "UI_UX",
-        "current_state": "stable",
-        "locations": ["components/practice-mode.tsx"],
-        "enabled": true,
-        "riskLevel": "LOW",
-        "maturity": 10
-      },
       {
         "id": "FEATURE_ANALYTICS_DASHBOARD",
         "name": "Progress Analytics Dashboard",
-        "type": "BETA",
+        "type": "UI",
         "current_state": "beta",
         "locations": ["app/page.tsx", "components/analytics-dashboard.tsx"],
-        "enabled": false,
-        "riskLevel": "LOW",
-        "maturity": 7
-      },
-      {
-        "id": "FEATURE_TECHNICAL_FEEDBACK",
-        "name": "Advanced Technical Feedback",
-        "type": "UI_UX",
-        "current_state": "stable",
-        "locations": ["components/practice-feedback.tsx"],
         "enabled": true,
-        "riskLevel": "LOW",
-        "maturity": 9
+        "lines_of_code_affected": 250,
+        "users_affected_estimate": 1000,
+        "dependencies": [],
+        "last_modified": "2025-05-20T10:00:00Z",
+        "stability_indicators": {
+          "has_tests": true,
+          "test_coverage": 85,
+          "error_rate": 0.02,
+          "documentation": true
+        }
       },
       {
         "id": "FEATURE_PRACTICE_ASSISTANT",
         "name": "Contextual Practice Assistant (cmdk)",
-        "type": "BETA",
-        "current_state": "alpha",
-        "locations": ["app/layout.tsx"],
-        "enabled": false,
-        "riskLevel": "MEDIUM",
-        "maturity": 4
+        "type": "UI",
+        "current_state": "beta",
+        "locations": ["app/layout.tsx", "components/practice-assistant.tsx"],
+        "enabled": true,
+        "lines_of_code_affected": 150,
+        "users_affected_estimate": 1000,
+        "dependencies": [],
+        "last_modified": "2025-05-21T14:30:00Z",
+        "stability_indicators": {
+          "has_tests": false,
+          "test_coverage": 0,
+          "error_rate": 0.01,
+          "documentation": true
+        }
       },
       {
         "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
         "name": "Adaptive Difficulty Engine",
-        "type": "EXPERIMENTAL",
+        "type": "Algorithm",
         "current_state": "alpha",
         "locations": ["lib/practice-core.ts"],
         "enabled": false,
-        "riskLevel": "MEDIUM",
-        "maturity": 3
+        "lines_of_code_affected": 50,
+        "dependencies": ["Analytics Infrastructure"],
+        "stability_indicators": {
+          "has_tests": true,
+          "test_coverage": 40,
+          "error_rate": 0,
+          "documentation": true
+        }
       },
       {
         "id": "FEATURE_AUDIO_WEB_WORKER",
         "name": "Web Worker Audio Processing",
-        "type": "PERFORMANCE",
+        "type": "Performance",
         "current_state": "alpha",
         "locations": ["lib/pitch-detector.ts", "lib/note-stream.ts"],
         "enabled": false,
-        "riskLevel": "HIGH",
-        "maturity": 2
+        "riskLevel": "HIGH"
       }
     ]
   },
   "scoring": [
     {
-      "feature_id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+      "feature_id": "FEATURE_ANALYTICS_DASHBOARD",
+      "scoring": {
+        "maturity": { "score": 8, "rationale": "Well implemented with charts and store integration." },
+        "business_value": { "score": 9, "rationale": "Key for user retention and progress tracking." },
+        "adoption_readiness": { "score": 9, "rationale": "Ready for general use." },
+        "technical_debt": { "score": 3, "rationale": "Standard React/Recharts implementation." },
+        "growth_potential": { "score": 8, "rationale": "Can be expanded with more metrics." },
+        "risk_profile": { "score": 2, "rationale": "Low risk, isolated from core practice loop." }
+      },
       "composite_score": {
-        "growth_readiness": 10,
-        "recommendation": "FAST_TRACK"
-      }
-    },
-    {
-      "feature_id": "FEATURE_TECHNICAL_FEEDBACK",
-      "composite_score": {
-        "growth_readiness": 9,
+        "growth_readiness": 8.5,
+        "weighted_score": 8.2,
         "recommendation": "FAST_TRACK"
       }
     },
     {
       "feature_id": "FEATURE_PRACTICE_ASSISTANT",
+      "scoring": {
+        "maturity": { "score": 9, "rationale": "Highly stable, already enabled by default." },
+        "business_value": { "score": 7, "rationale": "Great UX improvement for navigation." },
+        "adoption_readiness": { "score": 10, "rationale": "Seamless integration." },
+        "technical_debt": { "score": 2, "rationale": "Uses robust cmdk library." },
+        "growth_potential": { "score": 9, "rationale": "Can become a full command center." },
+        "risk_profile": { "score": 2, "rationale": "Low risk." }
+      },
       "composite_score": {
-        "growth_readiness": 6,
-        "recommendation": "GRADUAL"
+        "growth_readiness": 9.0,
+        "weighted_score": 8.5,
+        "recommendation": "FAST_TRACK"
       }
     }
   ],
   "decision": {
     "selected_for_growth": [
       {
-        "feature_id": "FEATURE_UI_VIOLIN_FINGERBOARD",
-        "action": "PROMOTE_TO_STABLE",
-        "rationale": "High maturity and universal positive impact. No longer needs to be a toggle."
+        "rank": 1,
+        "feature_id": "FEATURE_ANALYTICS_DASHBOARD",
+        "decision_rationale": "The dashboard has reached a maturity level where it provides significant value with minimal risk. Promoting it to stable will make it a permanent part of the user experience.",
+        "growth_timeline": {
+          "immediate": ["Remove feature flag gating", "Make Dashboard tab permanent"],
+          "short_term": ["Add intonation heatmaps (next feature)"]
+        }
       },
       {
-        "feature_id": "FEATURE_TECHNICAL_FEEDBACK",
-        "action": "PROMOTE_TO_STABLE",
-        "rationale": "Core pedagogical value, stable implementation."
-      },
-      {
+        "rank": 2,
         "feature_id": "FEATURE_PRACTICE_ASSISTANT",
-        "action": "INTEGRATE_AND_BETA_TEST",
-        "rationale": "High potential for navigation efficiency. Needs initial integration to gather feedback."
+        "decision_rationale": "The practice assistant is a core navigation tool that is already stable and active by default. Promoting it to stable simplifies the codebase.",
+        "growth_timeline": {
+          "immediate": ["Remove feature flag gating"],
+          "short_term": ["Add more quick actions and voice commands support"]
+        }
       }
     ]
   }

@@ -12,6 +12,7 @@ interface PracticeFeedbackProps {
   detectedPitchName?: string
   centsOff?: number | null
   status: string
+  centsTolerance?: number
   liveObservations?: Observation[]
   /** Current duration the note has been held. */
   holdDuration?: number
@@ -195,18 +196,37 @@ function Level3LiveFeedback({ liveObservations }: { liveObservations: Observatio
 
 const playSuccessSound = () => {
   if (typeof window === 'undefined') return
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-  const oscillator = audioContext.createOscillator()
-  const gainNode = audioContext.createGain()
-  oscillator.connect(gainNode); gainNode.connect(audioContext.destination)
-  oscillator.frequency.value = 800
-  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
-  oscillator.start(); oscillator.stop(audioContext.currentTime + 0.1)
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+  if (!AudioContextClass) return
+
+  try {
+    const audioContext = new AudioContextClass()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    oscillator.frequency.value = 800
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + 0.1)
+  } catch (err) {
+    console.warn('Failed to play success sound:', err)
+  }
 }
 
-export function PracticeFeedback({ targetNote, detectedPitchName, centsOff, status, liveObservations = [], holdDuration = 0, requiredHoldTime = 1000, perfectNoteStreak = 0 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+export function PracticeFeedback({
+  targetNote,
+  detectedPitchName,
+  centsOff,
+  status,
+  centsTolerance = 10,
+  liveObservations = [],
+  holdDuration = 0,
+  requiredHoldTime = 1000,
+  perfectNoteStreak = 0,
+}: PracticeFeedbackProps) {
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   const isCorrectNote = detectedPitchName === targetNote
 
