@@ -36,6 +36,7 @@ describe('PracticeFeedback', () => {
         detectedPitchName="A4"
         centsOff={-18}
         status="listening"
+        centsTolerance={10}
       />
     )
     const arrow = screen.getByText('↓')

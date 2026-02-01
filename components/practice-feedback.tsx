@@ -14,6 +14,8 @@ interface PracticeFeedbackProps {
   status: string
   /** Technical observations for real-time feedback. */
   liveObservations?: Observation[]
+  /** The allowable pitch deviation in cents for a note to be considered "In Tune". @defaultValue 25 */
+  centsTolerance?: number
 }
 
 function ListeningStatus({ targetNote }: { targetNote: string }) {
@@ -107,7 +109,15 @@ function Level1Status({
   return null
 }
 
-function Level2TechnicalDetails({ isPlaying, centsOff }: { isPlaying: boolean, centsOff?: number | null }) {
+function Level2TechnicalDetails({
+  isPlaying,
+  centsOff,
+  centsTolerance = 25,
+}: {
+  isPlaying: boolean
+  centsOff?: number | null
+  centsTolerance?: number
+}) {
   if (!isPlaying || centsOff === null || centsOff === undefined) return null
 
   return (
@@ -120,12 +130,13 @@ function Level2TechnicalDetails({ isPlaying, centsOff }: { isPlaying: boolean, c
           <div>
             <div className="text-muted-foreground">Deviation</div>
             <div className="font-mono text-lg">
-              {centsOff > 0 ? '+' : ''}{centsOff.toFixed(1)}¢
+              {centsOff > 0 ? '+' : ''}
+              {centsOff.toFixed(1)}¢
             </div>
           </div>
           <div>
             <div className="text-muted-foreground">Tolerance</div>
-            <div className="font-mono text-lg">±10¢</div>
+            <div className="font-mono text-lg">±{centsTolerance}¢</div>
           </div>
         </div>
       </div>
@@ -179,8 +190,10 @@ export function PracticeFeedback({
   centsOff,
   status,
   liveObservations = [],
+  centsTolerance = 25,
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+  const isInTune =
+    centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   const isCorrectNote = detectedPitchName === targetNote
 
@@ -200,7 +213,11 @@ export function PracticeFeedback({
       </div>
 
       {/* LEVEL 2: Precise Metrics */}
-      <Level2TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} />
+      <Level2TechnicalDetails
+        isPlaying={isPlaying}
+        centsOff={centsOff}
+        centsTolerance={centsTolerance}
+      />
 
       {/* LEVEL 3: Live Observations */}
       <Level3LiveFeedback liveObservations={liveObservations} />
