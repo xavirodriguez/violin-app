@@ -42,9 +42,10 @@ interface PracticeStore {
   setNoteIndex: (index: number) => void
   initializeAudio: () => Promise<void>
   start: () => Promise<void>
-  stop: () => Promise<void>
+  stop: () => void
   reset: () => void
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
+  initializeAudio: () => Promise<void>
 }
 
 export const usePracticeStore = create<PracticeStore>((set, get) => {
