@@ -21,9 +21,6 @@ import {
   type DetectedNote,
   formatPitchName,
 } from '@/lib/practice-core'
-import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
-
-const DEFAULT_CENTS_TOLERANCE = 10
 import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
@@ -48,6 +45,18 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExerciseCard } from '@/components/exercise-card'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
+
+const DEFAULT_CENTS_TOLERANCE = 25
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
+  return (
+    <div className="text-center">
+      <h2 className="text-foreground mb-2 text-3xl font-bold">{exerciseName}</h2>
+      <p className="text-muted-foreground">Play each note in tune to advance.</p>
+    </div>
+  )
+}
 
 function ExerciseLibrary({
   selectedId,
@@ -274,6 +283,7 @@ function SheetMusicView({
  */
 export function PracticeMode() {
   const {
+    state,
     practiceState,
     analyser,
     detector,
@@ -402,9 +412,10 @@ export function PracticeMode() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        {error && <ErrorDisplay error={error} onReset={reset} />}
+        {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
+        {state.status === 'initializing' && <Card className="p-12 text-center">Initializing Audio...</Card>}
 
-        {!zenMode && practiceState && (
+        {!zenMode && (state.status !== 'idle' || state.exercise) && (
           <PracticeControls
             status={status}
             hasExercise={!!practiceState}
@@ -417,7 +428,7 @@ export function PracticeMode() {
           />
         )}
 
-        {status === 'idle' && (
+        {state.status === 'idle' && (
           <div className="space-y-6">
             {isAutoStartFeatureEnabled && (
               <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">

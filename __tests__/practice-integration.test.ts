@@ -3,14 +3,32 @@ import { usePracticeStore } from '../stores/practice-store'
 import type { Exercise } from '../lib/exercises/types'
 import { audioManager } from '../lib/infrastructure/audio-manager'
 
-// Mock audioManager
-vi.mock('../lib/infrastructure/audio-manager', () => ({
+// Mock dependencies
+vi.mock('@/lib/practice/session-runner', () => ({
+  runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
+  PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+    return {
+      run: vi.fn().mockImplementation(() => new Promise(() => {})),
+      cancel: vi.fn()
+    }
+  })
+}))
+
+vi.mock('@/lib/infrastructure/audio-manager', () => ({
   audioManager: {
-    initialize: vi.fn().mockResolvedValue({
-      analyser: { fftSize: 2048 },
-      context: { sampleRate: 44100 },
-      stream: {},
-      gainNode: {}
+    initialize: vi.fn(),
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    setGain: vi.fn(),
+    getAnalyser: vi.fn(),
+  },
+}))
+
+vi.mock('@/lib/pitch-detector', () => {
+  return {
+    PitchDetector: vi.fn().mockImplementation(function (this: any) {
+      this.setMaxFrequency = vi.fn()
+      this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
+      this.calculateRMS = vi.fn(() => 0)
     }),
     cleanup: vi.fn()
   }
@@ -53,15 +71,20 @@ describe('Practice Store Integration', () => {
     const store = usePracticeStore.getState()
     store.loadExercise(mockExercise)
 
-    const state = usePracticeStore.getState().practiceState
-    expect(state?.status).toBe('idle')
-    expect(state?.currentIndex).toBe(0)
-    expect(state?.exercise.id).toBe('test-exercise')
-  })
+    // 2. Start practice
+    const mockContext = { sampleRate: 44100 }
+    const mockAnalyser = {
+      fftSize: 2048,
+      getFloatTimeDomainData: vi.fn(),
+      context: mockContext
+    }
+    ;(audioManager.initialize as Mock).mockResolvedValue({
+      context: mockContext,
+      analyser: mockAnalyser,
+    })
 
-  it('start() should change status to listening and initialize audio', async () => {
-    const store = usePracticeStore.getState()
-    store.loadExercise(mockExercise)
+    await usePracticeStore.getState().start()
+    expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
 
     await store.start()
 

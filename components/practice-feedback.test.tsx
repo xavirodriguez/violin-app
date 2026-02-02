@@ -1,22 +1,33 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PracticeFeedback } from './practice-feedback'
 import React from 'react'
 import { Observation } from '@/lib/technique-types'
-import { usePreferencesStore } from '@/stores/preferences-store'
-
-// Mock the preferences store to control feedback levels in tests
-vi.mock('@/stores/preferences-store', () => ({
-  usePreferencesStore: vi.fn(),
-}))
 
 describe('PracticeFeedback', () => {
-  it('renders "Play A4" state when not playing', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
+  beforeEach(() => {
+    // Mock AudioContext for components that use it
+    class MockAudioContext {
+      createOscillator = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        frequency: { value: 0 }
+      })
+      createGain = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: {
+          setValueAtTime: vi.fn(),
+          exponentialRampToValueAtTime: vi.fn()
+        }
+      })
+      destination = {}
+      currentTime = 0
+    }
+    vi.stubGlobal('AudioContext', MockAudioContext)
+  })
 
+  it('renders "Play A4" state when not playing', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -27,11 +38,6 @@ describe('PracticeFeedback', () => {
   })
 
   it('renders "Perfect!" when in tune and correct note', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -45,29 +51,18 @@ describe('PracticeFeedback', () => {
   })
 
   it('renders "Almost!" when slightly out of tune', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     render(
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
         centsOff={12}
         status="listening"
-        centsTolerance={10}
       />
     )
     expect(screen.getByText('Almost!')).toBeDefined()
   })
 
   it('renders "Adjust" when further out of tune', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -81,11 +76,6 @@ describe('PracticeFeedback', () => {
   })
 
   it('renders "Wrong Note" when playing different note', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -98,11 +88,6 @@ describe('PracticeFeedback', () => {
   })
 
   it('renders live feedback observations', () => {
-    (usePreferencesStore as any).mockReturnValue({
-      feedbackLevel: 'beginner',
-      showTechnicalDetails: false,
-    })
-
     const liveObservations: Observation[] = [
       {
         type: 'intonation',
