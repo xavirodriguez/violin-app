@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 import { ArrowUp, ArrowDown, AlertCircle } from 'lucide-react'
 
-export interface Annotation { fingerNumber?: 1|2|3|4; bowDirection?: 'up'|'down'; warningFlag?: boolean; }
+export interface Annotation { fingerNumber?: 0|1|2|3|4; bowDirection?: 'up'|'down'; warningFlag?: boolean; }
 interface SheetMusicAnnotationsProps { annotations: Record<number, Annotation>; currentNoteIndex: number; osmd: OpenSheetMusicDisplay | null; containerRef: React.RefObject<HTMLDivElement | null>; }
 
 export function SheetMusicAnnotations({ annotations, currentNoteIndex, osmd, containerRef }: SheetMusicAnnotationsProps) {

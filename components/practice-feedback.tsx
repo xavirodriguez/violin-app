@@ -33,10 +33,14 @@ function ListeningStatus({ targetNote }: { targetNote: string }) {
   )
 }
 
-function PerfectStatus() {
+function PerfectStatus({ isInTune }: { isInTune: boolean }) {
   return (
     <div className="text-center">
-      <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1.1, opacity: 1 }} transition={{ duration: 0.3, type: "spring" }}>
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: isInTune ? 1.1 : 1, opacity: 1 }}
+        transition={{ duration: 0.3, type: "spring" }}
+      >
         <CheckCircle2 className="w-32 h-32 text-[var(--pitch-perfect)] mx-auto mb-4" />
       </motion.div>
       <div className="text-4xl font-bold text-[var(--pitch-perfect)]">Perfect!</div>
@@ -74,12 +78,17 @@ function ValidatingFeedback({ holdDuration = 0, requiredHoldTime = 1000 }: { hol
 }
 
 function AdjustStatus({ centsOff }: { centsOff: number }) {
-  const color = Math.abs(centsOff) < 15 ? '#F59E0B' : '#EF4444'
+  const color = Math.abs(centsOff) < 15 ? 'var(--pitch-close-flat)' : 'var(--pitch-very-flat)'
   return (
     <div className="text-center">
-      <div className="text-8xl font-bold mb-4" style={{ color }}>
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="text-8xl font-bold mb-4"
+        style={{ color }}
+      >
         {centsOff > 0 ? '↑' : '↓'}
-      </div>
+      </motion.div>
       <div className="text-3xl font-semibold" style={{ color }}>
         {Math.abs(centsOff) < 15 ? 'Almost!' : 'Adjust'}
       </div>
@@ -93,8 +102,8 @@ function AdjustStatus({ centsOff }: { centsOff: number }) {
 function WrongNoteStatus({ detectedPitchName, targetNote }: { detectedPitchName?: string, targetNote: string }) {
   return (
     <div className="text-center">
-      <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
-      <div className="text-3xl font-bold text-yellow-500 mb-2">
+      <AlertTriangle className="w-24 h-24 text-[var(--pitch-very-flat)] mx-auto mb-4" />
+      <div className="text-3xl font-bold text-[var(--pitch-very-flat)] mb-2">
         Wrong Note
       </div>
       <div className="text-xl text-muted-foreground">
@@ -124,7 +133,7 @@ function Level1Status({ status, targetNote, isPlaying, isCorrectNote, isInTune, 
   if (status === 'listening' && !isPlaying) return <ListeningStatus targetNote={targetNote} />
   if (status === 'validating' || (isPlaying && isCorrectNote && isInTune)) {
     if (status === 'validating') return <ValidatingFeedback holdDuration={holdDuration} requiredHoldTime={requiredHoldTime} />
-    return <PerfectStatus />
+    return <PerfectStatus isInTune={isInTune} />
   }
   if (isPlaying && isCorrectNote && !isInTune) return <AdjustStatus centsOff={centsOff ?? 0} />
   if (isPlaying && !isCorrectNote) return <WrongNoteStatus detectedPitchName={detectedPitchName} targetNote={targetNote} />

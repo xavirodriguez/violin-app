@@ -89,6 +89,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         error: null,
         liveObservations: [],
       }))
+
+      if (get().autoStartEnabled) {
+        // We use a small delay to ensure UI has updated before starting audio
+        setTimeout(() => {
+          get().start().catch(err => console.error('Auto-start failed:', err))
+        }, 100)
+      }
     },
 
     setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),

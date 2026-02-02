@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SheetMusic } from '@/components/sheet-music'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
-import { Music, Play, Target, ListCheck } from 'lucide-react'
+import { Music, Play, Target, ListCheck, Volume2 } from 'lucide-react'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
+import { formatPitchName, MusicalNote } from '@/lib/practice-core'
+import { useState } from 'react'
 
 interface ExercisePreviewModalProps {
   exercise: Exercise | null; isOpen: boolean; onOpenChange: (open: boolean) => void; onStart: () => void;
@@ -18,6 +20,55 @@ interface ExercisePreviewModalProps {
 
 export function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }: ExercisePreviewModalProps) {
   const osmdHook = useOSMDSafe(exercise?.musicXML ?? '')
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const playReferenceAudio = async () => {
+    if (!exercise || isPlaying) return
+
+    setIsPlaying(true)
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    const audioContext = new AudioContextClass()
+
+    try {
+      let currentTime = audioContext.currentTime
+
+      for (const note of exercise.notes) {
+        const noteName = formatPitchName(note.pitch)
+        const musicalNote = MusicalNote.fromName(noteName)
+        const freq = musicalNote.frequency
+
+        // Use exercise tempo if available, default to 120 BPM
+        const bpm = (exercise as any).tempoRange?.min ?? 120
+        const durationSeconds = (4 / note.duration) * (60 / bpm)
+
+        const osc = audioContext.createOscillator()
+        const gain = audioContext.createGain()
+
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(freq, currentTime)
+
+        gain.gain.setValueAtTime(0, currentTime)
+        gain.gain.linearRampToValueAtTime(0.15, currentTime + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.001, currentTime + durationSeconds)
+
+        osc.connect(gain)
+        gain.connect(audioContext.destination)
+
+        osc.start(currentTime)
+        osc.stop(currentTime + durationSeconds)
+
+        currentTime += durationSeconds + 0.02
+      }
+
+      // Reset isPlaying after total duration
+      const totalDuration = currentTime - audioContext.currentTime
+      setTimeout(() => setIsPlaying(false), totalDuration * 1000)
+    } catch (err) {
+      console.error('Failed to play reference audio:', err)
+      setIsPlaying(false)
+    }
+  }
+
   if (!exercise) return null
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -59,9 +110,23 @@ export function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="p-6 bg-muted/20 border-t flex-row gap-4 sm:justify-between">
-          <Button variant="outline" onClick={() => alert('Coming soon!')} className="gap-2"><Play className="h-4 w-4" />Listen</Button>
-          <Button onClick={onStart} size="lg" className="px-8 font-bold gap-2">Start Practice</Button>
+        <DialogFooter className="p-6 bg-muted/20 border-t flex flex-row gap-4 sm:justify-between items-center">
+          <Button
+            variant="outline"
+            onClick={playReferenceAudio}
+            disabled={isPlaying}
+            className="gap-2"
+          >
+            {isPlaying ? (
+              <div className="h-4 w-4 animate-pulse bg-primary rounded-full" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+            {isPlaying ? 'Playing...' : 'Listen Reference'}
+          </Button>
+          <Button onClick={onStart} size="lg" className="px-8 font-bold gap-2">
+            <Play className="h-4 w-4" /> Start Practice
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -22,7 +22,7 @@ import {
   formatPitchName,
 } from '@/lib/practice-core'
 
-const DEFAULT_CENTS_TOLERANCE = 25
+const DEFAULT_CENTS_TOLERANCE = 10
 import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
@@ -239,14 +239,16 @@ function PracticeActiveView({
           perfectNoteStreak={perfectNoteStreak}
         />
       </Card>
-      <Card className="p-12">
-        <ViolinFingerboard
-          targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch ?? null}
-          centsDeviation={lastDetectedNote?.cents ?? null}
-          centsTolerance={DEFAULT_CENTS_TOLERANCE}
-        />
-      </Card>
+      {!zenMode && (
+        <Card className="p-12">
+          <ViolinFingerboard
+            targetNote={targetPitchName}
+            detectedPitchName={lastDetectedNote?.pitch ?? null}
+            centsDeviation={lastDetectedNote?.cents ?? null}
+            centsTolerance={DEFAULT_CENTS_TOLERANCE}
+          />
+        </Card>
+      )}
     </>
   )
 }
@@ -326,6 +328,9 @@ export function PracticeMode() {
           break
         case 'c':
           setNoteIndex(currentNoteIndex + 1)
+          break
+        case 'm':
+          setNoteIndex(Math.max(0, currentNoteIndex - 4))
           break
         case 'z':
           setZenMode(v => !v)
@@ -426,10 +431,10 @@ export function PracticeMode() {
             />
             {practiceState && (
               <SheetMusicAnnotations
-                annotations={{
-                  // Sample annotation for demo purposes
-                  [currentNoteIndex]: { fingerNumber: 1, bowDirection: 'down' }
-                }}
+                annotations={practiceState.exercise.notes.reduce((acc, note, idx) => {
+                  if (note.annotations) acc[idx] = note.annotations
+                  return acc
+                }, {} as Record<number, any>)}
                 currentNoteIndex={currentNoteIndex}
                 osmd={osmdHook.osmd}
                 containerRef={osmdHook.containerRef}
