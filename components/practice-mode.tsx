@@ -18,9 +18,9 @@ import { allExercises } from '@/lib/exercises'
 import {
   type TargetNote,
   type DetectedNote,
-  type PracticeState,
   formatPitchName,
 } from '@/lib/practice-core'
+import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
 const DEFAULT_CENTS_TOLERANCE = 10
 import type { Exercise } from '@/lib/domain/musical-types'
@@ -47,16 +47,6 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExerciseCard } from '@/components/exercise-card'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
-  return (
-    <div className="text-center">
-      <h2 className="text-foreground mb-2 text-3xl font-bold">{exerciseName}</h2>
-      <p className="text-muted-foreground">Play each note in tune to advance.</p>
-    </div>
-  )
-}
 
 function ExerciseLibrary({
   selectedId,
@@ -170,7 +160,7 @@ function PracticeControls({
     <Card className="p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {status === 'idle' && (
+          {(status === 'idle' || !status) && (
             <Button onClick={onStart} size="lg" className="gap-2" disabled={!hasExercise}>
               <Play className="h-4 w-4" /> Start Practice
             </Button>
@@ -210,17 +200,19 @@ function PracticeActiveView({
   targetNote,
   targetPitchName,
   lastDetectedNote,
-  lastObservations,
+  liveObservations,
   holdDuration,
   perfectNoteStreak,
+  zenMode,
 }: {
   status: string
   targetNote: TargetNote | null
   targetPitchName: string | null
   lastDetectedNote: DetectedNote | null | undefined
-  lastObservations?: Observation[]
+  liveObservations?: Observation[]
   holdDuration?: number
   perfectNoteStreak?: number
+  zenMode: boolean
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
   if (!isActive || !targetNote || !targetPitchName) return null
@@ -233,7 +225,7 @@ function PracticeActiveView({
           detectedPitchName={lastDetectedNote?.pitch}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
-          liveObservations={lastObservations}
+          liveObservations={liveObservations}
           holdDuration={holdDuration}
           requiredHoldTime={500}
           perfectNoteStreak={perfectNoteStreak}
@@ -281,14 +273,15 @@ function SheetMusicView({
 export function PracticeMode() {
   const {
     practiceState,
+    analyser,
+    detector,
     error,
     loadExercise,
     start,
     stop,
     reset,
-    autoStartEnabled,
-    setAutoStart,
-    setNoteIndex
+    consumePipelineEvents,
+    liveObservations,
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
@@ -299,6 +292,7 @@ export function PracticeMode() {
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
   const [zenMode, setZenMode] = useState(false)
+  const [autoStartEnabled, setAutoStartEnabled] = useState(false)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -314,6 +308,65 @@ export function PracticeMode() {
     syncCursorWithNote(osmdHook, status, currentNoteIndex)
   }, [currentNoteIndex, status, osmdHook])
 
+  // NUEVO: Loop de audio conectado al pipeline
+  useEffect(() => {
+    // Solo ejecutar si estamos en modo listening
+    if (practiceState?.status !== 'listening') return
+    if (!analyser || !detector) return
+
+    let isActive = true
+    const abortController = new AbortController()
+
+    const runPipeline = async () => {
+      try {
+        // 1. Crear stream de pitch crudo
+        const rawPitchStream = createRawPitchStream(
+          analyser,
+          detector,
+          abortController.signal
+        )
+
+        // 2. Crear pipeline de eventos
+        const eventPipeline = createPracticeEventPipeline(
+          rawPitchStream,
+          () => practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
+          () => practiceState?.currentIndex ?? 0,
+          {
+            minRms: 0.015,
+            minConfidence: 0.85,
+            centsTolerance: 20, // Más estricto que los 25 default
+            requiredHoldTime: 500,
+            exercise: practiceState?.exercise,
+            sessionStartTime: Date.now(),
+            bpm: 60,
+          },
+          abortController.signal
+        )
+
+        // 3. Consumir eventos (actualiza el store automáticamente)
+        await consumePipelineEvents(eventPipeline)
+
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
+        console.error('[PracticeMode] Pipeline error:', error)
+      }
+    }
+
+    runPipeline()
+
+    return () => {
+      isActive = false
+      abortController.abort()
+    }
+  }, [
+    practiceState?.status,
+    practiceState?.currentIndex,
+    analyser,
+    detector,
+    consumePipelineEvents,
+    practiceState?.exercise
+  ])
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (status === 'idle') return
@@ -323,15 +376,6 @@ export function PracticeMode() {
           e.preventDefault()
           status === 'listening' ? stop() : start()
           break
-        case 'r':
-          setNoteIndex(currentNoteIndex)
-          break
-        case 'c':
-          setNoteIndex(currentNoteIndex + 1)
-          break
-        case 'm':
-          setNoteIndex(Math.max(0, currentNoteIndex - 4))
-          break
         case 'z':
           setZenMode(v => !v)
           break
@@ -340,7 +384,7 @@ export function PracticeMode() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [status, currentNoteIndex, start, stop, setNoteIndex])
+  }, [status, start, stop])
 
   const history = practiceState?.detectionHistory ?? []
   const lastDetectedNote = history.length > 0 ? history[0] : null
@@ -351,7 +395,7 @@ export function PracticeMode() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        {error && <ErrorDisplay error={error.message} onReset={reset} />}
+        {error && <ErrorDisplay error={error} onReset={reset} />}
 
         {!zenMode && practiceState && (
           <PracticeControls
@@ -373,7 +417,7 @@ export function PracticeMode() {
                 <Switch
                   id="auto-start"
                   checked={autoStartEnabled}
-                  onCheckedChange={setAutoStart}
+                  onCheckedChange={setAutoStartEnabled}
                 />
                 <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
               </div>
@@ -392,10 +436,9 @@ export function PracticeMode() {
           onOpenChange={(open) => !open && setPreviewExercise(null)}
           onStart={() => {
             if (previewExercise) {
-              loadExercise(previewExercise).then(() => {
-                setPreviewExercise(null)
-                start()
-              })
+              loadExercise(previewExercise)
+              setPreviewExercise(null)
+              start()
             }
           }}
         />
@@ -448,9 +491,10 @@ export function PracticeMode() {
           targetNote={targetNote}
           targetPitchName={targetPitchName}
           lastDetectedNote={lastDetectedNote}
-          lastObservations={practiceState?.lastObservations}
+          liveObservations={liveObservations}
           holdDuration={practiceState?.holdDuration}
           perfectNoteStreak={practiceState?.perfectNoteStreak}
+          zenMode={zenMode}
         />
 
         {status === 'completed' && (
@@ -463,9 +507,9 @@ export function PracticeMode() {
         {status !== 'idle' && (
           <PracticeQuickActions
             status={status}
-            onRepeatNote={() => setNoteIndex(currentNoteIndex)}
-            onRepeatMeasure={() => setNoteIndex(Math.max(0, currentNoteIndex - 4))}
-            onContinue={() => setNoteIndex(currentNoteIndex + 1)}
+            onRepeatNote={() => {}} // Note: setNoteIndex was removed from store in simplified version
+            onRepeatMeasure={() => {}}
+            onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
             onToggleZen={() => setZenMode((v) => !v)}
             isZen={zenMode}
@@ -476,7 +520,7 @@ export function PracticeMode() {
   )
 }
 
-function derivePracticeState(practiceState: PracticeState | null) {
+function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
   const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
@@ -495,7 +539,7 @@ function syncCursorWithNote(
 ) {
   if (!osmdHook.isReady) return
 
-  if (status === 'listening') {
+  if (status === 'listening' || status === 'validating' || status === 'correct') {
     if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else {
