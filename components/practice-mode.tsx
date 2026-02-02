@@ -18,11 +18,8 @@ import { allExercises } from '@/lib/exercises'
 import {
   type TargetNote,
   type DetectedNote,
-  type PracticeState,
   formatPitchName,
 } from '@/lib/practice-core'
-
-const DEFAULT_CENTS_TOLERANCE = 25
 import type { Exercise } from '@/lib/domain/musical-types'
 import { type Observation } from '@/lib/technique-types'
 import { Button } from '@/components/ui/button'
@@ -47,6 +44,8 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExerciseCard } from '@/components/exercise-card'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
+
+const DEFAULT_CENTS_TOLERANCE = 25
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
@@ -170,7 +169,7 @@ function PracticeControls({
     <Card className="p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {status === 'idle' && (
+          {(status === 'idle' || !status) && (
             <Button onClick={onStart} size="lg" className="gap-2" disabled={!hasExercise}>
               <Play className="h-4 w-4" /> Start Practice
             </Button>
@@ -303,8 +302,8 @@ export function PracticeMode() {
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
   useEffect(() => {
-    if (!loadedRef.current && !practiceState) {
-      // Don't auto-load first exercise into store, let user select from library
+    if (!loadedRef.current && !practiceState && allExercises.length > 0) {
+      loadExercise(allExercises[0])
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
@@ -350,7 +349,20 @@ export function PracticeMode() {
         {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
         {state.status === 'initializing' && <Card className="p-12 text-center">Initializing Audio...</Card>}
 
-        {state.status === 'idle' ? (
+        {!zenMode && (state.status !== 'idle' || state.exercise) && (
+          <PracticeControls
+            status={status}
+            hasExercise={!!practiceState}
+            onStart={start}
+            onStop={stop}
+            onRestart={handleRestart}
+            progress={progress}
+            currentNoteIndex={currentNoteIndex}
+            totalNotes={totalNotes}
+          />
+        )}
+
+        {state.status === 'idle' && (
           <div className="space-y-6">
             <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
               <div className="flex items-center gap-2">
@@ -368,19 +380,6 @@ export function PracticeMode() {
               disabled={false}
             />
           </div>
-        ) : (
-          !zenMode && (
-            <PracticeControls
-              status={status}
-              hasExercise={!!practiceState}
-              onStart={start}
-              onStop={stop}
-              onRestart={handleRestart}
-              progress={progress}
-              currentNoteIndex={currentNoteIndex}
-              totalNotes={totalNotes}
-            />
-          )
         )}
 
         <ExercisePreviewModal
@@ -428,10 +427,10 @@ export function PracticeMode() {
             />
             {practiceState && (
               <SheetMusicAnnotations
-                annotations={{
-                  // Sample annotation for demo purposes
-                  [currentNoteIndex]: { fingerNumber: 1, bowDirection: 'down' }
-                }}
+                annotations={practiceState.exercise.notes.reduce((acc, note, idx) => {
+                  if (note.annotations) acc[idx] = note.annotations
+                  return acc
+                }, {} as Record<number, any>)}
                 currentNoteIndex={currentNoteIndex}
                 osmd={osmdHook.osmd}
                 containerRef={osmdHook.containerRef}
@@ -473,7 +472,7 @@ export function PracticeMode() {
   )
 }
 
-function derivePracticeState(practiceState: PracticeState | null) {
+function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
   const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
@@ -492,7 +491,7 @@ function syncCursorWithNote(
 ) {
   if (!osmdHook.isReady) return
 
-  if (status === 'listening') {
+  if (status === 'listening' || status === 'validating' || status === 'correct') {
     if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else {

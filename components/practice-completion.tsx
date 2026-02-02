@@ -20,7 +20,7 @@ export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletio
     if (!sessionData) return 1
     const { accuracy, averageCents } = sessionData
     if (accuracy >= 95 && Math.abs(averageCents) < 5) return 3
-    if (accuracy >= 85 && Math.abs(averageCents) < 15) return 2
+    if (accuracy >= 85 && Math.abs(averageCents) < 10) return 2
     return 1
   }, [sessionData])
 

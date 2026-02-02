@@ -87,7 +87,7 @@ export function calculateLiveObservations(
 
   // Priorizar observaciones (más severas y confiables primero)
   return observations
-    .sort((a, b) => (b.severity * (b.confidence ?? 0)) - (a.severity * (a.confidence ?? 0)))
+    .sort((a, b) => (b.severity * b.confidence) - (a.severity * a.confidence))
     .slice(0, 2) // Máximo 2 observaciones simultáneas
 }
 
