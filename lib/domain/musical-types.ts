@@ -34,6 +34,12 @@ export interface Note {
   pitch: Pitch
   /** The duration of the note. */
   duration: NoteDuration
+  /** Optional pedagogical annotations for the note. */
+  annotations?: {
+    fingerNumber?: 1 | 2 | 3 | 4
+    bowDirection?: 'up' | 'down'
+    warningFlag?: boolean
+  }
 }
 
 // --- Metadata types ---

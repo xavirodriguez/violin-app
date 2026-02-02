@@ -8,6 +8,9 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 interface NoteAttempt { noteIndex: number; targetPitch: string; accuracy: number; cents: number; }
 interface PracticeSummaryChartProps { noteAttempts: NoteAttempt[]; }
 
+/**
+ * Visual summary of exercise performance with accuracy heatmap.
+ */
 export function PracticeSummaryChart({ noteAttempts }: PracticeSummaryChartProps) {
   if (noteAttempts.length === 0) return null
   const bestNote = [...noteAttempts].sort((a, b) => b.accuracy - a.accuracy)[0]

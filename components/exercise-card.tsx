@@ -16,6 +16,9 @@ interface ExerciseCardProps {
   isSelected: boolean
 }
 
+/**
+ * Visual card representing a violin exercise with OSMD preview.
+ */
 export function ExerciseCard({
   exercise,
   isRecommended,
