@@ -32,6 +32,8 @@ Some features require others to be enabled or have infrastructure dependencies:
 | :--- | :--- | :--- |
 | `FEATURE_UI_VIOLIN_FINGERBOARD` | Stable / Universal | **PROMOTED**: Flag removed, component is now permanent. |
 | `FEATURE_TECHNICAL_FEEDBACK` | Stable | **PROMOTED**: Flag removed, feedback system is now permanent. |
+| `FEATURE_ANALYTICS_DASHBOARD` | Stable | **PROMOTED**: Flag removed, analytics is now a core view. |
+| `FEATURE_PRACTICE_ASSISTANT` | Stable | **PROMOTED**: Flag removed, cmdk assistant is now permanent. |
 | `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
 
 ## 🚀 Architectural Recommendations

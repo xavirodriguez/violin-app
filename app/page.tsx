@@ -24,7 +24,6 @@ export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const isAnalyticsEnabled = useFeatureFlag('FEATURE_ANALYTICS_DASHBOARD')
 
   useEffect(() => {
     // Check if user has completed onboarding
@@ -71,12 +70,10 @@ export default function Home() {
                         <Music className="h-4 w-4" />
                         Practice
                       </TabsTrigger>
-                      {isAnalyticsEnabled && (
-                        <TabsTrigger value="dashboard" className="gap-2">
-                          <LayoutDashboard className="h-4 w-4" />
-                          Dashboard
-                        </TabsTrigger>
-                      )}
+                      <TabsTrigger value="dashboard" className="gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
 
@@ -106,7 +103,7 @@ export default function Home() {
         <main className="flex-1">
           {mode === 'tuner' && <TunerMode />}
           {mode === 'practice' && <PracticeMode />}
-          {mode === 'dashboard' && isAnalyticsEnabled && <AnalyticsDashboard />}
+          {mode === 'dashboard' && <AnalyticsDashboard />}
         </main>
 
         {/* Footer */}

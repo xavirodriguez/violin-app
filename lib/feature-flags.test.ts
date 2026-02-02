@@ -14,7 +14,7 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return the default value when the flag is not set in environment', () => {
-    const flagName = 'FEATURE_ANALYTICS_DASHBOARD'
+    const flagName = 'FEATURE_AUDIO_WEB_WORKER'
     const metadata = FEATURE_FLAGS_METADATA[flagName]
 
     // Ensure it's not in env
@@ -25,21 +25,22 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return true when the flag is set to "true" in environment', () => {
-    const flagName = 'FEATURE_ANALYTICS_DASHBOARD'
+    const flagName = 'FEATURE_AUDIO_WEB_WORKER'
     process.env[flagName] = 'true'
 
     expect(featureFlags.isEnabled(flagName)).toBe(true)
   })
 
   it('should return false when the flag is set to "false" in environment', () => {
-    const flagName = 'FEATURE_PRACTICE_ASSISTANT' // Default is true in metadata
+    // We need a flag that is true by default or we set it to true then false
+    const flagName = 'FEATURE_AUDIO_WEB_WORKER'
     process.env[flagName] = 'false'
 
     expect(featureFlags.isEnabled(flagName)).toBe(false)
   })
 
   it('should respect NEXT_PUBLIC_ prefix for client-side flags', () => {
-    const flagName = 'FEATURE_ANALYTICS_DASHBOARD'
+    const flagName = 'FEATURE_AUDIO_WEB_WORKER'
     delete process.env[flagName]
     process.env[`NEXT_PUBLIC_${flagName}`] = 'true'
 
@@ -57,26 +58,25 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return all flags with their current values', () => {
-    process.env['FEATURE_ANALYTICS_DASHBOARD'] = 'true'
     process.env['FEATURE_AUDIO_WEB_WORKER'] = 'true'
+    process.env['FEATURE_TELEMETRY_ACCURACY'] = 'true'
 
     const allFlags = featureFlags.getAll()
 
-    expect(allFlags['FEATURE_ANALYTICS_DASHBOARD']).toBe(true)
     expect(allFlags['FEATURE_AUDIO_WEB_WORKER']).toBe(true)
+    expect(allFlags['FEATURE_TELEMETRY_ACCURACY']).toBe(true)
     expect(Object.keys(allFlags)).toEqual(Object.keys(FEATURE_FLAGS_METADATA))
   })
 
   it('should get raw values using get()', () => {
     process.env['SOME_RANDOM_FLAG'] = 'some-value'
     // Since it's not in metadata, it should still return the env value if we use get()
-    // Wait, the implementation of get() checks metadata too.
 
     expect(featureFlags.get('SOME_RANDOM_FLAG' as any)).toBe('some-value')
   })
 
   it('should return default value from get() when env is missing', () => {
-    const flagName = 'FEATURE_ANALYTICS_DASHBOARD'
+    const flagName = 'FEATURE_AUDIO_WEB_WORKER'
     delete process.env[flagName]
     delete process.env[`NEXT_PUBLIC_${flagName}`]
 

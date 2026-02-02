@@ -18,34 +18,28 @@ These features were previously behind flags but are now a permanent part of the 
 - **Impact**: Provides qualitative feedback beyond simple pitch accuracy.
 - **Status**: Stable.
 
+### Progress Analytics Dashboard
+- **ID**: `FEATURE_ANALYTICS_DASHBOARD` (Promoted)
+- **Description**: A dedicated view for tracking practice time, streaks, and skill progression.
+- **Impact**: Increases user engagement and motivation.
+- **Status**: Stable.
+
+### Contextual Practice Assistant
+- **ID**: `FEATURE_PRACTICE_ASSISTANT` (Promoted)
+- **Description**: A command-palette style assistant (powered by `cmdk`) for quick navigation and drill selection.
+- **Status**: Stable. Accessible via `Meta+K` or `Ctrl+K`.
+
 ---
 
 ## 📋 Active Feature Flags
 
 | Flag | Category | Status | Risk |
 | :--- | :--- | :--- | :--- |
-| `FEATURE_PRACTICE_ASSISTANT` | BETA | ACTIVE | MEDIUM |
-| `FEATURE_ANALYTICS_DASHBOARD` | BETA | ACTIVE | LOW |
+| `FEATURE_TELEMETRY_ACCURACY` | INTEGRATION | ACTIVE (Log) | LOW |
 | `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | EXPERIMENTAL | DEFINED | MEDIUM |
 | `FEATURE_AUDIO_WEB_WORKER` | PERFORMANCE | DEFINED | HIGH |
 | `FEATURE_UI_INTONATION_HEATMAPS` | EXPERIMENTAL | DEFINED | LOW |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS` | EXPERIMENTAL | PLANNED | HIGH |
-| `FEATURE_TELEMETRY_ACCURACY` | INTEGRATION | PLANNED | LOW |
-
----
-
-## 🛠 Feature Details
-
-### Contextual Practice Assistant
-- **ID**: `FEATURE_PRACTICE_ASSISTANT`
-- **Description**: A command-palette style assistant (powered by `cmdk`) for quick navigation and drill selection.
-- **Status**: Integrated and active. Accessible via `Meta+K` or `Ctrl+K`.
-
-### Progress Analytics Dashboard
-- **ID**: `FEATURE_ANALYTICS_DASHBOARD`
-- **Description**: A dedicated view for tracking practice time, streaks, and skill progression.
-- **Impact**: Increases user engagement and motivation.
-- **How to test**: Toggle the 'Dashboard' tab in the main header.
 
 ---
 
@@ -79,7 +73,7 @@ These features were previously behind flags but are now a permanent part of the 
 ### Accuracy Telemetry
 - **ID**: `FEATURE_TELEMETRY_ACCURACY`
 - **Description**: Anonymous tracking of detection confidence levels to optimize the algorithm for different hardware.
-- **Status**: Researching privacy-safe implementation.
+- **Status**: Integrated (Basic Logging). Enabled to collect real-world detection data.
 
 ---
 

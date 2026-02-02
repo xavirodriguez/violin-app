@@ -44,6 +44,7 @@ describe('PracticeFeedback', () => {
         detectedPitchName="A4"
         centsOff={5}
         status="correct"
+        centsTolerance={10}
       />
     )
     expect(screen.getByText('Perfect!')).toBeDefined()
@@ -68,6 +69,7 @@ describe('PracticeFeedback', () => {
         detectedPitchName="A4"
         centsOff={12}
         status="listening"
+        centsTolerance={10}
       />
     )
     // There might be multiple (one in meter, one in details)

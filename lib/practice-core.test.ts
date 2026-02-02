@@ -24,6 +24,7 @@ const getInitialState = (
   exercise: mockExercise,
   currentIndex,
   detectionHistory: [],
+  perfectNoteStreak: 0,
 })
 
 describe('reducePracticeEvent', () => {
