@@ -23,16 +23,15 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
   },
 }))
 
-vi.mock('@/lib/pitch-detector', () => {
-  return {
-    PitchDetector: vi.fn().mockImplementation(function (this: any) {
-      this.setMaxFrequency = vi.fn()
-      this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
-      this.calculateRMS = vi.fn(() => 0)
-    }),
-    cleanup: vi.fn()
-  }
-});
+vi.mock('@/lib/pitch-detector', () => ({
+  PitchDetector: vi.fn().mockImplementation(function(this: any) {
+    this.setMaxFrequency = vi.fn()
+    this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
+    this.calculateRMS = vi.fn(() => 0)
+    return this
+  }),
+  cleanup: vi.fn()
+}))
 
 // Mock de ejercicio
 const mockExercise: Exercise = {
@@ -78,14 +77,15 @@ describe('Practice Store Integration', () => {
       getFloatTimeDomainData: vi.fn(),
       context: mockContext
     }
-    ;(audioManager.initialize as Mock).mockResolvedValue({
-      context: mockContext,
-      analyser: mockAnalyser,
+    vi.mocked(audioManager.initialize).mockResolvedValue({
+      context: mockContext as any,
+      analyser: mockAnalyser as any,
+      stream: {} as any
     })
 
-    await usePracticeStore.getState().start()
-    expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
+    await store.start()
 
+    expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
     expect(usePracticeStore.getState().analyser).not.toBeNull()
     expect(usePracticeStore.getState().detector).not.toBeNull()
     expect(audioManager.initialize).toHaveBeenCalled()
