@@ -215,7 +215,7 @@ class FeatureFlagsManager {
     // Check dependencies
     for (const flagName in FEATURE_FLAGS_METADATA) {
       const name = flagName as FeatureFlagName
-      const metadata = FEATURE_FLAGS_METADATA[name]
+      const metadata = FEATURE_FLAGS_METADATA[name] as FeatureFlagMetadata
 
       if (this.isEnabled(name) && metadata.dependencies) {
         for (const dep of metadata.dependencies) {

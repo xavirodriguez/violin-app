@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
 import type { Exercise } from '../lib/exercises/types'
 import { audioManager } from '../lib/infrastructure/audio-manager'

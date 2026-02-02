@@ -8,6 +8,7 @@ interface PracticeFeedbackProps {
   detectedPitchName?: string
   centsOff?: number | null
   status: string
+  centsTolerance?: number
   liveObservations?: Observation[] // NUEVO
   // These are kept for compatibility with PracticeMode if needed,
   // although not strictly required by the prompt's snippet
@@ -21,9 +22,10 @@ export function PracticeFeedback({
   detectedPitchName,
   centsOff,
   status,
+  centsTolerance = 10,
   liveObservations = [],
 }: PracticeFeedbackProps) {
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < 10
+  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   const isCorrectNote = detectedPitchName === targetNote
 
@@ -98,7 +100,7 @@ export function PracticeFeedback({
               </div>
               <div>
                 <div className="text-muted-foreground">Tolerance</div>
-                <div className="font-mono text-lg">±10¢</div>
+                <div className="font-mono text-lg">±{centsTolerance}¢</div>
               </div>
             </div>
           </div>

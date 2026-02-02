@@ -21,6 +21,7 @@ import { toAppError, AppError } from '@/lib/errors/app-error'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { PitchDetector } from '@/lib/pitch-detector'
+import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
@@ -45,6 +46,9 @@ interface PracticeStore {
   // Extra UI state
   liveObservations: Observation[]
   autoStartEnabled: boolean
+  analyser: AnalyserNode | null
+  audioLoop: AudioLoopPort | null
+  detector: PitchDetectionPort | null
 
   // Concurrency and Resource Management
   isStarting: boolean
@@ -124,6 +128,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const loopAdapter = new WebAudioLoopAdapter(frameAdapter)
         const detector = new PitchDetector(analyser.context.sampleRate)
         const detectorPort = new PitchDetectorAdapter(detector)
+
+        set({ analyser, audioLoop: loopAdapter, detector: detectorPort })
 
         if (exercise) {
           const newState = transitions.ready({
@@ -370,7 +376,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             if (targetNote) {
               const targetPitchName = formatPitchName(targetNote.pitch)
               const liveObs = calculateLiveObservations(
-                practiceState.detectionHistory,
+                [...practiceState.detectionHistory],
                 targetPitchName
               )
               if (get().sessionId === currentSessionId) {
