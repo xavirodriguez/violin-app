@@ -5,6 +5,16 @@ import { audioManager } from '../lib/infrastructure/audio-manager'
 import { PracticeEvent } from '../lib/practice-core'
 
 // Mock dependencies
+vi.mock('@/lib/practice/session-runner', () => ({
+  runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
+  PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+    return {
+      run: vi.fn().mockImplementation(() => new Promise(() => {})),
+      cancel: vi.fn()
+    }
+  })
+}))
+
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
   audioManager: {
     initialize: vi.fn(),

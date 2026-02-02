@@ -27,7 +27,7 @@ describe('PracticeFeedback', () => {
     vi.stubGlobal('AudioContext', MockAudioContext)
   })
 
-  it('renders "Listening" state when not playing', () => {
+  it('renders "Play A4" state when not playing', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -50,7 +50,7 @@ describe('PracticeFeedback', () => {
     expect(screen.getByText('Perfect!')).toBeDefined()
   })
 
-  it('renders "Almost!" when in tune but outside tight tolerance', () => {
+  it('renders "Almost!" when slightly out of tune', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
@@ -62,18 +62,17 @@ describe('PracticeFeedback', () => {
     expect(screen.getByText('Almost!')).toBeDefined()
   })
 
-  it('renders technical cents when playing', () => {
+  it('renders "Adjust" when further out of tune', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
         detectedPitchName="A4"
-        centsOff={12}
+        centsOff={20}
         status="listening"
         centsTolerance={10}
       />
     )
-    // There might be multiple (one in meter, one in details)
-    expect(screen.getAllByText(/12\.0/)).toBeDefined()
+    expect(screen.getByText('Adjust')).toBeDefined()
   })
 
   it('renders "Wrong Note" when playing different note', () => {

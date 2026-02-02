@@ -3,6 +3,7 @@ import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-st
 import { handlePracticeEvent } from './practice-event-sink'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
+import { featureFlags } from '@/lib/feature-flags'
 import type { Exercise } from '@/lib/exercises/types'
 import { NoteTechnique } from '../technique-types'
 
@@ -114,6 +115,16 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     try {
       if (event.type === 'NOTE_DETECTED') {
         this.deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+
+        // Accuracy Telemetry Evolution
+        if (featureFlags.isEnabled('FEATURE_TELEMETRY_ACCURACY')) {
+          console.log('[TELEMETRY] Pitch Accuracy:', {
+            pitch: event.payload.pitch,
+            cents: event.payload.cents,
+            confidence: event.payload.confidence,
+            timestamp: event.payload.timestamp,
+          })
+        }
       } else if (event.type === 'NO_NOTE_DETECTED') {
         this.deps.updatePitch?.(0, 0)
       }

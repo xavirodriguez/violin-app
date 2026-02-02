@@ -22,7 +22,7 @@ import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
 
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
-import { PracticeState } from '@/lib/practice-core'
+import { PracticeState, PracticeEvent } from '@/lib/practice-core'
 
 interface PracticeStore {
   // Explicit State
@@ -187,8 +187,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       // Sync with TunerStore
       useTunerStore.setState({
-        state: { kind: 'LISTENING', sessionToken: get().sessionId },
-        detector: (state as any).detector?.detector || null // Accessing internal detector from adapter if possible
+        state: { kind: 'LISTENING', sessionToken: (state as any).sessionId || Date.now() },
+        detector: (state as any).detector?.detector || null
       })
 
       runPracticeSession(runnerDeps as any).then(result => {
@@ -197,55 +197,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           const stoppedState = transitions.stop(s)
           set({
             state: stoppedState,
-            practiceState: { ...s.practiceState, status: 'idle' } // fallback status
+            practiceState: { ...s.practiceState, status: 'idle' }
           })
         }
       })
-    },
-
-    start: async () => {
-      // 1. Synchronous guards for concurrency: prevents double start and overlapping loops
-      if (get().isStarting || get().practiceState?.status === 'listening') return
-
-      const currentState = get().practiceState
-      if (!currentState) {
-        set({ error: toAppError('No exercise loaded') })
-        return
-      }
-
-      set({ isStarting: true })
-
-      try {
-        // 2. Resource-first setup: Ensure any previous loops are stopped
-        // (This increments sessionId, invalidating any pending async loops)
-        await get().stop()
-
-        const deviceId = useTunerStore.getState().deviceId
-        const resources = await audioManager.initialize(deviceId ?? undefined)
-        const detector = new PitchDetector(resources.context.sampleRate)
-
-        const nextSessionId = get().sessionId + 1
-
-        set({
-          analyser: resources.analyser,
-          detector,
-          practiceState: reducePracticeEvent(currentState, { type: 'START' }),
-          isStarting: false,
-          sessionId: nextSessionId,
-          error: null,
-        })
-
-        // Sync with TunerStore
-        useTunerStore.setState({
-          state: { kind: 'LISTENING', sessionToken: nextSessionId },
-          detector,
-        })
-      } catch (error) {
-        set({
-          error: toAppError(error),
-          isStarting: false,
-        })
-      }
     },
 
     stop: async () => {
@@ -268,7 +223,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       set((s) => {
         if (!s.practiceState) return { practiceState: null }
-        // Preserve 'completed' status if already reached
         if (s.practiceState.status === 'completed') return { practiceState: s.practiceState }
         return {
           practiceState: { ...s.practiceState, status: 'idle' }
@@ -288,11 +242,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
       for await (const event of pipeline) {
-        const state = get().state
-        if (state.status !== 'active' && state.status !== 'ready' && state.status !== 'idle') {
-           // Maybe allow it if we have a practiceState
-        }
-
         handlePracticeEvent(
           event,
           {
@@ -320,7 +269,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           () => void get().stop()
         )
 
-        // Handle live observations (duplicated from runner for compatibility)
         if (event.type === 'NOTE_DETECTED') {
           const practiceState = get().practiceState
           if (practiceState) {
@@ -337,71 +285,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         } else if (event.type === 'NOTE_MATCHED') {
           set({ liveObservations: [] })
         }
-      } catch (err) {
-        console.warn('[PRACTICE STOP] Analytics closure failed:', err)
       }
-
-      set((state) => ({
-        practiceState: state.practiceState
-          ? reducePracticeEvent(state.practiceState, { type: 'STOP' })
-          : null,
-        analyser: null,
-        detector: null,
-        liveObservations: [],
-        sessionId: nextSessionId,
-        isStarting: false,
-      }))
-    },
-
-    reset: () => {
-      get().stop()
-      set({
-        practiceState: null,
-        error: null,
-        liveObservations: [],
-      })
-    },
-
-    consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
-      const localSessionId = get().sessionId
-      try {
-        for await (const event of pipeline) {
-          // Guard against stale sessions
-          if (get().sessionId !== localSessionId) break
-
-          const currentState = get().practiceState
-          if (!currentState) break
-
-          // Update state with pure reducer
-          const newState = reducePracticeEvent(currentState, event)
-
-          // Calculate live observations
-          if (event.type === 'NOTE_DETECTED') {
-            const targetNote = currentState.exercise.notes[currentState.currentIndex]
-            if (targetNote) {
-              const targetPitchName = formatPitchName(targetNote.pitch)
-              const liveObs = calculateLiveObservations(
-                [...newState.detectionHistory],
-                targetPitchName
-              )
-              set({ liveObservations: liveObs })
-            }
-          }
-
-          // Clear live observations on match
-          if (event.type === 'NOTE_MATCHED') {
-            set({ liveObservations: [] })
-          }
-
-          set({ practiceState: newState })
-
-          if (newState.status === 'completed' && currentState.status !== 'completed') {
-            console.log('[PracticeStore] Exercise completed!')
-          }
-        }
-      } catch (error) {
-        console.error('[PracticeStore] Pipeline consumption error:', error)
-      }
-    },
+    }
   }
 })
