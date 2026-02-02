@@ -5,6 +5,10 @@ import { audioManager } from '../lib/infrastructure/audio-manager'
 import { PracticeEvent } from '../lib/practice-core'
 
 // Mock dependencies
+vi.mock('@/lib/practice/session-runner', () => ({
+  runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
+}))
+
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
   audioManager: {
     initialize: vi.fn(),
@@ -40,7 +44,10 @@ describe('Practice Mode - E2E Integration', () => {
 
     // 2. Start practice
     const mockContext = { sampleRate: 44100 }
-    const mockAnalyser = { fftSize: 2048 }
+    const mockAnalyser = {
+      fftSize: 2048,
+      getFloatTimeDomainData: vi.fn()
+    }
     ;(audioManager.initialize as Mock).mockResolvedValue({
       context: mockContext,
       analyser: mockAnalyser,
