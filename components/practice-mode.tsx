@@ -14,7 +14,6 @@ import { useFeatureFlag } from '@/lib/feature-flags'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { useFeatureFlag } from '@/lib/feature-flags'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { allExercises } from '@/lib/exercises'
 import {
@@ -46,6 +45,7 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExerciseCard } from '@/components/exercise-card'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
+import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
 const DEFAULT_CENTS_TOLERANCE = 25
 
@@ -286,10 +286,11 @@ export function PracticeMode() {
   const {
     state,
     practiceState,
-    analyser,
+    audioLoop,
     detector,
     error,
     loadExercise,
+    setAutoStart,
     start,
     stop,
     reset,
@@ -330,7 +331,7 @@ export function PracticeMode() {
   useEffect(() => {
     // Solo ejecutar si estamos en modo listening
     if (practiceState?.status !== 'listening') return
-    if (!analyser || !detector) return
+    if (!audioLoop || !detector) return
 
     let isActive = true
     const abortController = new AbortController()
@@ -339,7 +340,7 @@ export function PracticeMode() {
       try {
         // 1. Crear stream de pitch crudo
         const rawPitchStream = createRawPitchStream(
-          analyser,
+          audioLoop,
           detector,
           abortController.signal
         )
@@ -379,7 +380,7 @@ export function PracticeMode() {
   }, [
     practiceState?.status,
     practiceState?.currentIndex,
-    analyser,
+    audioLoop,
     detector,
     consumePipelineEvents,
     practiceState?.exercise

@@ -11,7 +11,7 @@ export class WebAudioFrameAdapter implements AudioFramePort {
   }
 
   getFrame(): Float32Array {
-    this.analyser.getFloatTimeDomainData(this.buffer)
+    this.analyser.getFloatTimeDomainData(this.buffer as Float32Array<ArrayBuffer>)
     return this.buffer
   }
 

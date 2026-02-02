@@ -48,7 +48,7 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
     (set, get) => ({
       ...DEFAULT_PROGRESS,
 
-      addSession: (session) => {
+      addSession: (session: PracticeSession) => {
         const { exerciseStats } = get()
 
         const existingStats = exerciseStats[session.exerciseId]
@@ -65,7 +65,7 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
           lastPracticedMs: session.endTimeMs
         }
 
-        set(state => ({
+        set((state: ProgressState) => ({
           totalPracticeSessions: state.totalPracticeSessions + 1,
           totalPracticeTime: state.totalPracticeTime + Math.floor(session.durationMs / 1000),
           exercisesCompleted: state.exercisesCompleted.includes(session.exerciseId)
@@ -78,7 +78,7 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
         }))
       },
 
-      updateSkills: (sessions) => {
+      updateSkills: (sessions: PracticeSession[]) => {
         // Ported from original analytics-store.ts
         const intonationSkill = calculateIntonationSkill(sessions)
         const rhythmSkill = calculateRhythmSkill(sessions)
