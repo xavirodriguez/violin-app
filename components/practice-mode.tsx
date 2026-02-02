@@ -302,8 +302,8 @@ export function PracticeMode() {
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
   useEffect(() => {
-    if (!loadedRef.current && !practiceState) {
-      // Don't auto-load first exercise into store, let user select from library
+    if (!loadedRef.current && !practiceState && allExercises.length > 0) {
+      loadExercise(allExercises[0])
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
@@ -348,7 +348,20 @@ export function PracticeMode() {
       <div className="space-y-6">
         {error && <ErrorDisplay error={error.message} onReset={reset} />}
 
-        {status === 'idle' ? (
+        {!zenMode && practiceState && (
+          <PracticeControls
+            status={status}
+            hasExercise={!!practiceState}
+            onStart={start}
+            onStop={stop}
+            onRestart={handleRestart}
+            progress={progress}
+            currentNoteIndex={currentNoteIndex}
+            totalNotes={totalNotes}
+          />
+        )}
+
+        {status === 'idle' && (
           <div className="space-y-6">
             <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
               <div className="flex items-center gap-2">
@@ -366,19 +379,6 @@ export function PracticeMode() {
               disabled={false}
             />
           </div>
-        ) : (
-          !zenMode && (
-            <PracticeControls
-              status={status}
-              hasExercise={!!practiceState}
-              onStart={start}
-              onStop={stop}
-              onRestart={handleRestart}
-              progress={progress}
-              currentNoteIndex={currentNoteIndex}
-              totalNotes={totalNotes}
-            />
-          )
         )}
 
         <ExercisePreviewModal
