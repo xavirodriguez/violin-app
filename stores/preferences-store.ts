@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences'
 import { analytics } from '@/lib/analytics-tracker'
+import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
 
 interface PreferencesStore extends UserPreferences {
   setFeedbackLevel: (level: FeedbackLevel) => void
@@ -21,7 +22,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 }
 
 export const usePreferencesStore = create<PreferencesStore>()(
-  persist(
+  validatedPersist(
+    PreferencesStateSchema as any,
     (set) => ({
       ...DEFAULT_PREFERENCES,
 

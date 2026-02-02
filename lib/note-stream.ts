@@ -11,7 +11,7 @@ import {
   isMatch,
   type TargetNote,
 } from '@/lib/practice-core'
-import type { PitchDetector } from '@/lib/pitch-detector'
+import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import { TechniqueFrame, NoteSegment } from './technique-types'
@@ -70,58 +70,52 @@ const defaultOptions: NoteStreamOptions = {
 }
 
 /**
- * Creates an async iterable of raw pitch events from a Web Audio API AnalyserNode.
+ * Creates an async iterable of raw pitch events using audio ports.
  */
 export async function* createRawPitchStream(
-  analyser: AnalyserNode,
-  detector: PitchDetector,
+  audioLoop: AudioLoopPort,
+  detector: PitchDetectionPort,
   signal: AbortSignal,
 ): AsyncGenerator<RawPitchEvent> {
-  const buffer = new Float32Array(analyser.fftSize)
-  while (!signal.aborted) {
-    analyser.getFloatTimeDomainData(buffer)
-    const result = detector.detectPitch(buffer)
-    const rms = detector.calculateRMS(buffer)
+  const queue: RawPitchEvent[] = []
+  let resolver: (() => void) | null = null
 
-    yield {
-      pitchHz: result.pitchHz,
-      confidence: result.confidence,
-      rms: rms,
-      timestamp: Date.now(),
+  const loopPromise = audioLoop.start((frame) => {
+    const { pitchHz, confidence } = detector.detect(frame)
+    queue.push({
+      pitchHz,
+      confidence,
+      rms: detector.calculateRMS(frame),
+      timestamp: Date.now()
+    })
+    if (resolver) {
+      resolver()
+      resolver = null
     }
+  }, signal)
 
-    try {
-      await new Promise<void>((resolve, reject) => {
-        if (signal.aborted) {
-          reject(new DOMException('Aborted', 'AbortError'))
-          return
-        }
-
-        const rafId = requestAnimationFrame(() => {
-          signal.removeEventListener('abort', abortHandler)
-          if (signal.aborted) {
-            reject(new DOMException('Aborted', 'AbortError'))
-          } else {
-            resolve()
+  try {
+    while (!signal.aborted) {
+      if (queue.length === 0) {
+        const abortHandler = () => {
+          if (resolver) {
+            resolver()
+            resolver = null
           }
-        })
-
-        function abortHandler() {
-          cancelAnimationFrame(rafId)
-          reject(new DOMException('Aborted', 'AbortError'))
         }
-
         signal.addEventListener('abort', abortHandler, { once: true })
-      })
-    } catch (e) {
-      if (e instanceof Error && e.name === 'AbortError') return
-      // Handle potential null/undefined errors explicitly
-      if (!e) {
-        console.warn('[PIPELINE] Caught null error in createRawPitchStream')
-        return
+        await new Promise<void>(resolve => {
+          resolver = resolve
+        })
+        signal.removeEventListener('abort', abortHandler)
       }
-      throw e
+
+      while (queue.length > 0 && !signal.aborted) {
+        yield queue.shift()!
+      }
     }
+  } finally {
+    await loopPromise.catch(() => {}) // Cleanup
   }
 }
 

@@ -23,6 +23,7 @@ export interface FeatureFlagMetadata {
   affectedFiles?: string[]
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
   rollbackStrategy?: string
+  dependencies?: string[]
 }
 
 export const FEATURE_FLAGS_METADATA = {
@@ -34,7 +35,8 @@ export const FEATURE_FLAGS_METADATA = {
     defaultValue: false,
     riskLevel: 'MEDIUM',
     affectedFiles: ['lib/practice-core.ts'],
-    rollbackStrategy: 'Revert to fixed difficulty levels.'
+    rollbackStrategy: 'Revert to fixed difficulty levels.',
+    dependencies: ['FEATURE_TELEMETRY_ACCURACY']
   },
   FEATURE_AUDIO_WEB_WORKER: {
     name: 'FEATURE_AUDIO_WEB_WORKER',
@@ -209,7 +211,21 @@ class FeatureFlagsManager {
 
   validateFlags(): { valid: boolean; errors: string[] } {
     const errors: string[] = []
-    // Add validation logic if needed
+
+    // Check dependencies
+    for (const flagName in FEATURE_FLAGS_METADATA) {
+      const name = flagName as FeatureFlagName
+      const metadata = FEATURE_FLAGS_METADATA[name]
+
+      if (this.isEnabled(name) && metadata.dependencies) {
+        for (const dep of metadata.dependencies) {
+          if (!this.isEnabled(dep as FeatureFlagName)) {
+            errors.push(`Flag "${name}" is enabled but its dependency "${dep}" is disabled.`)
+          }
+        }
+      }
+    }
+
     return { valid: errors.length === 0, errors }
   }
 }

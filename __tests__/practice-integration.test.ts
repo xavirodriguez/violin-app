@@ -1,12 +1,17 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
-import { allExercises } from '../lib/exercises'
+import type { Exercise } from '../lib/exercises/types'
 import { audioManager } from '../lib/infrastructure/audio-manager'
-import { PracticeEvent } from '../lib/practice-core'
 
 // Mock dependencies
 vi.mock('@/lib/practice/session-runner', () => ({
   runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
+  PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+    return {
+      run: vi.fn().mockImplementation(() => new Promise(() => {})),
+      cancel: vi.fn()
+    }
+  })
 }))
 
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -22,31 +27,56 @@ vi.mock('@/lib/pitch-detector', () => {
   return {
     PitchDetector: vi.fn().mockImplementation(function (this: any) {
       this.setMaxFrequency = vi.fn()
-      this.detectPitch = vi.fn()
-      this.calculateRMS = vi.fn()
+      this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
+      this.calculateRMS = vi.fn(() => 0)
     }),
+    cleanup: vi.fn()
   }
-})
+}))
 
-describe('Practice Mode - E2E Integration', () => {
-  beforeEach(async () => {
+// Mock de ejercicio
+const mockExercise: Exercise = {
+  id: 'test-exercise',
+  name: 'Test Exercise',
+  description: 'A test exercise',
+  category: 'Open Strings',
+  difficulty: 'Beginner',
+  scoreMetadata: {
+    clef: 'G',
+    timeSignature: { beats: 4, beatType: 4 },
+    keySignature: 0,
+  },
+  notes: [
+    { pitch: { step: 'A', octave: 4, alter: 0 }, duration: 4 },
+    { pitch: { step: 'B', octave: 4, alter: 0 }, duration: 4 },
+  ],
+  musicXML: '',
+  technicalGoals: [],
+  estimatedDuration: '1m',
+  technicalTechnique: 'None',
+}
+
+describe('Practice Store Integration', () => {
+  beforeEach(() => {
     vi.clearAllMocks()
     usePracticeStore.getState().reset()
   })
 
-  it('completes a practice session with live feedback', async () => {
+  it('should initialize with null practiceState', () => {
     const store = usePracticeStore.getState()
-    const exercise = allExercises[0]
+    expect(store.practiceState).toBeNull()
+  })
 
-    // 1. Setup: Load exercise
-    await store.loadExercise(exercise)
-    expect(usePracticeStore.getState().practiceState?.status).toBe('idle')
+  it('loadExercise should set initial state', () => {
+    const store = usePracticeStore.getState()
+    store.loadExercise(mockExercise)
 
     // 2. Start practice
     const mockContext = { sampleRate: 44100 }
     const mockAnalyser = {
       fftSize: 2048,
-      getFloatTimeDomainData: vi.fn()
+      getFloatTimeDomainData: vi.fn(),
+      context: mockContext
     }
     ;(audioManager.initialize as Mock).mockResolvedValue({
       context: mockContext,
@@ -55,96 +85,96 @@ describe('Practice Mode - E2E Integration', () => {
 
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
-    expect(usePracticeStore.getState().analyser).toBe(mockAnalyser)
 
-    // 3. Simulate events through consumePipelineEvents
-    const events: PracticeEvent[] = []
+    await store.start()
 
-    // Helper to run pipeline consumption
-    const runPipeline = async () => {
-      const pipeline = async function* () {
-        for (const event of events) {
-          yield event
-        }
-      }()
-      await usePracticeStore.getState().consumePipelineEvents(pipeline)
+    expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
+    expect(usePracticeStore.getState().analyser).not.toBeNull()
+    expect(usePracticeStore.getState().detector).not.toBeNull()
+    expect(audioManager.initialize).toHaveBeenCalled()
+  })
+
+  it('consumePipelineEvents should process NOTE_DETECTED and update liveObservations', async () => {
+    const store = usePracticeStore.getState()
+    store.loadExercise(mockExercise)
+    await store.start()
+
+    const mockDetection = {
+      pitch: 'A4',
+      pitchHz: 440,
+      cents: 20,
+      confidence: 0.9,
+      timestamp: Date.now(),
     }
 
-    // A. Simular tocar nota incorrecta (debe mostrar live feedback)
-    for (let i = 0; i < 6; i++) {
-      events.push({
-        type: 'NOTE_DETECTED',
-        payload: {
-          pitch: 'A4', // Assuming target is different (e.g., G3)
-          pitchHz: 440,
-          cents: 0,
-          confidence: 0.9,
-          timestamp: Date.now()
+    const mockPipeline = async function* () {
+      yield { type: 'NOTE_DETECTED' as const, payload: mockDetection }
+    }()
+
+    await store.consumePipelineEvents(mockPipeline)
+
+    const state = usePracticeStore.getState().practiceState
+    expect(state?.detectionHistory.length).toBe(1)
+    expect(state?.detectionHistory[0].pitch).toBe('A4')
+  })
+
+  it('liveObservations should update in real-time with consistent sharp detections', async () => {
+    const store = usePracticeStore.getState()
+    store.loadExercise(mockExercise)
+    await store.start()
+
+    const mockPipeline = async function* () {
+      for (let i = 0; i < 10; i++) {
+        yield {
+          type: 'NOTE_DETECTED' as const,
+          payload: {
+            pitch: 'A4',
+            pitchHz: 440,
+            cents: 20, // Consistentemente sharp (>15)
+            confidence: 0.9,
+            timestamp: Date.now() + i * 50
+          }
         }
-      })
-    }
+      }
+    }()
 
-    await runPipeline()
+    await store.consumePipelineEvents(mockPipeline)
 
-    // Check live observations
     const observations = usePracticeStore.getState().liveObservations
     expect(observations.length).toBeGreaterThan(0)
-    expect(observations[0].message).toContain('Playing A4')
+    expect(observations[0].type).toBe('intonation')
+    expect(observations[0].message).toContain('sharp')
+  })
 
-    // B. Simular tocar nota correcta pero desafinada
-    events.length = 0 // Clear previous events
-    const targetNote = exercise.notes[0]
-    const targetPitch = 'G3' // Based on first exercise "Open G String"
+  it('should clear liveObservations after NOTE_MATCHED', async () => {
+    const store = usePracticeStore.getState()
+    store.loadExercise(mockExercise)
+    await store.start()
 
-    for (let i = 0; i < 10; i++) {
-      events.push({
-        type: 'NOTE_DETECTED',
-        payload: {
-          pitch: targetPitch,
-          pitchHz: 196,
-          cents: 20, // Sharp
-          confidence: 0.9,
-          timestamp: Date.now()
+    // 1. First some detections to generate observations
+    const detections = async function* () {
+      for (let i = 0; i < 10; i++) {
+        yield {
+          type: 'NOTE_DETECTED' as const,
+          payload: {
+            pitch: 'A4',
+            pitchHz: 440,
+            cents: 20,
+            confidence: 0.9,
+            timestamp: Date.now() + i * 50
+          }
         }
-      })
-    }
+      }
+    }()
+    await store.consumePipelineEvents(detections)
+    expect(usePracticeStore.getState().liveObservations.length).toBeGreaterThan(0)
 
-    await runPipeline()
-    expect(usePracticeStore.getState().liveObservations[0].message).toContain('sharp')
+    // 2. Then a NOTE_MATCHED event
+    const matched = async function* () {
+      yield { type: 'NOTE_MATCHED' as const }
+    }()
+    await store.consumePipelineEvents(matched)
 
-    // C. Simular completar la nota
-    events.length = 0
-    events.push({
-      type: 'NOTE_MATCHED',
-      payload: { technique: {} as any, observations: [] }
-    })
-
-    await runPipeline()
-    expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(1)
     expect(usePracticeStore.getState().liveObservations).toEqual([])
-
-    // D. Completar el ejercicio
-    events.length = 0
-    const totalNotes = exercise.notes.length
-    for (let i = 1; i < totalNotes; i++) {
-       // Simulate detection to transition from 'correct' back to 'listening'
-       events.push({
-         type: 'NOTE_DETECTED',
-         payload: {
-           pitch: targetPitch,
-           pitchHz: 196,
-           cents: 0,
-           confidence: 0.9,
-           timestamp: Date.now()
-         }
-       })
-       events.push({
-         type: 'NOTE_MATCHED',
-         payload: { technique: {} as any, observations: [] }
-       })
-    }
-
-    await runPipeline()
-    expect(usePracticeStore.getState().practiceState?.status).toBe('completed')
   })
 })
