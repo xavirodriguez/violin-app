@@ -13,7 +13,7 @@ export default defineConfig({
       'hooks/**/*.test.ts',
       'components/**/*.test.tsx',
       'stores/**/*.test.ts',
-      '__tests__/**/*.test.ts',
+      '__tests__/**/*.test.{ts,tsx}',
     ],
     exclude: ['node_modules', 'e2e/**'],
   },
