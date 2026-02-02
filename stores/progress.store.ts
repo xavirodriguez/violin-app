@@ -1,8 +1,30 @@
 import { create } from 'zustand'
+import superjson from 'superjson'
 import { PracticeSession } from './session.store'
 import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { createMigrator } from '@/lib/persistence/migrator'
 import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
 import { NoteTechnique } from '../lib/technique-types'
+
+export interface ProgressEvent {
+  ts: number
+  exerciseId: string
+  accuracy: number
+  rhythmErrorMs: number
+}
+
+export interface SkillAggregates {
+  intonation: number
+  rhythm: number
+  overall: number
+}
+
+export interface ProgressSnapshot {
+  userId: string
+  window: '7d' | '30d' | 'all'
+  aggregates: SkillAggregates
+  lastSessionId: string
+}
 
 export interface ExerciseStats {
   exerciseId: string
@@ -14,6 +36,7 @@ export interface ExerciseStats {
 }
 
 export interface ProgressState {
+  schemaVersion: 1
   totalPracticeSessions: number
   totalPracticeTime: number // in seconds
   exercisesCompleted: string[]
@@ -23,6 +46,9 @@ export interface ProgressState {
   rhythmSkill: number
   overallSkill: number
   exerciseStats: Record<string, ExerciseStats>
+  eventBuffer: ProgressEvent[]
+  snapshots: ProgressSnapshot[]
+  eventCounter: number
 }
 
 interface ProgressActions {
@@ -31,6 +57,7 @@ interface ProgressActions {
 }
 
 const DEFAULT_PROGRESS: ProgressState = {
+  schemaVersion: 1,
   totalPracticeSessions: 0,
   totalPracticeTime: 0,
   exercisesCompleted: [],
@@ -39,7 +66,10 @@ const DEFAULT_PROGRESS: ProgressState = {
   intonationSkill: 0,
   rhythmSkill: 0,
   overallSkill: 0,
-  exerciseStats: {}
+  exerciseStats: {},
+  eventBuffer: [],
+  snapshots: [],
+  eventCounter: 0
 }
 
 export const useProgressStore = create<ProgressState & ProgressActions>()(
@@ -49,7 +79,43 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
       ...DEFAULT_PROGRESS,
 
       addSession: (session: PracticeSession) => {
-        const { exerciseStats } = get()
+        const { exerciseStats, eventBuffer, eventCounter } = get()
+
+        // 1. Create ProgressEvent
+        const avgRhythmError = session.noteResults.reduce((acc, nr) => {
+          return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
+        }, 0) / (session.noteResults.length || 1)
+
+        const newEvent: ProgressEvent = {
+          ts: session.endTimeMs,
+          exerciseId: session.exerciseId,
+          accuracy: session.accuracy,
+          rhythmErrorMs: avgRhythmError
+        }
+
+        // 2. Manage Buffer (Circular N=1000)
+        const newBuffer = [newEvent, ...eventBuffer].slice(0, 1000)
+
+        // 3. Incremental Snapshots (Every 50 events)
+        const newEventCounter = eventCounter + 1
+        let newSnapshots = get().snapshots
+        if (newEventCounter % 50 === 0) {
+          const snapshot: ProgressSnapshot = {
+            userId: 'anonymous', // Default for now
+            window: 'all',
+            aggregates: {
+              intonation: get().intonationSkill,
+              rhythm: get().rhythmSkill,
+              overall: get().overallSkill
+            },
+            lastSessionId: session.id
+          }
+          newSnapshots = [snapshot, ...newSnapshots].slice(0, 10) // Keep last 10 snapshots
+        }
+
+        // 4. Pruning Logic (Time-based > 90 days)
+        const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
+        const prunedBuffer = newBuffer.filter(e => e.ts > ninetyDaysAgo)
 
         const existingStats = exerciseStats[session.exerciseId]
         const nextExerciseStats: ExerciseStats = {
@@ -74,7 +140,10 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
           exerciseStats: {
             ...state.exerciseStats,
             [session.exerciseId]: nextExerciseStats
-          }
+          },
+          eventBuffer: prunedBuffer,
+          snapshots: newSnapshots,
+          eventCounter: newEventCounter
         }))
       },
 
@@ -93,18 +162,16 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
     {
       name: 'violin-progress',
       version: 1,
-      migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          return {
-            ...persistedState,
-            intonationSkill: persistedState.intonationSkill || 0,
-            rhythmSkill: persistedState.rhythmSkill || 0,
-            overallSkill: persistedState.overallSkill || 0,
-            exerciseStats: persistedState.exerciseStats || {}
-          }
-        }
-        return persistedState
-      }
+      migrate: createMigrator({
+        1: (state: any) => ({
+          ...state,
+          intonationSkill: state.intonationSkill || 0,
+          rhythmSkill: state.rhythmSkill || 0,
+          overallSkill: state.overallSkill || 0,
+          exerciseStats: state.exerciseStats || {},
+          schemaVersion: 1
+        })
+      })
     }
   )
 )

@@ -26,6 +26,8 @@ import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from 
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
+import { createPracticeEngine } from '@/lib/practice-engine/engine'
+import { engineReducer } from '@/lib/practice-engine/engine.reducer'
 import { PracticeSessionRunnerImpl, runPracticeSession } from '@/lib/practice/session-runner'
 import { handlePracticeEvent } from '@/lib/practice/practice-event-sink'
 import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'

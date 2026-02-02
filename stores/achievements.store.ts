@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { createMigrator } from '@/lib/persistence/migrator'
 import { AchievementsStateSchema } from '@/lib/schemas/persistence.schema'
 
 export interface Achievement {
@@ -13,6 +14,7 @@ export interface Achievement {
 }
 
 interface AchievementsState {
+  schemaVersion: 1
   unlocked: Achievement[]
   pending: Achievement[]
 }
@@ -26,6 +28,7 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
   validatedPersist(
     AchievementsStateSchema as any,
     (set, get) => ({
+      schemaVersion: 1,
       unlocked: [],
       pending: [],
 
@@ -50,7 +53,14 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
       }
     }),
     {
-      name: 'violin-achievements'
+      name: 'violin-achievements',
+      version: 1,
+      migrate: createMigrator({
+        1: (state: any) => ({
+          ...state,
+          schemaVersion: 1
+        })
+      })
     }
   )
 )

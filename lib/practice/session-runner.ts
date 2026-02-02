@@ -1,5 +1,6 @@
 import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
-import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
+import { createPracticeEngine } from '../practice-engine/engine'
+import { engineReducer } from '../practice-engine/engine.reducer'
 import { handlePracticeEvent } from './practice-event-sink'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
@@ -78,32 +79,43 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private async runInternal(signal: AbortSignal): Promise<void> {
-    const { audioLoop, detector, exercise, sessionStartTime } = this.deps
+    const { audioLoop, detector, exercise } = this.deps
 
-    const targetNoteSelector = () => {
-      if (signal.aborted) return null
-      const state = this.deps.store.getState().practiceState
-      if (!state) return null
-      return state.exercise.notes[state.currentIndex] ?? null
-    }
+    const engine = createPracticeEngine({
+      audio: audioLoop,
+      pitch: detector,
+      exercise,
+      reducer: engineReducer,
+      targetSelector: () => {
+        if (signal.aborted) return null
+        const state = this.deps.store.getState().practiceState
+        if (!state) return null
+        return state.exercise.notes[state.currentIndex] ?? null
+      },
+      currentIndexSelector: () => {
+        if (signal.aborted) return 0
+        return this.deps.store.getState().practiceState?.currentIndex ?? 0
+      }
+    })
 
-    const currentIndexSelector = () => {
-      if (signal.aborted) return 0
-      return this.deps.store.getState().practiceState?.currentIndex ?? 0
-    }
+    const engineEvents = engine.start(signal)
 
-    const rawPitchStream = createRawPitchStream(audioLoop, detector, signal)
-    const pipeline = createPracticeEventPipeline(
-      rawPitchStream,
-      targetNoteSelector,
-      currentIndexSelector,
-      { exercise, sessionStartTime, bpm: 60 },
-      signal
-    )
-
-    for await (const event of pipeline) {
+    for await (const event of engineEvents) {
       if (signal.aborted) break
-      this.processEvent(event, signal)
+
+      // Adapt PracticeEngineEvent back to PracticeEvent for compatibility
+      const practiceEvent: PracticeEvent = this.mapEngineEventToPracticeEvent(event)
+      this.processEvent(practiceEvent, signal)
+    }
+  }
+
+  private mapEngineEventToPracticeEvent(event: any): PracticeEvent {
+    switch (event.type) {
+      case 'NOTE_DETECTED': return { type: 'NOTE_DETECTED', payload: event.payload }
+      case 'HOLDING_NOTE': return { type: 'HOLDING_NOTE', payload: event.payload }
+      case 'NOTE_MATCHED': return { type: 'NOTE_MATCHED', payload: event.payload }
+      case 'NO_NOTE': return { type: 'NO_NOTE_DETECTED' }
+      default: return { type: 'NO_NOTE_DETECTED' }
     }
   }
 

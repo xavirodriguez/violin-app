@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
+
+extendZodWithOpenApi(z)
 
 export const NoteTechniqueSchema = z.object({
   vibrato: z.object({
@@ -53,7 +56,28 @@ export const ExerciseStatsSchema = z.object({
   lastPracticedMs: z.number()
 })
 
+export const ProgressEventSchema = z.object({
+  ts: z.number(),
+  exerciseId: z.string(),
+  accuracy: z.number(),
+  rhythmErrorMs: z.number()
+})
+
+export const SkillAggregatesSchema = z.object({
+  intonation: z.number(),
+  rhythm: z.number(),
+  overall: z.number()
+})
+
+export const ProgressSnapshotSchema = z.object({
+  userId: z.string(),
+  window: z.enum(['7d', '30d', 'all']),
+  aggregates: SkillAggregatesSchema,
+  lastSessionId: z.string()
+})
+
 export const ProgressStateSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
   totalPracticeSessions: z.number(),
   totalPracticeTime: z.number(),
   exercisesCompleted: z.array(z.string()),
@@ -62,7 +86,10 @@ export const ProgressStateSchema = z.object({
   intonationSkill: z.number(),
   rhythmSkill: z.number(),
   overallSkill: z.number(),
-  exerciseStats: z.record(ExerciseStatsSchema)
+  exerciseStats: z.record(ExerciseStatsSchema),
+  eventBuffer: z.array(ProgressEventSchema).default([]),
+  snapshots: z.array(ProgressSnapshotSchema).default([]),
+  eventCounter: z.number().default(0)
 })
 
 export const AchievementSchema = z.object({
@@ -74,6 +101,7 @@ export const AchievementSchema = z.object({
 })
 
 export const AchievementsStateSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
   unlocked: z.array(AchievementSchema),
   pending: z.array(AchievementSchema)
 })
@@ -83,6 +111,7 @@ export const SessionHistoryStateSchema = z.object({
 })
 
 export const PreferencesStateSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
   feedbackLevel: z.enum(['beginner', 'intermediate', 'advanced']),
   showTechnicalDetails: z.boolean(),
   enableCelebrations: z.boolean(),
