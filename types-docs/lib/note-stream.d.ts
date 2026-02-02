@@ -4,7 +4,7 @@
  * This decouples the audio input source from the state management logic.
  */
 import { type PracticeEvent, type TargetNote } from '@/lib/practice-core';
-import type { PitchDetector } from '@/lib/pitch-detector';
+import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port';
 import type { Exercise } from './exercises/types';
 /**
  * The raw data yielded from the pitch detector on each animation frame.
@@ -47,9 +47,9 @@ export interface PipelineContext {
     readonly getCurrentIndex: () => number;
 }
 /**
- * Creates an async iterable of raw pitch events from a Web Audio API AnalyserNode.
+ * Creates an async iterable of raw pitch events using audio ports.
  */
-export declare function createRawPitchStream(analyser: AnalyserNode, detector: PitchDetector, signal: AbortSignal): AsyncGenerator<RawPitchEvent>;
+export declare function createRawPitchStream(audioLoop: AudioLoopPort, detector: PitchDetectionPort, signal: AbortSignal): AsyncGenerator<RawPitchEvent>;
 /**
  * Creates a practice event processing pipeline.
  *

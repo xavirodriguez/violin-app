@@ -30,6 +30,12 @@ export interface Note {
     pitch: Pitch;
     /** The duration of the note. */
     duration: NoteDuration;
+    /** Optional pedagogical annotations for the note. */
+    annotations?: {
+        fingerNumber?: 1 | 2 | 3 | 4;
+        bowDirection?: 'up' | 'down';
+        warningFlag?: boolean;
+    };
 }
 /** Categories for grouping exercises. */
 export type ExerciseCategory = 'Open Strings' | 'Scales' | 'Songs';
@@ -74,6 +80,14 @@ export interface ExerciseData {
     scoreMetadata: ScoreMetadata;
     /** Ordered array of notes in the exercise. */
     notes: Note[];
+    /** Technical goals for the exercise. */
+    technicalGoals: string[];
+    /** Estimated duration of the exercise. */
+    estimatedDuration: string;
+    /** Primary technique focused on. */
+    technicalTechnique: string;
+    /** Whether this exercise is recommended. */
+    recommended?: boolean;
 }
 /**
  * The processed exercise object consumed by the application.

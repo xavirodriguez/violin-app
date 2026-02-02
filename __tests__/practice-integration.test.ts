@@ -32,7 +32,7 @@ vi.mock('@/lib/pitch-detector', () => {
     }),
     cleanup: vi.fn()
   }
-}))
+});
 
 // Mock de ejercicio
 const mockExercise: Exercise = {
