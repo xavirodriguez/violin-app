@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
+import { useFeatureFlag } from '@/lib/feature-flags'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -69,11 +70,12 @@ function ExerciseLibrary({
 }) {
   const [activeTab, setActiveTab] = useState('all')
   const { progress, sessions } = useAnalyticsStore()
+  const isRecommenderEnabled = useFeatureFlag('FEATURE_PRACTICE_EXERCISE_RECOMMENDER')
 
-  const recommended = useMemo(() =>
-    getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId),
-    [progress, sessions]
-  )
+  const recommended = useMemo(() => {
+    if (!isRecommenderEnabled) return null
+    return getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId)
+  }, [progress, sessions, isRecommenderEnabled])
 
   const filteredExercises = useMemo(() => {
     return allExercises.filter((ex) => {
@@ -213,6 +215,7 @@ function PracticeActiveView({
   lastObservations,
   holdDuration,
   perfectNoteStreak,
+  zenMode,
 }: {
   status: string
   targetNote: TargetNote | null
@@ -221,6 +224,7 @@ function PracticeActiveView({
   lastObservations?: Observation[]
   holdDuration?: number
   perfectNoteStreak?: number
+  zenMode: boolean
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
   if (!isActive || !targetNote || !targetPitchName) return null
@@ -292,6 +296,8 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
+  const isZenModeEnabled = useFeatureFlag('FEATURE_PRACTICE_ZEN_MODE')
+  const isAutoStartEnabled = useFeatureFlag('FEATURE_PRACTICE_AUTO_START')
 
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
@@ -316,6 +322,11 @@ export function PracticeMode() {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'z' && isZenModeEnabled) {
+        setZenMode(v => !v)
+        return
+      }
+
       if (status === 'idle') return
 
       switch (e.key.toLowerCase()) {
@@ -368,16 +379,18 @@ export function PracticeMode() {
 
         {status === 'idle' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="auto-start"
-                  checked={autoStartEnabled}
-                  onCheckedChange={setAutoStart}
-                />
-                <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
+            {!zenMode && isAutoStartEnabled && (
+              <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="auto-start"
+                    checked={autoStartEnabled}
+                    onCheckedChange={setAutoStart}
+                  />
+                  <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
+                </div>
               </div>
-            </div>
+            )}
             <ExerciseLibrary
               selectedId={practiceState?.exercise.id}
               onSelect={(exercise) => setPreviewExercise(exercise)}
@@ -451,6 +464,7 @@ export function PracticeMode() {
           lastObservations={practiceState?.lastObservations}
           holdDuration={practiceState?.holdDuration}
           perfectNoteStreak={practiceState?.perfectNoteStreak}
+          zenMode={zenMode}
         />
 
         {status === 'completed' && (
@@ -467,8 +481,8 @@ export function PracticeMode() {
             onRepeatMeasure={() => setNoteIndex(Math.max(0, currentNoteIndex - 4))}
             onContinue={() => setNoteIndex(currentNoteIndex + 1)}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={() => setZenMode((v) => !v)}
-            isZen={zenMode}
+            onToggleZen={() => isZenModeEnabled && setZenMode((v) => !v)}
+            isZen={zenMode && isZenModeEnabled}
           />
         )}
       </div>

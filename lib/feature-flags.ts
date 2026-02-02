@@ -75,6 +75,46 @@ export const FEATURE_FLAGS_METADATA = {
     riskLevel: 'LOW',
     affectedFiles: [],
     rollbackStrategy: 'Disable accuracy telemetry tracking.'
+  },
+  FEATURE_PRACTICE_ZEN_MODE: {
+    name: 'FEATURE_PRACTICE_ZEN_MODE',
+    key: 'practiceZenMode',
+    type: 'EXPERIMENTAL',
+    description: 'Enable Zen Mode to simplify the interface during practice.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable Zen Mode functionality.'
+  },
+  FEATURE_PRACTICE_AUTO_START: {
+    name: 'FEATURE_PRACTICE_AUTO_START',
+    key: 'practiceAutoStart',
+    type: 'BETA',
+    description: 'Enable automatic start of audio detection when an exercise is loaded.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['stores/practice-store.ts', 'components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable auto-start and require manual start.'
+  },
+  FEATURE_PRACTICE_EXERCISE_RECOMMENDER: {
+    name: 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER',
+    key: 'practiceExerciseRecommender',
+    type: 'BETA',
+    description: 'Enable the exercise recommendation system based on user performance.',
+    defaultValue: true,
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['lib/exercise-recommender.ts', 'components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable recommendations and show all exercises.'
+  },
+  FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM: {
+    name: 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM',
+    key: 'practiceAchievementSystem',
+    type: 'BETA',
+    description: 'Enable the gamified achievement system.',
+    defaultValue: true,
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['lib/achievements/', 'stores/analytics-store.ts'],
+    rollbackStrategy: 'Disable achievement tracking and notifications.'
   }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
@@ -100,6 +140,14 @@ class FeatureFlagsManager {
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
         return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
+      case 'FEATURE_PRACTICE_ZEN_MODE':
+        return process.env.FEATURE_PRACTICE_ZEN_MODE ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ZEN_MODE
+      case 'FEATURE_PRACTICE_AUTO_START':
+        return process.env.FEATURE_PRACTICE_AUTO_START ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_AUTO_START
+      case 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER':
+        return process.env.FEATURE_PRACTICE_EXERCISE_RECOMMENDER ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_EXERCISE_RECOMMENDER
+      case 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM':
+        return process.env.FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM
       default:
         return undefined
     }
