@@ -12,6 +12,7 @@ import { toAppError, AppError } from '@/lib/errors/app-error'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { PitchDetector } from '@/lib/pitch-detector'
+import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
@@ -35,6 +36,9 @@ interface PracticeStore {
   // Extra UI state
   liveObservations: Observation[]
   autoStartEnabled: boolean
+  analyser: AnalyserNode | null
+  audioLoop: AudioLoopPort | null
+  detector: PitchDetectionPort | null
 
   // Actions
   loadExercise: (exercise: Exercise) => Promise<void>
@@ -42,10 +46,9 @@ interface PracticeStore {
   setNoteIndex: (index: number) => void
   initializeAudio: () => Promise<void>
   start: () => Promise<void>
-  stop: () => void
+  stop: () => Promise<void>
   reset: () => void
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
-  initializeAudio: () => Promise<void>
 }
 
 export const usePracticeStore = create<PracticeStore>((set, get) => {
@@ -55,6 +58,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     error: null,
     liveObservations: [],
     autoStartEnabled: false,
+    analyser: null,
+    audioLoop: null,
+    detector: null,
 
     loadExercise: async (exercise) => {
       await get().stop()
@@ -114,6 +120,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const loopAdapter = new WebAudioLoopAdapter(frameAdapter)
         const detector = new PitchDetector(analyser.context.sampleRate)
         const detectorPort = new PitchDetectorAdapter(detector)
+
+        set({ analyser, audioLoop: loopAdapter, detector: detectorPort })
 
         if (exercise) {
           const newState = transitions.ready({
@@ -175,7 +183,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           },
           stop: get().stop
         },
-        analytics: useSessionStore.getState()
+        analytics: {
+          ...useSessionStore.getState(),
+          endSession: () => useSessionStore.getState().end(),
+          recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) =>
+            useSessionStore.getState().recordAttempt(index, pitch, cents, inTune),
+          recordNoteCompletion: (index: number, time: number, technique?: any) =>
+            useSessionStore.getState().recordCompletion(index, time, technique)
+        }
       }
 
       const runner = new PracticeSessionRunnerImpl(runnerDeps)
@@ -277,7 +292,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             if (targetNote) {
               const targetPitchName = formatPitchName(targetNote.pitch)
               const liveObs = calculateLiveObservations(
-                practiceState.detectionHistory,
+                [...practiceState.detectionHistory],
                 targetPitchName
               )
               set({ liveObservations: liveObs })

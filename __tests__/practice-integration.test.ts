@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
 import type { Exercise } from '../lib/exercises/types'
 import { audioManager } from '../lib/infrastructure/audio-manager'
@@ -67,9 +67,9 @@ describe('Practice Store Integration', () => {
     expect(store.practiceState).toBeNull()
   })
 
-  it('loadExercise should set initial state', () => {
+  it('loadExercise should set initial state', async () => {
     const store = usePracticeStore.getState()
-    store.loadExercise(mockExercise)
+    await store.loadExercise(mockExercise)
 
     // 2. Start practice
     const mockContext = { sampleRate: 44100 }
@@ -86,9 +86,6 @@ describe('Practice Store Integration', () => {
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
 
-    await store.start()
-
-    expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
     expect(usePracticeStore.getState().analyser).not.toBeNull()
     expect(usePracticeStore.getState().detector).not.toBeNull()
     expect(audioManager.initialize).toHaveBeenCalled()

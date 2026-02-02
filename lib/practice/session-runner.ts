@@ -29,6 +29,7 @@ export interface SessionRunnerDependencies {
     stop: () => Promise<void>
   }
   analytics: {
+    endSession: () => void
     recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
     recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
   }

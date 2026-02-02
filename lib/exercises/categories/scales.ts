@@ -116,7 +116,7 @@ const createTetrachordExercise = (config: {
         pitch: parsePitch(pitch),
         duration: DURATION.QUARTER,
         annotations: !isNaN(finger) ? {
-          fingerNumber: finger as 0 | 1 | 2 | 3 | 4,
+          fingerNumber: finger >= 1 && finger <= 4 ? finger as 1 | 2 | 3 | 4 : undefined,
           bowDirection: idx % 2 === 0 ? 'down' : 'up'
         } : undefined
       }
@@ -188,7 +188,7 @@ const createFullScaleExercise = (config: {
         pitch: parsePitch(pitch),
         duration: DURATION.QUARTER,
         annotations: !isNaN(finger) ? {
-          fingerNumber: finger as 0 | 1 | 2 | 3 | 4,
+          fingerNumber: finger >= 1 && finger <= 4 ? finger as 1 | 2 | 3 | 4 : undefined,
           bowDirection: idx % 2 === 0 ? 'down' : 'up'
         } : undefined
       }
