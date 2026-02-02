@@ -81,38 +81,42 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_PRACTICE_ZEN_MODE: {
     name: 'FEATURE_PRACTICE_ZEN_MODE',
     key: 'practiceZenMode',
-    type: 'UI_UX',
-    description: 'Simplified UI for practice sessions.',
+    type: 'EXPERIMENTAL',
+    description: 'Enable Zen Mode to simplify the interface during practice.',
     defaultValue: true,
     riskLevel: 'LOW',
-    affectedFiles: ['components/practice-mode.tsx']
+    affectedFiles: ['components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable Zen Mode functionality.'
   },
   FEATURE_PRACTICE_AUTO_START: {
     name: 'FEATURE_PRACTICE_AUTO_START',
     key: 'practiceAutoStart',
-    type: 'UI_UX',
-    description: 'Enable auto-starting audio detection when exercise is loaded.',
+    type: 'BETA',
+    description: 'Enable automatic start of audio detection when an exercise is loaded.',
     defaultValue: true,
     riskLevel: 'LOW',
-    affectedFiles: ['components/practice-mode.tsx']
+    affectedFiles: ['stores/practice-store.ts', 'components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable auto-start and require manual start.'
   },
   FEATURE_PRACTICE_EXERCISE_RECOMMENDER: {
     name: 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER',
     key: 'practiceExerciseRecommender',
-    type: 'EXPERIMENTAL',
-    description: 'Intelligent exercise recommendations based on progress.',
+    type: 'BETA',
+    description: 'Enable the exercise recommendation system based on user performance.',
     defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['lib/exercise-recommender.ts', 'components/practice-mode.tsx']
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['lib/exercise-recommender.ts', 'components/practice-mode.tsx'],
+    rollbackStrategy: 'Disable recommendations and show all exercises.'
   },
   FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM: {
     name: 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM',
     key: 'practiceAchievementSystem',
-    type: 'UI_UX',
-    description: 'Enable the achievement and gamification system.',
+    type: 'BETA',
+    description: 'Enable the gamified achievement system.',
     defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['stores/analytics-store.ts']
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['lib/achievements/', 'stores/analytics-store.ts'],
+    rollbackStrategy: 'Disable achievement tracking and notifications.'
   }
 } as const satisfies Record<string, FeatureFlagMetadata>
 

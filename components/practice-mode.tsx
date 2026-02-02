@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
+import { useFeatureFlag } from '@/lib/feature-flags'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -71,10 +72,10 @@ function ExerciseLibrary({
   const { progress, sessions } = useAnalyticsStore()
   const isRecommenderEnabled = useFeatureFlag('FEATURE_PRACTICE_EXERCISE_RECOMMENDER')
 
-  const recommended = useMemo(() =>
-    isRecommenderEnabled ? getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId) : null,
-    [progress, sessions, isRecommenderEnabled]
-  )
+  const recommended = useMemo(() => {
+    if (!isRecommenderEnabled) return null
+    return getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId)
+  }, [progress, sessions, isRecommenderEnabled])
 
   const filteredExercises = useMemo(() => {
     return allExercises.filter((ex) => {
@@ -297,6 +298,8 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
+  const isZenModeEnabled = useFeatureFlag('FEATURE_PRACTICE_ZEN_MODE')
+  const isAutoStartEnabled = useFeatureFlag('FEATURE_PRACTICE_AUTO_START')
 
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
@@ -384,6 +387,11 @@ export function PracticeMode() {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'z' && isZenModeEnabled) {
+        setZenMode(v => !v)
+        return
+      }
+
       if (status === 'idle') return
 
       switch (e.key.toLowerCase()) {
@@ -430,13 +438,13 @@ export function PracticeMode() {
 
         {state.status === 'idle' && (
           <div className="space-y-6">
-            {isAutoStartFeatureEnabled && (
+            {!zenMode && isAutoStartEnabled && (
               <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
                 <div className="flex items-center gap-2">
                   <Switch
                     id="auto-start"
                     checked={autoStartEnabled}
-                    onCheckedChange={setAutoStartEnabled}
+                    onCheckedChange={setAutoStart}
                   />
                   <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
                 </div>
@@ -531,8 +539,8 @@ export function PracticeMode() {
             onRepeatMeasure={() => {}}
             onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={isZenModeFeatureEnabled ? () => setZenMode((v) => !v) : undefined}
-            isZen={zenMode}
+            onToggleZen={() => isZenModeEnabled && setZenMode((v) => !v)}
+            isZen={zenMode && isZenModeEnabled}
           />
         )}
       </div>

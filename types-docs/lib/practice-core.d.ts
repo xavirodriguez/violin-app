@@ -90,6 +90,7 @@ export interface PracticeState {
     detectionHistory: readonly DetectedNote[];
     holdDuration?: number;
     lastObservations?: Observation[];
+    perfectNoteStreak: number;
 }
 /** Events that can modify the practice state. */
 export type PracticeEvent = {

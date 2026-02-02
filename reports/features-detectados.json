@@ -6,105 +6,62 @@
       "tipo": "EXPERIMENTAL",
       "descripcion": "Ajusta automáticamente los umbrales de afinación y la complejidad del ejercicio según el rendimiento del usuario.",
       "estado": "DEFINIDO",
-      "ubicaciones": [
-        "lib/feature-flags.ts",
-        "FEATURE_CATALOG.md"
-      ],
-      "riesgo": "MEDIO"
+      "riesgo": "MEDIO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/practice-core.ts"]
     },
     {
       "id": "FEATURE_AUDIO_WEB_WORKER",
       "nombre": "Procesamiento de Audio en Web Worker",
       "tipo": "PERFORMANCE",
-      "descripcion": "Mueve las tareas pesadas de DSP (Procesamiento Digital de Señales) a un hilo secundario para mejorar la capacidad de respuesta de la UI.",
+      "descripcion": "Mueve las tareas pesadas de DSP a un hilo secundario.",
       "estado": "DEFINIDO",
-      "ubicaciones": [
-        "lib/feature-flags.ts",
-        "FEATURE_CATALOG.md"
-      ],
-      "riesgo": "ALTO"
+      "riesgo": "ALTO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/pitch-detector.ts", "lib/note-stream.ts"]
     },
     {
       "id": "FEATURE_UI_INTONATION_HEATMAPS",
       "nombre": "Mapas de Calor de Entonación",
       "tipo": "EXPERIMENTAL",
-      "descripcion": "Visualiza patrones de precisión de tono a lo largo del tiempo en una superposición de pentagrama o diapasón.",
+      "descripcion": "Visualiza patrones de precisión de tono.",
       "estado": "DEFINIDO",
-      "ubicaciones": [
-        "lib/feature-flags.ts",
-        "FEATURE_CATALOG.md"
-      ],
-      "riesgo": "BAJO"
+      "riesgo": "BAJO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "components/analytics-dashboard.tsx"]
     },
     {
-      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
-      "nombre": "Salas de Práctica Social",
-      "tipo": "EXPERIMENTAL",
-      "descripcion": "Sincronización en tiempo real para práctica grupal o sesiones dirigidas por profesores.",
-      "estado": "PLANIFICADO",
-      "ubicaciones": [
-        "lib/feature-flags.ts",
-        "FEATURE_CATALOG.md"
-      ],
-      "riesgo": "ALTO"
-    },
-    {
-      "id": "FEATURE_TELEMETRY_ACCURACY",
-      "nombre": "Telemetría de Precisión",
-      "tipo": "INTEGRACIÓN",
-      "descripcion": "Rastrea la confianza de detección a través de Vercel Analytics para identificar problemas del entorno.",
-      "estado": "ACTIVO (Registro)",
-      "ubicaciones": [
-        "lib/feature-flags.ts",
-        "lib/practice/session-runner.ts",
-        "FEATURE_CATALOG.md"
-      ],
-      "riesgo": "BAJO"
-    }
-  ],
-  "features_implicitos": [
-    {
-      "id": "ZEN_MODE",
+      "id": "FEATURE_PRACTICE_ZEN_MODE",
       "nombre": "Modo Zen",
-      "tipo": "UI_UX",
-      "descripcion": "Interfaz de práctica simplificada que oculta controles para favorecer el enfoque.",
-      "estado": "IMPLEMENTADO",
-      "ubicaciones": [
-        "components/practice-mode.tsx"
-      ]
+      "tipo": "EXPERIMENTAL",
+      "descripcion": "Interfaz de práctica simplificada.",
+      "estado": "ACTIVO",
+      "riesgo": "BAJO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "components/practice-mode.tsx"]
     },
     {
-      "id": "AUTO_START",
-      "nombre": "Auto-inicio (Siempre escuchando)",
-      "tipo": "UI_UX",
-      "descripcion": "Opción para iniciar automáticamente la detección de audio cuando se carga un ejercicio.",
-      "estado": "IMPLEMENTADO",
-      "ubicaciones": [
-        "stores/practice-store.ts",
-        "components/practice-mode.tsx"
-      ]
+      "id": "FEATURE_PRACTICE_AUTO_START",
+      "nombre": "Auto-inicio",
+      "tipo": "BETA",
+      "descripcion": "Inicia automáticamente la detección de audio.",
+      "estado": "ACTIVO",
+      "riesgo": "BAJO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "stores/practice-store.ts", "components/practice-mode.tsx"]
     },
     {
-      "id": "EXERCISE_RECOMMENDER",
+      "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
       "nombre": "Recomendador de Ejercicios",
-      "tipo": "ALGORITMO",
-      "descripcion": "Sugiere el próximo ejercicio basado en el historial y la precisión del usuario.",
-      "estado": "IMPLEMENTADO",
-      "ubicaciones": [
-        "lib/exercise-recommender.ts",
-        "components/practice-mode.tsx"
-      ]
+      "tipo": "BETA",
+      "descripcion": "Sugiere el próximo ejercicio.",
+      "estado": "ACTIVO",
+      "riesgo": "MEDIO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/exercise-recommender.ts", "components/practice-mode.tsx"]
     },
     {
-      "id": "ACHIEVEMENT_SYSTEM",
+      "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
       "nombre": "Sistema de Logros",
-      "tipo": "ENGAGEMENT",
-      "descripcion": "Elementos de gamificación que recompensan hitos y rachas.",
-      "estado": "IMPLEMENTADO",
-      "ubicaciones": [
-        "lib/achievements/",
-        "stores/analytics-store.ts"
-      ]
+      "tipo": "BETA",
+      "descripcion": "Recompensas por hitos técnicos.",
+      "estado": "ACTIVO",
+      "riesgo": "MEDIO",
+      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/achievements/", "stores/analytics-store.ts"]
     }
   ],
   "features_promocionados": [

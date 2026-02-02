@@ -14,18 +14,9 @@ export interface FeatureFlagMetadata {
     affectedFiles?: string[];
     riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
     rollbackStrategy?: string;
+    dependencies?: string[];
 }
 export declare const FEATURE_FLAGS_METADATA: {
-    readonly FEATURE_ANALYTICS_DASHBOARD: {
-        readonly name: "FEATURE_ANALYTICS_DASHBOARD";
-        readonly key: "analyticsDashboard";
-        readonly type: "BETA";
-        readonly description: "Toggle the progress analytics dashboard.";
-        readonly defaultValue: false;
-        readonly riskLevel: "LOW";
-        readonly affectedFiles: ["components/analytics-dashboard.tsx"];
-        readonly rollbackStrategy: "Disable the flag to hide the analytics dashboard.";
-    };
     readonly FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
         readonly name: "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY";
         readonly key: "practiceAdaptiveDifficulty";
@@ -35,6 +26,7 @@ export declare const FEATURE_FLAGS_METADATA: {
         readonly riskLevel: "MEDIUM";
         readonly affectedFiles: ["lib/practice-core.ts"];
         readonly rollbackStrategy: "Revert to fixed difficulty levels.";
+        readonly dependencies: ["FEATURE_TELEMETRY_ACCURACY"];
     };
     readonly FEATURE_AUDIO_WEB_WORKER: {
         readonly name: "FEATURE_AUDIO_WEB_WORKER";
@@ -56,16 +48,6 @@ export declare const FEATURE_FLAGS_METADATA: {
         readonly affectedFiles: ["components/analytics-dashboard.tsx"];
         readonly rollbackStrategy: "Disable the heatmap visualization.";
     };
-    readonly FEATURE_PRACTICE_ASSISTANT: {
-        readonly name: "FEATURE_PRACTICE_ASSISTANT";
-        readonly key: "practiceAssistant";
-        readonly type: "BETA";
-        readonly description: "Enable the contextual practice assistant (cmdk).";
-        readonly defaultValue: true;
-        readonly riskLevel: "MEDIUM";
-        readonly affectedFiles: ["app/layout.tsx", "components/practice-assistant.tsx"];
-        readonly rollbackStrategy: "Disable the practice assistant component.";
-    };
     readonly FEATURE_SOCIAL_PRACTICE_ROOMS: {
         readonly name: "FEATURE_SOCIAL_PRACTICE_ROOMS";
         readonly key: "socialPracticeRooms";
@@ -85,6 +67,46 @@ export declare const FEATURE_FLAGS_METADATA: {
         readonly riskLevel: "LOW";
         readonly affectedFiles: [];
         readonly rollbackStrategy: "Disable accuracy telemetry tracking.";
+    };
+    readonly FEATURE_PRACTICE_ZEN_MODE: {
+        readonly name: "FEATURE_PRACTICE_ZEN_MODE";
+        readonly key: "practiceZenMode";
+        readonly type: "EXPERIMENTAL";
+        readonly description: "Enable Zen Mode to simplify the interface during practice.";
+        readonly defaultValue: true;
+        readonly riskLevel: "LOW";
+        readonly affectedFiles: ["components/practice-mode.tsx"];
+        readonly rollbackStrategy: "Disable Zen Mode functionality.";
+    };
+    readonly FEATURE_PRACTICE_AUTO_START: {
+        readonly name: "FEATURE_PRACTICE_AUTO_START";
+        readonly key: "practiceAutoStart";
+        readonly type: "BETA";
+        readonly description: "Enable automatic start of audio detection when an exercise is loaded.";
+        readonly defaultValue: true;
+        readonly riskLevel: "LOW";
+        readonly affectedFiles: ["stores/practice-store.ts", "components/practice-mode.tsx"];
+        readonly rollbackStrategy: "Disable auto-start and require manual start.";
+    };
+    readonly FEATURE_PRACTICE_EXERCISE_RECOMMENDER: {
+        readonly name: "FEATURE_PRACTICE_EXERCISE_RECOMMENDER";
+        readonly key: "practiceExerciseRecommender";
+        readonly type: "BETA";
+        readonly description: "Enable the exercise recommendation system based on user performance.";
+        readonly defaultValue: true;
+        readonly riskLevel: "MEDIUM";
+        readonly affectedFiles: ["lib/exercise-recommender.ts", "components/practice-mode.tsx"];
+        readonly rollbackStrategy: "Disable recommendations and show all exercises.";
+    };
+    readonly FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM: {
+        readonly name: "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM";
+        readonly key: "practiceAchievementSystem";
+        readonly type: "BETA";
+        readonly description: "Enable the gamified achievement system.";
+        readonly defaultValue: true;
+        readonly riskLevel: "MEDIUM";
+        readonly affectedFiles: ["lib/achievements/", "stores/analytics-store.ts"];
+        readonly rollbackStrategy: "Disable achievement tracking and notifications.";
     };
 };
 /**

@@ -1,24 +1,23 @@
 /**
  * PracticeStore
  *
- * Managing the state of a violin practice session, including audio resources
- * and the real-time event pipeline consumption.
+ * Managing the state of a violin practice session using explicit states.
  */
-import { type PracticeState } from '@/lib/practice-core';
-import { PitchDetector } from '@/lib/pitch-detector';
 import { AppError } from '@/lib/errors/app-error';
+import { PracticeStoreState } from '@/lib/practice/practice-states';
 import type { Exercise } from '@/lib/exercises/types';
-import type { PracticeEvent } from '@/lib/practice-core';
-import type { Observation } from '@/lib/technique-types';
+import { Observation } from '@/lib/technique-types';
+import { PracticeState, PracticeEvent } from '@/lib/practice-core';
 interface PracticeStore {
+    state: PracticeStoreState;
     practiceState: PracticeState | null;
-    analyser: AnalyserNode | null;
-    detector: PitchDetector | null;
     error: AppError | null;
     liveObservations: Observation[];
-    isStarting: boolean;
-    sessionId: number;
-    loadExercise: (exercise: Exercise) => void;
+    autoStartEnabled: boolean;
+    loadExercise: (exercise: Exercise) => Promise<void>;
+    setAutoStart: (enabled: boolean) => void;
+    setNoteIndex: (index: number) => void;
+    initializeAudio: () => Promise<void>;
     start: () => Promise<void>;
     stop: () => void;
     reset: () => void;
