@@ -16,6 +16,7 @@ export default defineConfig({
       '__tests__/**/*.test.{ts,tsx}',
     ],
     exclude: ['node_modules', 'e2e/**'],
+    setupFiles: ['./vitest.setup.ts'],
   },
   resolve: {
     alias: {
