@@ -1,0 +1,144 @@
+{
+  "discovery": {
+    "discovery_timestamp": "2025-05-22T16:00:00Z",
+    "total_features_detected": 9,
+    "features": [
+      {
+        "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+        "name": "Adaptive Difficulty Engine",
+        "type": "Algorithm",
+        "current_state": "alpha",
+        "locations": ["lib/practice-core.ts"],
+        "enabled": false,
+        "riskLevel": "MEDIUM"
+      },
+      {
+        "id": "FEATURE_AUDIO_WEB_WORKER",
+        "name": "Web Worker Audio Processing",
+        "type": "Performance",
+        "current_state": "alpha",
+        "locations": ["lib/pitch-detector.ts", "lib/note-stream.ts"],
+        "enabled": false,
+        "riskLevel": "HIGH"
+      },
+      {
+        "id": "FEATURE_UI_INTONATION_HEATMAPS",
+        "name": "Intonation Heatmaps",
+        "type": "UI",
+        "current_state": "alpha",
+        "locations": ["components/analytics-dashboard.tsx"],
+        "enabled": false,
+        "riskLevel": "LOW"
+      },
+      {
+        "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+        "name": "Social Practice Rooms",
+        "type": "Algorithm",
+        "current_state": "planned",
+        "locations": ["lib/feature-flags.ts"],
+        "enabled": false,
+        "riskLevel": "HIGH"
+      },
+      {
+        "id": "FEATURE_TELEMETRY_ACCURACY",
+        "name": "Accuracy Telemetry",
+        "type": "Integration",
+        "current_state": "beta",
+        "locations": ["lib/practice/session-runner.ts"],
+        "enabled": false,
+        "riskLevel": "LOW"
+      },
+      {
+        "id": "FEATURE_PRACTICE_ZEN_MODE",
+        "name": "Zen Mode",
+        "type": "UI_UX",
+        "current_state": "stable",
+        "locations": ["components/practice-mode.tsx"],
+        "enabled": true,
+        "notes": "Currently implemented as local state. Promoting to flag."
+      },
+      {
+        "id": "FEATURE_PRACTICE_AUTO_START",
+        "name": "Auto-Start",
+        "type": "UI_UX",
+        "current_state": "stable",
+        "locations": ["components/practice-mode.tsx"],
+        "enabled": true,
+        "notes": "Currently implemented as local state. Promoting to flag."
+      },
+      {
+        "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+        "name": "Exercise Recommender",
+        "type": "Algorithm",
+        "current_state": "stable",
+        "locations": ["lib/exercise-recommender.ts", "components/practice-mode.tsx"],
+        "enabled": true,
+        "notes": "Promoting to flag."
+      },
+      {
+        "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+        "name": "Achievement System",
+        "type": "UI_UX",
+        "current_state": "stable",
+        "locations": ["stores/analytics-store.ts"],
+        "enabled": true,
+        "notes": "Promoting to flag."
+      }
+    ]
+  },
+  "scoring": [
+    {
+      "feature_id": "FEATURE_PRACTICE_ZEN_MODE",
+      "scoring": {
+        "maturity": { "score": 10, "rationale": "Fully functional and stable in UI." },
+        "business_value": { "score": 8, "rationale": "High value for focused practice." },
+        "growth_potential": { "score": 7, "rationale": "Can be expanded to include audio focus." }
+      },
+      "composite_score": { "growth_readiness": 9.0, "recommendation": "FAST_TRACK" }
+    },
+    {
+      "feature_id": "FEATURE_PRACTICE_AUTO_START",
+      "scoring": {
+        "maturity": { "score": 9, "rationale": "Functional but could be more robust." },
+        "business_value": { "score": 7, "rationale": "Good for UX flow." }
+      },
+      "composite_score": { "growth_readiness": 8.5, "recommendation": "FAST_TRACK" }
+    },
+    {
+      "feature_id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+      "scoring": {
+        "maturity": { "score": 9, "rationale": "Solid pedagogical logic." },
+        "business_value": { "score": 9, "rationale": "Critical for guided learning path." }
+      },
+      "composite_score": { "growth_readiness": 9.0, "recommendation": "FAST_TRACK" }
+    },
+    {
+      "feature_id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+      "scoring": {
+        "maturity": { "score": 8, "rationale": "Integrated but could have more complex rules." },
+        "business_value": { "score": 10, "rationale": "Core gamification for retention." }
+      },
+      "composite_score": { "growth_readiness": 9.0, "recommendation": "FAST_TRACK" }
+    }
+  ],
+  "decision": {
+    "selected_for_growth": [
+      {
+        "feature_id": "FEATURE_PRACTICE_ZEN_MODE",
+        "decision_rationale": "Standardize local state into global feature flag system."
+      },
+      {
+        "feature_id": "FEATURE_PRACTICE_AUTO_START",
+        "decision_rationale": "Standardize local state into global feature flag system."
+      },
+      {
+        "feature_id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+        "decision_rationale": "Formalize the recommender as a feature flag for easier experimentation with new algorithms."
+      },
+      {
+        "feature_id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+        "decision_rationale": "Allow disabling/enabling the achievement system for different user segments."
+      }
+    ]
+  }
+}

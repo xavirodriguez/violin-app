@@ -5,6 +5,7 @@ import type { Exercise } from '@/lib/domain/musical-types'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { analytics } from '@/lib/analytics-tracker'
+import { featureFlags } from '@/lib/feature-flags'
 
 /** Represents a single, completed practice session. */
 export interface PracticeSession {
@@ -206,8 +207,10 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           accuracy: completedSession.accuracy,
         })
 
-        const newAchievements = checkLegacyAchievements(newProgress, completedSession, newSessions)
-        newProgress.achievements = [...progress.achievements, ...newAchievements]
+        if (featureFlags.isEnabled('FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM')) {
+          const newAchievements = checkLegacyAchievements(newProgress, completedSession, newSessions)
+          newProgress.achievements = [...progress.achievements, ...newAchievements]
+        }
 
         set({
           currentSession: null,
@@ -282,6 +285,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       checkAndUnlockAchievements: () => {
+        if (!featureFlags.isEnabled('FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM')) return
+
         const state = get()
         if (!state.currentSession) return
 

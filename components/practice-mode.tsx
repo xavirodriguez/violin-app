@@ -13,6 +13,7 @@ import { useAnalyticsStore } from '@/stores/analytics-store'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { useFeatureFlag } from '@/lib/feature-flags'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { allExercises } from '@/lib/exercises'
 import {
@@ -59,10 +60,11 @@ function ExerciseLibrary({
 }) {
   const [activeTab, setActiveTab] = useState('all')
   const { progress, sessions } = useAnalyticsStore()
+  const isRecommenderEnabled = useFeatureFlag('FEATURE_PRACTICE_EXERCISE_RECOMMENDER')
 
   const recommended = useMemo(() =>
-    getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId),
-    [progress, sessions]
+    isRecommenderEnabled ? getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId) : null,
+    [progress, sessions, isRecommenderEnabled]
   )
 
   const filteredExercises = useMemo(() => {
@@ -289,6 +291,9 @@ export function PracticeMode() {
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
 
+  const isZenModeFeatureEnabled = useFeatureFlag('FEATURE_PRACTICE_ZEN_MODE')
+  const isAutoStartFeatureEnabled = useFeatureFlag('FEATURE_PRACTICE_AUTO_START')
+
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
   const [zenMode, setZenMode] = useState(false)
@@ -377,7 +382,9 @@ export function PracticeMode() {
           status === 'listening' ? stop() : start()
           break
         case 'z':
-          setZenMode(v => !v)
+          if (isZenModeFeatureEnabled) {
+            setZenMode(v => !v)
+          }
           break
       }
     }
@@ -412,16 +419,18 @@ export function PracticeMode() {
 
         {status === 'idle' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="auto-start"
-                  checked={autoStartEnabled}
-                  onCheckedChange={setAutoStartEnabled}
-                />
-                <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
+            {isAutoStartFeatureEnabled && (
+              <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="auto-start"
+                    checked={autoStartEnabled}
+                    onCheckedChange={setAutoStartEnabled}
+                  />
+                  <Label htmlFor="auto-start" className="cursor-pointer">Always Listening (Auto-start)</Label>
+                </div>
               </div>
-            </div>
+            )}
             <ExerciseLibrary
               selectedId={practiceState?.exercise.id}
               onSelect={(exercise) => setPreviewExercise(exercise)}
@@ -511,7 +520,7 @@ export function PracticeMode() {
             onRepeatMeasure={() => {}}
             onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={() => setZenMode((v) => !v)}
+            onToggleZen={isZenModeFeatureEnabled ? () => setZenMode((v) => !v) : undefined}
             isZen={zenMode}
           />
         )}

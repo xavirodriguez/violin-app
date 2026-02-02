@@ -23,6 +23,7 @@ export interface FeatureFlagMetadata {
   affectedFiles?: string[]
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
   rollbackStrategy?: string
+  dependencies?: string[]
 }
 
 export const FEATURE_FLAGS_METADATA = {
@@ -34,7 +35,8 @@ export const FEATURE_FLAGS_METADATA = {
     defaultValue: false,
     riskLevel: 'MEDIUM',
     affectedFiles: ['lib/practice-core.ts'],
-    rollbackStrategy: 'Revert to fixed difficulty levels.'
+    rollbackStrategy: 'Revert to fixed difficulty levels.',
+    dependencies: ['FEATURE_TELEMETRY_ACCURACY']
   },
   FEATURE_AUDIO_WEB_WORKER: {
     name: 'FEATURE_AUDIO_WEB_WORKER',
@@ -75,6 +77,42 @@ export const FEATURE_FLAGS_METADATA = {
     riskLevel: 'LOW',
     affectedFiles: [],
     rollbackStrategy: 'Disable accuracy telemetry tracking.'
+  },
+  FEATURE_PRACTICE_ZEN_MODE: {
+    name: 'FEATURE_PRACTICE_ZEN_MODE',
+    key: 'practiceZenMode',
+    type: 'UI_UX',
+    description: 'Simplified UI for practice sessions.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['components/practice-mode.tsx']
+  },
+  FEATURE_PRACTICE_AUTO_START: {
+    name: 'FEATURE_PRACTICE_AUTO_START',
+    key: 'practiceAutoStart',
+    type: 'UI_UX',
+    description: 'Enable auto-starting audio detection when exercise is loaded.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['components/practice-mode.tsx']
+  },
+  FEATURE_PRACTICE_EXERCISE_RECOMMENDER: {
+    name: 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER',
+    key: 'practiceExerciseRecommender',
+    type: 'EXPERIMENTAL',
+    description: 'Intelligent exercise recommendations based on progress.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['lib/exercise-recommender.ts', 'components/practice-mode.tsx']
+  },
+  FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM: {
+    name: 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM',
+    key: 'practiceAchievementSystem',
+    type: 'UI_UX',
+    description: 'Enable the achievement and gamification system.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['stores/analytics-store.ts']
   }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
@@ -100,6 +138,14 @@ class FeatureFlagsManager {
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
         return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
+      case 'FEATURE_PRACTICE_ZEN_MODE':
+        return process.env.FEATURE_PRACTICE_ZEN_MODE ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ZEN_MODE
+      case 'FEATURE_PRACTICE_AUTO_START':
+        return process.env.FEATURE_PRACTICE_AUTO_START ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_AUTO_START
+      case 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER':
+        return process.env.FEATURE_PRACTICE_EXERCISE_RECOMMENDER ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_EXERCISE_RECOMMENDER
+      case 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM':
+        return process.env.FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM
       default:
         return undefined
     }
@@ -161,7 +207,21 @@ class FeatureFlagsManager {
 
   validateFlags(): { valid: boolean; errors: string[] } {
     const errors: string[] = []
-    // Add validation logic if needed
+
+    // Check dependencies
+    for (const flagName in FEATURE_FLAGS_METADATA) {
+      const name = flagName as FeatureFlagName
+      const metadata = FEATURE_FLAGS_METADATA[name]
+
+      if (this.isEnabled(name) && metadata.dependencies) {
+        for (const dep of metadata.dependencies) {
+          if (!this.isEnabled(dep as FeatureFlagName)) {
+            errors.push(`Flag "${name}" is enabled but its dependency "${dep}" is disabled.`)
+          }
+        }
+      }
+    }
+
     return { valid: errors.length === 0, errors }
   }
 }
