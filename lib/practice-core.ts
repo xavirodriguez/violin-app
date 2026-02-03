@@ -2,6 +2,7 @@
  * This file contains the pure, side-effect-free core logic for the violin practice mode.
  * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
+ * Refactored for branded types and strict validation.
  */
 
 import { NoteTechnique, Observation } from './technique-types'

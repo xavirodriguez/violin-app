@@ -1,36 +1,65 @@
 import { type PracticeState } from '@/lib/practice-core';
-import type { PitchDetector } from '@/lib/pitch-detector';
+import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
 import type { Exercise } from '@/lib/exercises/types';
 import { NoteTechnique } from '../technique-types';
-interface SessionState {
-    practiceState: PracticeState | null;
-    analyser: AnalyserNode | null;
+export interface SessionResult {
+    completed: boolean;
+    reason: 'finished' | 'cancelled' | 'error';
+    error?: Error;
 }
-interface SessionRunnerDependencies {
-    signal: AbortSignal;
-    sessionId: number;
+export interface PracticeSessionRunner {
+    run(signal: AbortSignal): Promise<SessionResult>;
+    cancel(): void;
+}
+export interface SessionRunnerDependencies {
+    audioLoop: AudioLoopPort;
+    detector: PitchDetectionPort;
+    exercise: Exercise;
+    sessionStartTime: number;
     store: {
-        getState: () => SessionState;
-        setState: (partial: SessionState | Partial<SessionState> | ((state: SessionState) => Partial<SessionState>), replace?: false) => void;
+        getState: () => {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        };
+        setState: (partial: {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        } | Partial<{
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }> | ((state: {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }) => {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        } | Partial<{
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }>), replace?: boolean) => void;
         stop: () => Promise<void>;
     };
     analytics: {
+        endSession: () => void;
         recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void;
         recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void;
-        endSession: () => void;
     };
     updatePitch?: (pitch: number, confidence: number) => void;
-    detector: PitchDetector;
-    exercise: Exercise;
-    sessionStartTime: number;
+}
+export declare class PracticeSessionRunnerImpl implements PracticeSessionRunner {
+    private deps;
+    private controller;
+    private loopState;
+    constructor(deps: SessionRunnerDependencies);
+    run(signal: AbortSignal): Promise<SessionResult>;
+    cancel(): void;
+    private cleanup;
+    private runInternal;
+    private mapEngineEventToPracticeEvent;
+    private processEvent;
+    private handleMatchedNoteSideEffects;
 }
 /**
- * Runs the asynchronous practice loop, processing audio events and updating the store.
- *
- * @remarks
- * This function is decoupled from the Zustand store's internal structure,
- * relying instead on a minimal dependency interface. This allows for better
- * testability and prevents closure-related memory leaks or race conditions.
+ * @deprecated Use PracticeSessionRunnerImpl directly
  */
-export declare function runPracticeSession(deps: SessionRunnerDependencies): Promise<void>;
-export {};
+export declare function runPracticeSession(deps: SessionRunnerDependencies): Promise<SessionResult>;

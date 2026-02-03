@@ -110,10 +110,17 @@ const createTetrachordExercise = (config: {
     category: 'Scales',
     difficulty: 'Beginner',
     scoreMetadata: scaleMetadataMap[config.key],
-    notes: config.notes.map((pitch) => ({
-      pitch: parsePitch(pitch),
-      duration: DURATION.QUARTER,
-    })),
+    notes: config.notes.map((pitch, idx) => {
+      const finger = parseInt(config.fingerPattern.split('-')[idx])
+      return {
+        pitch: parsePitch(pitch),
+        duration: DURATION.QUARTER,
+        annotations: !isNaN(finger) ? {
+          fingerNumber: finger >= 1 && finger <= 4 ? finger as 1 | 2 | 3 | 4 : undefined,
+          bowDirection: idx % 2 === 0 ? 'down' : 'up'
+        } : undefined
+      }
+    }),
     startingString: config.startingString,
     fingerPattern: config.fingerPattern,
     tempoRange: { min: 60, max: 120 },
@@ -173,10 +180,19 @@ const createFullScaleExercise = (config: {
     category: 'Scales',
     difficulty: 'Intermediate',
     scoreMetadata: scaleMetadataMap[config.key],
-    notes: config.notes.map((pitch) => ({
-      pitch: parsePitch(pitch),
-      duration: DURATION.QUARTER,
-    })),
+    notes: config.notes.map((pitch, idx) => {
+      // Simplified finger pattern parsing for full scales
+      const fingers = config.fingerPattern.replace(/\s|\//g, '').split('-')
+      const finger = parseInt(fingers[idx])
+      return {
+        pitch: parsePitch(pitch),
+        duration: DURATION.QUARTER,
+        annotations: !isNaN(finger) ? {
+          fingerNumber: finger >= 1 && finger <= 4 ? finger as 1 | 2 | 3 | 4 : undefined,
+          bowDirection: idx % 2 === 0 ? 'down' : 'up'
+        } : undefined
+      }
+    }),
     startingString: config.startingString,
     fingerPattern: config.fingerPattern,
     tempoRange: { min: 80, max: 144 },

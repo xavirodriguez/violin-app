@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
 import type { Exercise } from '@/lib/domain/musical-types'
+import { featureFlags } from '@/lib/feature-flags'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { analytics } from '@/lib/analytics-tracker'
@@ -284,6 +285,11 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       checkAndUnlockAchievements: () => {
         const state = get()
         if (!state.currentSession) return
+
+        // Guard with feature flag
+        if (!featureFlags.isEnabled('FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM')) {
+          return
+        }
 
         // Build stats for checker
         const stats: AchievementCheckStats = {

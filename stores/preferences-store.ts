@@ -1,9 +1,12 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences'
 import { analytics } from '@/lib/analytics-tracker'
+import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { createMigrator } from '@/lib/persistence/migrator'
+import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
 
 interface PreferencesStore extends UserPreferences {
+  schemaVersion: 1
   setFeedbackLevel: (level: FeedbackLevel) => void
   toggleTechnicalDetails: () => void
   toggleCelebrations: () => void
@@ -21,8 +24,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 }
 
 export const usePreferencesStore = create<PreferencesStore>()(
-  persist(
+  validatedPersist(
+    PreferencesStateSchema as any,
     (set) => ({
+      schemaVersion: 1,
       ...DEFAULT_PREFERENCES,
 
       setFeedbackLevel: (level) => {
@@ -44,7 +49,14 @@ export const usePreferencesStore = create<PreferencesStore>()(
       resetToDefaults: () => set(DEFAULT_PREFERENCES)
     }),
     {
-      name: 'violin-mentor-preferences'
+      name: 'violin-mentor-preferences',
+      version: 1,
+      migrate: createMigrator({
+        1: (state: any) => ({
+          ...state,
+          schemaVersion: 1
+        })
+      })
     }
   )
 )

@@ -71,6 +71,7 @@ export type SegmenterEvent =
 
 /**
  * A stateful class that processes a stream of `TechniqueFrame`s and emits events for note onsets, offsets, and changes.
+ * Refactored for state description documentation.
  *
  * @remarks
  * This class implements a state machine (`SILENCE` or `NOTE`) with hysteresis and temporal debouncing

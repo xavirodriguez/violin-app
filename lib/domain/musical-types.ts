@@ -24,7 +24,7 @@ export interface Pitch {
  * Represents the rhythmic duration of a note in standard musical notation.
  * 1 = Whole, 2 = Half, 4 = Quarter, 8 = Eighth, 16 = 16th, 32 = 32nd.
  */
-export type NoteDuration = 1 | 2 | 4 | 8 | 16 | 32
+export type NoteDuration = 1 | 2 | 4 | 6 | 8 | 16 | 32
 
 /**
  * Represents a single musical note with its pitch and rhythmic duration.
@@ -34,6 +34,12 @@ export interface Note {
   pitch: Pitch
   /** The duration of the note. */
   duration: NoteDuration
+  /** Optional pedagogical annotations for the note. */
+  annotations?: {
+    fingerNumber?: 1 | 2 | 3 | 4
+    bowDirection?: 'up' | 'down'
+    warningFlag?: boolean
+  }
 }
 
 // --- Metadata types ---

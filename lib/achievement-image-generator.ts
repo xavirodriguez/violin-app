@@ -1,5 +1,8 @@
 import type { PracticeSession } from '@/stores/analytics-store'
 
+/**
+ * Generates a shareable image for exercise completion.
+ */
 export async function generateAchievementImage(
   sessionData: PracticeSession,
   stars: number

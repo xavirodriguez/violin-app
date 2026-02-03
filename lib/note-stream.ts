@@ -11,7 +11,7 @@ import {
   isMatch,
   type TargetNote,
 } from '@/lib/practice-core'
-import type { PitchDetector } from '@/lib/pitch-detector'
+import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import { TechniqueFrame, NoteSegment } from './technique-types'
@@ -57,8 +57,9 @@ export interface NoteStreamOptions {
  * Captured once at pipeline creation to prevent state drift.
  */
 export interface PipelineContext {
-  readonly targetNote: () => TargetNote | null
-  readonly getCurrentIndex: () => number
+  readonly targetNote: TargetNote | null
+  readonly currentIndex: number
+  readonly sessionStartTime: number
 }
 
 const defaultOptions: NoteStreamOptions = {
@@ -70,47 +71,39 @@ const defaultOptions: NoteStreamOptions = {
 }
 
 /**
- * Creates an async iterable of raw pitch events from a Web Audio API AnalyserNode.
+ * Creates an async iterable of raw pitch events using audio ports.
  */
 export async function* createRawPitchStream(
-  analyser: AnalyserNode,
-  detector: PitchDetector,
+  audioLoop: AudioLoopPort,
+  detector: PitchDetectionPort,
   signal: AbortSignal,
 ): AsyncGenerator<RawPitchEvent> {
-  const buffer = new Float32Array(analyser.fftSize)
-  while (!signal.aborted) {
-    analyser.getFloatTimeDomainData(buffer)
-    const result = detector.detectPitch(buffer)
-    const rms = detector.calculateRMS(buffer)
+  const queue: RawPitchEvent[] = []
+  let resolver: (() => void) | null = null
 
-    yield {
-      pitchHz: result.pitchHz,
-      confidence: result.confidence,
-      rms: rms,
-      timestamp: Date.now(),
+  const loopPromise = audioLoop.start((frame) => {
+    const { pitchHz, confidence } = detector.detect(frame)
+    queue.push({
+      pitchHz,
+      confidence,
+      rms: detector.calculateRMS(frame),
+      timestamp: Date.now()
+    })
+    if (resolver) {
+      resolver()
+      resolver = null
     }
+  }, signal)
 
-    try {
-      await new Promise<void>((resolve, reject) => {
-        if (signal.aborted) {
-          reject(new DOMException('Aborted', 'AbortError'))
-          return
-        }
-
-        const rafId = requestAnimationFrame(() => {
-          signal.removeEventListener('abort', abortHandler)
-          if (signal.aborted) {
-            reject(new DOMException('Aborted', 'AbortError'))
-          } else {
-            resolve()
+  try {
+    while (!signal.aborted) {
+      if (queue.length === 0) {
+        const abortHandler = () => {
+          if (resolver) {
+            resolver()
+            resolver = null
           }
-        })
-
-        function abortHandler() {
-          cancelAnimationFrame(rafId)
-          reject(new DOMException('Aborted', 'AbortError'))
         }
-
         signal.addEventListener('abort', abortHandler, { once: true })
       })
       if (signal.aborted) return
@@ -121,8 +114,9 @@ export async function* createRawPitchStream(
         console.warn('[PIPELINE] Caught null error in createRawPitchStream')
         return
       }
-      throw e
     }
+  } finally {
+    await loopPromise.catch(() => {}) // Cleanup
   }
 }
 
@@ -201,7 +195,7 @@ function* processRawPitchEvent(
     return
   }
 
-  const currentTarget = context.targetNote()
+  const currentTarget = context.targetNote
   if (!currentTarget) return
 
   const { musicalNote, noteName, cents } = parseMusicalNote(raw.pitchHz)
@@ -268,7 +262,7 @@ function* validateAndEmitCompletion(
     segmentEvent,
     currentTarget,
     options,
-    context.getCurrentIndex,
+    () => context.currentIndex,
     agent,
   )
   if (completionEvent) {
@@ -481,43 +475,25 @@ function calculateRhythmExpectations(
 }
 
 /**
- * Creates a practice event processing pipeline.
+ * Creates a practice event processing pipeline with immutable context.
  *
  * @param rawPitchStream - Raw pitch detection events
- * @param targetNote - **Function called on EVERY event** to get current target.
- *   Must be idempotent for the same index. Use a store selector.
- * @param getCurrentIndex - **Function called on EVERY event** to get current position.
- *   Must be idempotent. Use a store selector.
+ * @param context - Immutable context snapshot. Pipeline processes events
+ *   relative to THIS context. To change context, create a new pipeline.
  * @param options - Pipeline configuration
  * @param signal - AbortSignal to stop the pipeline
  * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  *
  * @remarks
- * **Critical**: `targetNote` and `getCurrentIndex` are called frequently (60+ fps).
- * Ensure they:
- * 1. Are fast (\< 1ms)
- * 2. Return consistent values for the same underlying state
- * 3. Use memoized selectors from Zustand stores
- *
- * @example
- * ```ts
- * const pipeline = createPracticeEventPipeline(
- *   rawStream,
- *   () => usePracticeStore.getState().targetNote,  // ✅ Store selector
- *   () => usePracticeStore.getState().currentNoteIndex,
- *   options,
- *   signal
- * );
- * ```
+ * This design prevents context drift during async iteration.
+ * When the exercise note changes, create a new pipeline.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
-  targetNote: () => TargetNote | null,
-  getCurrentIndex: () => number,
-  options: Partial<NoteStreamOptions> & { exercise: Exercise; sessionStartTime: number },
+  context: PipelineContext,
+  options: Partial<NoteStreamOptions> & { exercise: Exercise },
   signal: AbortSignal,
 ): AsyncIterable<PracticeEvent> {
   const finalOptions = { ...defaultOptions, ...options } as NoteStreamOptions
-  const context: PipelineContext = { targetNote, getCurrentIndex }
   return technicalAnalysisWindow(rawPitchStream, context, finalOptions, signal)
 }

@@ -6,7 +6,7 @@
  * Use the new exercise system in `lib/exercises/` for new features.
  */
 
-import type { Exercise as ModernExercise, NoteDuration } from './exercises/types'
+import type { Exercise, NoteDuration } from './exercises/types'
 import { parsePitch } from './exercises/utils'
 
 /**
@@ -88,7 +88,7 @@ export const G_MAJOR_SCALE_EXERCISE: LegacyExercise = {
 /**
  * Adapts a legacy exercise into the modern Exercise format.
  */
-export function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise {
+export function adaptLegacyExercise(legacy: LegacyExercise): Exercise {
   return {
     id: legacy.id,
     name: legacy.name,

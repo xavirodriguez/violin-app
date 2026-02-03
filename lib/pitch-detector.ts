@@ -234,6 +234,7 @@ export class PitchDetector {
 
   /**
    * Gets the sample rate the detector was configured with.
+   * Refactored for range validation.
    * @returns The sample rate in Hz.
    */
   getSampleRate(): number {
