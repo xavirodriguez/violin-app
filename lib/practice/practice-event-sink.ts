@@ -22,13 +22,13 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
   analytics?: { endSession: () => void },
 ) => {
   if (!event || !event.type) {
-    console.warn('[INVALID EVENT]', event)
+    console.warn('[EVENT SINK] [INVALID EVENT]', event)
     return
   }
 
   const currentState = store.getState().practiceState
   if (!currentState) {
-    console.error('[STATE NULL]', { event })
+    console.error('[EVENT SINK] [STATE NULL] No practiceState in store', { type: event.type })
     return
   }
 

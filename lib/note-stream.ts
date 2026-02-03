@@ -105,14 +105,14 @@ export async function* createRawPitchStream(
           }
         }
         signal.addEventListener('abort', abortHandler, { once: true })
-        await new Promise<void>(resolve => {
-          resolver = resolve
-        })
-        signal.removeEventListener('abort', abortHandler)
-      }
-
-      while (queue.length > 0 && !signal.aborted) {
-        yield queue.shift()!
+      })
+      if (signal.aborted) return
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
+      // Handle potential null/undefined errors explicitly
+      if (!e) {
+        console.warn('[PIPELINE] Caught null error in createRawPitchStream')
+        return
       }
     }
   } finally {
@@ -174,6 +174,7 @@ async function* technicalAnalysisWindow(
   for await (const raw of source) {
     if (signal.aborted) break
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
+    if (signal.aborted) break
   }
 }
 
