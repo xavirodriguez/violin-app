@@ -78,7 +78,10 @@ function processSessionEvent(
 
   const currentState = deps.store.getState().practiceState
   if (!currentState) {
-    console.error('[STATE NULL]', { event })
+    console.error('[STATE NULL] deps.store.getState().practiceState is null', {
+      type: event.type,
+      sessionId: deps.sessionId,
+    })
     return state
   }
 

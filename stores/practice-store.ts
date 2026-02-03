@@ -84,14 +84,15 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     loadExercise: async (exercise) => {
       // Always stop any existing session before loading a new exercise
       await get().stop()
-      set(() => ({
+      set((state) => ({
+        ...state,
         practiceState: getInitialState(exercise),
         error: null,
         liveObservations: [],
       }))
     },
 
-    setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
+    setAutoStart: (enabled) => set((state) => ({ ...state, autoStartEnabled: enabled })),
 
     setNoteIndex: (index) => {
       set((state) => {
@@ -116,12 +117,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       const currentState = get().practiceState
       if (!currentState) {
-        set({ error: toAppError('No exercise loaded') })
+        set((state) => ({ ...state, error: toAppError('No exercise loaded') }))
         return
       }
 
       // Indicate start process is in progress
-      set({ isStarting: true })
+      set((state) => ({ ...state, isStarting: true }))
 
       try {
         // 2. Resource-first setup: Ensure any previous loops are stopped
@@ -135,13 +136,17 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const nextSessionId = get().sessionId + 1
         const sessionStartTime = Date.now()
 
-        set({
-          analyser: resources.analyser,
-          detector,
-          practiceState: reducePracticeEvent(currentState, { type: 'START' }),
-          sessionId: nextSessionId,
-          error: null,
-          isStarting: false,
+        set((state) => {
+          if (!state.practiceState) return state
+          return {
+            ...state,
+            analyser: resources.analyser,
+            detector,
+            practiceState: reducePracticeEvent(state.practiceState, { type: 'START' }),
+            sessionId: nextSessionId,
+            error: null,
+            isStarting: false,
+          }
         })
 
         // Sync with TunerStore
@@ -166,13 +171,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           exercise: currentState.exercise,
           sessionStartTime,
           store: {
-            getState: () => get() as any,
+            getState: () => get(),
             setState: (partial) => {
               // Safety guard: only apply updates if the session is still current
               if (get().sessionId !== nextSessionId) return
 
               set((state) => {
-                const next = typeof partial === 'function' ? (partial as any)(state) : partial
+                // Re-verify session ID inside the set loop for atomicity
+                if (state.sessionId !== nextSessionId) return state
+
+                const next = typeof partial === 'function' ? partial(state) : partial
                 if (!next.practiceState) return { ...state, ...next }
 
                 // Inject abstracted live observations logic
@@ -196,17 +204,19 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             useTunerStore.getState().updatePitch(pitch, confidence)
           }
         }).catch((err) => {
-          if (err.name !== 'AbortError') {
+          const isAbort = err && typeof err === 'object' && 'name' in err && err.name === 'AbortError'
+          if (!isAbort) {
             console.error('[PracticeStore] Session runner failed:', err)
-            set({ error: toAppError(err) })
+            set((state) => ({ ...state, error: toAppError(err) }))
             get().stop()
           }
         })
       } catch (error) {
-        set({
+        set((state) => ({
+          ...state,
           error: toAppError(error),
           isStarting: false,
-        })
+        }))
       }
     },
 
@@ -238,6 +248,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       // 3. Unified state update
       set((state) => ({
+        ...state,
         practiceState: state.practiceState
           ? reducePracticeEvent(state.practiceState, { type: 'STOP' })
           : null,
@@ -251,11 +262,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     reset: () => {
       get().stop()
-      set({
+      set((state) => ({
+        ...state,
         practiceState: null,
         error: null,
         liveObservations: [],
-      })
+      }))
     },
 
     consumePipelineEvents: async (pipeline) => {
@@ -264,13 +276,22 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         // Guard against session invalidation during processing
         if (get().sessionId !== currentSessionId) break
 
+        if (!event || !event.type) {
+          console.warn('[PIPELINE] Invalid event in consumePipelineEvents:', event)
+          continue
+        }
+
         const currentState = get().practiceState
-        if (!currentState) break
+        if (!currentState) {
+          console.error('[PIPELINE] State null in consumePipelineEvents', { event })
+          break
+        }
 
         const newState = reducePracticeEvent(currentState, event)
 
         set((state) => {
           if (state.sessionId !== currentSessionId) return state
+          if (!state.practiceState) return state
 
           // Use the same abstracted logic for live observations
           const liveObservations = getUpdatedLiveObservations(newState)

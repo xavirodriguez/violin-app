@@ -113,6 +113,7 @@ export async function* createRawPitchStream(
 
         signal.addEventListener('abort', abortHandler, { once: true })
       })
+      if (signal.aborted) return
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return
       // Handle potential null/undefined errors explicitly
@@ -179,6 +180,7 @@ async function* technicalAnalysisWindow(
   for await (const raw of source) {
     if (signal.aborted) break
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
+    if (signal.aborted) break
   }
 }
 
