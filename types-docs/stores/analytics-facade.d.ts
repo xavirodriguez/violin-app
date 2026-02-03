@@ -7,6 +7,7 @@ export declare const useAnalyticsStore: (() => {
     sessions: import("./session.store").PracticeSession[];
     progress: {
         achievements: import("./achievements.store").Achievement[];
+        schemaVersion: 1;
         totalPracticeSessions: number;
         totalPracticeTime: number;
         exercisesCompleted: string[];
@@ -16,6 +17,9 @@ export declare const useAnalyticsStore: (() => {
         rhythmSkill: number;
         overallSkill: number;
         exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
+        eventBuffer: import("./progress.store").ProgressEvent[];
+        snapshots: import("./progress.store").ProgressSnapshot[];
+        eventCounter: number;
         addSession: (session: import("./session.store").PracticeSession) => void;
         updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
     };
@@ -42,6 +46,7 @@ export declare const useAnalyticsStore: (() => {
         sessions: import("./session.store").PracticeSession[];
         progress: {
             achievements: import("./achievements.store").Achievement[];
+            schemaVersion: 1;
             totalPracticeSessions: number;
             totalPracticeTime: number;
             exercisesCompleted: string[];
@@ -51,6 +56,9 @@ export declare const useAnalyticsStore: (() => {
             rhythmSkill: number;
             overallSkill: number;
             exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
+            eventBuffer: import("./progress.store").ProgressEvent[];
+            snapshots: import("./progress.store").ProgressSnapshot[];
+            eventCounter: number;
             addSession: (session: import("./session.store").PracticeSession) => void;
             updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
         };

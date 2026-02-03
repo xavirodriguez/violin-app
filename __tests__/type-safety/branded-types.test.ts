@@ -1,3 +1,4 @@
+// Added for type safety verification
 import { describe, it, expect } from 'vitest'
 import { assertValidNoteName, MusicalNote, formatPitchName } from '@/lib/practice-core'
 import { AppError } from '@/lib/errors/app-error'

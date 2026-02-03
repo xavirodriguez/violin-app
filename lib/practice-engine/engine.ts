@@ -1,4 +1,4 @@
-import { PracticeEngineEvent, TargetNote } from './engine.types'
+import { PracticeEngineEvent } from './engine.types'
 import { AudioFramePort, PitchDetectorPort } from './engine.ports'
 import { createRawPitchStream, createPracticeEventPipeline } from '../note-stream'
 import { Exercise } from '../exercises/types'
@@ -39,11 +39,13 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 
       const pipeline = createPracticeEventPipeline(
         rawPitchStream,
-        () => ctx.exercise.notes[state.currentNoteIndex] ?? null,
-        () => state.currentNoteIndex,
+        {
+          targetNote: ctx.exercise.notes[state.currentNoteIndex] ?? null,
+          currentIndex: state.currentNoteIndex,
+          sessionStartTime: Date.now(),
+        },
         {
           exercise: ctx.exercise,
-          sessionStartTime: Date.now(),
           bpm: 60
         },
         signal

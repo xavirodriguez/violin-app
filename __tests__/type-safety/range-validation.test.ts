@@ -1,3 +1,4 @@
+// Added for type safety verification
 import { describe, it, expect } from 'vitest'
 import { clamp } from '@/lib/ui-utils'
 import { PitchDetector } from '@/lib/pitch-detector'

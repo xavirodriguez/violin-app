@@ -5,7 +5,7 @@
  * @deprecated This module is maintained for backward compatibility.
  * Use the new exercise system in `lib/exercises/` for new features.
  */
-import type { Exercise as ModernExercise } from './exercises/types';
+import type { Exercise } from './exercises/types';
 /**
  * Represents a single musical note in the legacy system.
  * @internal
@@ -41,5 +41,5 @@ export declare const G_MAJOR_SCALE_EXERCISE: LegacyExercise;
 /**
  * Adapts a legacy exercise into the modern Exercise format.
  */
-export declare function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise;
+export declare function adaptLegacyExercise(legacy: LegacyExercise): Exercise;
 export {};

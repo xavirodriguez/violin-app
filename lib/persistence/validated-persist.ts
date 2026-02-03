@@ -41,11 +41,29 @@ const createCompressedStorage = (name: string) => {
   }))
 }
 
+type JsonPrimitive = string | number | boolean | null
+type JsonObject = { [key: string]: JsonValue }
+type JsonArray = JsonValue[]
+type JsonValue = JsonPrimitive | JsonObject | JsonArray
+
+/**
+ * Ensures a type is JSON-serializable.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type Serializable<T> = T extends JsonValue ? T : never
+
+/**
+ * Wrapper for Zustand's persist middleware that adds Zod validation.
+ *
+ * @remarks
+ * Uses internal type casting for the state creator to handle complex mutator
+ * array types from Zustand's middleware.
+ */
 export const validatedPersist = <T>(
   schema: z.ZodType<T>,
-  config: StateCreator<T, [['zustand/persist', unknown]], []>,
-  options: PersistOptions<T>
-): StateCreator<T, [], [['zustand/persist', T]]> => {
+  config: StateCreator<T, any, any>,
+  options: PersistOptions<T, any>
+): StateCreator<T, any, any> => {
   return persist(
     (set, get, api) => {
       return config(set, get, api)
@@ -55,10 +73,6 @@ export const validatedPersist = <T>(
       storage: options.storage || createCompressedStorage(options.name),
       merge: (persistedState, currentState) => {
         try {
-          // In some cases (like tests or first load), persistedState might be the raw value from storage
-          // or already processed by storage.getItem. createJSONStorage handles the JSON.parse part,
-          // but our custom storage already returns the parsed SuperJSON object.
-
           // Validate the persisted state
           const validated = schema.parse(persistedState)
           console.log(`[Persist] ✅ State validated for ${options.name}`)
@@ -68,10 +82,13 @@ export const validatedPersist = <T>(
           }
           return { ...currentState, ...validated }
         } catch (validationError) {
-          console.error(`[Persist] ❌ Validation failed for ${options.name}. Falling back to default state.`, validationError)
+          console.error(
+            `[Persist] ❌ Validation failed for ${options.name}. Falling back to default state.`,
+            validationError,
+          )
           return currentState
         }
-      }
+      },
     }
-  )
+  ) as any
 }

@@ -1,3 +1,4 @@
+import { type PracticeState } from '@/lib/practice-core';
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
 import type { Exercise } from '@/lib/exercises/types';
 import { NoteTechnique } from '../technique-types';
@@ -16,11 +17,30 @@ export interface SessionRunnerDependencies {
     exercise: Exercise;
     sessionStartTime: number;
     store: {
-        getState: () => any;
-        setState: (partial: any) => void;
+        getState: () => {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        };
+        setState: (partial: {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        } | Partial<{
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }> | ((state: {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }) => {
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        } | Partial<{
+            practiceState: PracticeState | null;
+            liveObservations?: any[];
+        }>), replace?: boolean) => void;
         stop: () => Promise<void>;
     };
     analytics: {
+        endSession: () => void;
         recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void;
         recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void;
     };
@@ -35,6 +55,7 @@ export declare class PracticeSessionRunnerImpl implements PracticeSessionRunner 
     cancel(): void;
     private cleanup;
     private runInternal;
+    private mapEngineEventToPracticeEvent;
     private processEvent;
     private handleMatchedNoteSideEffects;
 }

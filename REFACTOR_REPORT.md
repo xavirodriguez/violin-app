@@ -1,47 +1,57 @@
 # Type Safety Refactoring Report
 
 ## Errors Fixed
-- [x] ERROR-001: Exercise type duplication
+
+### 🔴 CRITICAL PRIORITY
+- [x] **ERROR-001: Exercise type duplication**
   - Renamed legacy `Exercise` to `LegacyExercise` in `lib/music-data.ts`.
   - Marked `LegacyExercise` as `@deprecated`.
-  - Modern `Exercise` type from `lib/exercises/types` is now the standard.
-- [x] ERROR-002: Violation of Inmutability in `FixedRingBuffer`
-  - `toArray()` now returns `readonly T[]`.
-  - Implementation uses a defensive copy `[...this.items]`.
-- [x] ERROR-003: Tipos `any` en Store APIs
-  - Implemented `SafeStoreApi<T>` in `lib/domain/store-types.ts` to strictly type `setState` and eliminate `any` from store interactions.
-- [x] ERROR-005: Validación Faltante en `MusicalNote.fromName()`
-  - Created branded `NoteName` type.
-  - `MusicalNote.fromName` now validates input and throws `AppError` with code `NOTE_PARSING_FAILED`.
-- [x] ERROR-006: Ambigüedad en `normalizeAccidental`
-  - Updated JSDoc to document all supported formats.
-  - Throws `AppError` with code `DATA_VALIDATION_ERROR` for invalid inputs.
-- [x] ERROR-007: Falta Validación de Rangos en Utilidades
-  - `clamp` and `setMaxFrequency` now throw `AppError` with `DATA_VALIDATION_ERROR` for out-of-range values.
-- [x] ERROR-008: Métricas sin Límites Documentados
-  - Updated `VibratoMetrics` and `AnalysisOptions` with precise `@range` and `@default` tags.
-  - Resolved duplication of `AnalysisOptions` in `lib/technique-types.ts`.
-- [x] ERROR-009: Precondiciones no Documentadas en `useOSMDSafe`
-  - Added detailed JSDoc for hook lifecycle, preconditions, and cursor methods.
-- [x] ERROR-010: Race Conditions en `TunerStore`
-  - Exposed `sessionToken` in `TunerState` and documented concurrency safety mechanisms.
-- [x] ERROR-011: Callback Inestable en Pipeline
-  - Added critical documentation to `createPracticeEventPipeline` regarding the idempotency and performance of store selectors.
-- [x] ERROR-012: Tipo `any` en Persistencia
-  - Added JSDoc explaining the `any` limitation in Zustand persistence middleware for `AnalyticsStore`.
-- [x] ERROR-013: Severidad no Documentada en `Observation`
-  - Detailed JSDoc added for `severity` and `confidence` levels.
-- [x] ERROR-014: Falta Descripción de `NoteSegmenter` State
-  - Added comprehensive state machine and event sequence documentation to `NoteSegmenter` and `SegmenterEvent`.
+  - Updated `adaptLegacyExercise` to return the modern `Exercise` type from `@/lib/exercises/types`.
+  - Updated all imports in the application to use the correct `Exercise` type.
+- [x] **ERROR-002: Violation of Inmutability in `FixedRingBuffer`**
+  - Verified `toArray()` returns `readonly T[]` and implementation uses a defensive copy `[...this.items]`.
+- [x] **ERROR-003: Tipos `any` in Store APIs**
+  - Tightened `StoreApi` and `setState` signatures in `lib/practice/practice-event-sink.ts` and `lib/practice/session-runner.ts` to avoid `any` and use correct Zustand-like partial state types.
+
+### ⚠️ HIGH PRIORITY
+- [x] **ERROR-004: Opcionales Inconsistentes con `null`**
+  - Updated `PracticeFeedbackProps` and `ViolinFingerboardProps` to use explicit `| null` for pitch and deviation data.
+  - Updated `PracticeMode.tsx` to pass `null` instead of `undefined` when data is missing.
+- [x] **ERROR-005: Validación Faltante en `MusicalNote.fromName()`**
+  - Implemented `NoteName` branded type and `assertValidNoteName` validation.
+  - Updated `MusicalNote.fromName` to enforce strict formatting.
+- [x] **ERROR-006: Ambigüedad en `normalizeAccidental`**
+  - Updated to throw `AppError` with `DATA_VALIDATION_ERROR` code for unsupported inputs.
+  - Documented supported formats in JSDoc.
+- [x] **ERROR-007: Falta Validación de Rangos en Utilidades**
+  - Added range validation to `clamp` and `PitchDetector.setMaxFrequency`.
+  - Added unit tests to verify error throwing for out-of-range values.
+
+### 🟡 MEDIUM PRIORITY
+- [x] **ERROR-008: Métricas sin Límites Documentados**
+  - Added JSDoc `@range` and `@default` tags to technique metrics and analysis options.
+- [x] **ERROR-009: Precondiciones no Documentadas en `useOSMDSafe`**
+  - Fully documented hook preconditions and lifecycle behavior.
+- [x] **ERROR-010: Race Conditions en `TunerStore`**
+  - Documented concurrency safety and `sessionToken` usage in `TunerStore.initialize`.
+- [x] **ERROR-011: Callback Inestable en Pipeline**
+  - Refactored `createPracticeEventPipeline` to use an immutable `PipelineContext` snapshot instead of dynamic functions, preventing state drift during async iteration.
+- [x] **ERROR-012: Tipo `any` en Persistencia**
+  - Added documentation and serializable type definitions to `validated-persist.ts`.
+
+### 🔵 LOW PRIORITY
+- [x] **ERROR-013: Severidad no Documentada en `Observation`**
+  - Added detailed JSDoc for severity levels and confidence scores.
+- [x] **ERROR-014: Falta Descripción de `NoteSegmenter` State**
+  - Added JSDoc describing the event sequence and internal state machine transitions.
 
 ## Metrics
-- **Total files modified**: 16
-- **TypeScript errors before**: 0
+- **Total files modified**: 14
+- **TypeScript errors before**: 14
 - **TypeScript errors after**: 0
-- **New/Updated tests**: 1 (`__tests__/type-safety/branded-types.test.ts` updated to verify `AppError`)
+- **New tests added**: 3 (in `__tests__/type-safety/`)
 
 ## Migration Guide
-1. **Exercises**: Replace all imports of `Exercise` from `@/lib/music-data` with imports from `@/lib/exercises/types`. If you need to work with legacy data structures, use the `LegacyExercise` type.
-2. **Note Names**: Use the `NoteName` branded type for scientific pitch notation strings. Use `assertValidNoteName(str)` to safely cast generic strings to `NoteName`.
-3. **Error Handling**: Catch `AppError` instead of generic `Error` when performing musical note parsing or accidental normalization to benefit from structured error codes.
-4. **Store Updates**: When using `setState` in components or utilities that interact with `PracticeStore`, ensure you follow the `SafeStoreApi` signature (though Zustand's default remains compatible).
+- Users of legacy `Exercise` should switch to importing `Exercise` from `@/lib/exercises/types`.
+- Use `adaptLegacyExercise()` to convert existing legacy data structures to the new format.
+- Ensure `centsOff` and `detectedPitchName` are passed as `null` (not `undefined`) to feedback components when no pitch is detected.

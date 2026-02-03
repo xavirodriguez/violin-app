@@ -234,7 +234,7 @@ function PracticeActiveView({
       <Card className="p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch}
+          detectedPitchName={lastDetectedNote?.pitch ?? null}
           centsOff={lastDetectedNote?.cents ?? null}
           status={status}
           liveObservations={liveObservations}
@@ -348,15 +348,17 @@ export function PracticeMode() {
         // 2. Crear pipeline de eventos
         const eventPipeline = createPracticeEventPipeline(
           rawPitchStream,
-          () => practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
-          () => practiceState?.currentIndex ?? 0,
+          {
+            targetNote: practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
+            currentIndex: practiceState?.currentIndex ?? 0,
+            sessionStartTime: Date.now(),
+          },
           {
             minRms: 0.015,
             minConfidence: 0.85,
             centsTolerance: 20, // Más estricto que los 25 default
             requiredHoldTime: 500,
             exercise: practiceState?.exercise,
-            sessionStartTime: Date.now(),
             bpm: 60,
           },
           abortController.signal
