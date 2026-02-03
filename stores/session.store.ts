@@ -86,7 +86,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     if (!current) return
 
     const existingIndex = current.noteResults.findIndex(r => r.noteIndex === noteIndex)
-    let nextNoteResults = [...current.noteResults]
+    const nextNoteResults = [...current.noteResults]
 
     if (existingIndex >= 0) {
       const existing = nextNoteResults[existingIndex]
