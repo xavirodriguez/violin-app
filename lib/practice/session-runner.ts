@@ -25,8 +25,14 @@ export interface SessionRunnerDependencies {
   exercise: Exercise
   sessionStartTime: number
   store: {
-    getState: () => any
-    setState: (partial: any) => void
+    getState: () => { practiceState: PracticeState | null; liveObservations?: any[] }
+    setState: (
+      partial:
+        | { practiceState: PracticeState | null; liveObservations?: any[] }
+        | Partial<{ practiceState: PracticeState | null; liveObservations?: any[] }>
+        | ((state: { practiceState: PracticeState | null; liveObservations?: any[] }) => { practiceState: PracticeState | null; liveObservations?: any[] } | Partial<{ practiceState: PracticeState | null; liveObservations?: any[] }>),
+      replace?: boolean
+    ) => void
     stop: () => Promise<void>
   }
   analytics: {
@@ -82,20 +88,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const { audioLoop, detector, exercise } = this.deps
 
     const engine = createPracticeEngine({
-      audio: audioLoop,
+      audio: audioLoop as any,
       pitch: detector,
       exercise,
       reducer: engineReducer,
-      targetSelector: () => {
-        if (signal.aborted) return null
-        const state = this.deps.store.getState().practiceState
-        if (!state) return null
-        return state.exercise.notes[state.currentIndex] ?? null
-      },
-      currentIndexSelector: () => {
-        if (signal.aborted) return 0
-        return this.deps.store.getState().practiceState?.currentIndex ?? 0
-      }
     })
 
     const engineEvents = engine.start(signal)
@@ -153,7 +149,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
     handlePracticeEvent(
       event,
-      this.deps.store,
+      this.deps.store as any,
       () => void this.deps.store.stop(),
       this.deps.analytics
     )
@@ -167,7 +163,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
         if (targetNote) {
           const targetPitchName = formatPitchName(targetNote.pitch)
           const liveObs = calculateLiveObservations(
-            practiceState.detectionHistory,
+            [...practiceState.detectionHistory],
             targetPitchName
           )
           this.deps.store.setState({ liveObservations: liveObs })

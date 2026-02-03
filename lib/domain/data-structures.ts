@@ -9,6 +9,7 @@
  * Useful for tracking detection history without unbounded memory growth.
  *
  * @remarks
+ * Refactored for better type safety and immutability.
  * T - The type of elements in the buffer.
  * N - The maximum size of the buffer.
  */

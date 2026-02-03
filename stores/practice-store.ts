@@ -26,8 +26,6 @@ import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from 
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
-import { createPracticeEngine } from '@/lib/practice-engine/engine'
-import { engineReducer } from '@/lib/practice-engine/engine.reducer'
 import { PracticeSessionRunnerImpl, runPracticeSession } from '@/lib/practice/session-runner'
 import { handlePracticeEvent } from '@/lib/practice/practice-event-sink'
 import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
@@ -35,7 +33,6 @@ import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
 import { PracticeState, PracticeEvent } from '@/lib/practice-core'
-import { PitchDetectionPort } from '@/lib/ports/audio.port'
 
 interface PracticeStore {
   // Explicit State
@@ -55,8 +52,6 @@ interface PracticeStore {
   // Concurrency and Resource Management
   isStarting: boolean
   sessionId: number
-  analyser: AnalyserNode | null
-  detector: PitchDetectionPort | null
 
   // Actions
   loadExercise: (exercise: Exercise) => Promise<void>
@@ -79,6 +74,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isStarting: false,
     sessionId: 0,
     analyser: null,
+    audioLoop: null,
     detector: null,
 
     loadExercise: async (exercise) => {
@@ -118,7 +114,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     initializeAudio: async () => {
       const { state: currentState } = get()
-      const exercise = (currentState as any).exercise
+      const exercise = 'exercise' in currentState ? currentState.exercise : null
 
       set({ state: transitions.initialize(exercise) })
       try {
@@ -181,7 +177,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       try {
         // 3. Auto-initialize if needed
-        if (get().state.status === 'idle' && get().state.exercise) {
+        const currentStateAtStart = get().state
+        if (currentStateAtStart.status === 'idle' && 'exercise' in currentStateAtStart && currentStateAtStart.exercise) {
           await get().initializeAudio()
         }
 
@@ -241,7 +238,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const nextState = transitions.start(state, runner)
 
         // 5. Start Session in Analytics
-        useSessionStore.getState().start(state.exercise.id, state.exercise.title)
+        useSessionStore.getState().start(state.exercise.id, state.exercise.name)
 
         set({
           state: nextState,
@@ -298,8 +295,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       // 4. Unified State Update (Idempotent)
       set((s) => {
         // Transition FSM to idle since resources are cleaned up
-        const nextState = s.state.exercise
-          ? transitions.selectExercise(s.state.exercise)
+        const exercise = 'exercise' in s.state ? s.state.exercise : null
+        const nextState = exercise
+          ? transitions.selectExercise(exercise)
           : transitions.reset()
 
         // Update domain practiceState (reduce STOP)

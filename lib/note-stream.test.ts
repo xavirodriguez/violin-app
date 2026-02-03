@@ -32,7 +32,6 @@ describe('createPracticeEventPipeline', () => {
     pitch: { step: 'A', octave: 4, alter: 0 },
     duration: 4,
   }
-  const getTargetNote = () => mockTargetNote
 
   const testOptions = {
     minRms: 0.01,
@@ -40,6 +39,11 @@ describe('createPracticeEventPipeline', () => {
     centsTolerance: 25,
     requiredHoldTime: 100, // Use a shorter hold time for efficient testing
     exercise: allExercises[0],
+  }
+
+  const testContext = {
+    targetNote: mockTargetNote,
+    currentIndex: 0,
     sessionStartTime: Date.now(),
   }
 
@@ -48,8 +52,7 @@ describe('createPracticeEventPipeline', () => {
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      testContext,
       testOptions,
       new AbortController().signal,
     )
@@ -63,8 +66,7 @@ describe('createPracticeEventPipeline', () => {
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      testContext,
       testOptions,
       new AbortController().signal,
     )
@@ -74,16 +76,11 @@ describe('createPracticeEventPipeline', () => {
   })
 
   it('should filter out events with high cent deviation, emitting NO_NOTE_DETECTED', async () => {
-    // 440Hz is A4. 466.16Hz is A#4.
-    // To be > 50 cents off, we need to be at the midpoint or beyond,
-    // but the system will just snap to the next note.
-    // However, we can simulate an 'invalid' pitchHz of 0 which our code should handle.
     const rawEvents: RawPitchEvent[] = [{ pitchHz: 0, confidence: 0.9, rms: 0.02, timestamp: 0 }]
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      testContext,
       testOptions,
       new AbortController().signal,
     )
@@ -97,8 +94,7 @@ describe('createPracticeEventPipeline', () => {
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      testContext,
       testOptions,
       new AbortController().signal,
     )
@@ -133,8 +129,7 @@ describe('createPracticeEventPipeline', () => {
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      { ...testContext, sessionStartTime: startTime },
       {
         ...testOptions,
         requiredHoldTime: 120,
@@ -162,8 +157,7 @@ describe('createPracticeEventPipeline', () => {
     const rawPitchStream = createMockStream(rawEvents)
     const pipeline = createPracticeEventPipeline(
       rawPitchStream,
-      getTargetNote,
-      () => 0,
+      testContext,
       testOptions,
       new AbortController().signal,
     )

@@ -1,3 +1,4 @@
+// Added for type safety verification
 import { describe, it, expect } from 'vitest'
 import { adaptLegacyExercise, G_MAJOR_SCALE_EXERCISE } from '@/lib/music-data'
 

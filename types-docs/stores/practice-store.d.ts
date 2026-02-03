@@ -29,8 +29,6 @@ interface PracticeStore {
     detector: PitchDetectionPort | null;
     isStarting: boolean;
     sessionId: number;
-    analyser: AnalyserNode | null;
-    detector: PitchDetectionPort | null;
     loadExercise: (exercise: Exercise) => Promise<void>;
     setAutoStart: (enabled: boolean) => void;
     setNoteIndex: (index: number) => void;

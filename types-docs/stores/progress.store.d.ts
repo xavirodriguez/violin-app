@@ -43,17 +43,5 @@ interface ProgressActions {
     addSession: (session: PracticeSession) => void;
     updateSkills: (sessions: PracticeSession[]) => void;
 }
-export declare const useProgressStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<ProgressState & ProgressActions>, "setState" | "persist"> & {
-    setState(partial: (ProgressState & ProgressActions) | Partial<ProgressState & ProgressActions> | ((state: ProgressState & ProgressActions) => (ProgressState & ProgressActions) | Partial<ProgressState & ProgressActions>), replace?: false | undefined): unknown;
-    setState(state: (ProgressState & ProgressActions) | ((state: ProgressState & ProgressActions) => ProgressState & ProgressActions), replace: true): unknown;
-    persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<ProgressState & ProgressActions, ProgressState & ProgressActions, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: ProgressState & ProgressActions) => void) => () => void;
-        onFinishHydration: (fn: (state: ProgressState & ProgressActions) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<ProgressState & ProgressActions, ProgressState & ProgressActions, unknown>>;
-    };
-}>;
+export declare const useProgressStore: import("zustand").UseBoundStore<import("zustand").StoreApi<ProgressState & ProgressActions>>;
 export {};
