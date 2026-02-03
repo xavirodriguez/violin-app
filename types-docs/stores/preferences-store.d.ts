@@ -1,5 +1,6 @@
 import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences';
 interface PreferencesStore extends UserPreferences {
+    schemaVersion: 1;
     setFeedbackLevel: (level: FeedbackLevel) => void;
     toggleTechnicalDetails: () => void;
     toggleCelebrations: () => void;

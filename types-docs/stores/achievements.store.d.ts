@@ -7,6 +7,7 @@ export interface Achievement {
     unlockedAtMs: number;
 }
 interface AchievementsState {
+    schemaVersion: 1;
     unlocked: Achievement[];
     pending: Achievement[];
 }
