@@ -4,7 +4,7 @@
  */
 
 import { DetectedNote } from './practice-core'
-import { Observation } from './technique-types'
+import { Observation, Ratio01 } from './technique-types'
 
 /**
  * Calcula observaciones en vivo que el estudiante puede corregir
@@ -29,7 +29,7 @@ export function calculateLiveObservations(
     observations.push({
       type: 'intonation',
       severity: 2,
-      confidence: 0.9,
+      confidence: 0.9 as Ratio01,
       message: avgCents > 0
         ? 'Consistently sharp'
         : 'Consistently flat',
@@ -49,7 +49,7 @@ export function calculateLiveObservations(
     observations.push({
       type: 'stability',
       severity: 2,
-      confidence: 0.85,
+      confidence: 0.85 as Ratio01,
       message: 'Pitch is wavering',
       tip: 'Apply steady finger pressure and keep your hand relaxed',
       evidence: { stdDev }
@@ -63,7 +63,7 @@ export function calculateLiveObservations(
     observations.push({
       type: 'intonation',
       severity: 3,
-      confidence: 0.95,
+      confidence: 0.95 as Ratio01,
       message: `Playing ${last10[0].pitch} instead of ${targetPitch}`,
       tip: 'Check your finger position on the fingerboard',
       evidence: { detectedPitch: last10[0].pitch, targetPitch }
@@ -78,7 +78,7 @@ export function calculateLiveObservations(
     observations.push({
       type: 'attack',
       severity: 1,
-      confidence: 0.7,
+      confidence: 0.7 as Ratio01,
       message: 'Weak or unclear tone',
       tip: 'Apply more bow pressure and check contact point',
       evidence: { avgConfidence }
