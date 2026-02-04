@@ -80,13 +80,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     this.controller = null
   }
 
-  const currentState = deps.store.getState().practiceState
-  if (!currentState) {
-    console.error('[STATE NULL] deps.store.getState().practiceState is null', {
-      type: event.type,
-      sessionId: deps.sessionId,
-    })
-    return state
+  private cleanup(): void {
+    this.controller = null
   }
 
   private async runInternal(signal: AbortSignal): Promise<void> {
