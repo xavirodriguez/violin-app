@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
-import { TechniqueFrame, NoteSegment } from './technique-types'
+import {
+  TechniqueFrame,
+  NoteSegment,
+  TimestampMs,
+  Hz,
+  Cents,
+  MusicalNoteName,
+} from './technique-types'
 
 describe('TechniqueAnalysisAgent', () => {
   const agent = new TechniqueAnalysisAgent()
@@ -13,12 +20,13 @@ describe('TechniqueAnalysisAgent', () => {
     const frames: TechniqueFrame[] = []
     for (let t = 0; t <= durationMs; t += 5) {
       frames.push({
-        timestamp: t,
-        pitchHz: 440,
-        cents: centsFunc(t),
+        kind: 'pitched',
+        timestamp: t as TimestampMs,
+        pitchHz: 440 as Hz,
+        cents: centsFunc(t) as Cents,
         rms: rmsFunc(t),
         confidence: 0.9,
-        noteName: 'A4',
+        noteName: 'A4' as MusicalNoteName,
       })
     }
     return frames
@@ -31,10 +39,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.05,
     )
     const segment: NoteSegment = {
+      segmentId: 'test-1',
+      durationMs: 500 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 500 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -52,10 +62,12 @@ describe('TechniqueAnalysisAgent', () => {
     )
 
     const segment: NoteSegment = {
+      segmentId: 'test-2',
+      durationMs: 1000 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 1000,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 1000 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -73,10 +85,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
     const segment: NoteSegment = {
+      segmentId: 'test-3',
+      durationMs: 1000 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 1000,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 1000 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -90,10 +104,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.05,
     ).map((f) => ({ ...f, confidence: 0.4 }))
     const segment: NoteSegment = {
+      segmentId: 'test-4',
+      durationMs: 500 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 500 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -107,12 +123,14 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
     const segment: NoteSegment = {
+      segmentId: 'test-5',
+      durationMs: 500 as TimestampMs,
       noteIndex: 1,
-      targetPitch: 'A4',
-      startTime: 1050,
-      endTime: 1550,
-      expectedStartTime: 1000,
-      expectedDuration: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 1050 as TimestampMs,
+      endTime: 1550 as TimestampMs,
+      expectedStartTime: 1000 as TimestampMs,
+      expectedDuration: 500 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -127,10 +145,12 @@ describe('TechniqueAnalysisAgent', () => {
       (t) => Math.min(0.1, (t / 100) * 0.1),
     )
     const segment: NoteSegment = {
+      segmentId: 'test-6',
+      durationMs: 500 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 500 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -140,8 +160,8 @@ describe('TechniqueAnalysisAgent', () => {
     expect(metrics.attackRelease.pitchScoopCents).toBeLessThan(-5)
 
     // Unstable release: add some noise at the end
-    const lastFrames = frames.slice(-5)
-    lastFrames.forEach((f, i) => {
+    const lastFrames = (segment.frames as any).slice(-5)
+    lastFrames.forEach((f: any, i: number) => {
       f.cents += Math.sin(i) * 20
     })
 
@@ -161,16 +181,17 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
 
-    const metrics = agent.analyzeSegment(
-      {
-        noteIndex: 1,
-        targetPitch: 'A4',
-        startTime: 150,
-        endTime: 650,
-        frames: currentFrames,
-      },
-      gapFrames,
-    )
+    const segment: NoteSegment = {
+      segmentId: 'test-7',
+      durationMs: 500 as TimestampMs,
+      noteIndex: 1,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 150 as TimestampMs,
+      endTime: 650 as TimestampMs,
+      frames: currentFrames,
+    }
+
+    const metrics = agent.analyzeSegment(segment, gapFrames)
 
     expect(metrics.transition.transitionTimeMs).toBeGreaterThan(100)
     expect(metrics.transition.glissAmountCents).toBeGreaterThan(50)
@@ -185,10 +206,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
     const segment: NoteSegment = {
+      segmentId: 'test-8',
+      durationMs: 1000 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 1000,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 1000 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
@@ -202,10 +225,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
     const unstableSegment: NoteSegment = {
+      segmentId: 'test-9',
+      durationMs: 500 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 500 as TimestampMs,
       frames: unstableFrames,
     }
     const unstableMetrics = agent.analyzeSegment(unstableSegment)
@@ -227,20 +252,22 @@ describe('TechniqueAnalysisAgent', () => {
       confidence: 0.3, // Low confidence contributes to suspectedWolf
     }))
     const segment: NoteSegment = {
+      segmentId: 'test-10',
+      durationMs: 1000 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 1000,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 1000 as TimestampMs,
       frames,
     }
 
     // Add some RMS beating (8Hz) for wolf tone detection
-    frames.forEach((f) => {
+    frames.forEach((f: any) => {
       f.rms = 0.05 + 0.04 * Math.sin(2 * Math.PI * 8 * (f.timestamp / 1000))
     })
 
     // Add some pitch noise to trigger inconsistent vibrato
-    frames.forEach((f, i) => {
+    frames.forEach((f: any, i: number) => {
       // Random-ish noise to ensure low regularity
       f.cents += Math.sin(i * 0.5) * 15 + Math.cos(i * 2) * 10
     })
@@ -263,10 +290,12 @@ describe('TechniqueAnalysisAgent', () => {
       () => 0.1,
     )
     const segment: NoteSegment = {
+      segmentId: 'test-11',
+      durationMs: 500 as TimestampMs,
       noteIndex: 0,
-      targetPitch: 'A4',
-      startTime: 0,
-      endTime: 500,
+      targetPitch: 'A4' as MusicalNoteName,
+      startTime: 0 as TimestampMs,
+      endTime: 500 as TimestampMs,
       frames,
     }
     const metrics = agent.analyzeSegment(segment)
