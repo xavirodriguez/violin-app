@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PracticeFeedback } from './practice-feedback'
 import React from 'react'
-import { Observation } from '@/lib/technique-types'
+import { Observation, Ratio01 } from '@/lib/technique-types'
 
 describe('PracticeFeedback', () => {
   beforeEach(() => {
@@ -94,7 +94,7 @@ describe('PracticeFeedback', () => {
       {
         type: 'intonation',
         severity: 2,
-        confidence: 0.9,
+        confidence: 0.9 as Ratio01,
         message: 'Consistently sharp',
         tip: 'Move finger down',
       },

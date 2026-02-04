@@ -77,26 +77,6 @@ export const FEATURE_FLAGS_METADATA = {
     riskLevel: 'LOW',
     affectedFiles: [],
     rollbackStrategy: 'Disable accuracy telemetry tracking.'
-  },
-  FEATURE_PRACTICE_EXERCISE_RECOMMENDER: {
-    name: 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER',
-    key: 'practiceExerciseRecommender',
-    type: 'STABLE',
-    description: 'Enable the exercise recommendation system based on user performance.',
-    defaultValue: true,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['lib/exercise-recommender.ts', 'components/practice-mode.tsx'],
-    rollbackStrategy: 'Disable recommendations and show all exercises.'
-  },
-  FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM: {
-    name: 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM',
-    key: 'practiceAchievementSystem',
-    type: 'STABLE',
-    description: 'Enable the gamified achievement system.',
-    defaultValue: true,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['lib/achievements/', 'stores/analytics-store.ts'],
-    rollbackStrategy: 'Disable achievement tracking and notifications.'
   }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
@@ -122,10 +102,6 @@ class FeatureFlagsManager {
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
         return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
-      case 'FEATURE_PRACTICE_EXERCISE_RECOMMENDER':
-        return process.env.FEATURE_PRACTICE_EXERCISE_RECOMMENDER ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_EXERCISE_RECOMMENDER
-      case 'FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM':
-        return process.env.FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM
       default:
         return undefined
     }

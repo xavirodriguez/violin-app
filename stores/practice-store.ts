@@ -1,13 +1,21 @@
 'use client'
 
 import { create } from 'zustand'
-import { formatPitchName, reducePracticeEvent } from '@/lib/practice-core'
+import {
+  formatPitchName,
+  reducePracticeEvent,
+  type PracticeState,
+  type PracticeEvent,
+} from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
+import { WebAudioFrameAdapter } from '@/lib/adapters/web-audio.adapter'
+import { PitchDetector } from '@/lib/pitch-detector'
 import { useSessionStore } from './session.store'
+import { useAnalyticsStore } from './analytics-store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
 import { PracticeSessionRunnerImpl } from '@/lib/practice/session-runner'
@@ -67,8 +75,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         practiceState: getInitialState(exercise),
         state: { status: 'idle', exercise, error: null },
         error: null,
-        liveObservations: []
-      }))
+        liveObservations: [],
+      })
     },
 
     setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
@@ -93,57 +101,27 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       const deviceId = useTunerStore.getState().deviceId
 
       if (!exercise) {
-         set({ error: toAppError('No exercise loaded') })
-         return
+        set({ error: toAppError('No exercise loaded') })
+        return
       }
 
       set({ state: transitions.initialize(exercise) })
 
       try {
         const resources = await audioManager.initialize(deviceId ?? undefined)
-        const audioLoop = new WebAudioLoopAdapter(resources.analyser)
         const detector = new PitchDetectorAdapter(new PitchDetector(resources.context.sampleRate))
+        const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
+        const audioLoop = new WebAudioLoopAdapter(frameAdapter)
 
         set({
           state: transitions.ready({ audioLoop, detector, exercise }),
           analyser: resources.analyser,
           audioLoop,
-          detector
+          detector,
         })
       } catch (err) {
         const appError = toAppError(err)
         set({ state: transitions.error(appError), error: appError })
-      }
-
-      set((s) => ({ ...s, state: transitions.initialize(currentState.exercise) }))
-
-      try {
-        const deviceId = useTunerStore.getState().deviceId || undefined
-        const resources = await audioManager.initialize(deviceId)
-        const detector = new PitchDetectorAdapter(new PitchDetector(resources.context.sampleRate))
-        const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
-        const audioLoop = new WebAudioLoopAdapter(frameAdapter)
-
-        const nextState = transitions.ready({
-          audioLoop,
-          detector,
-          exercise: currentState.exercise
-        })
-
-        set((s) => ({
-          ...s,
-          state: nextState,
-          analyser: resources.analyser,
-          detector,
-          audioLoop
-        }))
-      } catch (err) {
-        const appError = toAppError(err)
-        set((s) => ({
-          ...s,
-          state: transitions.error(appError),
-          error: appError
-        }))
       }
     },
 
@@ -244,15 +222,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         analyser: null,
         audioLoop: null,
         detector: null,
-        audioLoop: null,
         liveObservations: [],
         sessionId: nextSessionId,
         isStarting: false,
       }))
     },
 
-    reset: () => {
-      get().stop()
+    reset: async () => {
+      await get().stop()
       set({
         state: transitions.reset(),
         practiceState: null,
@@ -272,9 +249,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         if (!currentState) break
 
         const newState = reducePracticeEvent(currentState, event)
-        const liveObservations = event.type === 'NOTE_MATCHED'
-          ? []
-          : getUpdatedLiveObservations(newState)
 
         set((state) => {
           if (state.sessionId !== currentSessionId) return state
