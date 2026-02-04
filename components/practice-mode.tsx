@@ -49,6 +49,13 @@ import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-st
 
 const DEFAULT_CENTS_TOLERANCE = 25
 
+/**
+ * Header component for the practice mode, displaying the exercise name.
+ *
+ * @param props - Component props.
+ * @param props.exerciseName - The name of the current exercise.
+ * @internal
+ */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   return (
@@ -59,6 +66,17 @@ function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   )
 }
 
+/**
+ * Library component for browsing and selecting exercises.
+ *
+ * @remarks
+ * Includes filtering by difficulty and progress, as well as an AI-driven recommender.
+ *
+ * @param props - Component props.
+ * @param props.selectedId - ID of the currently selected exercise.
+ * @param props.onSelect - Callback when an exercise is chosen.
+ * @param props.disabled - Whether interaction is disabled.
+ */
 function ExerciseLibrary({
   selectedId,
   onSelect,
@@ -132,6 +150,13 @@ function ExerciseLibrary({
   )
 }
 
+/**
+ * Display for application-level errors during practice.
+ *
+ * @param props - Component props.
+ * @param props.error - Error message.
+ * @param props.onReset - Callback to clear the error and reset.
+ */
 function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }) {
   return (
     <Card className="bg-destructive/10 border-destructive p-6">
@@ -149,6 +174,11 @@ function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }
   )
 }
 
+/**
+ * Control bar for starting, stopping, and monitoring practice progress.
+ *
+ * @param props - Component props.
+ */
 function PracticeControls({
   status,
   hasExercise,
@@ -159,13 +189,21 @@ function PracticeControls({
   currentNoteIndex,
   totalNotes,
 }: {
+  /** Current status of the practice machine. */
   status: string
+  /** Whether an exercise is currently loaded. */
   hasExercise: boolean
+  /** Callback to start practice. */
   onStart: () => void
+  /** Callback to stop practice. */
   onStop: () => void
+  /** Callback to restart the current exercise. */
   onRestart: () => void
+  /** Completion progress (0-100). */
   progress: number
+  /** Index of the current target note. */
   currentNoteIndex: number
+  /** Total number of notes in the exercise. */
   totalNotes: number
 }) {
   return (
@@ -206,7 +244,11 @@ function PracticeControls({
   )
 }
 
-
+/**
+ * View displaying real-time feedback and fingerboard visualization during practice.
+ *
+ * @param props - Component props.
+ */
 function PracticeActiveView({
   status,
   targetNote,
@@ -217,13 +259,21 @@ function PracticeActiveView({
   perfectNoteStreak,
   zenMode,
 }: {
+  /** Machine status. */
   status: string
+  /** The note the user should be playing. */
   targetNote: TargetNote | null
+  /** Formatted name of the target pitch. */
   targetPitchName: string | null
+  /** Latest note detected by the audio pipeline. */
   lastDetectedNote: DetectedNote | null | undefined
+  /** Heuristic observations about current performance. */
   liveObservations?: Observation[]
+  /** How long the current note has been held in tune. */
   holdDuration?: number
+  /** Number of consecutive notes played perfectly. */
   perfectNoteStreak?: number
+  /** Whether Zen Mode is active (hides distractions). */
   zenMode: boolean
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
@@ -257,15 +307,24 @@ function PracticeActiveView({
   )
 }
 
+/**
+ * Displays the musical notation using OpenSheetMusicDisplay.
+ *
+ * @param props - Component props.
+ */
 function SheetMusicView({
   musicXML,
   isReady,
   error,
   containerRef,
 }: {
+  /** MusicXML string to render. */
   musicXML?: string
+  /** Whether OSMD has finished rendering. */
   isReady: boolean
+  /** Rendering error, if any. */
   error: string | null
+  /** Reference to the container element. */
   containerRef: React.RefObject<HTMLDivElement | null>
 }) {
   if (!musicXML) return null
@@ -280,7 +339,19 @@ function SheetMusicView({
 }
 
 /**
- * Renders the practice interface and manages its complex lifecycle.
+ * Main component for the Interactive Practice Mode.
+ *
+ * @remarks
+ * This component orchestrates the entire practice experience, including:
+ * - Loading and selecting exercises.
+ * - Managing the audio analysis pipeline.
+ * - Synchronizing sheet music with the user's progress.
+ * - Providing real-time visual feedback via the fingerboard and feedback indicators.
+ * - Handling keyboard shortcuts (e.g., 'Space' to start/stop, 'Z' for Zen Mode).
+ *
+ * It relies on the `usePracticeStore` for state management and `useOSMDSafe` for music notation.
+ *
+ * @public
  */
 export function PracticeMode() {
   const {
@@ -551,6 +622,12 @@ export function PracticeMode() {
   )
 }
 
+/**
+ * Derives calculated UI state from the raw practice state.
+ *
+ * @param practiceState - The current domain-level practice state.
+ * @returns Derived properties for UI consumption.
+ */
 function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
@@ -563,6 +640,13 @@ function derivePracticeState(practiceState: import('@/lib/practice-core').Practi
   return { status, currentNoteIndex, targetNote, totalNotes, progress }
 }
 
+/**
+ * Synchronizes the sheet music cursor and highlighting with the current practice note.
+ *
+ * @param osmdHook - The OSMD hook state.
+ * @param status - Current practice status.
+ * @param currentNoteIndex - Current note index.
+ */
 function syncCursorWithNote(
   osmdHook: ReturnType<typeof useOSMDSafe>,
   status: string,

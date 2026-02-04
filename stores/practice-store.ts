@@ -31,36 +31,142 @@ import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
 
+/**
+ * Main store for managing the practice mode lifecycle and real-time audio pipeline.
+ *
+ * @remarks
+ * This store is the central hub for the practice experience, coordinating the audio
+ * infrastructure, the musical domain logic, and the user interface state.
+ * It uses a formalized state machine (`PracticeStoreState`) to manage transitions.
+ *
+ * @public
+ */
 interface PracticeStore {
-  // Explicit State
+  /**
+   * The current formalized state of the practice system.
+   */
   state: PracticeStoreState
 
-  // Backward compatibility properties (kept in state for easy access)
+  /**
+   * Domain-specific practice state (backward compatibility).
+   * @deprecated Use `state.practiceState` when in 'active' status.
+   */
   practiceState: PracticeState | null
+
+  /**
+   * Most recent error encountered.
+   */
   error: AppError | null
 
-  // Extra UI state
+  /**
+   * Real-time observations about the user's playing (e.g., intonation feedback).
+   */
   liveObservations: Observation[]
+
+  /**
+   * Whether the practice session should start automatically after loading an exercise.
+   */
   autoStartEnabled: boolean
+
+  /**
+   * The Web Audio AnalyserNode used for visualization and analysis.
+   */
   analyser: AnalyserNode | null
+
+  /**
+   * The loop driver responsible for pulling audio frames.
+   */
   audioLoop: AudioLoopPort | null
+
+  /**
+   * The active pitch detection engine.
+   */
   detector: PitchDetectionPort | null
 
-  // Concurrency and Resource Management
+  /**
+   * Flag indicating if a start operation is currently in progress.
+   */
   isStarting: boolean
+
+  /**
+   * Unique identifier for the current active session, used to ignore stale updates.
+   */
   sessionId: number
 
-  // Actions
+  /**
+   * Loads an exercise into the store and resets the practice state.
+   *
+   * @param exercise - The musical exercise to load.
+   * @returns A promise that resolves when the exercise is loaded.
+   */
   loadExercise: (exercise: Exercise) => Promise<void>
+
+  /**
+   * Enables or disables automatic start of the practice session.
+   *
+   * @param enabled - True to enable auto-start.
+   */
   setAutoStart: (enabled: boolean) => void
+
+  /**
+   * Manually jumps to a specific note in the exercise.
+   *
+   * @param index - The index of the note to jump to.
+   */
   setNoteIndex: (index: number) => void
+
+  /**
+   * Initializes the audio hardware and acquires necessary permissions.
+   *
+   * @remarks
+   * This is called automatically by `start()` if the system is in 'idle' status.
+   *
+   * @returns A promise that resolves when audio is ready.
+   * @throws {@link AppError} if microphone access is denied or audio context fails.
+   */
   initializeAudio: () => Promise<void>
+
+  /**
+   * Begins the active practice session, starting the audio loop and analysis.
+   *
+   * @remarks
+   * Implements a guard against concurrent start calls and ensures that only
+   * one session is active at a time.
+   *
+   * @returns A promise that resolves when the session has started.
+   */
   start: () => Promise<void>
+
+  /**
+   * Stops the current practice session and releases audio resources.
+   *
+   * @remarks
+   * This method is idempotent and handles cleanup even if resources were partially initialized.
+   *
+   * @returns A promise that resolves when cleanup is complete.
+   */
   stop: () => Promise<void>
+
+  /**
+   * Completely resets the store to its initial state, stopping any active sessions.
+   *
+   * @returns A promise that resolves when reset is complete.
+   */
   reset: () => Promise<void>
+
+  /**
+   * Consumes a stream of events from the practice pipeline and updates the store state.
+   *
+   * @param pipeline - An async iterable of practice events.
+   * @returns A promise that resolves when the pipeline is closed or the session ends.
+   * @internal
+   */
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }
 
+/**
+ * Returns the initial domain state for a given exercise.
+ */
 function getInitialState(exercise: Exercise): PracticeState {
   return {
     status: 'idle',
@@ -73,6 +179,9 @@ function getInitialState(exercise: Exercise): PracticeState {
   }
 }
 
+/**
+ * Calculates updated live observations based on the current practice state.
+ */
 function getUpdatedLiveObservations(state: PracticeState): Observation[] {
   const targetNote = state.exercise.notes[state.currentIndex]
   if (!targetNote) return []
@@ -80,6 +189,11 @@ function getUpdatedLiveObservations(state: PracticeState): Observation[] {
   return calculateLiveObservations([...state.detectionHistory], targetPitchName)
 }
 
+/**
+ * Zustand hook for accessing the PracticeStore.
+ *
+ * @public
+ */
 export const usePracticeStore = create<PracticeStore>((set, get) => {
   return {
     state: { status: 'idle', exercise: null, error: null },
