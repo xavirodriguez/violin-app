@@ -16,7 +16,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { formatPitchName, PracticeState, PracticeEvent, reducePracticeEvent } from '@/lib/practice-core'
+import { formatPitchName, reducePracticeEvent } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
@@ -33,26 +33,18 @@ import type { Exercise } from '@/lib/exercises/types'
 import { Observation, NoteTechnique } from '@/lib/technique-types'
 
 interface PracticeStore {
-  // Explicit State
   state: PracticeStoreState
-
-  // Backward compatibility properties (kept in state for easy access)
   practiceState: PracticeState | null
   error: AppError | null
-
-  // Extra UI state
   liveObservations: Observation[]
   autoStartEnabled: boolean
   analyser: AnalyserNode | null
   audioLoop: AudioLoopPort | null
   detector: PitchDetectionPort | null
-
-  // Concurrency and Resource Management
   isStarting: boolean
   isInitializing: boolean
   sessionToken: string | null
 
-  // Actions
   loadExercise: (exercise: Exercise) => Promise<void>
   setAutoStart: (enabled: boolean) => void
   setNoteIndex: (index: number) => void
@@ -69,9 +61,7 @@ function getInitialState(exercise: Exercise): PracticeState {
     exercise,
     currentIndex: 0,
     detectionHistory: [],
-    holdDuration: 0,
     perfectNoteStreak: 0,
-    lastObservations: [],
   }
 }
 
@@ -101,35 +91,28 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     loadExercise: async (exercise) => {
       await get().stop()
-      set((state) => ({
-        ...state,
-        state: { status: 'idle', exercise, error: null },
+      set({
         practiceState: getInitialState(exercise),
+        state: { status: 'idle', exercise, error: null },
         error: null,
         liveObservations: [],
         sessionToken: null,
       }))
     },
 
-    setAutoStart: (enabled) => set((state) => ({ ...state, autoStartEnabled: enabled })),
+    setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
 
     setNoteIndex: (index) => {
-      const { state } = get()
-      if (state.status === 'active') {
+      const { practiceState } = get()
+      if (practiceState) {
         const newPracticeState: PracticeState = {
-          ...state.practiceState,
-          currentIndex: Math.max(0, Math.min(index, state.exercise.notes.length - 1)),
+          ...practiceState,
+          currentIndex: Math.max(0, Math.min(index, practiceState.exercise.notes.length - 1)),
           status: 'listening',
           holdDuration: 0,
           detectionHistory: [],
         }
-        set({
-          state: {
-            ...state,
-            practiceState: newPracticeState
-          },
-          practiceState: newPracticeState
-        })
+        set({ practiceState: newPracticeState })
       }
     },
 
@@ -181,19 +164,21 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
 
     start: async () => {
-      if (get().isStarting) return
-      set((state) => ({ ...state, isStarting: true }))
+      const currentSessionId = get().sessionId
+      const newSessionId = currentSessionId + 1
+
+      set({ isStarting: true, error: null })
 
       try {
-        const currentStateAtStart = get().state
-        if (currentStateAtStart.status === 'idle' && currentStateAtStart.exercise) {
+        let storeState = get().state
+        if (storeState.status === 'idle' && storeState.exercise) {
           await get().initializeAudio()
+          storeState = get().state
         }
 
-        const state = get().state
-        if (state.status !== 'ready') {
-          set((s) => ({ ...s, isStarting: false }))
-          return
+        if (storeState.status !== 'ready') {
+           set({ isStarting: false })
+           return
         }
 
         const currentToken = crypto.randomUUID()
@@ -227,10 +212,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
 
         const runnerDeps = {
-          audioLoop: state.audioLoop,
-          detector: state.detector,
-          exercise: state.exercise,
-          sessionStartTime,
+          audioLoop: storeState.audioLoop,
+          detector: storeState.detector,
+          exercise: storeState.exercise,
+          sessionStartTime: Date.now(),
           store: {
             getState: () => ({
               practiceState: get().practiceState,
@@ -279,8 +264,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           console.error('[PracticeStore] Failed to start session', e)
         }
 
-        set((s) => ({
-          ...s,
+        // Sync with TunerStore
+        useTunerStore.setState({
+          state: { kind: 'LISTENING', sessionToken: newSessionId },
+          detector: (storeState as any).detector?.detector || null
+        })
+
+        set({
           state: nextState,
           practiceState: reducePracticeEvent(s.practiceState!, { type: 'START' }),
           sessionToken: currentToken,
@@ -330,11 +320,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
       }
 
-      try {
-        await audioManager.cleanup()
-      } catch (err) {
-        console.warn('[PracticeStore] Error during audio cleanup:', err)
-      }
+      await audioManager.cleanup()
 
       try {
         const session = useSessionStore.getState().end()
@@ -347,13 +333,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       set((s) => ({
         ...s,
-        state: s.state.status === 'active' || s.state.status === 'ready'
-          ? { status: 'idle', exercise: s.state.exercise, error: null }
-          : s.state,
-        practiceState: s.practiceState
-          ? reducePracticeEvent(s.practiceState, { type: 'STOP' })
-          : null,
+        state: s.state.status === 'active' ? transitions.stop(s.state) : s.state,
+        practiceState: s.practiceState ? { ...s.practiceState, status: 'idle' } : null,
         analyser: null,
+        audioLoop: null,
         detector: null,
         audioLoop: null,
         liveObservations: [],
@@ -387,10 +370,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
 
         const currentState = get().practiceState
-        if (!currentState) {
-          console.error('[PIPELINE] State null in consumePipelineEvents', { event })
-          break
-        }
+        if (!currentState) break
 
         const newState = reducePracticeEvent(currentState, event)
         const liveObservations = event.type === 'NOTE_MATCHED'
@@ -400,9 +380,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         set((s) => {
           if (s.sessionToken !== currentToken) return s
           return {
-            ...s,
+            ...state,
             practiceState: newState,
-            liveObservations
+            liveObservations: liveObs,
           }
         })
       }
