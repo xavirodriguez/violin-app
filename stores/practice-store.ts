@@ -5,7 +5,6 @@ import { formatPitchName, reducePracticeEvent } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import { PitchDetector } from '@/lib/pitch-detector'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
 import { useSessionStore } from './session.store'
@@ -16,7 +15,6 @@ import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
 
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
-import { PracticeState, PracticeEvent } from '@/lib/practice-core'
 
 interface PracticeStore {
   state: PracticeStoreState
@@ -70,7 +68,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         state: { status: 'idle', exercise, error: null },
         error: null,
         liveObservations: []
-      })
+      }))
     },
 
     setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
@@ -116,6 +114,37 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const appError = toAppError(err)
         set({ state: transitions.error(appError), error: appError })
       }
+
+      set((s) => ({ ...s, state: transitions.initialize(currentState.exercise) }))
+
+      try {
+        const deviceId = useTunerStore.getState().deviceId || undefined
+        const resources = await audioManager.initialize(deviceId)
+        const detector = new PitchDetectorAdapter(new PitchDetector(resources.context.sampleRate))
+        const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
+        const audioLoop = new WebAudioLoopAdapter(frameAdapter)
+
+        const nextState = transitions.ready({
+          audioLoop,
+          detector,
+          exercise: currentState.exercise
+        })
+
+        set((s) => ({
+          ...s,
+          state: nextState,
+          analyser: resources.analyser,
+          detector,
+          audioLoop
+        }))
+      } catch (err) {
+        const appError = toAppError(err)
+        set((s) => ({
+          ...s,
+          state: transitions.error(appError),
+          error: appError
+        }))
+      }
     },
 
     start: async () => {
@@ -153,15 +182,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           },
           analytics: {
             recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) =>
-              useSessionStore.getState().recordAttempt(index, pitch, cents, inTune),
+              useAnalyticsStore.getState().recordNoteAttempt(index, pitch, cents, inTune),
             recordNoteCompletion: (index: number, timeMs: number, technique?: any) =>
-              useSessionStore.getState().recordCompletion(index, timeMs, technique),
-            endSession: () => {
-              const completed = useSessionStore.getState().end()
-              if (completed) {
-                useProgressStore.getState().addSession(completed)
-              }
-            }
+              useAnalyticsStore.getState().recordNoteCompletion(index, timeMs, technique),
+            endSession: () => useAnalyticsStore.getState().endSession()
+          },
+          updatePitch: (pitch: number, confidence: number) => {
+            useTunerStore.getState().updatePitch(pitch, confidence)
           }
         }
 
@@ -217,6 +244,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         analyser: null,
         audioLoop: null,
         detector: null,
+        audioLoop: null,
         liveObservations: [],
         sessionId: nextSessionId,
         isStarting: false,
@@ -244,6 +272,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         if (!currentState) break
 
         const newState = reducePracticeEvent(currentState, event)
+        const liveObservations = event.type === 'NOTE_MATCHED'
+          ? []
+          : getUpdatedLiveObservations(newState)
 
         set((state) => {
           if (state.sessionId !== currentSessionId) return state

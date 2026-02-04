@@ -1,5 +1,6 @@
 import {
   TechniqueFrame,
+  PitchedFrame,
   NoteSegment,
   NoteTechnique,
   VibratoMetrics,
@@ -10,75 +11,64 @@ import {
   TransitionMetrics,
   Observation,
   AnalysisOptions,
+  Cents,
+  Hz,
+  Ratio01,
+  TimestampMs,
 } from './technique-types'
 
-const DEFAULT_OPTIONS: AnalysisOptions = {
-  settlingTimeMs: 150,
-  inTuneThresholdCents: 15,
-  vibratoMinRateHz: 4,
-  vibratoMaxRateHz: 10,
-  vibratoMinWidthCents: 10,
-  vibratoMinRegularity: 0.5,
+const DEFAULT_OPTIONS: Required<AnalysisOptions> = {
+  settlingTimeMs: 150 as TimestampMs,
+  inTuneThresholdCents: 15 as Cents,
+  vibratoMinRateHz: 4 as Hz,
+  vibratoMaxRateHz: 10 as Hz,
+  vibratoMinWidthCents: 10 as Cents,
+  vibratoMinRegularity: 0.5 as Ratio01,
 }
 
 /**
  * A stateful agent that analyzes note segments to provide detailed technical feedback.
- *
- * @remarks
- * This class encapsulates the signal processing and heuristic logic for evaluating
- * various aspects of violin technique, such as vibrato, pitch stability, and rhythm.
- * It is designed to be instantiated once and reused for each note segment detected
- * in a practice session.
- *
- * The agent's workflow is typically:
- * 1.  `analyzeSegment` is called with a completed `NoteSegment`.
- * 2.  This produces a `NoteTechnique` object containing dozens of quantitative metrics.
- * 3.  `generateObservations` is called with the `NoteTechnique` object.
- * 4.  This produces an array of human-readable `Observation`s, which are prioritized
- *     and filtered pedagogical tips ready for display to the user.
  */
 export class TechniqueAnalysisAgent {
-  private options: AnalysisOptions
+  private options: Required<AnalysisOptions>
 
-  /**
-   * Constructs a new TechniqueAnalysisAgent with optional configuration.
-   * @param options - Configuration overrides for the analysis heuristics.
-   */
-  constructor(options: Partial<AnalysisOptions> = {}) {
+  constructor(options: AnalysisOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
   }
 
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
-   *
-   * @param segment - The `NoteSegment` to analyze, containing all frames of the note.
-   * @param gapFrames - Optional frames from the silence preceding the note, used for transition analysis.
-   * @returns A `NoteTechnique` object with detailed metrics.
    */
   analyzeSegment(
     segment: NoteSegment,
-    gapFrames: TechniqueFrame[] = [],
+    gapFrames: ReadonlyArray<TechniqueFrame> = [],
     prevSegment: NoteSegment | null = null,
   ): NoteTechnique {
     const frames = segment.frames
+    const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
     return {
-      vibrato: this.calculateVibrato(frames),
-      pitchStability: this.calculateStability(frames),
-      attackRelease: this.calculateAttackRelease(frames),
-      resonance: this.calculateResonance(frames),
+      vibrato: this.calculateVibrato(pitchedFrames),
+      pitchStability: this.calculateStability(pitchedFrames),
+      attackRelease: this.calculateAttackRelease(frames), // Attack/Release might use RMS from unpitched
+      resonance: this.calculateResonance(pitchedFrames),
       rhythm: this.calculateRhythm(segment),
       transition: this.calculateTransition(gapFrames, frames, prevSegment),
     }
   }
 
-  private calculateStability(frames: TechniqueFrame[]): PitchStability {
+  private calculateStability(frames: PitchedFrame[]): PitchStability {
     if (frames.length === 0) {
-      return { settlingStdCents: 0, globalStdCents: 0, driftCentsPerSec: 0, inTuneRatio: 0 }
+      return {
+        settlingStdCents: 0 as Cents,
+        globalStdCents: 0 as Cents,
+        driftCentsPerSec: 0,
+        inTuneRatio: 0 as Ratio01,
+      }
     }
 
     const cents = frames.map((f) => f.cents)
-    const globalStd = this.calculateStdDev(cents)
+    const globalStd = this.calculateStdDev(cents) as Cents
 
     // Settling stability: use frames after configured settling time
     const startTime = frames[0].timestamp
@@ -86,12 +76,11 @@ export class TechniqueAnalysisAgent {
       (f) => f.timestamp - startTime > this.options.settlingTimeMs,
     )
     const settlingCents = settlingFrames.length > 0 ? settlingFrames.map((f) => f.cents) : cents
-    const settlingStd = this.calculateStdDev(settlingCents)
+    const settlingStd = this.calculateStdDev(settlingCents) as Cents
 
     const drift = this.calculateDrift(frames)
-    const inTuneRatio =
-      frames.filter((f) => Math.abs(f.cents) < this.options.inTuneThresholdCents).length /
-      frames.length
+    const inTuneRatio = (frames.filter((f) => Math.abs(f.cents) < this.options.inTuneThresholdCents)
+      .length / frames.length) as Ratio01
 
     return {
       settlingStdCents: settlingStd,
@@ -101,37 +90,31 @@ export class TechniqueAnalysisAgent {
     }
   }
 
-  private calculateVibrato(frames: TechniqueFrame[]): VibratoMetrics {
+  private calculateVibrato(frames: PitchedFrame[]): VibratoMetrics {
     if (frames.length < 20) {
-      return { present: false, rateHz: 0, widthCents: 0, regularity: 0 }
+      return { present: false }
     }
 
     const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
-    // Vibrato needs at least 500ms to be reliably detected
     if (duration < 500) {
-      return { present: false, rateHz: 0, widthCents: 0, regularity: 0 }
+      return { present: false }
     }
 
-    // CRITICAL: Gate vibrato detection by pitch stability
-    // True vibrato oscillates around a stable center (stdDev < 40 cents)
-    // High global deviation indicates tuning chaos, not expressive technique
     const pitchStd = this.calculateStdDev(frames.map((f) => f.cents))
     if (pitchStd > 40) {
-      return { present: false, rateHz: 0, widthCents: 0, regularity: 0 }
+      return { present: false }
     }
 
     const detrended = this.detrend(frames)
-    // Robust width: 2 * std covers ~95% of a sine wave's peak-to-peak if noise is low
-    // std * 2.828 is more precise for pure sine (sqrt(2)*2)
     const std = this.calculateStdDev(detrended)
-    const widthCents = std * 2.828
+    const widthCents = (std * 2.828) as Cents
 
     const { periodMs, correlation } = this.findPeriod(
       detrended,
       frames.map((f) => f.timestamp),
     )
-    const rateHz = periodMs > 0 ? 1000 / periodMs : 0
-    const regularity = Math.max(0, correlation)
+    const rateHz = (periodMs > 0 ? 1000 / periodMs : 0) as Hz
+    const regularity = Math.max(0, correlation) as Ratio01
 
     const present =
       rateHz >= this.options.vibratoMinRateHz &&
@@ -139,19 +122,27 @@ export class TechniqueAnalysisAgent {
       widthCents >= this.options.vibratoMinWidthCents &&
       regularity >= this.options.vibratoMinRegularity
 
-    return { present, rateHz, widthCents, regularity }
+    return {
+      present,
+      rateHz: present ? rateHz : undefined,
+      widthCents: present ? widthCents : undefined,
+      regularity: present ? regularity : undefined,
+    }
   }
 
-  private calculateAttackRelease(frames: TechniqueFrame[]): AttackReleaseMetrics {
+  private calculateAttackRelease(frames: ReadonlyArray<TechniqueFrame>): AttackReleaseMetrics {
     if (frames.length === 0) {
-      return { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 }
+      return {
+        attackTimeMs: 0 as TimestampMs,
+        pitchScoopCents: 0 as Cents,
+        releaseStability: 0 as Cents,
+      }
     }
 
     const startTime = frames[0].timestamp
     const rmsValues = frames.map((f) => f.rms)
     const maxRms = Math.max(...rmsValues)
 
-    // Find "stable" RMS: average of middle 50% of frames
     const middleFrames = frames.slice(
       Math.floor(frames.length * 0.25),
       Math.floor(frames.length * 0.75),
@@ -163,29 +154,31 @@ export class TechniqueAnalysisAgent {
 
     const stableRmsThreshold = stableRms * 0.85
 
-    // Attack Time: From onset to reaching 85% of stable RMS
-    let attackTimeMs = 0
+    let attackTimeMs = 0 as TimestampMs
     const stableFrame = frames.find((f) => f.rms >= stableRmsThreshold)
     if (stableFrame) {
-      attackTimeMs = stableFrame.timestamp - startTime
+      attackTimeMs = (stableFrame.timestamp - startTime) as TimestampMs
     }
 
-    // Pitch Scoop: First 150ms vs frames after settling time
-    const earlyFrames = frames.filter((f) => f.timestamp - startTime <= 150)
-    const stableFrames = frames.filter((f) => f.timestamp - startTime > this.options.settlingTimeMs)
+    const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const earlyPitched = pitchedFrames.filter((f) => f.timestamp - startTime <= 150)
+    const stablePitched = pitchedFrames.filter(
+      (f) => f.timestamp - startTime > this.options.settlingTimeMs,
+    )
 
-    let pitchScoopCents = 0
-    if (earlyFrames.length > 0 && stableFrames.length > 0) {
-      const avgEarly = earlyFrames.reduce((sum, f) => sum + f.cents, 0) / earlyFrames.length
-      const avgStable = stableFrames.reduce((sum, f) => sum + f.cents, 0) / stableFrames.length
-      pitchScoopCents = avgEarly - avgStable
+    let pitchScoopCents = 0 as Cents
+    if (earlyPitched.length > 0 && stablePitched.length > 0) {
+      const avgEarly = earlyPitched.reduce((sum, f) => sum + f.cents, 0) / earlyPitched.length
+      const avgStable = stablePitched.reduce((sum, f) => sum + f.cents, 0) / stablePitched.length
+      pitchScoopCents = (avgEarly - avgStable) as Cents
     }
 
-    // Release Stability: Last 100ms before offset
     const endTime = frames[frames.length - 1].timestamp
-    const lateFrames = frames.filter((f) => endTime - f.timestamp <= 100)
+    const latePitched = pitchedFrames.filter((f) => endTime - f.timestamp <= 100)
     const releaseStability =
-      lateFrames.length > 0 ? this.calculateStdDev(lateFrames.map((f) => f.cents)) : 0
+      latePitched.length > 0
+        ? (this.calculateStdDev(latePitched.map((f) => f.cents)) as Cents)
+        : (0 as Cents)
 
     return {
       attackTimeMs,
@@ -194,16 +187,15 @@ export class TechniqueAnalysisAgent {
     }
   }
 
-  private calculateResonance(frames: TechniqueFrame[]): ResonanceMetrics {
+  private calculateResonance(frames: PitchedFrame[]): ResonanceMetrics {
     if (frames.length < 10) {
-      return { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 }
+      return { suspectedWolf: false, rmsBeatingScore: 0 as Ratio01, pitchChaosScore: 0, lowConfRatio: 0 as Ratio01 }
     }
 
     const highRmsFrames = frames.filter((f) => f.rms > 0.02)
-    const lowConfRatio =
-      highRmsFrames.length > 0
-        ? highRmsFrames.filter((f) => f.confidence < 0.6).length / highRmsFrames.length
-        : 0
+    const lowConfRatio = (highRmsFrames.length > 0
+      ? highRmsFrames.filter((f) => f.confidence < 0.6).length / highRmsFrames.length
+      : 0) as Ratio01
 
     const rmsValues = frames.map((f) => f.rms)
     const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
@@ -216,17 +208,13 @@ export class TechniqueAnalysisAgent {
     const detrendedCents = this.detrend(frames)
     const pitchChaosScore = this.calculateStdDev(detrendedCents)
 
-    // A wolf tone typically shows combined evidence:
-    // 1. High RMS but low confidence (phase cancellation)
-    // 2. Beating (amplitude modulation in the 4-12Hz range)
-    // 3. Pitch chaos (unstable frequency)
     const suspectedWolf =
       (lowConfRatio > 0.3 && rmsBeatingScore > 0.4) ||
       (rmsBeatingScore > 0.6 && pitchChaosScore > 20)
 
     return {
       suspectedWolf,
-      rmsBeatingScore: Math.max(0, rmsBeatingScore),
+      rmsBeatingScore: Math.max(0, rmsBeatingScore) as Ratio01,
       pitchChaosScore,
       lowConfRatio,
     }
@@ -248,22 +236,21 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateTransition(
-    gapFrames: TechniqueFrame[],
-    currentFrames: TechniqueFrame[],
+    gapFrames: ReadonlyArray<TechniqueFrame>,
+    currentFrames: ReadonlyArray<TechniqueFrame>,
     _prevSegment: NoteSegment | null,
   ): TransitionMetrics {
-    if (currentFrames.length === 0) {
-      return { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 }
-    }
+    const transitionTimeMs = (gapFrames.length > 1
+      ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp
+      : 0) as TimestampMs
 
-    const transitionTimeMs =
-      gapFrames.length > 0 ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp : 0
+    const pitchedGap = gapFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const glissAmountCents = this.calculateGlissando(pitchedGap) as Cents
 
-    const glissAmountCents = this.calculateGlissando(gapFrames)
-
-    const startTime = currentFrames[0].timestamp
-    const landingErrorCents = this.calculateLandingError(currentFrames, startTime)
-    const correctionCount = this.calculateCorrectionCount(currentFrames, startTime)
+    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
+    const landingErrorCents = this.calculateLandingError(pitchedCurrent, startTime) as Cents
+    const correctionCount = this.calculateCorrectionCount(pitchedCurrent, startTime)
 
     return {
       transitionTimeMs,
@@ -272,18 +259,17 @@ export class TechniqueAnalysisAgent {
       correctionCount,
     }
   }
-  calculateGlissando(gapFrames: TechniqueFrame[]): number {
+
+  private calculateGlissando(gapFrames: PitchedFrame[]): number {
     if (gapFrames.length < 2) return 0
-
-    const deltas = []
+    let total = 0
     for (let i = 1; i < gapFrames.length; i++) {
-      deltas.push(Math.abs(gapFrames[i].cents - gapFrames[i - 1].cents))
+      total += Math.abs(gapFrames[i].cents - gapFrames[i - 1].cents)
     }
-
-    return deltas.reduce((a, b) => a + b, 0)
+    return total
   }
 
-  calculateLandingError(currentFrames: TechniqueFrame[], startTime: number): number {
+  private calculateLandingError(currentFrames: PitchedFrame[], startTime: TimestampMs): number {
     const firstStable = currentFrames.find(
       (f) => f.timestamp - startTime > this.options.settlingTimeMs,
     )
@@ -291,7 +277,7 @@ export class TechniqueAnalysisAgent {
     return Math.abs(firstStable.cents)
   }
 
-  calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number): number {
+  private calculateCorrectionCount(currentFrames: PitchedFrame[], startTime: TimestampMs): number {
     const window = currentFrames.filter(
       (f) => f.timestamp - startTime < this.options.settlingTimeMs,
     )
@@ -304,18 +290,6 @@ export class TechniqueAnalysisAgent {
     return count
   }
 
-  /**
-   * Generates a list of human-readable observations based on computed technique metrics.
-   *
-   * @remarks
-   * This method acts as an "intelligent feedback motor". It applies a set of pedagogical rules
-   * and heuristics to the quantitative data in the `NoteTechnique` object to produce
-   * actionable, prioritized feedback for the user. The observations are sorted by
-   * a combination of severity and confidence.
-   *
-   * @param technique - The `NoteTechnique` object produced by `analyzeSegment`.
-   * @returns An array of `Observation` objects, ready for display.
-   */
   generateObservations(technique: NoteTechnique): Observation[] {
     const observations: Observation[] = [
       ...this.generateStabilityObservations(technique),
@@ -326,7 +300,6 @@ export class TechniqueAnalysisAgent {
       ...this.generateRhythmObservations(technique),
     ]
 
-    // Prioritize and rank observations
     return observations
       .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
       .slice(0, 3)
@@ -339,7 +312,7 @@ export class TechniqueAnalysisAgent {
       {
         type: 'stability',
         severity: 2,
-        confidence: 0.9,
+        confidence: 0.9 as Ratio01,
         message: drift > 0 ? 'Pitch is drifting sharp' : 'Pitch is drifting flat',
         tip: 'Maintain consistent finger pressure and bow speed.',
         evidence: { drift },
@@ -349,13 +322,13 @@ export class TechniqueAnalysisAgent {
 
   private generateVibratoObservations(technique: NoteTechnique): Observation[] {
     const { present, rateHz, widthCents, regularity } = technique.vibrato
-    if (present) {
+    if (present && rateHz !== undefined && widthCents !== undefined && regularity !== undefined) {
       if (rateHz < 4.5) {
         return [
           {
             type: 'vibrato',
             severity: 1,
-            confidence: 0.8,
+            confidence: 0.8 as Ratio01,
             message: 'Slow vibrato detected',
             tip: 'Try to slightly increase the speed of your hand oscillation.',
             evidence: { rate: rateHz },
@@ -367,24 +340,29 @@ export class TechniqueAnalysisAgent {
           {
             type: 'vibrato',
             severity: 1,
-            confidence: 0.8,
+            confidence: 0.8 as Ratio01,
             message: 'Wide vibrato detected',
             tip: 'Focus on a narrower, more controlled oscillation.',
             evidence: { width: widthCents },
           },
         ]
       }
-    } else if (widthCents > 10 && regularity < 0.4) {
-      return [
-        {
-          type: 'vibrato',
-          severity: 2,
-          confidence: 0.7,
-          message: 'Inconsistent vibrato',
-          tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
-          evidence: { regularity },
-        },
-      ]
+    } else {
+      // Logic for inconsistent vibrato if width is high but not present
+      const width = technique.vibrato.widthCents ?? 0
+      const reg = technique.vibrato.regularity ?? 0
+      if (width > 10 && reg < 0.4) {
+        return [
+          {
+            type: 'vibrato',
+            severity: 2,
+            confidence: 0.7 as Ratio01,
+            message: 'Inconsistent vibrato',
+            tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
+            evidence: { regularity: reg },
+          },
+        ]
+      }
     }
     return []
   }
@@ -395,7 +373,7 @@ export class TechniqueAnalysisAgent {
       obs.push({
         type: 'attack',
         severity: 1,
-        confidence: 0.9,
+        confidence: 0.9 as Ratio01,
         message: 'Slow note attack',
         tip: 'Start the note with more clarity and deliberate bow contact.',
         evidence: { attackTime: technique.attackRelease.attackTimeMs },
@@ -405,7 +383,7 @@ export class TechniqueAnalysisAgent {
       obs.push({
         type: 'attack',
         severity: 2,
-        confidence: 0.85,
+        confidence: 0.85 as Ratio01,
         message:
           technique.attackRelease.pitchScoopCents < 0 ? 'Pitch scoops up' : 'Pitch drops down',
         tip: 'Ensure your finger is accurately placed before starting the bow.',
@@ -421,7 +399,7 @@ export class TechniqueAnalysisAgent {
       obs.push({
         type: 'transition',
         severity: 2,
-        confidence: 0.8,
+        confidence: 0.8 as Ratio01,
         message: 'Audible glissando',
         tip: 'Move your hand more quickly between positions for a cleaner transition.',
         evidence: {
@@ -434,7 +412,7 @@ export class TechniqueAnalysisAgent {
       obs.push({
         type: 'transition',
         severity: 2,
-        confidence: 0.75,
+        confidence: 0.75 as Ratio01,
         message: 'Landing error',
         tip: 'Aim for the center of the new note immediately upon shifting.',
         evidence: { error: technique.transition.landingErrorCents },
@@ -449,7 +427,7 @@ export class TechniqueAnalysisAgent {
       {
         type: 'resonance',
         severity: 3,
-        confidence: 0.6,
+        confidence: 0.6 as Ratio01,
         message: 'Tone instability (Wolf-like resonance)',
         tip: 'Adjust your bow pressure, speed, or contact point to stabilize the tone.',
         evidence: {
@@ -466,7 +444,7 @@ export class TechniqueAnalysisAgent {
       {
         type: 'rhythm',
         severity: 2,
-        confidence: 0.95,
+        confidence: 0.95 as Ratio01,
         message: technique.rhythm.onsetErrorMs > 0 ? 'Late note entry' : 'Early note entry',
         tip: 'Focus on the internal beat and prepare your fingers in advance.',
         evidence: { error: technique.rhythm.onsetErrorMs },
@@ -474,7 +452,6 @@ export class TechniqueAnalysisAgent {
     ]
   }
 
-  /** @internal */
   private calculateStdDev(values: number[]): number {
     if (values.length === 0) return 0
     const mean = values.reduce((a, b) => a + b) / values.length
@@ -483,11 +460,7 @@ export class TechniqueAnalysisAgent {
     return Math.sqrt(avgSquareDiff)
   }
 
-  /**
-   * Calculates the pitch drift over a series of frames using linear regression.
-   * @internal
-   */
-  private calculateDrift(frames: TechniqueFrame[]): number {
+  private calculateDrift(frames: PitchedFrame[]): number {
     if (frames.length < 2) return 0
     const n = frames.length
     const startTime = frames[0].timestamp
@@ -509,15 +482,10 @@ export class TechniqueAnalysisAgent {
     const denominator = n * sumXX - sumX * sumX
     if (Math.abs(denominator) < 1e-10) return 0
 
-    const slope = (n * sumXY - sumX * sumY) / denominator
-    return slope
+    return (n * sumXY - sumX * sumY) / denominator
   }
 
-  /**
-   * Removes the linear trend from a series of cents values.
-   * @internal
-   */
-  private detrend(frames: TechniqueFrame[]): number[] {
+  private detrend(frames: PitchedFrame[]): number[] {
     const n = frames.length
     if (n === 0) return []
     const startTime = frames[0].timestamp
@@ -546,10 +514,6 @@ export class TechniqueAnalysisAgent {
     })
   }
 
-  /**
-   * Finds the dominant period in a signal using autocorrelation.
-   * @internal
-   */
   private findPeriod(
     values: number[],
     timestamps: number[],
@@ -562,7 +526,6 @@ export class TechniqueAnalysisAgent {
     const avgDt = totalDuration / (timestamps.length - 1)
     if (avgDt <= 0) return { periodMs: 0, correlation: 0 }
 
-    // Search range: 4Hz to 10Hz (100ms to 250ms)
     const minPeriod = 100
     const maxPeriod = 250
 
@@ -583,7 +546,6 @@ export class TechniqueAnalysisAgent {
       const mag = Math.sqrt(sqSum1 * sqSum2)
       const corr = mag > 0 ? dotProduct / mag : 0
 
-      // We want the HIGHEST correlation in the expected range
       if (corr > bestCorrelation) {
         bestCorrelation = corr
         bestPeriodMs = periodMs
