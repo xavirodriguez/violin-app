@@ -1,0 +1,177 @@
+[
+  {
+    "id": "FEATURE_PRACTICE_ZEN_MODE",
+    "name": "Zen Mode",
+    "scoring": {
+      "maturity": {
+        "score": 8,
+        "rationale": "Stable implementation, enabled by default."
+      },
+      "business_value": {
+        "score": 7,
+        "rationale": "Improves user focus during practice."
+      },
+      "adoption_readiness": {
+        "score": 9,
+        "rationale": "Low complexity, already integrated in UI."
+      },
+      "technical_debt": {
+        "score": 2,
+        "rationale": "Clean implementation in components/practice-mode.tsx."
+      },
+      "growth_potential": {
+        "score": 6,
+        "rationale": "Can be expanded with more UI presets."
+      },
+      "risk_profile": {
+        "score": 1,
+        "rationale": "Very low risk, only affects UI visibility."
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 8.5,
+      "weighted_score": 7.8,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "id": "FEATURE_PRACTICE_AUTO_START",
+    "name": "Auto-start Listening",
+    "scoring": {
+      "maturity": {
+        "score": 9,
+        "rationale": "Solid implementation, BETA status, default true."
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "Reduces friction for starting practice."
+      },
+      "adoption_readiness": {
+        "score": 10,
+        "rationale": "Automatic feature, no user action required."
+      },
+      "technical_debt": {
+        "score": 1,
+        "rationale": "Well integrated into PracticeStore."
+      },
+      "growth_potential": {
+        "score": 4,
+        "rationale": "Limited growth as it is a binary toggle."
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Low risk, simple state transition."
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 9.0,
+      "weighted_score": 8.2,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+    "name": "Exercise Recommender",
+    "scoring": {
+      "maturity": {
+        "score": 7,
+        "rationale": "BETA status, depends on performance metrics."
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "High value for guided learning path."
+      },
+      "adoption_readiness": {
+        "score": 7,
+        "rationale": "Medium complexity, depends on user history."
+      },
+      "technical_debt": {
+        "score": 4,
+        "rationale": "Complexity in lib/exercise-recommender.ts."
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "High potential for AI-driven improvements."
+      },
+      "risk_profile": {
+        "score": 5,
+        "rationale": "Medium risk if recommendations are poor."
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 7.5,
+      "weighted_score": 7.8,
+      "recommendation": "GRADUAL"
+    }
+  },
+  {
+    "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+    "name": "Achievement System",
+    "scoring": {
+      "maturity": {
+        "score": 7,
+        "rationale": "BETA status, core logic in stores/analytics-store.ts."
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "High engagement through gamification."
+      },
+      "adoption_readiness": {
+        "score": 8,
+        "rationale": "Well understood pattern for users."
+      },
+      "technical_debt": {
+        "score": 3,
+        "rationale": "Decoupled logic in lib/achievements/."
+      },
+      "growth_potential": {
+        "score": 8,
+        "rationale": "Easy to add new achievements."
+      },
+      "risk_profile": {
+        "score": 3,
+        "rationale": "Low risk, mostly additive."
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 7.8,
+      "weighted_score": 7.6,
+      "recommendation": "GRADUAL"
+    }
+  },
+  {
+    "id": "FEATURE_AUDIO_WEB_WORKER",
+    "name": "Web Worker Audio",
+    "scoring": {
+      "maturity": {
+        "score": 3,
+        "rationale": "DEFINED but high risk, complex threading issues."
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "Significant performance boost for low-end devices."
+      },
+      "adoption_readiness": {
+        "score": 4,
+        "rationale": "Transparent but technical hurdles exist."
+      },
+      "technical_debt": {
+        "score": 6,
+        "rationale": "Requires significant refactoring of audio loop."
+      },
+      "growth_potential": {
+        "score": 5,
+        "rationale": "Enables more complex DSP."
+      },
+      "risk_profile": {
+        "score": 9,
+        "rationale": "High risk of breaking audio processing."
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 4.0,
+      "weighted_score": 5.2,
+      "recommendation": "MAINTAIN"
+    }
+  }
+]

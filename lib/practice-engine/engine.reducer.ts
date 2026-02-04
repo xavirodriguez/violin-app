@@ -18,6 +18,7 @@ export const engineReducer: PracticeReducer = (state, event) => {
         currentNoteIndex: state.currentNoteIndex + 1,
         lastTechnique: event.payload?.technique,
         liveObservations: [],
+        perfectNoteStreak: event.payload?.isPerfect ? state.perfectNoteStreak + 1 : 0,
       }
     case 'SESSION_COMPLETED':
       return { ...state, status: 'completed' }

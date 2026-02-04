@@ -87,7 +87,7 @@ export async function* createRawPitchStream(
       pitchHz,
       confidence,
       rms: detector.calculateRMS(frame),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
     if (resolver) {
       resolver()
@@ -97,23 +97,25 @@ export async function* createRawPitchStream(
 
   try {
     while (!signal.aborted) {
-      if (queue.length === 0) {
+      while (queue.length > 0) {
+        yield queue.shift()!
+      }
+
+      if (signal.aborted) break
+
+      await new Promise<void>((resolve) => {
+        resolver = resolve
         const abortHandler = () => {
-          if (resolver) {
-            resolver()
-            resolver = null
-          }
+          resolve()
+          resolver = null
         }
         signal.addEventListener('abort', abortHandler, { once: true })
       })
-      if (signal.aborted) return
-    } catch (e) {
-      if (e instanceof Error && e.name === 'AbortError') return
-      // Handle potential null/undefined errors explicitly
-      if (!e) {
-        console.warn('[PIPELINE] Caught null error in createRawPitchStream')
-        return
-      }
+    }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return
+    if (e) {
+      console.warn('[PIPELINE] Caught error in createRawPitchStream', e)
     }
   } finally {
     await loopPromise.catch(() => {}) // Cleanup
@@ -122,29 +124,6 @@ export async function* createRawPitchStream(
 
 /**
  * A custom `iter-tools` operator that implements note stability validation and technical analysis.
- *
- * @remarks
- * This operator is the core of the practice pipeline. It consumes a stream of raw pitch events,
- * segments them into discrete notes using `NoteSegmenter`, and performs technical analysis on each
- * completed note segment via `TechniqueAnalysisAgent`.
- *
- * It emits a variety of `PracticeEvent`s:
- * - `NOTE_DETECTED`: For immediate UI feedback on what the user is playing.
- * - `NOTE_HOLD_PROGRESS`: To drive UI elements showing note stability.
- * - `NOTE_MATCHED`: The final event for a successfully held note, containing detailed technique analysis.
- *
- * This function is marked as `@internal` because it's a specialized component of the exported
- * `createPracticeEventPipeline` and not intended for direct use.
- *
- * @internal
- * @param source - An async iterable of `RawPitchEvent`.
- * @param targetNote - A selector function that returns the current `TargetNote` to match against.
- * @param options - Configuration for the stability check and segmentation.
- * @param getCurrentIndex - A selector function to get the current note's index for rhythm analysis.
- * @returns An `AsyncGenerator` that yields `PracticeEvent` objects.
- */
-/**
- * Internal state for the technical analysis window.
  */
 interface TechnicalAnalysisState {
   lastGapFrames: TechniqueFrame[]
@@ -155,13 +134,14 @@ interface TechnicalAnalysisState {
 
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext,
-  options: NoteStreamOptions,
+  contextOrGetter: PipelineContext | (() => PipelineContext),
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
+  const initialOptions = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
   const segmenter = new NoteSegmenter({
-    minRms: options.minRms,
-    minConfidence: options.minConfidence,
+    minRms: initialOptions.minRms,
+    minConfidence: initialOptions.minConfidence,
   })
   const agent = new TechniqueAnalysisAgent()
   const state: TechnicalAnalysisState = {
@@ -173,6 +153,8 @@ async function* technicalAnalysisWindow(
 
   for await (const raw of source) {
     if (signal.aborted) break
+    const context = typeof contextOrGetter === 'function' ? contextOrGetter() : contextOrGetter
+    const options = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
     if (signal.aborted) break
   }
@@ -442,11 +424,12 @@ function processCompletedSegment(
 
   const technique = agent.analyzeSegment(currentSegment, lastGapFrames, prevSegment)
   const observations = agent.generateObservations(technique)
+  const isPerfect = Math.abs(lastDetected.cents) < 5
 
   return {
     onsetTime,
     segment: currentSegment,
-    payload: { technique, observations },
+    payload: { technique, observations, isPerfect },
   }
 }
 
@@ -476,24 +459,18 @@ function calculateRhythmExpectations(
 
 /**
  * Creates a practice event processing pipeline with immutable context.
- *
- * @param rawPitchStream - Raw pitch detection events
- * @param context - Immutable context snapshot. Pipeline processes events
- *   relative to THIS context. To change context, create a new pipeline.
- * @param options - Pipeline configuration
- * @param signal - AbortSignal to stop the pipeline
- * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
- *
- * @remarks
- * This design prevents context drift during async iteration.
- * When the exercise note changes, create a new pipeline.
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext,
-  options: Partial<NoteStreamOptions> & { exercise: Exercise },
+  context: PipelineContext | (() => PipelineContext),
+  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncIterable<PracticeEvent> {
-  const finalOptions = { ...defaultOptions, ...options } as NoteStreamOptions
-  return technicalAnalysisWindow(rawPitchStream, context, finalOptions, signal)
+  let optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
+  if (typeof options === 'function') {
+    optionsOrGetter = options
+  } else {
+    optionsOrGetter = { ...defaultOptions, ...options } as NoteStreamOptions
+  }
+  return technicalAnalysisWindow(rawPitchStream, context, optionsOrGetter, signal)
 }

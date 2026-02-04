@@ -204,7 +204,7 @@ export type PracticeEvent =
   // Fired when a note matches target but is still being validated.
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   // Fired by the pipeline only when a target note is held stable.
-  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
+  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean } }
   // Fired when the signal is lost.
   | { type: 'NO_NOTE_DETECTED' }
 
@@ -360,7 +360,7 @@ function handleNoteMatched(
   if (state.status !== 'listening' && state.status !== 'validating') return state
 
   const lastDetection = state.detectionHistory[0]
-  const isPerfect = lastDetection && Math.abs(lastDetection.cents) < 5
+  const isPerfect = payload?.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
   const newStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
 
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1

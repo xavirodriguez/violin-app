@@ -6,6 +6,7 @@ export interface PracticeEngineState {
   scoreLength: number
   liveObservations: Observation[]
   lastTechnique?: NoteTechnique
+  perfectNoteStreak: number
 }
 
 export const INITIAL_ENGINE_STATE: PracticeEngineState = {
@@ -13,4 +14,5 @@ export const INITIAL_ENGINE_STATE: PracticeEngineState = {
   currentNoteIndex: 0,
   scoreLength: 0,
   liveObservations: [],
+  perfectNoteStreak: 0,
 }
