@@ -25,6 +25,7 @@ export interface InitializingState {
   status: 'initializing'
   exercise: Exercise | null
   progress: number // 0-100
+  error: null
 }
 
 export interface ReadyState {
@@ -32,6 +33,7 @@ export interface ReadyState {
   audioLoop: AudioLoopPort
   detector: PitchDetectionPort
   exercise: Exercise
+  error: null
 }
 
 export interface ActiveState {
@@ -41,10 +43,13 @@ export interface ActiveState {
   exercise: Exercise
   runner: PracticeSessionRunner
   practiceState: PracticeState
+  abortController: AbortController
+  error: null
 }
 
 export interface ErrorState {
   status: 'error'
+  exercise: Exercise | null
   error: AppError
 }
 
@@ -55,7 +60,8 @@ export const transitions = {
   initialize: (exercise: Exercise | null): InitializingState => ({
     status: 'initializing',
     exercise,
-    progress: 0
+    progress: 0,
+    error: null,
   }),
 
   ready: (resources: {
@@ -64,22 +70,29 @@ export const transitions = {
     exercise: Exercise
   }): ReadyState => ({
     status: 'ready',
-    ...resources
+    ...resources,
+    error: null,
   }),
 
-  start: (state: ReadyState, runner: PracticeSessionRunner): ActiveState => ({
+  start: (
+    state: ReadyState,
+    runner: PracticeSessionRunner,
+    abortController: AbortController,
+  ): ActiveState => ({
     status: 'active',
     audioLoop: state.audioLoop,
     detector: state.detector,
     exercise: state.exercise,
     runner,
+    abortController,
+    error: null,
     practiceState: {
       status: 'listening',
       exercise: state.exercise,
       currentIndex: 0,
       detectionHistory: [],
-      perfectNoteStreak: 0
-    }
+      perfectNoteStreak: 0,
+    },
   }),
 
   stop: (state: ActiveState): ReadyState => ({
@@ -89,9 +102,10 @@ export const transitions = {
     exercise: state.exercise
   }),
 
-  error: (error: AppError): ErrorState => ({
+  error: (error: AppError, exercise: Exercise | null = null): ErrorState => ({
     status: 'error',
-    error
+    exercise,
+    error,
   }),
 
   reset: (): IdleState => ({

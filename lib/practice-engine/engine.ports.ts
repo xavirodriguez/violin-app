@@ -1,9 +1,7 @@
-import { RawPitchEvent } from '../note-stream'
 import { PracticeEngineState } from './engine.state'
 
 export interface AudioFramePort {
   start(callback: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>
-  stop(): void
 }
 
 export interface PitchDetectorPort {

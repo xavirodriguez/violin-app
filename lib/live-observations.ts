@@ -11,7 +11,7 @@ import { Observation } from './technique-types'
  * MIENTRAS está tocando.
  */
 export function calculateLiveObservations(
-  recentDetections: DetectedNote[],
+  recentDetections: readonly DetectedNote[],
   targetPitch: string
 ): Observation[] {
   if (recentDetections.length < 5) {

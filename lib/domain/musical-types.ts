@@ -117,16 +117,16 @@ export interface Exercise extends ExerciseData {
  */
 export type TunerState =
   | { kind: 'IDLE' }
-  | { kind: 'INITIALIZING'; readonly sessionToken: number }
-  | { kind: 'READY'; readonly sessionToken: number }
-  | { kind: 'LISTENING'; readonly sessionToken: number }
+  | { kind: 'INITIALIZING'; readonly sessionToken: string | number }
+  | { kind: 'READY'; readonly sessionToken: string | number }
+  | { kind: 'LISTENING'; readonly sessionToken: string | number }
   | {
       kind: 'DETECTED'
       pitch: number
       note: string
       cents: number
       confidence: number
-      readonly sessionToken: number
+      readonly sessionToken: string | number
     }
   | { kind: 'ERROR'; error: AppError }
 

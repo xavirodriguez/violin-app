@@ -86,7 +86,6 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
     },
 
     stop() {
-      ctx.audio.stop()
       isRunning = false
     },
 
