@@ -151,7 +151,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * Performs internal cleanup of session-specific resources.
    */
   private cleanup(): void {
-    this.controller = null
+    // No-op cleanup
   }
 
   /**
