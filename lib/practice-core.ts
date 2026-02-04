@@ -5,7 +5,7 @@
  * Refactored for branded types and strict validation.
  */
 
-import { NoteTechnique, Observation } from './technique-types'
+import { NoteTechnique, Observation, MusicalNoteName } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { FixedRingBuffer } from './domain/data-structures'
 import { AppError, ERROR_CODES } from './errors/app-error'
@@ -15,21 +15,11 @@ export type { TargetNote }
 
 /**
  * A valid note name in scientific pitch notation.
- *
- * @example "C4", "F#5", "Bb3"
- *
- * @remarks
- * Pattern: `^[A-G][#b]?[0-8]$`
  */
-export type NoteName = string & { readonly __brand: unique symbol }
+export type NoteName = MusicalNoteName
 
 /**
  * Type guard to validate note name format.
- *
- * @param name - The string to validate.
- *
- * @remarks
- * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
   if (!/^[A-G](?:b{1,2}|#{1,2})?-?\d+$/.test(name)) {
@@ -57,10 +47,6 @@ const A4_MIDI = 69
 
 /**
  * Represents a musical note with properties derived from its frequency.
- * @remarks
- * The factory methods (`fromFrequency`, `fromMidi`, `fromName`) are strict and will
- * throw errors on invalid input, such as non-finite numbers or malformed note names.
- * This is intentional to catch data or programming errors early.
  */
 export class MusicalNote {
   private constructor(
@@ -96,21 +82,6 @@ export class MusicalNote {
     return MusicalNote.fromFrequency(frequency)
   }
 
-  /**
-   * Parses a note name in scientific pitch notation.
-   *
-   * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
-   * @returns A MusicalNote instance
-   *
-   * @remarks
-   * Throws `AppError` CODE: `NOTE_PARSING_FAILED` if format is invalid.
-   *
-   * @example
-   * ```ts
-   * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
-   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
-   * ```
-   */
   static fromName(fullName: NoteName): MusicalNote {
     const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
     if (!match) {
@@ -152,19 +123,15 @@ export class MusicalNote {
 
 /**
  * Defines the tolerance boundaries for matching a note.
- * Uses different values for entering and exiting the matched state
- * to prevent oscillation (hysteresis).
  */
 export interface MatchHysteresis {
-  /** Tolerance in cents to consider a note as "starting to match". */
   enter: number
-  /** Tolerance in cents to consider a note as "no longer matching". */
   exit: number
 }
 
 /** Represents a note detected from the user's microphone input. */
 export interface DetectedNote {
-  pitch: string // e.g., "G4"
+  pitch: string
   pitchHz: number
   cents: number
   timestamp: number
@@ -173,24 +140,20 @@ export interface DetectedNote {
 
 /** The status of the practice session. */
 export type PracticeStatus =
-  | 'idle' // Not yet started
-  | 'listening' // Actively waiting for user input
-  | 'validating' // Target note detected, waiting for hold time
-  | 'correct' // Target note held for required time (transient)
-  | 'completed' // The entire exercise is finished
+  | 'idle'
+  | 'listening'
+  | 'validating'
+  | 'correct'
+  | 'completed'
 
 /** The complete, self-contained state of the practice session. */
 export interface PracticeState {
   status: PracticeStatus
   exercise: Exercise
   currentIndex: number
-  // The history of recent detections, used for UI feedback.
   detectionHistory: readonly DetectedNote[]
-  // The current duration the target note has been held (ms).
   holdDuration?: number
-  // Advanced technique observations for the last completed note.
   lastObservations?: Observation[]
-  // Count of consecutive notes played with high precision.
   perfectNoteStreak: number
 }
 
@@ -199,12 +162,10 @@ export type PracticeEvent =
   | { type: 'START' }
   | { type: 'STOP' }
   | { type: 'RESET' }
-  // Fired continuously from the pipeline for UI feedback.
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  // Fired when a note matches target but is still being validated.
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   // Fired by the pipeline only when a target note is held stable.
-  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[] } }
+  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean } }
   // Fired when the signal is lost.
   | { type: 'NO_NOTE_DETECTED' }
 
@@ -212,15 +173,6 @@ export type PracticeEvent =
 
 /**
  * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
- *
- * @remarks
- * This function handles various `alter` formats, including numeric (`1`, `-1`) and
- * string-based (`"sharp"`, `"#"`), normalizing them into a format that `MusicalNote`
- * can parse (e.g., "C#4"). It will throw an error if the `alter` value is
- * unsupported, as this indicates a data validation issue upstream.
- *
- * @param pitch - The pitch object from a `TargetNote`.
- * @returns A standardized note name string like `"C#4"` or `"Bb3"`.
  */
 export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
   const canonicalAlter = normalizeAccidental(pitch.alter)
@@ -248,13 +200,6 @@ export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
 
 /**
  * Checks if a detected note matches a target note within a specified tolerance.
- * Supports hysteresis to prevent rapid toggling near the tolerance boundary.
- *
- * @param target - The expected musical note.
- * @param detected - The note detected from audio.
- * @param tolerance - Either a fixed cent tolerance or a `MatchHysteresis` object.
- * @param isCurrentlyMatched - Whether the note was already matching in the previous frame.
- * @returns True if the detected note is considered a match.
  */
 export function isMatch(
   target: TargetNote,
@@ -330,10 +275,7 @@ function handleStopReset(state: PracticeState): PracticeState {
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-  // To maintain newest at index 0, we push existing items in reverse order before the new payload.
-  // FixedRingBuffer.push then reverses the entire argument list, putting payload at index 0.
   buffer.push(...state.detectionHistory.slice().reverse(), payload)
-  // Transition back to listening if we were validating/correct and received a detection
   const status =
     state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
   return {
@@ -360,7 +302,7 @@ function handleNoteMatched(
   if (state.status !== 'listening' && state.status !== 'validating') return state
 
   const lastDetection = state.detectionHistory[0]
-  const isPerfect = lastDetection && Math.abs(lastDetection.cents) < 5
+  const isPerfect = payload?.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
   const newStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
 
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1

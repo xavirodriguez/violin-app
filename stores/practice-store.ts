@@ -5,10 +5,10 @@
  * 1. FSM (State Machine) for the practice flow.
  * 2. Audio resources (Web Audio, Pitch Detection).
  * 3. Asynchronous runner loop.
- * 4. Analytics and progress tracking.
+ * 4. Analytics and progress tracking (via Session and Progress stores).
  *
  * Refactored to handle:
- * - Concurrency: Guards against double start and stale updates using sessionId.
+ * - Concurrency: Guards against double start and stale updates using sessionToken.
  * - Resource Lifecycle: Resource-first cleanup in stop() to prevent leaks.
  * - Reactivity: analyser and detector are stored in state for UI consistency.
  */
@@ -23,8 +23,9 @@ import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
+import { useSessionStore } from './session.store'
+import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
-import { useAnalyticsStore } from './analytics-store'
 import { PracticeSessionRunnerImpl } from '@/lib/practice/session-runner'
 import { transitions, PracticeStoreState } from '@/lib/practice/practice-states'
 
@@ -205,8 +206,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             const next = typeof partial === 'function' ? partial(s) : partial
             const ps = next.practiceState || s.practiceState
 
-            // Ensure we have at least a practiceState to derive liveObservations,
-            // or we are just updating the error/liveObservations directly.
             const liveObservations = ps ? getUpdatedLiveObservations(ps) : s.liveObservations
 
             if (s.state.status === 'active') {
@@ -243,23 +242,26 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           analytics: {
             recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => {
               try {
-                useAnalyticsStore.getState().recordNoteAttempt(index, pitch, cents, inTune)
+                useSessionStore.getState().recordAttempt(index, pitch, cents, inTune)
               } catch (e) {
-                console.error('[PracticeStore] analytics.recordNoteAttempt failed', e)
+                console.error('[PracticeStore] session.recordAttempt failed', e)
               }
             },
             recordNoteCompletion: (index: number, timeMs: number, technique?: NoteTechnique) => {
               try {
-                useAnalyticsStore.getState().recordNoteCompletion(index, timeMs, technique)
+                useSessionStore.getState().recordCompletion(index, timeMs, technique)
               } catch (e) {
-                console.error('[PracticeStore] analytics.recordNoteCompletion failed', e)
+                console.error('[PracticeStore] session.recordCompletion failed', e)
               }
             },
             endSession: () => {
               try {
-                useAnalyticsStore.getState().endSession()
+                const session = useSessionStore.getState().end()
+                if (session) {
+                  useProgressStore.getState().addSession(session)
+                }
               } catch (e) {
-                console.error('[PracticeStore] analytics.endSession failed', e)
+                console.error('[PracticeStore] finalize session failed', e)
               }
             },
           },
@@ -272,9 +274,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         const nextState = transitions.start(state, runner, abortController)
 
         try {
-          useAnalyticsStore.getState().startSession(state.exercise.id, state.exercise.name, 'practice')
+          useSessionStore.getState().start(state.exercise.id, state.exercise.name, 'practice')
         } catch (e) {
-          console.error('[PracticeStore] Failed to start analytics session', e)
+          console.error('[PracticeStore] Failed to start session', e)
         }
 
         set((s) => ({
@@ -335,9 +337,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }
 
       try {
-        useAnalyticsStore.getState().endSession()
+        const session = useSessionStore.getState().end()
+        if (session) {
+          useProgressStore.getState().addSession(session)
+        }
       } catch (err) {
-        console.warn('[PracticeStore] Error ending analytics session:', err)
+        console.warn('[PracticeStore] Error ending session:', err)
       }
 
       set((s) => ({

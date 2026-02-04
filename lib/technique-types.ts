@@ -2,22 +2,51 @@
  * Types and interfaces for advanced violin technique analysis.
  */
 
+/** Nominal type for a timestamp in milliseconds. */
+export type TimestampMs = number & { readonly __unit: 'ms' }
+/** Nominal type for frequency in Hertz. */
+export type Hz = number & { readonly __unit: 'Hz' }
+/** Nominal type for pitch deviation in cents. */
+export type Cents = number & { readonly __unit: 'cents' }
+/** Nominal type for a ratio between 0 and 1. */
+export type Ratio01 = number & { readonly __unit: '01' }
+
 /**
- * A single frame of analysis from the audio pipeline, enriched with technique-related data.
+ * Valid musical note name in scientific pitch notation.
+ * @example "A4", "C#5", "Bb3"
  */
-export interface TechniqueFrame {
-  /** The timestamp of the frame in milliseconds. */
-  timestamp: number
-  /** The detected fundamental frequency in Hertz. */
-  pitchHz: number
-  /** The pitch deviation in cents from the nearest note. */
-  cents: number
+export type NoteLetter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+export type Accidental = '' | '#' | 'b' | '##' | 'bb'
+export type Octave = number // Simplified to number, but typically 0-8
+export type MusicalNoteName = `${NoteLetter}${Accidental}${number}`
+
+/**
+ * A single frame of analysis from the audio pipeline.
+ * Use a discriminated union to distinguish between frames with valid pitch and without.
+ */
+export type TechniqueFrame = PitchedFrame | UnpitchedFrame
+
+interface BaseFrame {
+  /** The timestamp of the frame. */
+  readonly timestamp: TimestampMs
   /** The Root Mean Square (volume) of the frame. */
-  rms: number
+  readonly rms: number
   /** The confidence of the pitch detection algorithm (0-1). */
-  confidence: number
-  /** The name of the detected note (e.g., "C#4"). */
-  noteName: string
+  readonly confidence: number
+}
+
+export interface PitchedFrame extends BaseFrame {
+  readonly kind: 'pitched'
+  /** The detected fundamental frequency. */
+  readonly pitchHz: Hz
+  /** The pitch deviation in cents from the nearest note. */
+  readonly cents: Cents
+  /** The name of the detected note. */
+  readonly noteName: MusicalNoteName
+}
+
+export interface UnpitchedFrame extends BaseFrame {
+  readonly kind: 'unpitched'
 }
 
 /**
@@ -25,212 +54,144 @@ export interface TechniqueFrame {
  */
 export interface VibratoMetrics {
   /** `true` if vibrato is detected in the note segment. */
-  present: boolean
+  readonly present: boolean
   /** Vibrato rate in Hz (typical range: 4-8 Hz) */
-  rateHz: number
+  readonly rateHz?: Hz
   /** Vibrato width in cents (typical range: 10-50 cents) */
-  widthCents: number
+  readonly widthCents?: Cents
   /**
    * Vibrato regularity score.
-   *
-   * @remarks
    * Range: 0.0 to 1.0.
-   * - 0.0: Completely irregular/random oscillation
-   * - 0.5: Moderately regular
-   * - 1.0: Perfect sinusoidal regularity
    */
-  regularity: number
+  readonly regularity?: Ratio01
 }
 
 /**
  * Metrics related to pitch stability and intonation control.
  */
 export interface PitchStability {
-  /** The standard deviation of pitch (in cents) after the initial note attack (settling period). */
-  settlingStdCents: number
+  /** The standard deviation of pitch (in cents) after the initial note attack. */
+  readonly settlingStdCents: Cents
   /** The overall standard deviation of pitch (in cents) for the entire note. */
-  globalStdCents: number
-  /** The rate of pitch change over time, calculated via linear regression, in cents per second. */
-  driftCentsPerSec: number
-  /** The proportion of frames (0-1) that are within the target intonation tolerance. */
-  inTuneRatio: number
+  readonly globalStdCents: Cents
+  /** The rate of pitch change over time (cents per second). */
+  readonly driftCentsPerSec: number
+  /** The proportion of frames (0-1) within target intonation tolerance. */
+  readonly inTuneRatio: Ratio01
 }
 
 /**
  * Metrics related to the beginning (attack) and end (release) of a note.
  */
 export interface AttackReleaseMetrics {
-  /** The time in milliseconds from note onset to reaching 90% of the maximum volume (RMS). */
-  attackTimeMs: number
-  /** The pitch difference in cents between the start of the note and its stable pitch, indicating a "scoop". */
-  pitchScoopCents: number
-  /** The standard deviation of pitch (in cents) in the final milliseconds of the note, indicating release control. */
-  releaseStability: number
+  /** Time from onset to stable volume. */
+  readonly attackTimeMs: TimestampMs
+  /** Pitch difference between start and stable pitch ("scoop"). */
+  readonly pitchScoopCents: Cents
+  /** Standard deviation of pitch in the final milliseconds. */
+  readonly releaseStability: Cents
 }
 
 /**
  * Metrics related to the tonal quality and resonance of the note.
  */
 export interface ResonanceMetrics {
-  /** `true` if a "wolf tone" (a problematic, unstable resonance) is suspected. */
-  suspectedWolf: boolean
-  /** A score indicating the presence of periodic volume fluctuations (beating). */
-  rmsBeatingScore: number
-  /** A score indicating chaotic or unstable pitch fluctuations. */
-  pitchChaosScore: number
-  /** The proportion of high-volume frames that have low pitch-detection confidence. */
-  lowConfRatio: number
+  readonly suspectedWolf: boolean
+  /** Score indicating volume fluctuations (beating). */
+  readonly rmsBeatingScore: Ratio01
+  /** Score indicating chaotic pitch fluctuations. */
+  readonly pitchChaosScore: number
+  /** Proportion of high-volume frames with low confidence. */
+  readonly lowConfRatio: Ratio01
 }
 
 /**
  * Metrics related to the transition between two notes.
  */
 export interface TransitionMetrics {
-  /** The duration in milliseconds of the silence or glissando between notes. */
-  transitionTimeMs: number
-  /** The total pitch change in cents during an audible slide (glissando). */
-  glissAmountCents: number
-  /** The average pitch error in cents at the very beginning of the new note. */
-  landingErrorCents: number
-  /** The number of times the pitch crosses the center line during the note's start, indicating instability. */
-  correctionCount: number
+  /** Duration of silence or glissando between notes. */
+  readonly transitionTimeMs: TimestampMs
+  /** Total pitch change during an audible slide. */
+  readonly glissAmountCents: Cents
+  /** Average pitch error at the beginning of the new note. */
+  readonly landingErrorCents: Cents
+  /** Number of times pitch crosses the center line at the start. */
+  readonly correctionCount: number
 }
 
 /**
  * Configuration options for the technique analysis agent.
  */
 export interface AnalysisOptions {
-  /**
-   * Time to wait for pitch to settle after note onset.
-   *
-   * @remarks
-   * Range: 50-500 ms.
-   * Default: 150.
-   */
-  settlingTimeMs: number
-
-  /**
-   * Maximum pitch deviation to consider "in tune".
-   *
-   * @remarks
-   * Range: 5-50 cents.
-   * Default: 25.
-   */
-  inTuneThresholdCents: number
-
-  /**
-   * Minimum vibrato rate to detect.
-   *
-   * @remarks
-   * Range: 3-6 Hz.
-   * Default: 4.
-   */
-  vibratoMinRateHz: number
-
-  /**
-   * Maximum vibrato rate to detect.
-   *
-   * @remarks
-   * Range: 6-10 Hz.
-   * Default: 8.
-   */
-  vibratoMaxRateHz: number
-
-  /**
-   * Minimum vibrato width to consider present.
-   *
-   * @remarks
-   * Range: 5-20 cents.
-   * Default: 10.
-   */
-  vibratoMinWidthCents: number
-
-  /**
-   * Minimum regularity score to classify as intentional vibrato.
-   *
-   * @remarks
-   * Range: 0.3-0.8.
-   * Default: 0.5.
-   */
-  vibratoMinRegularity: number
+  /** Time to wait for pitch to settle (ms). Default: 150. */
+  settlingTimeMs?: TimestampMs
+  /** Max pitch deviation for "in tune" (cents). Default: 25. */
+  inTuneThresholdCents?: Cents
+  /** Min vibrato rate (Hz). Default: 4. */
+  vibratoMinRateHz?: Hz
+  /** Max vibrato rate (Hz). Default: 8. */
+  vibratoMaxRateHz?: Hz
+  /** Min vibrato width (cents). Default: 10. */
+  vibratoMinWidthCents?: Cents
+  /** Min regularity score for intentional vibrato. Default: 0.5. */
+  vibratoMinRegularity?: Ratio01
 }
 
 /**
  * Metrics related to rhythmic accuracy.
  */
 export interface RhythmMetrics {
-  /** The timing error in milliseconds of the note's start (onset) compared to the expected time. */
-  onsetErrorMs: number
-  /** The error in milliseconds of the note's total duration compared to the expected duration. */
-  durationErrorMs?: number
+  /** Timing error of the note's start (ms). */
+  readonly onsetErrorMs: number
+  /** Error of the note's total duration (ms). */
+  readonly durationErrorMs?: number
 }
 
 /**
- * A comprehensive collection of all technique metrics calculated for a single note.
+ * A comprehensive collection of all technique metrics.
  */
 export interface NoteTechnique {
-  vibrato: VibratoMetrics
-  pitchStability: PitchStability
-  attackRelease: AttackReleaseMetrics
-  resonance: ResonanceMetrics
-  rhythm: RhythmMetrics
-  transition: TransitionMetrics
+  readonly vibrato: VibratoMetrics
+  readonly pitchStability: PitchStability
+  readonly attackRelease: AttackReleaseMetrics
+  readonly resonance: ResonanceMetrics
+  readonly rhythm: RhythmMetrics
+  readonly transition: TransitionMetrics
 }
 
 /**
- * Represents a completed musical note, containing all its analysis frames and metadata.
+ * Represents a completed musical note segment.
  */
 export interface NoteSegment {
+  /** Unique identifier for the segment. */
+  readonly segmentId: string
   /** The zero-based index of the note within the exercise. */
-  noteIndex: number
-  /** The target pitch for the note (e.g., "A#4"). */
-  targetPitch: string
-  /** The timestamp of the note's start (onset) in milliseconds. */
-  startTime: number
-  /** The timestamp of the note's end (offset) in milliseconds. */
-  endTime: number
+  readonly noteIndex: number
+  /** The target pitch for the note. */
+  readonly targetPitch: MusicalNoteName
+  /** The timestamp of the note's start (onset). */
+  readonly startTime: TimestampMs
+  /** The timestamp of the note's end (offset). */
+  readonly endTime: TimestampMs
+  /** Duration calculated from end - start. */
+  readonly durationMs: TimestampMs
   /** The expected start time for rhythm analysis. */
-  expectedStartTime?: number
+  readonly expectedStartTime?: TimestampMs
   /** The expected duration for rhythm analysis. */
-  expectedDuration?: number
-  /** An array of all `TechniqueFrame`s that comprise the note. */
-  frames: TechniqueFrame[]
+  readonly expectedDuration?: TimestampMs
+  /** Readonly array of frames that comprise the note. */
+  readonly frames: ReadonlyArray<TechniqueFrame>
 }
 
 /**
- * Represents a piece of human-readable pedagogical feedback.
+ * Represents a piece of pedagogical feedback.
  */
 export interface Observation {
-  /** The category of the observation. */
-  type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
-
-  /**
-   * Severity level of the technical issue.
-   *
-   * @remarks
-   * - 1: Minor issue (cosmetic, does not affect musicality)
-   * - 2: Moderate issue (noticeable, affects quality)
-   * - 3: Critical issue (fundamental flaw, requires immediate attention)
-   */
-  severity: 1 | 2 | 3
-
-  /**
-   * Confidence in this observation.
-   *
-   * @remarks
-   * Range: 0.0 to 1.0.
-   * - \< 0.5: Low confidence (speculative, may be noise)
-   * - 0.5-0.8: Moderate confidence (likely accurate)
-   * - \> 0.8: High confidence (very reliable)
-   */
-  confidence: number
-
-  /** User-facing description of the issue */
-  message: string
-
-  /** Actionable pedagogical advice */
-  tip: string
-
-  /** Optional raw data supporting this observation (for debugging) */
-  evidence?: unknown
+  readonly type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
+  readonly severity: 1 | 2 | 3
+  readonly confidence: Ratio01
+  readonly message: string
+  readonly tip: string
+  /** Structured evidence supporting this observation. */
+  readonly evidence?: Record<string, unknown>
 }
