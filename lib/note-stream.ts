@@ -96,7 +96,7 @@ export async function* createRawPitchStream(
       pitchHz,
       confidence,
       rms: detector.calculateRMS(frame),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
     if (resolver) {
       resolver()
@@ -106,24 +106,25 @@ export async function* createRawPitchStream(
 
   try {
     while (!signal.aborted) {
-      if (queue.length === 0) {
-        await new Promise<void>((r) => {
-          resolver = r
-          const abortHandler = () => {
-            if (resolver) {
-              resolver()
-              resolver = null
-            }
-          }
-          signal.addEventListener('abort', abortHandler, { once: true })
-        })
-      }
-      if (signal.aborted) return
-
       while (queue.length > 0) {
-        const event = queue.shift()
-        if (event) yield event
+        yield queue.shift()!
       }
+
+      if (signal.aborted) break
+
+      await new Promise<void>((resolve) => {
+        resolver = resolve
+        const abortHandler = () => {
+          resolve()
+          resolver = null
+        }
+        signal.addEventListener('abort', abortHandler, { once: true })
+      })
+    }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return
+    if (e) {
+      console.warn('[PIPELINE] Caught error in createRawPitchStream', e)
     }
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') return
@@ -137,7 +138,7 @@ export async function* createRawPitchStream(
 }
 
 /**
- * Internal state for the technical analysis window.
+ * A custom `iter-tools` operator that implements note stability validation and technical analysis.
  */
 interface TechnicalAnalysisState {
   lastGapFrames: ReadonlyArray<TechniqueFrame>
@@ -148,13 +149,14 @@ interface TechnicalAnalysisState {
 
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext,
-  options: NoteStreamOptions,
+  contextOrGetter: PipelineContext | (() => PipelineContext),
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
+  const initialOptions = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
   const segmenter = new NoteSegmenter({
-    minRms: options.minRms,
-    minConfidence: options.minConfidence,
+    minRms: initialOptions.minRms,
+    minConfidence: initialOptions.minConfidence,
   })
   const agent = new TechniqueAnalysisAgent()
   const state: TechnicalAnalysisState = {
@@ -166,6 +168,8 @@ async function* technicalAnalysisWindow(
 
   for await (const raw of source) {
     if (signal.aborted) break
+    const context = typeof contextOrGetter === 'function' ? contextOrGetter() : contextOrGetter
+    const options = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
     if (signal.aborted) break
   }
@@ -348,10 +352,67 @@ function parseMusicalNote(pitchHz: number) {
     if (pitchHz > 0) {
       noteClass = MusicalNoteClass.fromFrequency(pitchHz)
     }
-  } catch {}
+  } else {
+    yield { type: 'NO_NOTE_DETECTED' }
+  }
+}
+
+/** Handles the logic for a completed segment and its technical analysis. */
+function processCompletedSegment(
+  frames: TechniqueFrame[],
+  currentTarget: TargetNote,
+  options: NoteStreamOptions,
+  getCurrentIndex: () => number,
+  firstNoteOnsetTime: number | null,
+  lastGapFrames: TechniqueFrame[],
+  prevSegment: NoteSegment | null,
+  agent: TechniqueAnalysisAgent,
+) {
+  if (frames.length === 0) return null
+
+  const segmentNoteName = frames[0].noteName
+  const targetPitch = formatTargetPitch(currentTarget)
+
+  const lastDetected: DetectedNote = {
+    pitch: segmentNoteName,
+    pitchHz: frames[frames.length - 1].pitchHz,
+    cents: frames[frames.length - 1].cents,
+    timestamp: frames[frames.length - 1].timestamp,
+    confidence: frames[frames.length - 1].confidence,
+  }
+
+  const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
+  const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
+
+  if (!match || duration < options.requiredHoldTime) return null
+
+  const currentIndex = getCurrentIndex()
+  const onsetTime = frames[0].timestamp
+
+  const { expectedStartTime, expectedDuration } = calculateRhythmExpectations(
+    options,
+    currentIndex,
+    firstNoteOnsetTime ?? onsetTime,
+  )
+
+  const currentSegment: NoteSegment = {
+    noteIndex: currentIndex,
+    targetPitch,
+    startTime: onsetTime,
+    endTime: frames[frames.length - 1].timestamp,
+    expectedStartTime,
+    expectedDuration,
+    frames,
+  }
+
+  const technique = agent.analyzeSegment(currentSegment, lastGapFrames, prevSegment)
+  const observations = agent.generateObservations(technique)
+  const isPerfect = Math.abs(lastDetected.cents) < 5
+
   return {
-    noteName: noteClass?.nameWithOctave ?? '',
-    cents: noteClass?.centsDeviation ?? 0,
+    onsetTime,
+    segment: currentSegment,
+    payload: { technique, observations, isPerfect },
   }
 }
 
@@ -374,12 +435,20 @@ function calculateRhythmExpectations(
   return { expectedStartTime, expectedDuration }
 }
 
+/**
+ * Creates a practice event processing pipeline with immutable context.
+ */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext,
-  options: Partial<NoteStreamOptions> & { exercise: Exercise },
+  context: PipelineContext | (() => PipelineContext),
+  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncIterable<PracticeEvent> {
-  const finalOptions = { ...defaultOptions, ...options } as NoteStreamOptions
-  return technicalAnalysisWindow(rawPitchStream, context, finalOptions, signal)
+  let optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
+  if (typeof options === 'function') {
+    optionsOrGetter = options
+  } else {
+    optionsOrGetter = { ...defaultOptions, ...options } as NoteStreamOptions
+  }
+  return technicalAnalysisWindow(rawPitchStream, context, optionsOrGetter, signal)
 }

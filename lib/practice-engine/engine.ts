@@ -2,6 +2,7 @@ import { PracticeEngineEvent } from './engine.types'
 import { AudioFramePort, PitchDetectorPort } from './engine.ports'
 import { createRawPitchStream, createPracticeEventPipeline } from '../note-stream'
 import { Exercise } from '../exercises/types'
+import { featureFlags } from '../feature-flags'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 
@@ -37,16 +38,25 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
         signal
       )
 
+      const sessionStartTime = Date.now()
+
       const pipeline = createPracticeEventPipeline(
         rawPitchStream,
-        {
+        () => ({
           targetNote: ctx.exercise.notes[state.currentNoteIndex] ?? null,
           currentIndex: state.currentNoteIndex,
-          sessionStartTime: Date.now(),
-        },
-        {
-          exercise: ctx.exercise,
-          bpm: 60
+          sessionStartTime,
+        }),
+        () => {
+          let centsTolerance = 25
+          if (featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')) {
+            centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
+          }
+          return {
+            exercise: ctx.exercise,
+            bpm: 60,
+            centsTolerance
+          } as any
         },
         signal
       )

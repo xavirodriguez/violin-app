@@ -1,0 +1,318 @@
+{
+  "discovery_timestamp": "2026-02-03T14:45:56.403098",
+  "total_features_detected": 20,
+  "features": [
+    {
+      "id": "feature_flags_metadata",
+      "name": "FEATURE_FLAGS_METADATA",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "FEATURE_FLAGS_CHECKLIST.md",
+        "FEATURE_FLAGS.md",
+        "reports/analisis-feature-flags.md",
+        "feature-flags-report.json",
+        "total.d.ts"
+      ],
+      "mentions": 26,
+      "metadata": {}
+    },
+    {
+      "id": "feature_ui_new_theme",
+      "name": "FEATURE_UI_NEW_THEME",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "README.md",
+        "FEATURE_ANALYSIS.md",
+        "FEATURE_FLAGS.md"
+      ],
+      "mentions": 10,
+      "metadata": {}
+    },
+    {
+      "id": "feature_audio_web_worker",
+      "name": "FEATURE_AUDIO_WEB_WORKER",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "feature_evolution_analysis.json",
+        "feature_evolution_analysis_v2.json",
+        "README.md",
+        "FEATURE_CATALOG.md",
+        "feature-flags-report.json",
+        "total.d.ts"
+      ],
+      "mentions": 26,
+      "metadata": {
+        "key": "FEATURE_AUDIO_WEB_WORKER"
+      }
+    },
+    {
+      "id": "feature_practice_adaptive_difficulty",
+      "name": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "feature_evolution_analysis.json",
+        "feature_evolution_analysis_v2.json",
+        "README.md",
+        "FEATURE_CATALOG.md",
+        "feature-flags-report.json",
+        "total.d.ts"
+      ],
+      "mentions": 19,
+      "metadata": {
+        "key": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"
+      }
+    },
+    {
+      "id": "feature_social_practice_rooms",
+      "name": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "feature_evolution_analysis_v2.json",
+        "types-docs/lib/feature-flags.d.ts",
+        "lib/feature-flags.ts",
+        "README.md",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 14,
+      "metadata": {
+        "key": "FEATURE_SOCIAL_PRACTICE_ROOMS"
+      }
+    },
+    {
+      "id": "feature_ui_intonation_heatmaps",
+      "name": "FEATURE_UI_INTONATION_HEATMAPS",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "reports/features-detectados.json",
+        "reports/analisis-feature-flags.md",
+        "feature_evolution_analysis_v2.json",
+        "types-docs/lib/feature-flags.d.ts",
+        "README.md",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 16,
+      "metadata": {
+        "key": "FEATURE_UI_INTONATION_HEATMAPS"
+      }
+    },
+    {
+      "id": "feature_analytics_dashboard",
+      "name": "FEATURE_ANALYTICS_DASHBOARD",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "execution_plan.json",
+        "feature_evolution_analysis.json",
+        "FEATURE_CATALOG.md",
+        "feature-flags-report.json"
+      ],
+      "mentions": 11,
+      "metadata": {}
+    },
+    {
+      "id": "feature_telemetry_accuracy",
+      "name": "FEATURE_TELEMETRY_ACCURACY",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "execution_plan.json",
+        "feature_evolution_analysis_v2.json",
+        "README.md",
+        "FEATURE_CATALOG.md",
+        "feature-flags-report.json",
+        "total.d.ts"
+      ],
+      "mentions": 23,
+      "metadata": {
+        "key": "FEATURE_TELEMETRY_ACCURACY"
+      }
+    },
+    {
+      "id": "feature_ui_violin_fingerboard",
+      "name": "FEATURE_UI_VIOLIN_FINGERBOARD",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_CATALOG.md",
+        "FEATURE_ANALYSIS.md",
+        "feature-flags-report.json",
+        "reports/features-detectados.json"
+      ],
+      "mentions": 4,
+      "metadata": {}
+    },
+    {
+      "id": "feature_technical_feedback",
+      "name": "FEATURE_TECHNICAL_FEEDBACK",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_CATALOG.md",
+        "FEATURE_ANALYSIS.md",
+        "feature-flags-report.json",
+        "reports/features-detectados.json"
+      ],
+      "mentions": 4,
+      "metadata": {}
+    },
+    {
+      "id": "feature_practice_assistant",
+      "name": "FEATURE_PRACTICE_ASSISTANT",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_ANALYSIS.md",
+        "execution_plan.json",
+        "reports/features-detectados.json",
+        "feature_evolution_analysis.json",
+        "FEATURE_CATALOG.md",
+        "feature-flags-report.json"
+      ],
+      "mentions": 8,
+      "metadata": {}
+    },
+    {
+      "id": "feature_ui_dark_mode",
+      "name": "FEATURE_UI_DARK_MODE",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_FLAGS_CHECKLIST.md"
+      ],
+      "mentions": 1,
+      "metadata": {}
+    },
+    {
+      "id": "feature_catalog",
+      "name": "FEATURE_CATALOG",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "README.md",
+        "FEATURE_FLAGS_CHECKLIST.md",
+        "reports/features-detectados.json",
+        "execution_plan.json"
+      ],
+      "mentions": 16,
+      "metadata": {}
+    },
+    {
+      "id": "feature_xxx",
+      "name": "FEATURE_XXX",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "FEATURE_FLAGS_CHECKLIST.md"
+      ],
+      "mentions": 1,
+      "metadata": {}
+    },
+    {
+      "id": "feature_practice_zen_mode",
+      "name": "FEATURE_PRACTICE_ZEN_MODE",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "post_execution_analysis_v2.json",
+        "components/practice-mode.tsx",
+        "feature_evolution_analysis_v2.json",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 18,
+      "metadata": {
+        "key": "FEATURE_PRACTICE_ZEN_MODE"
+      }
+    },
+    {
+      "id": "feature_practice_auto_start",
+      "name": "FEATURE_PRACTICE_AUTO_START",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "post_execution_analysis_v2.json",
+        "components/practice-mode.tsx",
+        "feature_evolution_analysis_v2.json",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 18,
+      "metadata": {
+        "key": "FEATURE_PRACTICE_AUTO_START"
+      }
+    },
+    {
+      "id": "feature_practice_exercise_recommender",
+      "name": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "post_execution_analysis_v2.json",
+        "reports/features-detectados.json",
+        "components/practice-mode.tsx",
+        "feature_evolution_analysis_v2.json",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 17,
+      "metadata": {
+        "key": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER"
+      }
+    },
+    {
+      "id": "feature_practice_achievement_system",
+      "name": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "post_execution_analysis_v2.json",
+        "reports/features-detectados.json",
+        "stores/analytics-store.ts",
+        "feature_evolution_analysis_v2.json",
+        "FEATURE_CATALOG.md",
+        "total.d.ts"
+      ],
+      "mentions": 17,
+      "metadata": {
+        "key": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM"
+      }
+    },
+    {
+      "id": "feature_flags",
+      "name": "FEATURE_FLAGS",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "README.md"
+      ],
+      "mentions": 2,
+      "metadata": {}
+    },
+    {
+      "id": "feature_analysis",
+      "name": "FEATURE_ANALYSIS",
+      "type": "UNKNOWN",
+      "current_state": "detected",
+      "locations": [
+        "execution_plan.json"
+      ],
+      "mentions": 1,
+      "metadata": {}
+    }
+  ]
+}

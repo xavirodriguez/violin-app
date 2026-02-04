@@ -81,7 +81,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private cleanup(): void {
-    this.controller = null
+    // No-op cleanup
   }
 
   private async runInternal(signal: AbortSignal): Promise<void> {
