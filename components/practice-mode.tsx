@@ -88,12 +88,9 @@ function ExerciseLibrary({
 }) {
   const [activeTab, setActiveTab] = useState('all')
   const { progress, sessions } = useAnalyticsStore()
-  const isRecommenderEnabled = useFeatureFlag('FEATURE_PRACTICE_EXERCISE_RECOMMENDER')
-
   const recommended = useMemo(() => {
-    if (!isRecommenderEnabled) return null
     return getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId)
-  }, [progress, sessions, isRecommenderEnabled])
+  }, [progress, sessions])
 
   const filteredExercises = useMemo(() => {
     return allExercises.filter((ex) => {
@@ -370,14 +367,9 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
-  const isZenModeEnabled = useFeatureFlag('FEATURE_PRACTICE_ZEN_MODE')
-  const isAutoStartEnabled = useFeatureFlag('FEATURE_PRACTICE_AUTO_START')
 
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
-
-  const isZenModeFeatureEnabled = useFeatureFlag('FEATURE_PRACTICE_ZEN_MODE')
-  const isAutoStartFeatureEnabled = useFeatureFlag('FEATURE_PRACTICE_AUTO_START')
 
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
@@ -461,7 +453,7 @@ export function PracticeMode() {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'z' && isZenModeEnabled) {
+      if (e.key.toLowerCase() === 'z') {
         setZenMode(v => !v)
         return
       }
@@ -472,11 +464,6 @@ export function PracticeMode() {
         case ' ': // Spacebar
           e.preventDefault()
           status === 'listening' ? stop() : start()
-          break
-        case 'z':
-          if (isZenModeFeatureEnabled) {
-            setZenMode(v => !v)
-          }
           break
       }
     }
@@ -512,7 +499,7 @@ export function PracticeMode() {
 
         {state.status === 'idle' && (
           <div className="space-y-6">
-            {!zenMode && isAutoStartEnabled && (
+            {!zenMode && (
               <div className="flex items-center justify-end gap-4 p-4 bg-muted/20 rounded-xl border">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -613,8 +600,8 @@ export function PracticeMode() {
             onRepeatMeasure={() => {}}
             onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={() => isZenModeEnabled && setZenMode((v) => !v)}
-            isZen={zenMode && isZenModeEnabled}
+            onToggleZen={() => setZenMode((v) => !v)}
+            isZen={zenMode}
           />
         )}
       </div>

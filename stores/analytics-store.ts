@@ -415,11 +415,6 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const state = get()
         if (!state.currentSession) return
 
-        // Guard with feature flag
-        if (!featureFlags.isEnabled('FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM')) {
-          return
-        }
-
         // Build stats for checker
         const stats: AchievementCheckStats = {
           currentSession: {
