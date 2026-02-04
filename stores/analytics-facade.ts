@@ -5,8 +5,14 @@ import { useSessionHistoryStore } from './session-history.store'
 import { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 
 /**
- * Fachada temporal para mantener compatibilidad con código existente
- * @deprecated Usar stores individuales directamente
+ * Temporary facade to maintain backward compatibility with the legacy analytics API.
+ *
+ * @remarks
+ * This object aggregates multiple stores (Session, Progress, Achievements, History)
+ * into a single interface. New code should prefer using the individual stores directly.
+ *
+ * @deprecated Use individual stores (e.g., `useSessionStore`, `useProgressStore`) directly.
+ * @public
  */
 export const useAnalyticsStore = Object.assign(
   () => {
@@ -16,24 +22,32 @@ export const useAnalyticsStore = Object.assign(
     const history = useSessionHistoryStore()
 
     return {
+      /** The current active session, if any. */
       currentSession: session.current,
+      /** History of completed sessions. */
       sessions: history.sessions,
+      /** Aggregated user progress. */
       progress: {
         ...progress,
         achievements: achievements.unlocked
       },
+      /** Current streak of perfect notes. */
       currentPerfectStreak: session.perfectNoteStreak,
+      /** Starts a new session. */
       startSession: session.start,
+      /** Ends the current session and updates related stores. */
       endSession: () => {
         const completed = session.end()
         if (completed) {
           progress.addSession(completed)
           history.addSession(completed)
-        progress.updateSkills(history.sessions)
+          progress.updateSkills(history.sessions)
         }
         return completed
       },
+      /** Records an attempt at a note. */
       recordNoteAttempt: session.recordAttempt,
+      /** Records a completed note and checks for achievements. */
       recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: any) => {
         useSessionStore.getState().recordCompletion(noteIndex, timeMs, technique)
 
@@ -59,11 +73,12 @@ export const useAnalyticsStore = Object.assign(
         }
         useAchievementsStore.getState().check(stats)
       },
+      /** Manually triggers an achievement check. */
       checkAndUnlockAchievements: () => {
         const stats: AchievementCheckStats = {
           currentSession: {
             correctNotes: session.current?.notesCompleted || 0,
-          perfectNoteStreak: session.perfectNoteStreak,
+            perfectNoteStreak: session.perfectNoteStreak,
             accuracy: session.current?.accuracy || 0,
             durationMs: session.current ? Date.now() - session.current.startTimeMs : 0,
             exerciseId: session.current?.exerciseId || '',
@@ -78,13 +93,18 @@ export const useAnalyticsStore = Object.assign(
         }
         return achievements.check(stats)
       },
+      /** Retrieves filtered session history. */
       getSessionHistory: history.getHistory,
+      /** Gets stats for a specific exercise. */
       getExerciseStats: (exerciseId: string) => progress.exerciseStats[exerciseId] || null,
+      /** Returns summary stats for the current day. */
       getTodayStats: () => ({ duration: 0, accuracy: 0, sessionsCount: 0 }),
+      /** Returns streak information. */
       getStreakInfo: () => ({ current: progress.currentStreak, longest: progress.longestStreak })
     }
   },
   {
+    /** Imperative access to the facade's state. */
     getState: () => {
       const session = useSessionStore.getState()
       const progress = useProgressStore.getState()
@@ -112,13 +132,12 @@ export const useAnalyticsStore = Object.assign(
           return completed
         },
         checkAndUnlockAchievements: () => {
-           // similar to above
            return []
         }
       }
     },
+    /** Imperative state update (for compatibility). */
     setState: (partial: any) => {
-      // Mock setState for compatibility
       if (partial.progress) {
         useProgressStore.setState(partial.progress)
         if (partial.progress.achievements) {
@@ -129,6 +148,7 @@ export const useAnalyticsStore = Object.assign(
       if (partial.currentSession !== undefined) useSessionStore.setState({ current: partial.currentSession })
       if (partial.currentPerfectStreak !== undefined) useSessionStore.setState({ perfectNoteStreak: partial.currentPerfectStreak })
     },
+    /** Persistence options for the facade (migrated from legacy). */
     persist: {
       getOptions: () => ({
         migrate: (persisted: any, version: number) => {

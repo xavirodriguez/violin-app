@@ -1,58 +1,125 @@
 import { create } from 'zustand'
-import superjson from 'superjson'
 import { PracticeSession } from './session.store'
 import { validatedPersist } from '@/lib/persistence/validated-persist'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
-import { NoteTechnique } from '../lib/technique-types'
 
+/**
+ * Event representing a completed exercise within the progress history.
+ *
+ * @public
+ */
 export interface ProgressEvent {
+  /** Unix timestamp of the event. */
   ts: number
+  /** ID of the exercise. */
   exerciseId: string
+  /** Accuracy achieved (0-100). */
   accuracy: number
+  /** Average rhythmic error in milliseconds. */
   rhythmErrorMs: number
 }
 
+/**
+ * Aggregated skill metrics.
+ *
+ * @public
+ */
 export interface SkillAggregates {
+  /** Intonation accuracy score (0-100). */
   intonation: number
+  /** Rhythmic precision score (0-100). */
   rhythm: number
+  /** Overall combined skill level. */
   overall: number
 }
 
+/**
+ * A snapshot of the user's progress at a specific point in time.
+ *
+ * @public
+ */
 export interface ProgressSnapshot {
+  /** The user this snapshot belongs to. */
   userId: string
+  /** The time window covered by the snapshot. */
   window: '7d' | '30d' | 'all'
+  /** Aggregated skills at this snapshot. */
   aggregates: SkillAggregates
+  /** ID of the session that triggered this snapshot. */
   lastSessionId: string
 }
 
+/**
+ * Lifetime statistics for an individual exercise.
+ *
+ * @public
+ */
 export interface ExerciseStats {
+  /** ID of the exercise. */
   exerciseId: string
+  /** Number of times completed. */
   timesCompleted: number
+  /** Best accuracy recorded. */
   bestAccuracy: number
+  /** Average accuracy across all attempts. */
   averageAccuracy: number
+  /** Fastest completion time in milliseconds. */
   fastestCompletionMs: number
+  /** Unix timestamp of the last attempt. */
   lastPracticedMs: number
 }
 
+/**
+ * State structure for the Progress Store.
+ *
+ * @public
+ */
 export interface ProgressState {
+  /** Version of the persistence schema. */
   schemaVersion: 1
+  /** Lifetime count of practice sessions. */
   totalPracticeSessions: number
-  totalPracticeTime: number // in seconds
+  /** Total practice time in seconds. */
+  totalPracticeTime: number
+  /** IDs of exercises that have been completed. */
   exercisesCompleted: string[]
+  /** Current daily practice streak. */
   currentStreak: number
+  /** Highest daily streak recorded. */
   longestStreak: number
+  /** Current intonation skill level (0-100). */
   intonationSkill: number
+  /** Current rhythm skill level (0-100). */
   rhythmSkill: number
+  /** Overall skill level (0-100). */
   overallSkill: number
+  /** Map of per-exercise statistics. */
   exerciseStats: Record<string, ExerciseStats>
+  /** Circular buffer of recent progress events (last 1000). */
   eventBuffer: ProgressEvent[]
+  /** Historical snapshots of progress. */
   snapshots: ProgressSnapshot[]
+  /** Counter of events processed, used for snapshot triggers. */
   eventCounter: number
 }
 
+/**
+ * Actions available in the Progress Store.
+ */
 interface ProgressActions {
+  /**
+   * Integrates a completed session into the long-term progress.
+   *
+   * @param session - The completed session data.
+   */
   addSession: (session: PracticeSession) => void
+
+  /**
+   * Re-calculates skill levels based on session history.
+   *
+   * @param sessions - Recent session history.
+   */
   updateSkills: (sessions: PracticeSession[]) => void
 }
 
@@ -72,6 +139,19 @@ const DEFAULT_PROGRESS: ProgressState = {
   eventCounter: 0
 }
 
+/**
+ * Zustand store for high-density, persistent progress tracking.
+ *
+ * @remarks
+ * This store is optimized for long-term storage of user performance metrics.
+ * It uses a circular event buffer (`eventBuffer`) and incremental snapshots
+ * to keep the storage footprint manageable while retaining high-fidelity data.
+ *
+ * Data is validated against `ProgressStateSchema` and persisted using
+ * custom logic that handles serialization and schema migrations.
+ *
+ * @public
+ */
 export const useProgressStore = create<ProgressState & ProgressActions>()(
   validatedPersist(
     ProgressStateSchema as any,
@@ -176,6 +256,9 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
   )
 )
 
+/**
+ * Heuristic for calculating intonation skill from session history.
+ */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
@@ -185,6 +268,9 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
   return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
 }
 
+/**
+ * Heuristic for calculating rhythm skill from session history.
+ */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
