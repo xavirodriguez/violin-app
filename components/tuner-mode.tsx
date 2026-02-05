@@ -14,7 +14,19 @@ import { Mic, MicOff, AlertCircle } from 'lucide-react'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 
 /**
- * Main component for the Tuner mode.
+ * Main component for the Standalone Tuner Mode.
+ *
+ * @remarks
+ * This component provides a focused interface for tuning the violin. It manages its own
+ * high-frequency analysis loop using `requestAnimationFrame` when active.
+ *
+ * The tuner displays:
+ * - A connection prompt if audio is not initialized.
+ * - An active fingerboard visualization with cents deviation.
+ * - Controls for starting and stopping the session.
+ * - Error handling for microphone access issues.
+ *
+ * @public
  */
 export function TunerMode() {
   const { state, analyser, detector, initialize, retry, reset, updatePitch } = useTunerStore()
@@ -31,7 +43,14 @@ export function TunerMode() {
 
   const animationFrameRef = useRef<number>(undefined)
 
-  // Audio analysis loop
+  /**
+   * Effect that manages the real-time audio analysis loop.
+   *
+   * @remarks
+   * When the tuner is active and resources (analyser, detector) are available,
+   * it starts a `requestAnimationFrame` loop that pulls time-domain data and
+   * updates the store with detected pitch.
+   */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {
       return

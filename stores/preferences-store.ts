@@ -5,16 +5,41 @@ import { validatedPersist } from '@/lib/persistence/validated-persist'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
 
+/**
+ * Interface for the Preferences Store, extending base {@link UserPreferences}.
+ *
+ * @public
+ */
 interface PreferencesStore extends UserPreferences {
+  /** Persistence schema version. */
   schemaVersion: 1
+
+  /**
+   * Sets the pedagogical feedback level.
+   *
+   * @param level - The new feedback level.
+   */
   setFeedbackLevel: (level: FeedbackLevel) => void
+
+  /** Toggles visibility of technical cents/hertz details in the UI. */
   toggleTechnicalDetails: () => void
+
+  /** Toggles celebratory UI effects (e.g., confetti) on success. */
   toggleCelebrations: () => void
+
+  /** Toggles haptic feedback (if supported by device). */
   toggleHaptics: () => void
+
+  /** Toggles audio-based correctness feedback. */
   toggleSoundFeedback: () => void
+
+  /** Resets all preferences to their default values. */
   resetToDefaults: () => void
 }
 
+/**
+ * Initial/Default preference values.
+ */
 const DEFAULT_PREFERENCES: UserPreferences = {
   feedbackLevel: 'beginner',
   showTechnicalDetails: false,
@@ -23,6 +48,15 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   soundFeedbackEnabled: false
 }
 
+/**
+ * Zustand store for managing persistent user preferences.
+ *
+ * @remarks
+ * This store handles UI and pedagogical settings that customize the user experience.
+ * Settings are persisted across sessions and validated against `PreferencesStateSchema`.
+ *
+ * @public
+ */
 export const usePreferencesStore = create<PreferencesStore>()(
   validatedPersist(
     PreferencesStateSchema as any,

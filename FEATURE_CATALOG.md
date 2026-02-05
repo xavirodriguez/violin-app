@@ -29,6 +29,26 @@ These features were previously behind flags but are now a permanent part of the 
 - **Description**: A command-palette style assistant (powered by `cmdk`) for quick navigation and drill selection.
 - **Status**: Stable. Accessible via `Meta+K` or `Ctrl+K`.
 
+### Zen Mode
+- **ID**: `FEATURE_PRACTICE_ZEN_MODE` (Promoted)
+- **Description**: Simplifies the UI to focus on the score, hiding distractions.
+- **Status**: Permanent. Toggled via 'Z' key.
+
+### Auto-start Listening
+- **ID**: `FEATURE_PRACTICE_AUTO_START` (Promoted)
+- **Description**: Option to automatically start the audio detection loop when an exercise is loaded.
+- **Status**: Permanent. Configurable in the Practice View.
+
+### Exercise Recommender
+- **ID**: `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` (Promoted)
+- **Description**: Suggests the next exercise based on previous performance and skills.
+- **Status**: Permanent. Integrated into the Exercise Library.
+
+### Achievement System
+- **ID**: `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM` (Promoted)
+- **Description**: Tracks and unlocks rewards for technical milestones.
+- **Status**: Permanent. Integrated with ProgressStore.
+
 ---
 
 ## 📋 Active Feature Flags
@@ -40,10 +60,6 @@ These features were previously behind flags but are now a permanent part of the 
 | `FEATURE_AUDIO_WEB_WORKER` | PERFORMANCE | DEFINED | HIGH |
 | `FEATURE_UI_INTONATION_HEATMAPS` | EXPERIMENTAL | DEFINED | LOW |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS` | EXPERIMENTAL | PLANNED | HIGH |
-| `FEATURE_PRACTICE_ZEN_MODE` | EXPERIMENTAL | ACTIVE | LOW |
-| `FEATURE_PRACTICE_AUTO_START` | BETA | ACTIVE | LOW |
-| `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` | BETA | ACTIVE | MEDIUM |
-| `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM` | BETA | ACTIVE | MEDIUM |
 
 ---
 
@@ -63,27 +79,6 @@ These features were previously behind flags but are now a permanent part of the 
 - **ID**: `FEATURE_UI_INTONATION_HEATMAPS`
 - **Description**: Visualizes pitch accuracy patterns over time on a staff or fingerboard overlay.
 - **Status**: UI components being designed.
-
-### Zen Mode
-- **ID**: `FEATURE_PRACTICE_ZEN_MODE`
-- **Description**: Simplifies the UI to focus on the score, hiding distractions.
-- **Status**: Implemented as local state, now formalized as a flag.
-
-### Auto-start Listening
-- **ID**: `FEATURE_PRACTICE_AUTO_START`
-- **Description**: Automatically starts the audio detection loop when an exercise is loaded.
-- **Status**: Stable implementation, formalized as a flag.
-
-### Exercise Recommender
-- **ID**: `FEATURE_PRACTICE_EXERCISE_RECOMMENDER`
-- **Description**: Suggests the next exercise based on previous performance and skills.
-- **Status**: Algorithmic implementation active.
-
-### Achievement System
-- **ID**: `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM`
-- **Description**: Tracks and unlocks rewards for technical milestones.
-- **Status**: Core logic integrated with ProgressStore.
-
 
 ---
 

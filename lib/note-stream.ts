@@ -125,12 +125,8 @@ export async function* createRawPitchStream(
     if (e instanceof Error && e.name === 'AbortError') return
     if (e) {
       console.warn('[PIPELINE] Caught error in createRawPitchStream', e)
-    }
-  } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError') return
-    if (!e) {
+    } else {
       console.warn('[PIPELINE] Caught null error in createRawPitchStream')
-      return
     }
   } finally {
     await loopPromise.catch(() => {}) // Cleanup
@@ -298,7 +294,7 @@ function handleSegmentCompletion(
   if (!match || segment.durationMs < options.requiredHoldTime) return null
 
   const currentIndex = getCurrentIndex()
-  const { expectedStartTime, expectedDuration } = calculateRhythmExpectations(
+  const expectations = calculateRhythmExpectations(
     options,
     currentIndex,
     state.firstNoteOnsetTime ?? segment.startTime,
@@ -307,11 +303,11 @@ function handleSegmentCompletion(
   const finalSegment: NoteSegment = {
     ...segment,
     noteIndex: currentIndex,
-    expectedStartTime: expectedStartTime as TimestampMs,
-    expectedDuration: expectedDuration as TimestampMs,
+    expectedStartTime: expectations.expectedStartTime as TimestampMs,
+    expectedDuration: expectations.expectedDuration as TimestampMs,
   }
 
-  const technique = agent.analyzeSegment(finalSegment, state.lastGapFrames, state.prevSegment)
+  const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
   const observations = agent.generateObservations(technique)
 
   if (state.firstNoteOnsetTime === null) state.firstNoteOnsetTime = segment.startTime
@@ -352,69 +348,16 @@ function parseMusicalNote(pitchHz: number) {
     if (pitchHz > 0) {
       noteClass = MusicalNoteClass.fromFrequency(pitchHz)
     }
-  } else {
-    yield { type: 'NO_NOTE_DETECTED' }
+  } catch (e) {
+    // Ignore invalid frequencies
   }
-}
-
-/** Handles the logic for a completed segment and its technical analysis. */
-function processCompletedSegment(
-  frames: TechniqueFrame[],
-  currentTarget: TargetNote,
-  options: NoteStreamOptions,
-  getCurrentIndex: () => number,
-  firstNoteOnsetTime: number | null,
-  lastGapFrames: TechniqueFrame[],
-  prevSegment: NoteSegment | null,
-  agent: TechniqueAnalysisAgent,
-) {
-  if (frames.length === 0) return null
-
-  const segmentNoteName = frames[0].noteName
-  const targetPitch = formatTargetPitch(currentTarget)
-
-  const lastDetected: DetectedNote = {
-    pitch: segmentNoteName,
-    pitchHz: frames[frames.length - 1].pitchHz,
-    cents: frames[frames.length - 1].cents,
-    timestamp: frames[frames.length - 1].timestamp,
-    confidence: frames[frames.length - 1].confidence,
-  }
-
-  const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
-  const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
-
-  if (!match || duration < options.requiredHoldTime) return null
-
-  const currentIndex = getCurrentIndex()
-  const onsetTime = frames[0].timestamp
-
-  const { expectedStartTime, expectedDuration } = calculateRhythmExpectations(
-    options,
-    currentIndex,
-    firstNoteOnsetTime ?? onsetTime,
-  )
-
-  const currentSegment: NoteSegment = {
-    noteIndex: currentIndex,
-    targetPitch,
-    startTime: onsetTime,
-    endTime: frames[frames.length - 1].timestamp,
-    expectedStartTime,
-    expectedDuration,
-    frames,
-  }
-
-  const technique = agent.analyzeSegment(currentSegment, lastGapFrames, prevSegment)
-  const observations = agent.generateObservations(technique)
-  const isPerfect = Math.abs(lastDetected.cents) < 5
 
   return {
-    onsetTime,
-    segment: currentSegment,
-    payload: { technique, observations, isPerfect },
+    noteName: noteClass?.nameWithOctave ?? '',
+    cents: noteClass?.centsDeviation ?? 0,
   }
 }
+
 
 function calculateRhythmExpectations(
   options: NoteStreamOptions,

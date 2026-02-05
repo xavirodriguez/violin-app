@@ -34,6 +34,10 @@ Some features require others to be enabled or have infrastructure dependencies:
 | `FEATURE_TECHNICAL_FEEDBACK` | Stable | **PROMOTED**: Flag removed, feedback system is now permanent. |
 | `FEATURE_ANALYTICS_DASHBOARD` | Stable | **PROMOTED**: Flag removed, analytics is now a core view. |
 | `FEATURE_PRACTICE_ASSISTANT` | Stable | **PROMOTED**: Flag removed, cmdk assistant is now permanent. |
+| `FEATURE_PRACTICE_ZEN_MODE` | Stable | **PROMOTED**: Flag removed, Zen Mode is now a core UI capability. |
+| `FEATURE_PRACTICE_AUTO_START` | Stable | **PROMOTED**: Flag removed, Auto-start is now a core capability. |
+| `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` | Stable | **PROMOTED**: Flag removed, recommendation system is now permanent. |
+| `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM` | Stable | **PROMOTED**: Flag removed, achievement system is now permanent. |
 | `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
 
 ## 🚀 Architectural Recommendations

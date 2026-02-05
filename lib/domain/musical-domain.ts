@@ -7,28 +7,43 @@
 
 /**
  * Represents a pitch alteration in a canonical numeric format.
- * -1: Flat (b)
- *  0: Natural
- *  1: Sharp (#)
+ *
+ * @remarks
+ * Values:
+ * - -1: Flat (b)
+ * - 0: Natural
+ * - 1: Sharp (#)
+ *
+ * @public
  */
 export type CanonicalAccidental = -1 | 0 | 1
 
 /**
- * Normalizes various accidental representations to canonical format.
+ * Normalizes various accidental representations to the canonical format.
  *
- * @param input - Accidental in any supported format:
- *   - Number: -1 (flat), 0 (natural), 1 (sharp)
- *   - String: "b"/"flat" (-1), "natural"/"" (0), "#"/"sharp" (1)
- *   - null/undefined: Treated as 0 (natural)
+ * @remarks
+ * This function handles the conversion from multiple input formats (numeric, string, symbol)
+ * into a strictly typed {@link CanonicalAccidental}. It is primarily used during
+ * exercise definition and MusicXML parsing.
  *
- * @returns A CanonicalAccidental (-1, 0, or 1)
- * @throws Error - if input is invalid
+ * Supported inputs:
+ * - **Numbers**: -1, 0, 1. (Also supports -2/2 for double accidentals, mapping them to single).
+ * - **Strings**: "sharp", "#", "flat", "b", "natural", "", etc.
+ * - **Null/Undefined**: Defaults to 0 (natural).
+ *
+ * @param input - The raw accidental representation.
+ * @returns A {@link CanonicalAccidental} (-1, 0, or 1).
+ *
+ * @throws Error - If the input format is unrecognized or unsupported.
  *
  * @example
- * normalizeAccidental(1);        // 1
- * normalizeAccidental("#");      // 1
- * normalizeAccidental("flat");   // -1
- * normalizeAccidental("X");      // ❌ Throws Error
+ * ```ts
+ * normalizeAccidental("#");      // returns 1
+ * normalizeAccidental("flat");   // returns -1
+ * normalizeAccidental(undefined); // returns 0
+ * ```
+ *
+ * @public
  */
 export function normalizeAccidental(
   input: number | string | null | undefined,
