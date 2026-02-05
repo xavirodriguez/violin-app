@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transitions, PracticeStoreState, ReadyState, ActiveState } from './practice-states'
+import { transitions } from './practice-states'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { PracticeSessionRunner } from './session-runner'
 
@@ -23,7 +23,7 @@ describe('Practice state transitions', () => {
     })
     expect(ready.status).toBe('ready')
 
-    const active = transitions.start(ready, mockRunner)
+    const active = transitions.start(ready, mockRunner, new AbortController())
     expect(active.status).toBe('active')
     expect(active.runner).toBe(mockRunner)
 

@@ -40,8 +40,8 @@ export interface InitializingState {
   status: 'initializing'
   /** The exercise being initialized. */
   exercise: Exercise | null
-  /** The initialization progress from 0 to 100. */
-  progress: number
+  progress: number // 0-100
+  error: null
 }
 
 /**
@@ -56,6 +56,7 @@ export interface ReadyState {
   detector: PitchDetectionPort
   /** The exercise ready to be played. */
   exercise: Exercise
+  error: null
 }
 
 /**
@@ -74,6 +75,8 @@ export interface ActiveState {
   runner: PracticeSessionRunner
   /** The domain-specific practice state. */
   practiceState: PracticeState
+  abortController: AbortController
+  error: null
 }
 
 /**
@@ -82,7 +85,7 @@ export interface ActiveState {
 export interface ErrorState {
   /** The state machine status. */
   status: 'error'
-  /** The error details. */
+  exercise: Exercise | null
   error: AppError
 }
 
@@ -104,7 +107,8 @@ export const transitions = {
   initialize: (exercise: Exercise | null): InitializingState => ({
     status: 'initializing',
     exercise,
-    progress: 0
+    progress: 0,
+    error: null,
   }),
 
   /**
@@ -118,28 +122,29 @@ export const transitions = {
     exercise: Exercise
   }): ReadyState => ({
     status: 'ready',
-    ...resources
+    ...resources,
+    error: null,
   }),
 
-  /**
-   * Transitions to the active state when the practice begins.
-   *
-   * @param state - The current ready state.
-   * @param runner - The session runner to manage execution.
-   */
-  start: (state: ReadyState, runner: PracticeSessionRunner): ActiveState => ({
+  start: (
+    state: ReadyState,
+    runner: PracticeSessionRunner,
+    abortController: AbortController,
+  ): ActiveState => ({
     status: 'active',
     audioLoop: state.audioLoop,
     detector: state.detector,
     exercise: state.exercise,
     runner,
+    abortController,
+    error: null,
     practiceState: {
       status: 'listening',
       exercise: state.exercise,
       currentIndex: 0,
       detectionHistory: [],
-      perfectNoteStreak: 0
-    }
+      perfectNoteStreak: 0,
+    },
   }),
 
   /**
@@ -154,14 +159,16 @@ export const transitions = {
     exercise: state.exercise
   }),
 
+  
   /**
    * Transitions to the error state.
    *
    * @param error - The application error encountered.
    */
-  error: (error: AppError): ErrorState => ({
+  error: (error: AppError, exercise: Exercise | null = null): ErrorState => ({
     status: 'error',
-    error
+    exercise,
+    error,
   }),
 
   /**

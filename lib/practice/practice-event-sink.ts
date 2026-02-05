@@ -17,7 +17,7 @@ type StoreApi<T> = {
    */
   setState: (
     partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: false,
+    replace?: boolean,
   ) => void
 }
 

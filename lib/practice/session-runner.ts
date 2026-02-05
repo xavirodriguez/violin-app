@@ -1,8 +1,8 @@
 import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
 import { createPracticeEngine } from '../practice-engine/engine'
+import { PracticeEngineEvent } from '../practice-engine/engine.types'
 import { engineReducer } from '../practice-engine/engine.reducer'
 import { handlePracticeEvent } from './practice-event-sink'
-import { calculateLiveObservations } from '@/lib/live-observations'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { featureFlags } from '@/lib/feature-flags'
 import type { Exercise } from '@/lib/exercises/types'
@@ -43,11 +43,8 @@ export interface PracticeSessionRunner {
   cancel(): void
 }
 
-/**
- * Dependencies required by the {@link PracticeSessionRunnerImpl}.
- *
- * @public
- */
+import { Observation } from '../technique-types'
+
 export interface SessionRunnerDependencies {
   /** The source of audio frames. */
   audioLoop: AudioLoopPort
@@ -59,14 +56,17 @@ export interface SessionRunnerDependencies {
   sessionStartTime: number
   /** Minimal store interface for state management and communication. */
   store: {
-    /** Gets the current store state. */
-    getState: () => { practiceState: PracticeState | null; liveObservations?: any[] }
-    /** Updates the store state. */
+    getState: () => { practiceState: PracticeState | null; liveObservations?: Observation[] }
     setState: (
       partial:
-        | { practiceState: PracticeState | null; liveObservations?: any[] }
-        | Partial<{ practiceState: PracticeState | null; liveObservations?: any[] }>
-        | ((state: { practiceState: PracticeState | null; liveObservations?: any[] }) => { practiceState: PracticeState | null; liveObservations?: any[] } | Partial<{ practiceState: PracticeState | null; liveObservations?: any[] }>),
+        | { practiceState: PracticeState | null; liveObservations?: Observation[] }
+        | Partial<{ practiceState: PracticeState | null; liveObservations?: Observation[] }>
+        | ((state: {
+            practiceState: PracticeState | null
+            liveObservations?: Observation[]
+          }) =>
+            | { practiceState: PracticeState | null; liveObservations?: Observation[] }
+            | Partial<{ practiceState: PracticeState | null; liveObservations?: Observation[] }>),
       replace?: boolean
     ) => void
     /** Stops the session and cleans up resources. */
@@ -163,7 +163,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const { audioLoop, detector, exercise } = this.deps
 
     const engine = createPracticeEngine({
-      audio: audioLoop as any,
+      audio: audioLoop,
       pitch: detector,
       exercise,
       reducer: engineReducer,
@@ -180,19 +180,18 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     }
   }
 
-  /**
-   * Maps events from the formalized Practice Engine to legacy PracticeEvent types.
-   *
-   * @param event - The engine event to map.
-   * @returns A legacy {@link PracticeEvent}.
-   */
-  private mapEngineEventToPracticeEvent(event: any): PracticeEvent {
+  private mapEngineEventToPracticeEvent(event: PracticeEngineEvent): PracticeEvent {
     switch (event.type) {
-      case 'NOTE_DETECTED': return { type: 'NOTE_DETECTED', payload: event.payload }
-      case 'HOLDING_NOTE': return { type: 'HOLDING_NOTE', payload: event.payload }
-      case 'NOTE_MATCHED': return { type: 'NOTE_MATCHED', payload: event.payload }
-      case 'NO_NOTE': return { type: 'NO_NOTE_DETECTED' }
-      default: return { type: 'NO_NOTE_DETECTED' }
+      case 'NOTE_DETECTED':
+        return { type: 'NOTE_DETECTED', payload: event.payload }
+      case 'HOLDING_NOTE':
+        return { type: 'HOLDING_NOTE', payload: event.payload }
+      case 'NOTE_MATCHED':
+        return { type: 'NOTE_MATCHED', payload: event.payload }
+      case 'NO_NOTE':
+        return { type: 'NO_NOTE_DETECTED' }
+      default:
+        return { type: 'NO_NOTE_DETECTED' }
     }
   }
 
@@ -236,29 +235,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
     handlePracticeEvent(
       event,
-      this.deps.store as any,
+      this.deps.store,
       () => void this.deps.store.stop(),
       this.deps.analytics
     )
-
-    // Handle live observations
-    if (event.type === 'NOTE_DETECTED') {
-      const state = this.deps.store.getState()
-      const practiceState = state.practiceState
-      if (practiceState) {
-        const targetNote = practiceState.exercise.notes[practiceState.currentIndex]
-        if (targetNote) {
-          const targetPitchName = formatPitchName(targetNote.pitch)
-          const liveObs = calculateLiveObservations(
-            [...practiceState.detectionHistory],
-            targetPitchName
-          )
-          this.deps.store.setState({ liveObservations: liveObs })
-        }
-      }
-    } else if (event.type === 'NOTE_MATCHED') {
-      this.deps.store.setState({ liveObservations: [] })
-    }
   }
 
   /**

@@ -16,7 +16,7 @@ import { Observation, Ratio01 } from './technique-types'
  * @public
  */
 export function calculateLiveObservations(
-  recentDetections: DetectedNote[],
+  recentDetections: readonly DetectedNote[],
   targetPitch: string
 ): Observation[] {
   if (recentDetections.length < 5) {

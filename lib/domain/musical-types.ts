@@ -162,6 +162,10 @@ export interface Exercise extends ExerciseData {
  * @public
  */
 export type TunerState =
+  | { kind: 'IDLE' }
+  | { kind: 'INITIALIZING'; readonly sessionToken: string | number }
+  | { kind: 'READY'; readonly sessionToken: string | number }
+  | { kind: 'LISTENING'; readonly sessionToken: string | number }
   | {
       /** Initial state before any action is taken. */
       kind: 'IDLE'
@@ -195,8 +199,7 @@ export type TunerState =
       cents: number
       /** Detection confidence (0.0 to 1.0). */
       confidence: number
-      /** Unique token for the current session. */
-      readonly sessionToken: number
+      readonly sessionToken: string | number
     }
   | {
       /** Terminal or recoverable error state. */
