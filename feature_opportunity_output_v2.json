@@ -1,0 +1,63 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "growth_adaptive_practice",
+      "primary_feature": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "growth_type": "increase_capabilities",
+      "current_state": "Basic streak-based tolerance adjustment.",
+      "opportunity_description": "Enhance adaptive logic to include multi-dimension performance metrics (rhythm, intonation stability) and promote to Beta.",
+      "rationale": {
+        "why_now": "Core audio engine is stable. Users are asking for more personalized feedback.",
+        "user_benefit": "Practice that automatically adjusts to their level, preventing frustration.",
+        "business_benefit": "Higher user retention and engagement.",
+        "technical_readiness": "70% ready. Core FSM supports dynamic updates."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Intonation Stability",
+          "duration_weeks": 2,
+          "rollout_percentage": 0.2,
+          "success_metrics": [
+            "False positive rate < 5%",
+            "User retention +10%"
+          ],
+          "go_no_go_criteria": "Stability metrics met."
+        },
+        "phase_2": {
+          "name": "Rhythmic Precision",
+          "duration_weeks": 3,
+          "rollout_percentage": 0.5,
+          "success_metrics": [
+            "Average session duration +5m"
+          ],
+          "go_no_go_criteria": "Performance remains stable."
+        }
+      },
+      "required_work": [
+        {
+          "task": "Refactor engine to accept multi-metric feedback.",
+          "effort_hours": 20,
+          "priority": "high",
+          "blocking": true
+        },
+        {
+          "task": "Update UI to show 'adaptive mode' status.",
+          "effort_hours": 8,
+          "priority": "medium",
+          "blocking": false
+        }
+      ],
+      "confidence_score": 0.85,
+      "recommendation_strength": "STRONG"
+    }
+  ],
+  "prioritized_queue": [
+    {
+      "rank": 1,
+      "opportunity_id": "growth_adaptive_practice",
+      "recommended_start_date": "2026-02-07T14:37:48.896972",
+      "expected_completion_date": "2026-05-01T14:37:48.896972",
+      "impact_if_successful": "Significant improvement in pedagogical value."
+    }
+  ]
+}

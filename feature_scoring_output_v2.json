@@ -1,0 +1,230 @@
+[
+  {
+    "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+    "scoring": {
+      "maturity": {
+        "score": 6,
+        "rationale": "Logic implemented in PracticeEngine and used in PracticeMode. Some tests exist.",
+        "factors": {
+          "code_quality": 7,
+          "test_coverage": 6,
+          "documentation": 7,
+          "stability_over_time": 5,
+          "bug_frequency": 4
+        }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "High pedagogical value. Personalizes learning experience.",
+        "factors": {
+          "user_impact": 9,
+          "revenue_potential": 7,
+          "strategic_alignment": 9,
+          "competitive_advantage": 8,
+          "market_demand": 9
+        }
+      },
+      "adoption_readiness": {
+        "score": 7,
+        "rationale": "Ready for beta testing with more users.",
+        "factors": {
+          "current_users": 3,
+          "feature_discoverability": 6,
+          "onboarding_complexity": 5,
+          "performance_impact": 4,
+          "ui_ux_quality": 7
+        }
+      },
+      "technical_debt": {
+        "score": 4,
+        "rationale": "Integrated into core engine reducer. Clean but complex.",
+        "factors": {
+          "code_complexity": 6,
+          "refactor_needs": 3,
+          "performance_debt": 3,
+          "security_concerns": 2,
+          "scalability_limits": 4
+        }
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "Can be expanded to more technique metrics.",
+        "factors": {
+          "feature_expansion_possibilities": 9,
+          "market_expansion": 8,
+          "integration_opportunities": 7,
+          "monetization_potential": 8,
+          "ecosystem_value": 7
+        }
+      },
+      "risk_profile": {
+        "score": 5,
+        "rationale": "Moderate risk of frustrating users if too strict.",
+        "factors": {
+          "breaking_change_risk": 4,
+          "security_risk": 1,
+          "performance_risk": 3,
+          "compatibility_risk": 3,
+          "migration_risk": 4
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 8.2,
+      "weighted_score": 7.8,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_TELEMETRY_ACCURACY",
+    "scoring": {
+      "maturity": {
+        "score": 9,
+        "rationale": "Stable and simple implementation. Integrated with Vercel.",
+        "factors": {
+          "code_quality": 9,
+          "test_coverage": 8,
+          "documentation": 9,
+          "stability_over_time": 9,
+          "bug_frequency": 1
+        }
+      },
+      "business_value": {
+        "score": 7,
+        "rationale": "Crucial for internal observability and improvement.",
+        "factors": {
+          "user_impact": 4,
+          "revenue_potential": 2,
+          "strategic_alignment": 8,
+          "competitive_advantage": 5,
+          "market_demand": 4
+        }
+      },
+      "adoption_readiness": {
+        "score": 9,
+        "rationale": "Transparent to the user.",
+        "factors": {
+          "current_users": 10,
+          "feature_discoverability": 1,
+          "onboarding_complexity": 1,
+          "performance_impact": 2,
+          "ui_ux_quality": 10
+        }
+      },
+      "technical_debt": {
+        "score": 2,
+        "rationale": "Minimal debt. Standard instrumentation.",
+        "factors": {
+          "code_complexity": 2,
+          "refactor_needs": 1,
+          "performance_debt": 2,
+          "security_concerns": 3,
+          "scalability_limits": 2
+        }
+      },
+      "growth_potential": {
+        "score": 6,
+        "rationale": "Can include more domain-specific metrics.",
+        "factors": {
+          "feature_expansion_possibilities": 7,
+          "market_expansion": 4,
+          "integration_opportunities": 6,
+          "monetization_potential": 3,
+          "ecosystem_value": 5
+        }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Low risk, mostly data privacy (handled by Vercel).",
+        "factors": {
+          "breaking_change_risk": 1,
+          "security_risk": 3,
+          "performance_risk": 2,
+          "compatibility_risk": 1,
+          "migration_risk": 1
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 9.0,
+      "weighted_score": 8.5,
+      "recommendation": "GRADUAL"
+    }
+  },
+  {
+    "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+    "scoring": {
+      "maturity": {
+        "score": 3,
+        "rationale": "Defined but not fully utilized in current pipeline. Needs major refactor.",
+        "factors": {
+          "code_quality": 5,
+          "test_coverage": 2,
+          "documentation": 4,
+          "stability_over_time": 2,
+          "bug_frequency": 6
+        }
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "Essential for performance on lower-end devices.",
+        "factors": {
+          "user_impact": 8,
+          "revenue_potential": 5,
+          "strategic_alignment": 9,
+          "competitive_advantage": 7,
+          "market_demand": 7
+        }
+      },
+      "adoption_readiness": {
+        "score": 4,
+        "rationale": "Needs significant testing across browsers.",
+        "factors": {
+          "current_users": 1,
+          "feature_discoverability": 2,
+          "onboarding_complexity": 3,
+          "performance_impact": 9,
+          "ui_ux_quality": 5
+        }
+      },
+      "technical_debt": {
+        "score": 7,
+        "rationale": "Current main thread logic is deeply coupled.",
+        "factors": {
+          "code_complexity": 8,
+          "refactor_needs": 9,
+          "performance_debt": 8,
+          "security_concerns": 2,
+          "scalability_limits": 7
+        }
+      },
+      "growth_potential": {
+        "score": 7,
+        "rationale": "Enables more complex real-time analysis.",
+        "factors": {
+          "feature_expansion_possibilities": 8,
+          "market_expansion": 7,
+          "integration_opportunities": 6,
+          "monetization_potential": 5,
+          "ecosystem_value": 6
+        }
+      },
+      "risk_profile": {
+        "score": 8,
+        "rationale": "High risk of breaking audio engine.",
+        "factors": {
+          "breaking_change_risk": 9,
+          "security_risk": 2,
+          "performance_risk": 4,
+          "compatibility_risk": 8,
+          "migration_risk": 9
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 4.5,
+      "weighted_score": 5.2,
+      "recommendation": "MAINTAIN"
+    }
+  }
+]

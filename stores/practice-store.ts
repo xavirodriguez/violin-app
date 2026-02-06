@@ -182,6 +182,9 @@ function getInitialState(exercise: Exercise): PracticeState {
 }
 
 function getUpdatedLiveObservations(state: PracticeState): Observation[] {
+  if (state.status === 'idle' || state.status === 'correct' || state.status === 'completed') {
+    return state.lastObservations || []
+  }
   const targetNote = state.exercise.notes[state.currentIndex]
   if (!targetNote) return []
   const targetPitchName = formatPitchName(targetNote.pitch)
@@ -213,7 +216,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         error: null,
         liveObservations: [],
         sessionToken: null,
-      }))
+      })
     },
 
     setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
@@ -372,30 +375,26 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
 
         const runner = new PracticeSessionRunnerImpl(runnerDeps)
-        const nextState = transitions.start(state, runner, abortController)
+        const nextState = transitions.start(storeState, runner, abortController)
 
         try {
-          useSessionStore.getState().start(state.exercise.id, state.exercise.name, 'practice')
+          if (storeState.exercise) {
+            useSessionStore.getState().start(storeState.exercise.id, storeState.exercise.name, 'practice')
+          }
         } catch (e) {
           console.error('[PracticeStore] Failed to start session', e)
         }
 
-        // Sync with TunerStore
-        useTunerStore.setState({
-          state: { kind: 'LISTENING', sessionToken: newSessionId },
-          detector: (storeState as any).detector?.detector || null
-        })
-
         set({
           state: nextState,
-          practiceState: reducePracticeEvent(s.practiceState!, { type: 'START' }),
+          practiceState: reducePracticeEvent(get().practiceState!, { type: 'START' }),
           sessionToken: currentToken,
           isStarting: false,
           error: null,
-        }))
+        })
 
         // Sync with TunerStore
-        const detectorInstance = (state.detector as PitchDetectorAdapter).detector || null
+        const detectorInstance = (storeState as any).detector?.detector || null
         useTunerStore.setState({
           state: { kind: 'LISTENING', sessionToken: currentToken },
           detector: detectorInstance,
@@ -449,7 +448,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
       set((s) => ({
         ...s,
-        state: s.state.status === 'active' ? transitions.stop(s.state) : s.state,
+        state: (s.state.status === 'active' || s.state.status === 'ready') ? transitions.stop(s.state as any) : s.state,
         practiceState: s.practiceState ? { ...s.practiceState, status: 'idle' } : null,
         analyser: null,
         audioLoop: null,
@@ -492,9 +491,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         set((s) => {
           if (s.sessionToken !== currentToken) return s
           return {
-            ...state,
+            ...s,
             practiceState: newState,
-            liveObservations: liveObs,
+            liveObservations: getUpdatedLiveObservations(newState),
           }
         })
       }

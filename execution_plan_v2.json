@@ -1,0 +1,59 @@
+{
+  "execution_plan": {
+    "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+    "plan_version": 2.0,
+    "generated_date": "2026-02-06T14:36:08.593322",
+    "planning_horizon": "12 weeks",
+    "workstreams": [
+      {
+        "workstream_id": "technical_readiness",
+        "owner": "Jules (Agent)",
+        "items": [
+          {
+            "task_id": "TECH001",
+            "description": "Refactor Adaptive Difficulty logic in engine.ts to support multiple metrics.",
+            "acceptance_criteria": [
+              "Handles both centsTolerance and holdDuration requirements.",
+              "Unit tests pass."
+            ],
+            "effort_estimate_hours": 12,
+            "priority": "critical",
+            "start_date": "2026-02-06T14:36:08.593322",
+            "end_date": "2026-02-13T14:36:08.593322",
+            "status": "in_progress"
+          }
+        ]
+      }
+    ],
+    "rollout_schedule": {
+      "phase_name": "Gradual Rollout",
+      "total_duration_weeks": 4,
+      "phases": [
+        {
+          "phase_number": 1,
+          "phase_name": "Internal Dogfooding",
+          "duration_days": 7,
+          "target_users": "Agent Simulation",
+          "user_segments": [
+            "internal"
+          ],
+          "goals": [
+            "Verify stability",
+            "No regressions in pitch detection."
+          ],
+          "key_metrics": {
+            "crash_rate": {
+              "target_max": 0.0,
+              "unit": "percentage"
+            },
+            "error_rate": {
+              "target_max": 0.1,
+              "unit": "percentage"
+            }
+          },
+          "go_no_go_decision": "Proceed if tests pass."
+        }
+      ]
+    }
+  }
+}
