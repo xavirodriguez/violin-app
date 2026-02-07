@@ -30,11 +30,11 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
     name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
     key: 'practiceAdaptiveDifficulty',
-    type: 'EXPERIMENTAL',
-    description: 'Enable adaptive difficulty based on performance metrics.',
+    type: 'BETA',
+    description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.',
     defaultValue: false,
     riskLevel: 'MEDIUM',
-    affectedFiles: ['lib/practice-core.ts'],
+    affectedFiles: ['lib/practice-engine/engine.ts'],
     rollbackStrategy: 'Revert to fixed difficulty levels.',
     dependencies: ['FEATURE_TELEMETRY_ACCURACY']
   },

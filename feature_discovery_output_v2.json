@@ -1,0 +1,270 @@
+{
+  "discovery_timestamp": "2026-02-06T14:37:47.702149",
+  "total_features_detected": 19,
+  "features": [
+    {
+      "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "name": "Practice Adaptive Difficulty",
+      "type": "EXPERIMENTAL",
+      "description": "Enable adaptive difficulty based on performance metrics.",
+      "current_state": "alpha",
+      "locations": [
+        "lib/feature-flags.ts",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./README.md",
+        "./total.d.ts",
+        "./reports/analisis-feature-flags.md",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts",
+        "./lib/practice-engine/engine.ts"
+      ],
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "id": "FEATURE_AUDIO_WEB_WORKER",
+      "name": "Audio Web Worker",
+      "type": "PERFORMANCE",
+      "description": "Offload audio processing to a Web Worker.",
+      "current_state": "alpha",
+      "locations": [
+        "lib/feature-flags.ts",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./README.md",
+        "./total.d.ts",
+        "./reports/analisis-feature-flags.md",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts",
+        "./lib/feature-flags.test.ts"
+      ],
+      "riskLevel": "HIGH"
+    },
+    {
+      "id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "name": "Ui Intonation Heatmaps",
+      "type": "EXPERIMENTAL",
+      "description": "Show intonation heatmaps in the analytics dashboard.",
+      "current_state": "alpha",
+      "locations": [
+        "lib/feature-flags.ts",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./README.md",
+        "./total.d.ts",
+        "./reports/analisis-feature-flags.md",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts"
+      ],
+      "riskLevel": "LOW"
+    },
+    {
+      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "name": "Social Practice Rooms",
+      "type": "EXPERIMENTAL",
+      "description": "Real-time synchronization for group practice or teacher-led sessions.",
+      "current_state": "alpha",
+      "locations": [
+        "lib/feature-flags.ts",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./README.md",
+        "./total.d.ts",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts"
+      ],
+      "riskLevel": "HIGH"
+    },
+    {
+      "id": "FEATURE_TELEMETRY_ACCURACY",
+      "name": "Telemetry Accuracy",
+      "type": "INTEGRATION",
+      "description": "Track detection confidence via Vercel Analytics to identify environment issues.",
+      "current_state": "alpha",
+      "locations": [
+        "lib/feature-flags.ts",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./README.md",
+        "./total.d.ts",
+        "./reports/analisis-feature-flags.md",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts",
+        "./lib/feature-flags.test.ts",
+        "./lib/practice/session-runner.ts"
+      ],
+      "riskLevel": "LOW"
+    },
+    {
+      "id": "FEATURE_FLAGS_METADATA",
+      "name": "Flags Metadata",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_FLAGS.md",
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_FLAGS_CHECKLIST.md",
+        "./total.d.ts",
+        "./reports/analisis-feature-flags.md",
+        "./types-docs/lib/feature-flags.d.ts",
+        "./lib/feature-flags.ts",
+        "./lib/feature-flags.test.ts"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_UI_NEW_THEME",
+      "name": "Ui New Theme",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_FLAGS.md",
+        "./FEATURE_ANALYSIS.md",
+        "./README.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_ANALYTICS_DASHBOARD",
+      "name": "Analytics Dashboard",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+      "name": "Ui Violin Fingerboard",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_TECHNICAL_FEEDBACK",
+      "name": "Technical Feedback",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_PRACTICE_ASSISTANT",
+      "name": "Practice Assistant",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_PRACTICE_ZEN_MODE",
+      "name": "Practice Zen Mode",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./total.d.ts",
+        "./types-docs/lib/feature-flags.d.ts"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_PRACTICE_AUTO_START",
+      "name": "Practice Auto Start",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./total.d.ts",
+        "./types-docs/lib/feature-flags.d.ts"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+      "name": "Practice Exercise Recommender",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./total.d.ts",
+        "./types-docs/lib/feature-flags.d.ts"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+      "name": "Practice Achievement System",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_ANALYSIS.md",
+        "./FEATURE_CATALOG.md",
+        "./total.d.ts",
+        "./types-docs/lib/feature-flags.d.ts"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_UI_DARK_MODE",
+      "name": "Ui Dark Mode",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_FLAGS_CHECKLIST.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_CATALOG",
+      "name": "Catalog",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_FLAGS_CHECKLIST.md",
+        "./README.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_XXX",
+      "name": "Xxx",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./FEATURE_FLAGS_CHECKLIST.md"
+      ],
+      "enabled": "implicit"
+    },
+    {
+      "id": "FEATURE_FLAGS",
+      "name": "Flags",
+      "type": "UNKNOWN",
+      "current_state": "phantom",
+      "locations": [
+        "./README.md"
+      ],
+      "enabled": "implicit"
+    }
+  ],
+  "relationships": {
+    "dependency_graph": {},
+    "conflicts": [],
+    "orphaned": []
+  }
+}

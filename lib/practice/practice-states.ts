@@ -148,15 +148,14 @@ export const transitions = {
   }),
 
   /**
-   * Transitions back to ready from active, stopping the runner.
+   * Transitions back to idle from active or ready, stopping the runner and cleaning up resources.
    *
-   * @param state - The current active state.
+   * @param state - The current active or ready state.
    */
-  stop: (state: ActiveState): ReadyState => ({
-    status: 'ready',
-    audioLoop: state.audioLoop,
-    detector: state.detector,
-    exercise: state.exercise
+  stop: (state: ActiveState | ReadyState): IdleState => ({
+    status: 'idle',
+    exercise: state.exercise,
+    error: null,
   }),
 
   
