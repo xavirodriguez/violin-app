@@ -283,9 +283,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
 
     start: async () => {
-      const currentSessionId = get().sessionId
-      const newSessionId = currentSessionId + 1
-
       set({ isStarting: true, error: null })
 
       try {
@@ -408,7 +405,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             const appError = toAppError(err)
             set((s) => ({
               ...s,
-              state: transitions.error(appError, state.exercise),
+              state: transitions.error(appError, s.state.exercise),
               error: appError,
             }))
             void get().stop()

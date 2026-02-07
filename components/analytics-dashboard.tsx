@@ -7,6 +7,8 @@
 
 import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { PracticeSummaryChart } from './practice-summary-chart'
+import { useFeatureFlag } from '@/lib/feature-flags'
 
 /**
  * Main dashboard component that aggregates various analytics visualizations.
@@ -19,13 +21,23 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
  * - Uses internal utility functions to format data for the `recharts` components.
  */
 export function AnalyticsDashboard() {
-  const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
+  const { progress, sessions, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
   const recentSessions = getSessionHistory(7)
+  const isHeatmapEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
 
   // Prepare chart data
   const practiceTimeData = getLast7DaysData(recentSessions)
+
+  // Get data for heatmap from the latest session
+  const latestSession = sessions[0]
+  const heatmapData = latestSession?.noteResults.map((nr) => ({
+    noteIndex: nr.noteIndex,
+    targetPitch: nr.targetPitch,
+    accuracy: nr.wasInTune ? 100 : Math.max(0, 100 - Math.abs(nr.averageCents)),
+    cents: nr.averageCents
+  })) || []
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -63,6 +75,14 @@ export function AnalyticsDashboard() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Intonation Heatmap (Feature Flagged) */}
+      {isHeatmapEnabled && heatmapData.length > 0 && (
+        <div className="bg-card border-border mb-6 rounded-lg border p-4">
+          <h2 className="mb-4 text-xl font-bold">Latest Session Intonation</h2>
+          <PracticeSummaryChart noteAttempts={heatmapData} />
+        </div>
+      )}
 
       {/* Recent Achievements */}
       <div className="bg-card border-border rounded-lg border p-4">

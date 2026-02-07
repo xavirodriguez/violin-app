@@ -12,6 +12,7 @@ import {
   type TargetNote,
   type NoteName,
 } from '@/lib/practice-core'
+import { featureFlags } from './feature-flags'
 import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
@@ -307,14 +308,19 @@ function handleSegmentCompletion(
     expectedDuration: expectations.expectedDuration as TimestampMs,
   }
 
-  const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
-  const observations = agent.generateObservations(technique)
+  let payload: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload'] = undefined
+
+  if (featureFlags.isEnabled('FEATURE_TECHNICAL_FEEDBACK')) {
+    const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
+    const observations = agent.generateObservations(technique)
+    payload = { technique, observations }
+  }
 
   if (state.firstNoteOnsetTime === null) state.firstNoteOnsetTime = segment.startTime
   state.prevSegment = finalSegment
   state.lastGapFrames = []
 
-  return { type: 'NOTE_MATCHED', payload: { technique, observations } }
+  return { type: 'NOTE_MATCHED', payload }
 }
 
 function checkHoldingStatus(

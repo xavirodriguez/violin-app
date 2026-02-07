@@ -1,0 +1,130 @@
+{
+  "discovery": {
+    "discovery_timestamp": "2026-02-07T14:54:51Z",
+    "total_features_detected": 8,
+    "features": [
+      {
+        "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+        "name": "Adaptive Difficulty Engine",
+        "type": "Algorithm",
+        "current_state": "beta",
+        "locations": ["lib/practice-engine/engine.ts"],
+        "enabled": true,
+        "riskLevel": "MEDIUM"
+      },
+      {
+        "id": "FEATURE_AUDIO_WEB_WORKER",
+        "name": "Web Worker Audio Processing",
+        "type": "Performance",
+        "current_state": "planned",
+        "locations": ["lib/feature-flags.ts"],
+        "enabled": false,
+        "riskLevel": "HIGH"
+      },
+      {
+        "id": "FEATURE_UI_INTONATION_HEATMAPS",
+        "name": "Intonation Heatmaps",
+        "type": "UI",
+        "current_state": "alpha",
+        "locations": ["lib/feature-flags.ts"],
+        "enabled": false,
+        "riskLevel": "LOW"
+      },
+      {
+        "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+        "name": "Social Practice Rooms",
+        "type": "Infrastructure",
+        "current_state": "planned",
+        "locations": ["lib/feature-flags.ts"],
+        "enabled": false,
+        "riskLevel": "HIGH"
+      },
+      {
+        "id": "FEATURE_TELEMETRY_ACCURACY",
+        "name": "Accuracy Telemetry",
+        "type": "Integration",
+        "current_state": "stable",
+        "locations": ["lib/practice/session-runner.ts"],
+        "enabled": true,
+        "riskLevel": "LOW"
+      },
+      {
+        "id": "FEATURE_TECHNICAL_FEEDBACK",
+        "name": "Technical Analysis Agent",
+        "type": "Algorithm",
+        "current_state": "unflagged_stable",
+        "locations": ["lib/technique-analysis-agent.ts", "lib/note-stream.ts"],
+        "enabled": true,
+        "notes": "Currently always enabled. Formalizing as flag."
+      },
+      {
+        "id": "FEATURE_EMOTIONAL_FEEDBACK",
+        "name": "Emotional Feedback System",
+        "type": "UI_UX",
+        "current_state": "unflagged_experimental",
+        "locations": ["components/emotional-feedback.tsx"],
+        "enabled": false,
+        "notes": "Defined but unused."
+      },
+      {
+        "id": "FEATURE_PRACTICE_ASSISTANT",
+        "name": "Practice Assistant (CMDK)",
+        "type": "UI_UX",
+        "current_state": "unflagged_stable",
+        "locations": ["components/practice-assistant.tsx", "app/layout.tsx"],
+        "enabled": true,
+        "notes": "Currently always enabled. Formalizing as flag."
+      }
+    ]
+  },
+  "scoring": {
+    "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY": {
+      "maturity": 8,
+      "business_value": 9,
+      "risk_profile": 4,
+      "growth_potential": 9,
+      "recommendation": "FAST_TRACK"
+    },
+    "FEATURE_TELEMETRY_ACCURACY": {
+      "maturity": 9,
+      "business_value": 7,
+      "risk_profile": 1,
+      "growth_potential": 5,
+      "recommendation": "FAST_TRACK"
+    },
+    "FEATURE_TECHNICAL_FEEDBACK": {
+      "maturity": 9,
+      "business_value": 10,
+      "risk_profile": 3,
+      "growth_potential": 10,
+      "recommendation": "FAST_TRACK"
+    },
+    "FEATURE_UI_INTONATION_HEATMAPS": {
+      "maturity": 2,
+      "business_value": 8,
+      "risk_profile": 2,
+      "growth_potential": 8,
+      "recommendation": "GRADUAL"
+    }
+  },
+  "decision": {
+    "selected_for_growth": [
+      {
+        "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+        "action": "PROMOTE_TO_STABLE"
+      },
+      {
+        "feature_id": "FEATURE_TELEMETRY_ACCURACY",
+        "action": "PROMOTE_TO_STABLE"
+      },
+      {
+        "feature_id": "FEATURE_TECHNICAL_FEEDBACK",
+        "action": "FORMALIZE_FLAG"
+      },
+      {
+        "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+        "action": "IMPLEMENT_GROWTH_PHASE"
+      }
+    ]
+  }
+}
