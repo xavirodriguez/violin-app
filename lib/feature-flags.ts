@@ -12,6 +12,7 @@ export type FeatureFlagType =
   | 'INTEGRATION'
   | 'PERFORMANCE'
   | 'UI_UX'
+  | 'STABLE'
   | 'DEPRECATED'
 
 export interface FeatureFlagMetadata {
@@ -30,9 +31,9 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
     name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
     key: 'practiceAdaptiveDifficulty',
-    type: 'BETA',
+    type: 'STABLE',
     description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.',
-    defaultValue: false,
+    defaultValue: true,
     riskLevel: 'MEDIUM',
     affectedFiles: ['lib/practice-engine/engine.ts'],
     rollbackStrategy: 'Revert to fixed difficulty levels.',
@@ -71,12 +72,39 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_TELEMETRY_ACCURACY: {
     name: 'FEATURE_TELEMETRY_ACCURACY',
     key: 'telemetryAccuracy',
-    type: 'INTEGRATION',
+    type: 'STABLE',
     description: 'Track detection confidence via Vercel Analytics to identify environment issues.',
     defaultValue: true,
     riskLevel: 'LOW',
     affectedFiles: [],
     rollbackStrategy: 'Disable accuracy telemetry tracking.'
+  },
+  FEATURE_TECHNICAL_FEEDBACK: {
+    name: 'FEATURE_TECHNICAL_FEEDBACK',
+    key: 'technicalFeedback',
+    type: 'STABLE',
+    description: 'Advanced technique analysis providing pedagogical tips (vibrato, attack, etc.).',
+    defaultValue: true,
+    riskLevel: 'MEDIUM',
+    affectedFiles: ['lib/note-stream.ts', 'lib/technique-analysis-agent.ts']
+  },
+  FEATURE_EMOTIONAL_FEEDBACK: {
+    name: 'FEATURE_EMOTIONAL_FEEDBACK',
+    key: 'emotionalFeedback',
+    type: 'EXPERIMENTAL',
+    description: 'Visual feedback using emojis and emotional states based on performance.',
+    defaultValue: false,
+    riskLevel: 'LOW',
+    affectedFiles: ['components/emotional-feedback.tsx']
+  },
+  FEATURE_PRACTICE_ASSISTANT: {
+    name: 'FEATURE_PRACTICE_ASSISTANT',
+    key: 'practiceAssistant',
+    type: 'UI_UX',
+    description: 'Command palette for quick navigation and exercise selection.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['app/layout.tsx', 'components/practice-assistant.tsx']
   }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
@@ -102,6 +130,12 @@ class FeatureFlagsManager {
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
       case 'FEATURE_TELEMETRY_ACCURACY':
         return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
+      case 'FEATURE_TECHNICAL_FEEDBACK':
+        return process.env.FEATURE_TECHNICAL_FEEDBACK ?? process.env.NEXT_PUBLIC_FEATURE_TECHNICAL_FEEDBACK
+      case 'FEATURE_EMOTIONAL_FEEDBACK':
+        return process.env.FEATURE_EMOTIONAL_FEEDBACK ?? process.env.NEXT_PUBLIC_FEATURE_EMOTIONAL_FEEDBACK
+      case 'FEATURE_PRACTICE_ASSISTANT':
+        return process.env.FEATURE_PRACTICE_ASSISTANT ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ASSISTANT
       default:
         return undefined
     }
