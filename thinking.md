@@ -2,44 +2,44 @@
 
 ## 1. Stack Capabilities
 
-Este stack tecnológico transforma una aplicación convencional en un **Motor de Inteligencia Pedagógica Musical** de alto rendimiento. La integración de React 19 y Next.js 16 (Turbopack) proporciona la base para una experiencia de usuario "zero-latency" necesaria para el feedback musical en tiempo real.
+This technological stack transforms a conventional web application into a high-performance **Musical Pedagogical Intelligence Engine**. The integration of React 19 and Next.js 16 (Turbopack) provides the foundation for the "zero-latency" user experience required for real-time musical feedback.
 
-### Clasificación por Dominio
+### Domain Classification
 
-| Dominio | Paquetes Clave | Problema que resuelve | Qué permite construir | Ventaja Competitiva |
+| Domain | Key Packages | Problem Solved | What it Allows to Build | Competitive Advantage |
 | :--- | :--- | :--- | :--- | :--- |
-| **Datos** | `zod`, `zustand`, `pako`, `superjson`, `immer` | Gestión de estados complejos y límites de almacenamiento en el cliente. | Un sistema de persistencia comprimido que registra cada micro-interacción musical (pitch, timing, dinámica). | Historial de práctica ilimitado y ultra-preciso sin necesidad de infraestructura de base de datos costosa inicialmente. |
-| **UI** | `osmd`, `framer-motion`, `recharts`, `radix-ui` | La desconexión entre la partitura estática y la ejecución dinámica. | Una interfaz "viva" donde la partitura reacciona al sonido y el progreso se visualiza con dashboards de alta fidelidad. | Experiencia inmersiva que reduce la fricción cognitiva del estudiante, aumentando la retención (LTV). |
-| **Observabilidad** | `@vercel/analytics`, `logger.ts` | La opacidad del rendimiento del algoritmo en diversos dispositivos y entornos acústicos. | Telemetría de precisión sobre la precisión de la detección y la salud del pipeline de audio. | Mejora continua del producto basada en datos reales de performance técnica, no solo en clicks. |
-| **Seguridad** | `next-safe-action`, `zod` | La fragilidad en la comunicación cliente-servidor y la manipulación de datos. | Una capa de servicios blindada donde cada acción del usuario es validada por contrato antes de su ejecución. | Robustez de grado bancario para los datos de progreso y prevención proactiva de errores en producción. |
-| **Rendimiento** | `next` (App Router), `pako` | Latencia en carga y saturación del bus de datos en el navegador. | Aplicación que se siente instantánea, optimizando el bundle y comprimiendo el estado persistido. | Capacidad de funcionar en dispositivos de gama media/baja manteniendo una respuesta táctil y auditiva fluida. |
-| **DX** | `vitest`, `playwright`, `dependency-cruiser` | Degradación de la arquitectura y lentitud en el ciclo de feedback del desarrollador. | Un entorno de desarrollo con guardrails automáticos que aseguran la integridad de la arquitectura hexagonal. | Alta velocidad de entrega (Velocity) y capacidad de refactorización segura, reduciendo el "Time to Market". |
-| **Escalabilidad** | `zod-to-openapi`, `Next.js` | Dificultad para evolucionar de producto a plataforma o integrar terceros. | Una infraestructura lista para exponer APIs públicas y catálogos de ejercicios dinámicos. | Posicionamiento estratégico para integrarse en ecosistemas EdTech B2B o conservatorios digitales. |
+| **Data** | `zod`, `zustand`, `pako`, `superjson`, `immer`, `iter-tools` | Complexity of state management and client-side storage limits for high-frequency musical events. | A compressed persistence system that records every micro-interaction (pitch, timing, dynamics) with extreme precision. | Unlimited, ultra-precise practice history without the immediate need for expensive backend infrastructure. |
+| **UI** | `osmd`, `framer-motion`, `recharts`, `@radix-ui/*`, `vaul`, `cmdk` | The traditional disconnect between static sheet music and dynamic, real-time execution. | A "living" interface where notation reacts to sound and progress is visualized through high-fidelity, interactive dashboards. | An immersive pedagogical UX that reduces cognitive friction, significantly increasing student retention and LTV. |
+| **Observability** | `@vercel/analytics`, `logger.ts` | Opacity regarding algorithm performance across diverse devices and acoustic environments. | Precision telemetry on pitch detection accuracy and audio pipeline health in real-world scenarios. | Data-driven product iteration based on actual technical performance metrics, not just usage clicks. |
+| **Security** | `next-safe-action`, `zod` | Fragility in client-server communication and potential manipulation of progress data. | A hardened service layer where every user action is validated by contract before execution. | "Banking-grade" robustness for progress data and proactive prevention of runtime errors in production. |
+| **Performance** | `next` (App Router), `pako`, `use-sync-external-store` | UI jank during heavy DSP processing and local storage quota saturation. | An application that feels instantaneous by optimizing bundles and compressing large historical states. | Ability to run on mid-to-low range devices while maintaining fluid tactile and auditory responsiveness. |
+| **DX** | `vitest`, `playwright`, `dependency-cruiser`, `api-extractor` | Architectural degradation and slow developer feedback loops in a complex musical domain. | A development environment with automated guardrails that enforce hexagonal architecture integrity. | High developer velocity and safe refactoring capabilities, dramatically reducing "Time to Market" for new features. |
+| **Scalability** | `zod-to-openapi`, `Next.js` | Difficulty evolving from a standalone product to a platform or integrating with third-party EdTech. | An infrastructure ready to expose public APIs and dynamic exercise catalogs to partners. | Strategic positioning to integrate into B2B EdTech ecosystems or digital conservatories. |
 
 ## 2. Package Synergies
 
-- **Validación de Extremo a Extremo (`zod` + `next-safe-action` + `Next.js`):** Crea un túnel de datos seguro donde el desarrollador define la forma del dato una sola vez y se respeta desde el formulario hasta la lógica de negocio, eliminando clases enteras de bugs.
-- **Persistencia de Alta Densidad (`zustand` + `pako` + `superjson`):** Permite manejar objetos complejos (Dates, Maps, Sets) y comprimirlos antes de guardarlos en `localStorage`. Esto habilita el almacenamiento de "replays" de sesiones completas sin saturar el navegador.
-- **Orquestación Musical-Visual (`OSMD` + `Framer Motion` + `Web Audio`):** La sinergia permite sincronizar la posición del cursor en la partitura con la detección de pitch con precisión de milisegundos, creando un bucle de feedback sensorial perfecto para el aprendizaje.
-- **Arquitectura Documentada (`zod-to-openapi` + `api-extractor`):** Automatiza la generación de documentación técnica y contratos de API, asegurando que la "verdad" del código sea siempre accesible para futuros desarrolladores o socios de integración.
+- **End-to-End Validation (`zod` + `next-safe-action` + `React Hook Form`):** Creates a "secure-by-default" data tunnel. Developers define data shapes once, and they are enforced from the UI form through the server action to the business logic, eliminating entire classes of bugs.
+- **High-Density Persistence (`zustand` + `pako` + `superjson`):** Allows handling complex JS objects (Dates, Maps, Sets) and compressing them before saving to `localStorage`. This enables "session replays" and full performance history storage without saturating browser limits.
+- **Visual-Musical Orchestration (`OSMD` + `Framer Motion` + `Web Audio API`):** Sychronizes score cursor position with pitch detection at millisecond precision. This creates a perfect sensory feedback loop, critical for effective musical learning.
+- **Contract-Driven Documentation (`zod-to-openapi` + `api-extractor`):** Automates the generation of technical docs and API contracts, ensuring the "source of truth" in the code is always accessible for future developers or integration partners.
 
 ## 3. Product Opportunities
 
-- **Contextual Practice Assistant (`cmdk` + `PracticeEngine`):** Un asistente tipo "Spotlight" que analiza el rendimiento actual y sugiere instantáneamente el ejercicio específico para corregir un error detectado (ej. "Tu entonación en Re mayor flaquea, ¿practicamos esta escala?").
-- **Workstation de Práctica Personalizable (`react-resizable-panels` + `vaul`):** Permitir que el músico configure su entorno: expandir la partitura para lectura, o priorizar el visualizador de pitch y métricas durante el análisis técnico.
-- **Gamificación de Maestría (`canvas-confetti` + `AchievementStore`):** Implementar hitos de precisión (ej. "100 notas perfectas seguidas") con celebraciones visuales que refuercen positivamente el hábito de estudio.
-- **Análisis de Tendencias a Largo Plazo (`recharts` + `ProgressStore`):** Visualizar la "curva de aprendizaje" real, mostrando cómo la estabilidad del arco o la entonación ha mejorado mes a mes.
+- **Contextual Practice Assistant (`cmdk` + `PracticeEngine`):** A "Spotlight-style" assistant that analyzes current performance and suggests specific exercises to correct detected flaws (e.g., "Your intonation in D Major is wavering, try this scale?").
+- **Customizable Practice Workstation (`react-resizable-panels` + `vaul`):** Empowering musicians to configure their environment: expanding sheet music for reading or prioritizing pitch visualizers and technical metrics during analysis.
+- **Mastery Gamification (`canvas-confetti` + `AchievementStore`):** Implementing precision milestones (e.g., "100 consecutive perfect notes") with high-impact visual celebrations that reinforce positive practice habits.
+- **Long-term Trend Analysis (`recharts` + `ProgressStore`):** Visualizing the actual "learning curve," showing how bow stability or intonation has improved month-over-month through data-dense charts.
 
 ## 4. Architectural Risks
 
-- **Saturación del Main Thread:** El procesamiento de audio y el renderizado de la partitura (OSMD) compiten por el hilo principal. Existe el riesgo de "jank" si el pipeline de audio no se mueve eventualmente a Web Workers.
-- **Límites de Almacenamiento Local:** A pesar de la compresión (`pako`), el historial a largo plazo puede exceder los límites de `localStorage`. Es crítica una estrategia de sincronización Cloud pronto.
-- **Acoplamiento a Librerías Core:** La dependencia profunda de `OSMD` y `Next.js` (versiones bleeding-edge) implica un riesgo de mantenimiento si estas librerías introducen cambios disruptivos.
-- **Complejidad Cognitiva:** La arquitectura hexagonal sumada a generadores asíncronos para el stream de audio eleva la barrera de entrada para nuevos desarrolladores.
+- **Code Integrity and Syntax Regressions:** Current critical syntax errors in core stores (`PracticeStore.ts`) and architectural boundary violations (Domain layers depending on Framework/Zustand internals) indicate a breakdown in CI/CD enforcement and refactoring discipline.
+- **Main Thread Congestion:** Audio processing and sheet music rendering (OSMD) compete for the main thread. There is a risk of "jank" if the DSP pipeline is not moved to Web Workers or AudioWorklets soon.
+- **Local Storage Limits:** Despite compression (`pako`), multi-year history may exceed `localStorage` limits. A cloud synchronization strategy is a critical next step.
+- **Dependency Gravity:** Deep integration with `OSMD` and `Next.js` implies maintenance risk if these libraries introduce breaking changes. The imperative nature of OSMD conflicts with the declarative React 19 paradigm.
 
 ## 5. Strategic Recommendations
 
-- **Formalizar el "Core Musical" como Paquete Interno:** Aislar la lógica de procesamiento de señales y el motor de ejercicios del framework UI para permitir futuros clientes (ej. Mobile Nativo).
-- **Implementar Off-Main-Thread DSP:** Migrar el algoritmo de detección de pitch a un AudioWorklet o Web Worker para garantizar 60fps constantes en la UI, independientemente de la carga de procesamiento.
-- **Sistema de Migración de Esquemas:** Implementar una utilidad de migración para los datos persistidos en `localStorage`, asegurando que las actualizaciones del modelo de datos no corrompan el progreso de los usuarios.
-- **Estrategia "Offline-First" con Sync:** Evolucionar hacia un modelo donde los datos se guarden localmente (con el stack actual) pero se sincronicen asíncronamente con un backend para asegurar la durabilidad y multi-dispositivo.
+- **Formalize the "Musical Core" as an Internal Package:** Isolate signal processing and exercise engine logic from the UI framework to allow for future native mobile clients and ensure the Domain remains pure.
+- **Implement Off-Main-Thread DSP:** Migrate the pitch detection algorithm to an AudioWorklet or Web Worker to guarantee constant 60fps UI performance regardless of processing load.
+- **Enforce Architectural Boundaries:** Fix `dependency-cruiser` violations by decoupling persistence logic from framework-specific middleware, ensuring the hexagional architecture remains a reality, not just an intention.
+- **"Offline-First" with Async Sync:** Evolve toward a model where data is saved locally for performance (the current stack) but synchronized asynchronously with a backend for durability and multi-device support.
