@@ -5,13 +5,18 @@ import { Observation, Ratio01 } from './technique-types'
  * Calculates real-time technical observations based on a history of recent detections.
  *
  * @remarks
- * This function provides immediate feedback to the student while they are playing,
- * without waiting for the note to be completed. It analyzes patterns in intonation,
- * stability, and accuracy.
+ * This function provides immediate pedagogical feedback to the student while they are
+ * actively playing. It analyzes patterns in the audio stream to detect:
+ * 1. **Persistent Intonation Errors**: Detects if the user is consistently sharp or flat.
+ * 2. **Pitch Stability**: Identifies "jitter" or wavering in the pitch, often due to bow pressure or finger tension.
+ * 3. **Note Accuracy**: Flags when the user is playing a completely different note than intended.
+ * 4. **Tone Quality**: Uses confidence metrics to infer clarity of tone.
  *
- * @param recentDetections - Array of recently detected notes/frames.
- * @param targetPitch - The scientific pitch name (e.g., "A4") of the target note.
- * @returns An array of {@link Observation} objects, limited to the top 2 most relevant ones.
+ * It uses a sliding window of recent frames (minimum 5) to ensure high confidence in its findings.
+ *
+ * @param recentDetections - Readonly array of recently detected notes/frames from the pipeline.
+ * @param targetPitch - The scientific pitch name (e.g., "A4") of the currently practiced note.
+ * @returns An array of {@link Observation} objects, prioritized and limited to the top 2 most relevant ones.
  *
  * @public
  */
@@ -20,7 +25,7 @@ export function calculateLiveObservations(
   targetPitch: string
 ): Observation[] {
   if (recentDetections.length < 5) {
-    return [] // Need at least 5 frames to detect patterns
+    return [] // Need at least 5 frames to detect patterns reliably
   }
 
   const observations: Observation[] = []
@@ -91,9 +96,10 @@ export function calculateLiveObservations(
   }
 
   // Prioritize observations (highest severity and confidence first)
+  // Limited to 2 concurrent observations to avoid overwhelming the student.
   return observations
     .sort((a, b) => (b.severity * b.confidence) - (a.severity * a.confidence))
-    .slice(0, 2) // Maximum of 2 concurrent observations to avoid overwhelming the user
+    .slice(0, 2)
 }
 
 /**

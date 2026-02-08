@@ -19,11 +19,10 @@ import type { TunerStore } from '@/lib/domain/musical-types'
  *
  * @remarks
  * The TunerStore manages the state of the standalone violin tuner. It handles:
- * - Microphone initialization and permission tracking.
- * - Pitch detection using the `PitchDetector`.
- * - Device selection (input source).
- * - Sensitivity/Gain control.
- * - Integration with the `audioManager` for resource management.
+ * - **Permission Lifecycle**: Tracks microphone authorization states.
+ * - **Signal Analysis**: Interfaces with `PitchDetector` to extract note and deviation.
+ * - **Device Management**: Allows selection and enumeration of audio input hardware.
+ * - **Gain Control**: Adjusts sensitivity to match different environments.
  *
  * It uses a session token pattern to handle race conditions during asynchronous initialization.
  *
@@ -56,7 +55,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * the audio context. It implements a token-based guard to prevent stale
      * initialization results from being applied if a reset occurs during the process.
      *
-     * @returns A promise that resolves when initialization is complete (success or failure).
+     * @returns A promise that resolves when initialization is complete.
+     * @throws {@link AppError} if microphone access is denied or hardware fails.
      */
     initialize: async () => {
       const { state: currentState, deviceId, sensitivity } = get()
@@ -135,6 +135,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     /**
      * Processes a raw pitch/confidence pair and updates the detected note state.
      *
+     * @remarks
+     * Implements a confidence threshold (0.85) to filter out ambient noise.
+     * Automatically transitions to `DETECTED` when a valid signal is found,
+     * or back to `LISTENING` when the signal is lost.
+     *
      * @param pitch - The detected frequency in Hz.
      * @param confidence - The detector's confidence (0.0 to 1.0).
      */
@@ -204,7 +209,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Enumerates available audio input devices and updates the `devices` list.
      *
      * @remarks
-     * Triggers a brief initialization/reset cycle to prompt for permissions if necessary.
+     * Triggers a brief initialization cycle if permissions are missing to
+     * ensure device labels can be read.
      */
     loadDevices: async () => {
       // To get device labels, we need microphone permission. If we haven't asked yet,
@@ -224,7 +230,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Sets the preferred audio input device.
+     * Sets the preferred audio input device and re-initializes the pipeline.
      *
      * @param deviceId - The ID of the device to use.
      */
@@ -241,7 +247,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     /**
      * Adjusts the input gain/sensitivity.
      *
-     * @param sensitivity - Sensitivity value (typically 0-100).
+     * @param sensitivity - Sensitivity value (0-100). Maps to gain (0.0 to 2.0).
      */
     setSensitivity: (sensitivity: number) => {
       set({ sensitivity })

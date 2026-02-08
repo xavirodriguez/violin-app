@@ -5,25 +5,23 @@ import type { AnalyticsStore } from '@/stores/analytics-store'
 type UserProgress = AnalyticsStore['progress']
 
 /**
- * Pedagogical exercise recommender logic.
+ * Pedagogical exercise recommender engine.
  *
  * @remarks
- * This function implements a heuristic-based recommendation engine designed to optimize
- * the student's learning path. It follows several rules:
+ * This function implements a heuristic-based logic designed to optimize
+ * the student's learning path based on historical performance.
  *
- * 1. **Persistence**: If the last exercise played had low accuracy (`< 80%`) and was played recently,
- *    it recommends playing it again.
- * 2. **Review**: Finds exercises previously completed with very low accuracy (`< 70%`) and
- *    suggests an easier version in the same category (or the same one if already beginner).
- * 3. **Progression**: If all exercises in the current difficulty are completed, it moves
- *    to the next difficulty level.
- * 4. **Discovery**: Suggests the first unplayed exercise in the current target difficulty.
- * 5. **Spaced Repetition**: Suggests exercises not played today.
+ * **Recommendation Rules (in order of priority)**:
+ * 1. **Persistence**: If the last exercise played had low accuracy (`< 80%`) and was attempted today, suggest trying it again.
+ * 2. **Review with Regression**: If a completed exercise has low accuracy (`< 70%`), suggest an easier exercise in the same category.
+ * 3. **Progression**: If all exercises in the current difficulty are mastered, suggest the first exercise of the next level.
+ * 4. **Discovery**: Suggest the first unplayed exercise in the current target difficulty.
+ * 5. **Spaced Repetition**: Suggest the oldest practiced exercise that wasn't played today.
  *
- * @param exercises - All available exercises in the system.
- * @param userProgress - The user's historical performance data.
- * @param lastPlayedId - Optional ID of the exercise played just before this request.
- * @returns The recommended {@link Exercise}, or the first available one if no specific recommendation is found.
+ * @param exercises - Array of all available exercises.
+ * @param userProgress - The user's historical progress and statistics.
+ * @param lastPlayedId - ID of the exercise practiced in the previous session.
+ * @returns The recommended {@link Exercise}, or the first available one as a fallback.
  *
  * @public
  */
@@ -98,10 +96,11 @@ export function getRecommendedExercise(
 }
 
 /**
- * Compares two difficulty levels to see if the first is easier than the second.
+ * Compares two difficulty levels to determine if the first is easier than the second.
  *
- * @param a - First difficulty.
- * @param b - Second difficulty.
+ * @param a - The candidate easier difficulty.
+ * @param b - The reference harder difficulty.
+ * @returns True if `a` is strictly easier than `b`.
  * @internal
  */
 function isEasier(a: Difficulty, b: Difficulty): boolean {

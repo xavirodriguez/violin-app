@@ -3,8 +3,6 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
 /**
  * A type representing the core state management functions of a Zustand store,
  * generic over the state type `T`.
- *
- * @public
  */
 type StoreApi<T> = {
   /** Retrieves the current state from the store. */
@@ -26,14 +24,15 @@ type StoreApi<T> = {
  *
  * @remarks
  * This function acts as the "event sink" that bridge the gap between the event-driven
- * audio pipeline and the reactive Zustand stores. It ensures that state transitions
- * are performed using the `reducePracticeEvent` pure function and that side effects
- * (like analytics or completion logic) are triggered exactly once.
+ * audio pipeline and the reactive Zustand stores. It ensures that:
+ * 1. **Pure State Transitions**: Performed via the `reducePracticeEvent` reducer.
+ * 2. **Side Effect Detection**: Detects transitions to 'completed' and triggers callbacks.
+ * 3. **Error Resilience**: Implements defensive guards against null states or invalid events.
  *
  * @param event - The practice event to process.
  * @param store - The Zustand store API to update.
  * @param onCompleted - Callback triggered when the exercise is successfully completed.
- * @param analytics - Optional analytics handlers.
+ * @param analytics - Optional analytics handlers for session finalization.
  *
  * @public
  */
@@ -81,7 +80,7 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
     return { ...state, practiceState: nextState }
   })
 
-  // 2. Side effects (executed outside of the reducer/updater)
+  // 2. Side effects (executed outside of the reducer/updater to ensure consistency)
   if (shouldTriggerCompletion) {
     try {
       analytics?.endSession()

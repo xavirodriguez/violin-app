@@ -7,6 +7,8 @@ import { PitchDetector, PitchDetectionResult } from '../pitch-detector'
  * @remarks
  * This class handles the extraction of time-domain data from the Web Audio graph
  * and ensures it's compatible with the internal audio processing pipeline.
+ * It uses a pre-allocated buffer to minimize garbage collection overhead during
+ * high-frequency sampling.
  *
  * @public
  */
@@ -27,10 +29,14 @@ export class WebAudioFrameAdapter implements AudioFramePort {
   /**
    * Captures the current time-domain data from the analyser node.
    *
+   * @remarks
+   * This method uses `getFloatTimeDomainData` which provides PCM samples
+   * in the range [-1.0, 1.0].
+   *
    * @returns A {@link Float32Array} containing the audio samples.
    */
   getFrame(): Float32Array {
-    this.analyser.getFloatTimeDomainData(this.buffer as Float32Array<ArrayBuffer>)
+    this.analyser.getFloatTimeDomainData(this.buffer as any)
     return this.buffer
   }
 
@@ -46,8 +52,11 @@ export class WebAudioFrameAdapter implements AudioFramePort {
  * Adapter that implements {@link AudioLoopPort} using browser scheduling.
  *
  * @remarks
- * Uses `requestAnimationFrame` to drive the audio processing loop, which is
- * suitable for UI-synced applications but may be throttled in background tabs.
+ * Uses `requestAnimationFrame` to drive the audio processing loop.
+ *
+ * **Performance Note**: While suitable for UI-synced applications, this loop
+ * will be throttled or paused by the browser when the tab is in the background.
+ * For background-stable processing, consider a Web Worker implementation.
  *
  * @public
  */
@@ -98,6 +107,7 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
  *
  * @remarks
  * This serves as a bridge between the core pitch detection algorithm and the port-based architecture.
+ * It ensures that the detector's output is correctly mapped to the domain results.
  *
  * @public
  */
@@ -123,7 +133,7 @@ export class PitchDetectorAdapter implements PitchDetectionPort {
    * Calculates the volume (RMS) of the given audio frame.
    *
    * @param frame - Audio samples.
-   * @returns RMS value.
+   * @returns RMS value (typically 0.0 to 1.0).
    */
   calculateRMS(frame: Float32Array): number {
     return this.detector.calculateRMS(frame)

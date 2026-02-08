@@ -19,6 +19,10 @@ export interface AudioFramePort {
 
   /**
    * The sample rate of the audio stream in Hz (e.g., 44100).
+   *
+   * @remarks
+   * This value is critical for accurate pitch detection algorithms that rely on
+   * time-frequency transformations.
    */
   readonly sampleRate: number
 }
@@ -28,6 +32,8 @@ export interface AudioFramePort {
  *
  * @remarks
  * Encapsulates the logic for extracting musical information from raw audio frames.
+ * Implementations should be stateless or handle state internally to ensure
+ * detection consistency across frames.
  *
  * @public
  */
@@ -36,9 +42,9 @@ export interface PitchDetectionPort {
    * Detects the pitch and confidence of a given audio frame.
    *
    * @param frame - The raw audio samples to analyze.
-   * @returns A {@link PitchDetectionResult} containing frequency and confidence level.
+   * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
    *
-   * @throws Never - Returns confidence 0 or NaN frequency on failure rather than throwing.
+   * @throws Never - Returns confidence 0 or NaN frequency on failure rather than throwing to avoid pipeline disruption.
    */
   detect(frame: Float32Array): PitchDetectionResult
 
@@ -55,8 +61,9 @@ export interface PitchDetectionPort {
  * Port for managing an asynchronous audio processing loop.
  *
  * @remarks
- * Replaces manual requestAnimationFrame (RAF) or Web Worker intervals with a
- * standardized reactive stream of frames.
+ * Standardizes the execution of real-time audio analysis. Replaces manual
+ * `requestAnimationFrame` or `setInterval` with a managed lifecycle that
+ * respects an {@link AbortSignal}.
  *
  * @public
  */
@@ -72,8 +79,10 @@ export interface AudioLoopPort {
    * ```ts
    * const controller = new AbortController();
    * await loopPort.start((frame) => {
-   *   const pitch = detector.detect(frame);
-   *   console.log(pitch);
+   *   const result = detector.detect(frame);
+   *   if (result.confidence > 0.9) {
+   *     console.log(`Detected: ${result.pitchHz} Hz`);
+   *   }
    * }, controller.signal);
    * ```
    */
