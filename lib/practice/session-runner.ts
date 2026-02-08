@@ -224,15 +224,13 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       if (event.type === 'NOTE_DETECTED') {
         this.deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
 
-        // Accuracy Telemetry Evolution
-        if (featureFlags.isEnabled('FEATURE_TELEMETRY_ACCURACY')) {
-          console.log('[TELEMETRY] Pitch Accuracy:', {
-            pitch: event.payload.pitch,
-            cents: event.payload.cents,
-            confidence: event.payload.confidence,
-            timestamp: event.payload.timestamp,
-          })
-        }
+        // Accuracy Telemetry (Promoted to Permanent)
+        console.log('[TELEMETRY] Pitch Accuracy:', {
+          pitch: event.payload.pitch,
+          cents: event.payload.cents,
+          confidence: event.payload.confidence,
+          timestamp: event.payload.timestamp,
+        })
       } else if (event.type === 'NO_NOTE_DETECTED') {
         this.deps.updatePitch?.(0, 0)
       }

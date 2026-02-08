@@ -1,0 +1,115 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "GROWTH_ADAPTIVE_PRACTICE",
+      "primary_feature": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "growth_type": "expand_to_all_users",
+      "current_state": "Beta - Optional",
+      "opportunity_description": "Promote Adaptive Difficulty to Stable and enable by default.",
+      "rationale": {
+        "why_now": "The algorithm has been stable in beta for several weeks with positive feedback.",
+        "user_benefit": "Automatic personalization makes practicing less frustrating and more effective.",
+        "business_benefit": "Higher user retention through better learning outcomes.",
+        "technical_readiness": "100% ready, logic is already in the main engine."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Stabilization",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["error_rate < 0.1%"],
+          "go_no_go_criteria": "No regressions in engine performance"
+        }
+      },
+      "required_work": [
+        {
+          "task": "Update default value to true in lib/feature-flags.ts",
+          "effort_hours": 0.5,
+          "priority": "high",
+          "blocking": false
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 1,
+        "product_involvement": "low",
+        "qe_hours": 1,
+        "design_review": false
+      },
+      "success_metrics": {
+        "adoption_rate": { "target": 100, "current": 10, "unit": "percentage" },
+        "error_rate": { "target": 0.1, "current": 0.05, "unit": "percentage" }
+      },
+      "rollback_plan": {
+        "trigger": "Unexpected increase in engine latency",
+        "steps": ["Toggle flag back to false", "Fix performance issue"],
+        "recovery_time_estimate_minutes": 5
+      },
+      "confidence_score": 0.9,
+      "recommendation_strength": "STRONG"
+    },
+    {
+      "opportunity_id": "GROWTH_TELEMETRY_CORE",
+      "primary_feature": "FEATURE_TELEMETRY_ACCURACY",
+      "growth_type": "promote_to_permanent",
+      "current_state": "Beta - Enabled by default",
+      "opportunity_description": "Remove the feature flag and make telemetry a core part of the session runner.",
+      "rationale": {
+        "why_now": "Telemetry is essential for quality monitoring and no longer experimental.",
+        "user_benefit": "Indirectly improves quality by helping developers fix bugs faster.",
+        "business_benefit": "Better data-driven decisions.",
+        "technical_readiness": "100% ready."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "De-flagging",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["N/A"],
+          "go_no_go_criteria": "Clean code removal"
+        }
+      },
+      "required_work": [
+        {
+          "task": "Remove FEATURE_TELEMETRY_ACCURACY from lib/feature-flags.ts and usages",
+          "effort_hours": 2,
+          "priority": "medium",
+          "blocking": false
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 2,
+        "product_involvement": "none",
+        "qe_hours": 1,
+        "design_review": false
+      },
+      "success_metrics": {},
+      "rollback_plan": {
+        "trigger": "N/A",
+        "steps": ["Git revert"],
+        "recovery_time_estimate_minutes": 10
+      },
+      "confidence_score": 0.95,
+      "recommendation_strength": "STRONG"
+    }
+  ],
+  "prioritized_queue": [
+    {
+      "rank": 1,
+      "opportunity_id": "GROWTH_TELEMETRY_CORE",
+      "recommended_start_date": "2025-05-15T00:00:00Z",
+      "expected_completion_date": "2025-05-15T00:00:00Z",
+      "impact_if_successful": "Cleaner codebase and guaranteed observability"
+    },
+    {
+      "rank": 2,
+      "opportunity_id": "GROWTH_ADAPTIVE_PRACTICE",
+      "recommended_start_date": "2025-05-15T00:00:00Z",
+      "expected_completion_date": "2025-05-15T00:00:00Z",
+      "impact_if_successful": "Enhanced learning experience for all users"
+    }
+  ],
+  "next_30_days_focus": [
+    "FEATURE_TELEMETRY_ACCURACY",
+    "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"
+  ]
+}

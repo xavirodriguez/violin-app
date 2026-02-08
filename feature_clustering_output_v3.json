@@ -1,0 +1,34 @@
+{
+  "clusters": [
+    {
+      "cluster_id": "PRACTICE_INTELLIGENCE",
+      "type": "business_domain",
+      "features": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_TELEMETRY_ACCURACY"],
+      "characteristics": {
+        "shared_context": "Automatic adjustment of practice based on data",
+        "can_grow_together": true,
+        "combined_impact": "high",
+        "shared_risks": ["Pedagogical frustration"]
+      }
+    },
+    {
+      "cluster_id": "PLATFORM_EVOLUTION",
+      "type": "technical_initiative",
+      "features": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"],
+      "characteristics": {
+        "shared_context": "Core infrastructure improvements",
+        "can_grow_together": false,
+        "combined_impact": "high",
+        "shared_risks": ["Architectural complexity"]
+      }
+    }
+  ],
+  "optimization_opportunities": [
+    {
+      "opportunity": "Combine adaptive difficulty with real-time telemetry to provide live feedback",
+      "features_involved": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_TELEMETRY_ACCURACY"],
+      "synergy_benefit": "Dynamic personalization of learning path",
+      "implementation_complexity": "medium"
+    }
+  ]
+}

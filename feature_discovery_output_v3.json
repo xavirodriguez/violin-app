@@ -1,0 +1,103 @@
+{
+  "discovery_timestamp": "2025-05-15T10:00:00Z",
+  "total_features_detected": 5,
+  "features": [
+    {
+      "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "name": "Practice Adaptive Difficulty",
+      "type": "Algorithm",
+      "current_state": "beta",
+      "locations": ["lib/feature-flags.ts", "lib/practice-engine/engine.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 45,
+      "users_affected_estimate": 1000,
+      "dependencies": ["FEATURE_TELEMETRY_ACCURACY"],
+      "last_modified": "2025-05-10T08:30:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 85,
+        "error_rate": 0.02,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_AUDIO_WEB_WORKER",
+      "name": "Audio Web Worker",
+      "type": "Infrastructure",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts", "lib/pitch-detector.ts", "lib/note-stream.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 120,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-04-20T15:45:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": false
+      }
+    },
+    {
+      "id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "name": "UI Intonation Heatmaps",
+      "type": "UI",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts", "components/analytics-dashboard.tsx"],
+      "enabled": false,
+      "lines_of_code_affected": 10,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-01T11:20:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "name": "Social Practice Rooms",
+      "type": "Infrastructure",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 5,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-05T09:00:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_TELEMETRY_ACCURACY",
+      "name": "Telemetry Accuracy",
+      "type": "Observability",
+      "current_state": "beta",
+      "locations": ["lib/feature-flags.ts", "lib/practice/session-runner.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 15,
+      "users_affected_estimate": 5000,
+      "dependencies": [],
+      "last_modified": "2025-05-12T14:10:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 90,
+        "error_rate": 0.001,
+        "documentation": true
+      }
+    }
+  ],
+  "relationships": {
+    "dependency_graph": {
+      "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY": ["FEATURE_TELEMETRY_ACCURACY"]
+    },
+    "conflicts": [],
+    "orphaned": ["FEATURE_SOCIAL_PRACTICE_ROOMS"]
+  }
+}

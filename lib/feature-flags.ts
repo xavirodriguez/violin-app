@@ -8,6 +8,7 @@
 export type FeatureFlagType =
   | 'EXPERIMENTAL'
   | 'BETA'
+  | 'STABLE'
   | 'UNSTABLE'
   | 'INTEGRATION'
   | 'PERFORMANCE'
@@ -30,13 +31,12 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
     name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
     key: 'practiceAdaptiveDifficulty',
-    type: 'BETA',
+    type: 'STABLE',
     description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.',
-    defaultValue: false,
+    defaultValue: true,
     riskLevel: 'MEDIUM',
     affectedFiles: ['lib/practice-engine/engine.ts'],
-    rollbackStrategy: 'Revert to fixed difficulty levels.',
-    dependencies: ['FEATURE_TELEMETRY_ACCURACY']
+    rollbackStrategy: 'Revert to fixed difficulty levels.'
   },
   FEATURE_AUDIO_WEB_WORKER: {
     name: 'FEATURE_AUDIO_WEB_WORKER',
@@ -68,16 +68,6 @@ export const FEATURE_FLAGS_METADATA = {
     affectedFiles: [],
     rollbackStrategy: 'Disable real-time synchronization features.'
   },
-  FEATURE_TELEMETRY_ACCURACY: {
-    name: 'FEATURE_TELEMETRY_ACCURACY',
-    key: 'telemetryAccuracy',
-    type: 'INTEGRATION',
-    description: 'Track detection confidence via Vercel Analytics to identify environment issues.',
-    defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: [],
-    rollbackStrategy: 'Disable accuracy telemetry tracking.'
-  }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
 /**
@@ -100,8 +90,6 @@ class FeatureFlagsManager {
         return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
-      case 'FEATURE_TELEMETRY_ACCURACY':
-        return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
       default:
         return undefined
     }
