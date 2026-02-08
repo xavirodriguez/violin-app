@@ -11,15 +11,15 @@ import { AchievementsStateSchema } from '@/lib/schemas/persistence.schema'
  * @public
  */
 export interface Achievement {
-  /** Unique identifier for the achievement. */
+  /** Unique identifier for the achievement (e.g., 'first-perfect-scale'). */
   id: string
   /** Human-readable display name. */
   name: string
-  /** Description of the accomplishment. */
+  /** Detailed description of the accomplishment required to unlock it. */
   description: string
-  /** Icon or emoji representing the achievement. */
+  /** Icon or emoji representation of the achievement. */
   icon: string
-  /** Unix timestamp when the achievement was unlocked. */
+  /** Unix timestamp when the achievement was first unlocked. */
   unlockedAtMs: number
 }
 
@@ -27,42 +27,47 @@ export interface Achievement {
  * State structure for the achievements store.
  */
 interface AchievementsState {
-  /** Persistence schema version. */
+  /** Persistence schema version for migrations. */
   schemaVersion: 1
-  /** List of all unlocked achievements. */
+  /** List of all permanently unlocked achievements. */
   unlocked: Achievement[]
-  /** List of achievements that have been unlocked but not yet acknowledged by the user. */
+  /** Queue of achievements that have been unlocked but not yet acknowledged by the user in UI. */
   pending: Achievement[]
 }
 
 /**
- * Actions for managing achievements.
+ * Actions for managing the achievement lifecycle.
  */
 interface AchievementsActions {
   /**
-   * Checks current statistics against achievement criteria.
+   * Checks current practice metrics against defined achievement criteria.
+   *
+   * @remarks
+   * This method uses the `checkAchievements` domain logic and updates the store
+   * with any new milestones reached.
    *
    * @param stats - Current practice and progress metrics.
-   * @returns Array of newly unlocked achievements.
+   * @returns Array of newly unlocked achievements in this check cycle.
    */
   check: (stats: AchievementCheckStats) => Achievement[]
 
   /**
-   * Clears an achievement from the pending queue.
+   * Removes an achievement from the pending queue after it has been displayed to the user.
    *
-   * @param id - ID of the achievement.
+   * @param id - ID of the achievement to acknowledge.
    */
   markShown: (id: string) => void
 }
 
 /**
- * Zustand store for managing the achievement system.
+ * Zustand store for managing the persistent achievement system.
  *
  * @remarks
- * This store handles the persistence and state of user achievements. It separates
- * achievements into "unlocked" (permanent history) and "pending" (queued for UI notification).
- *
- * It uses `validatedPersist` to ensure the stored data matches the expected schema.
+ * This store coordinates the detection and persistence of user milestones.
+ * Key responsibilities:
+ * - **Achievement Detection**: Leverages pure domain logic to evaluate user performance.
+ * - **UI Notification Queue**: Manages a `pending` list for "toast" style notifications.
+ * - **Persistence**: Ensures achievements are saved across sessions using Zod-validated persistence.
  *
  * @public
  */

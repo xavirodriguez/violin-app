@@ -12,16 +12,16 @@ import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
 export interface ProgressEvent {
   /** Unix timestamp of the event. */
   ts: number
-  /** ID of the exercise. */
+  /** ID of the exercise practiced. */
   exerciseId: string
-  /** Accuracy achieved (0-100). */
+  /** Accuracy achieved during the session (0-100). */
   accuracy: number
-  /** Average rhythmic error in milliseconds. */
+  /** Average rhythmic error in milliseconds for the session. */
   rhythmErrorMs: number
 }
 
 /**
- * Aggregated skill metrics.
+ * Aggregated skill metrics across multiple domains.
  *
  * @public
  */
@@ -30,23 +30,26 @@ export interface SkillAggregates {
   intonation: number
   /** Rhythmic precision score (0-100). */
   rhythm: number
-  /** Overall combined skill level. */
+  /** Overall combined skill level based on multiple heuristics. */
   overall: number
 }
 
 /**
  * A snapshot of the user's progress at a specific point in time.
  *
+ * @remarks
+ * Snapshots are used to track trends over time (e.g., 7-day or 30-day improvements).
+ *
  * @public
  */
 export interface ProgressSnapshot {
-  /** The user this snapshot belongs to. */
+  /** The user identifier. */
   userId: string
-  /** The time window covered by the snapshot. */
+  /** The time window covered by this specific snapshot. */
   window: '7d' | '30d' | 'all'
-  /** Aggregated skills at this snapshot. */
+  /** Aggregated skills at the time of the snapshot. */
   aggregates: SkillAggregates
-  /** ID of the session that triggered this snapshot. */
+  /** ID of the session that triggered the creation of this snapshot. */
   lastSessionId: string
 }
 
@@ -58,15 +61,15 @@ export interface ProgressSnapshot {
 export interface ExerciseStats {
   /** ID of the exercise. */
   exerciseId: string
-  /** Number of times completed. */
+  /** Total number of times this exercise was completed. */
   timesCompleted: number
-  /** Best accuracy recorded. */
+  /** Highest accuracy percentage ever recorded. */
   bestAccuracy: number
-  /** Average accuracy across all attempts. */
+  /** Rolling average of accuracy across all attempts. */
   averageAccuracy: number
   /** Fastest completion time in milliseconds. */
   fastestCompletionMs: number
-  /** Unix timestamp of the last attempt. */
+  /** Unix timestamp of the most recent attempt. */
   lastPracticedMs: number
 }
 
@@ -76,53 +79,64 @@ export interface ExerciseStats {
  * @public
  */
 export interface ProgressState {
-  /** Version of the persistence schema. */
+  /** Version of the persistence schema for migrations. */
   schemaVersion: 1
-  /** Lifetime count of practice sessions. */
+  /** Lifetime count of all started practice sessions. */
   totalPracticeSessions: number
-  /** Total practice time in seconds. */
+  /** Total lifetime practice time in seconds. */
   totalPracticeTime: number
-  /** IDs of exercises that have been completed. */
+  /** IDs of unique exercises that have been completed at least once. */
   exercisesCompleted: string[]
   /** Current daily practice streak. */
   currentStreak: number
-  /** Highest daily streak recorded. */
+  /** Highest daily streak recorded for this user. */
   longestStreak: number
-  /** Current intonation skill level (0-100). */
+  /** Current calculated intonation skill level (0-100). */
   intonationSkill: number
-  /** Current rhythm skill level (0-100). */
+  /** Current calculated rhythm skill level (0-100). */
   rhythmSkill: number
-  /** Overall skill level (0-100). */
+  /** Combined overall skill level (0-100). */
   overallSkill: number
-  /** Map of per-exercise statistics. */
+  /** Map of exercise IDs to their lifetime statistics. */
   exerciseStats: Record<string, ExerciseStats>
-  /** Circular buffer of recent progress events (last 1000). */
+  /** Circular buffer of recent progress events (maximum 1000). */
   eventBuffer: ProgressEvent[]
-  /** Historical snapshots of progress. */
+  /** Historical snapshots of progress used for charting trends. */
   snapshots: ProgressSnapshot[]
-  /** Counter of events processed, used for snapshot triggers. */
+  /** Internal counter of events processed, used to trigger periodic snapshots. */
   eventCounter: number
 }
 
 /**
- * Actions available in the Progress Store.
+ * Actions available in the Progress Store for updating user performance.
  */
 interface ProgressActions {
   /**
-   * Integrates a completed session into the long-term progress.
+   * Integrates a completed session into the long-term progress history.
    *
-   * @param session - The completed session data.
+   * @remarks
+   * This method performs several side effects:
+   * 1. Updates lifetime counters and exercise-specific stats.
+   * 2. Manages the circular event buffer.
+   * 3. Triggers a new snapshot every 50 events.
+   * 4. Prunes events older than 90 days.
+   *
+   * @param session - The completed session data to integrate.
    */
   addSession: (session: PracticeSession) => void
 
   /**
-   * Re-calculates skill levels based on session history.
+   * Re-calculates domain-specific skill levels based on the provided session history.
    *
-   * @param sessions - Recent session history.
+   * @param sessions - Recent session history to analyze.
    */
   updateSkills: (sessions: PracticeSession[]) => void
 }
 
+/**
+ * Default initial state for new users.
+ * @internal
+ */
 const DEFAULT_PROGRESS: ProgressState = {
   schemaVersion: 1,
   totalPracticeSessions: 0,
@@ -143,12 +157,12 @@ const DEFAULT_PROGRESS: ProgressState = {
  * Zustand store for high-density, persistent progress tracking.
  *
  * @remarks
- * This store is optimized for long-term storage of user performance metrics.
- * It uses a circular event buffer (`eventBuffer`) and incremental snapshots
- * to keep the storage footprint manageable while retaining high-fidelity data.
- *
- * Data is validated against `ProgressStateSchema` and persisted using
- * custom logic that handles serialization and schema migrations.
+ * This store is designed for durability and performance when handling large volumes
+ * of historical practice data. Key features include:
+ * - **High-Density Storage**: Uses a circular buffer to limit memory usage while keeping detailed recent history.
+ * - **Incremental Snapshots**: Efficiently tracks long-term trends without re-processing all history.
+ * - **Schema Migrations**: Safely handles data format changes over time.
+ * - **Zod Validation**: Ensures the integrity of persisted data in `localStorage`.
  *
  * @public
  */
@@ -228,7 +242,6 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
       },
 
       updateSkills: (sessions: PracticeSession[]) => {
-        // Ported from original analytics-store.ts
         const intonationSkill = calculateIntonationSkill(sessions)
         const rhythmSkill = calculateRhythmSkill(sessions)
 
@@ -258,6 +271,7 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
 
 /**
  * Heuristic for calculating intonation skill from session history.
+ * @internal
  */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
@@ -270,6 +284,7 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 
 /**
  * Heuristic for calculating rhythm skill from session history.
+ * @internal
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0

@@ -5,27 +5,25 @@ import { Observation } from '@/lib/technique-types'
 
 /**
  * Props for the {@link PracticeFeedback} component.
- *
- * @public
  */
 interface PracticeFeedbackProps {
   /** The scientific pitch name of the target note (e.g., "A4"). */
   targetNote: string
   /** The scientific pitch name detected by the audio engine, if any. */
   detectedPitchName: string | null
-  /** Pitch deviation in cents from the target. */
+  /** Pitch deviation in cents from the target note's ideal frequency. */
   centsOff: number | null
-  /** Current status of the practice machine. */
+  /** Current status of the practice machine (e.g., 'listening', 'correct'). */
   status: string
   /** Maximum allowed deviation in cents to be considered "in tune". Defaults to 10. */
   centsTolerance?: number
-  /** List of real-time technical observations to display. */
+  /** List of real-time technical observations (intonation, stability, etc.) to display. */
   liveObservations?: Observation[]
-  /** Duration the current note has been held correctly, in milliseconds. */
+  /** Duration the current note has been held correctly in tune, in milliseconds. */
   holdDuration?: number
-  /** Required hold time for a note to be considered matched. */
+  /** Required hold time for a note to be considered successfully matched. */
   requiredHoldTime?: number
-  /** Current number of consecutive perfect notes. */
+  /** Current count of consecutive notes played with perfect accuracy. */
   perfectNoteStreak?: number
 }
 
@@ -33,10 +31,13 @@ interface PracticeFeedbackProps {
  * Component that provides real-time visual feedback during a practice session.
  *
  * @remarks
- * This component displays three levels of feedback:
- * 1. **Primary Status**: Large indicators for "Perfect", "Wrong Note", or "Adjust" (sharp/flat).
- * 2. **Technical Details**: Detailed cents deviation and tolerance (collapsible).
- * 3. **Live Observations**: Specific pedagogical tips based on technique analysis.
+ * This component implements a multi-level feedback system designed to guide
+ * students without overwhelming them:
+ *
+ * 1. **Primary Status (60% visual weight)**: Large indicators for "Perfect", "Wrong Note", or "Adjust" (arrows).
+ * 2. **Technical Details (Collapsible)**: Provides exact cents deviation for advanced students.
+ * 3. **Pedagogical Observations**: Displays high-level tips (e.g., "Consistently sharp")
+ *    derived from long-term analysis of the current note.
  *
  * @param props - Component props.
  * @public
@@ -56,7 +57,7 @@ export function PracticeFeedback({
   return (
     <div className="space-y-8">
 
-      {/* LEVEL 1: Main Status - Occupies 60% of visual space */}
+      {/* LEVEL 1: Main Status - Dominant feedback for quick recognition */}
       <div className="flex items-center justify-center min-h-[200px]">
         {status === 'listening' && !isPlaying && (
           <div className="text-center">
@@ -108,7 +109,7 @@ export function PracticeFeedback({
         )}
       </div>
 
-      {/* LEVEL 2: Precise Metrics - Collapsible, small font */}
+      {/* LEVEL 2: Precise Metrics - For students who want exact data */}
       {isPlaying && centsOff !== null && centsOff !== undefined && (
         <details className="text-center">
           <summary className="text-sm text-muted-foreground cursor-pointer">
@@ -131,7 +132,7 @@ export function PracticeFeedback({
         </details>
       )}
 
-      {/* LEVEL 3: Live Observations - Top 2 only */}
+      {/* LEVEL 3: Live Observations - Actionable pedagogical tips */}
       {liveObservations.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">

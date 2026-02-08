@@ -7,6 +7,7 @@ import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { featureFlags } from '@/lib/feature-flags'
 import type { Exercise } from '@/lib/exercises/types'
 import { NoteTechnique } from '../technique-types'
+import { Observation } from '../technique-types'
 
 /**
  * Result of a completed or cancelled practice session runner execution.
@@ -43,20 +44,23 @@ export interface PracticeSessionRunner {
   cancel(): void
 }
 
-import { Observation } from '../technique-types'
-
-export interface SessionRunnerDependencies {
-  /** The source of audio frames. */
+/**
+ * Dependencies required by the {@link PracticeSessionRunnerImpl}.
+ */
+interface SessionRunnerDependencies {
+  /** The source of audio frames (Hardware/Web Audio). */
   audioLoop: AudioLoopPort
-  /** The pitch detector for analysis. */
+  /** The pitch detector instance for real-time analysis. */
   detector: PitchDetectionPort
-  /** The exercise to be practiced. */
+  /** The musical exercise to be practiced. */
   exercise: Exercise
   /** Unix timestamp of when the session was initiated. */
   sessionStartTime: number
-  /** Minimal store interface for state management and communication. */
+  /** Minimal store interface for state management and UI synchronization. */
   store: {
+    /** Retrieves the current domain and UI observation state. */
     getState: () => { practiceState: PracticeState | null; liveObservations?: Observation[] }
+    /** Updates the store state using functional updaters. */
     setState: (
       partial:
         | { practiceState: PracticeState | null; liveObservations?: Observation[] }
@@ -72,16 +76,16 @@ export interface SessionRunnerDependencies {
     /** Stops the session and cleans up resources. */
     stop: () => Promise<void>
   }
-  /** Analytics handlers for recording progress. */
+  /** Analytics handlers for recording performance metrics. */
   analytics: {
-    /** Ends the analytics session. */
+    /** Ends the analytics session and finalizes data. */
     endSession: () => void
-    /** Records an individual note attempt. */
+    /** Records an individual pitch detection attempt. */
     recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
-    /** Records the completion of a note. */
+    /** Records the successful completion/matching of a note. */
     recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
   }
-  /** Optional callback to update real-time pitch feedback in the UI. */
+  /** Optional callback to update real-time pitch feedback (e.g., for a visual tuner). */
   updatePitch?: (pitch: number, confidence: number) => void
 }
 
@@ -91,8 +95,11 @@ export interface SessionRunnerDependencies {
  *
  * @remarks
  * This class acts as the "glue" between the pure domain logic of the `PracticeEngine`
- * and the external world (audio hardware, analytics, Zustand stores).
- * It manages its own internal {@link AbortController} for graceful shutdown.
+ * and the external world. It manages:
+ * 1. **Loop Orchestration**: Consumes engine events using an async iterator.
+ * 2. **State Synchronization**: Maps domain events to store updates via `handlePracticeEvent`.
+ * 3. **Side Effects**: Triggers analytics, telemetry, and pitch feedback.
+ * 4. **Lifecycle Management**: Handles graceful cancellation via {@link AbortController}.
  *
  * @public
  */
@@ -103,15 +110,15 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   /**
    * Creates an instance of PracticeSessionRunnerImpl.
    *
-   * @param deps - The dependencies required for orchestration.
+   * @param deps - The dependencies required for session orchestration.
    */
   constructor(private deps: SessionRunnerDependencies) {}
 
   /**
-   * Executes the session loop.
+   * Executes the session loop until completion, error, or external cancellation.
    *
    * @param signal - External abort signal.
-   * @returns The session outcome.
+   * @returns The session outcome result.
    */
   async run(signal: AbortSignal): Promise<SessionResult> {
     this.cancel()
@@ -140,7 +147,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   /**
-   * Cancels the current execution and triggers cleanup.
+   * Cancels the current execution and triggers internal cleanup.
    */
   cancel(): void {
     this.controller?.abort()
@@ -149,13 +156,14 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Performs internal cleanup of session-specific resources.
+   * @internal
    */
   private cleanup(): void {
-    // No-op cleanup
+    // No-op cleanup in current implementation
   }
 
   /**
-   * Internal async loop that consumes events from the Practice Engine.
+   * Internal async loop that consumes event streams from the Practice Engine.
    *
    * @param signal - Abort signal for the loop.
    */
@@ -174,12 +182,16 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     for await (const event of engineEvents) {
       if (signal.aborted) break
 
-      // Adapt PracticeEngineEvent back to PracticeEvent for compatibility
+      // Adapt PracticeEngineEvent back to PracticeEvent for compatibility with legacy sinks
       const practiceEvent: PracticeEvent = this.mapEngineEventToPracticeEvent(event)
       this.processEvent(practiceEvent, signal)
     }
   }
 
+  /**
+   * Maps formalized engine events to legacy domain events.
+   * @internal
+   */
   private mapEngineEventToPracticeEvent(event: PracticeEngineEvent): PracticeEvent {
     switch (event.type) {
       case 'NOTE_DETECTED':
@@ -200,6 +212,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    *
    * @param event - The event to process.
    * @param signal - Current session signal.
+   * @internal
    */
   private processEvent(event: PracticeEvent, signal: AbortSignal): void {
     if (!event || !event.type) return
@@ -243,9 +256,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Handles side effects specific to matching a note, such as recording analytics.
-   *
-   * @param event - The match event.
-   * @param currentState - The current domain state.
+   * @internal
    */
   private handleMatchedNoteSideEffects(
     event: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>,
@@ -276,6 +287,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
  *
  * @param deps - Session dependencies.
  * @returns A promise with the session result.
+ * @public
  */
 export async function runPracticeSession(deps: SessionRunnerDependencies) {
   const runner = new PracticeSessionRunnerImpl(deps)

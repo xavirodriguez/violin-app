@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
 import type { Exercise } from '@/lib/domain/musical-types'
-import { featureFlags } from '@/lib/feature-flags'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { analytics } from '@/lib/analytics-tracker'
@@ -45,7 +44,7 @@ export interface PracticeSession {
 interface NoteResult {
   /** Index of the note in the exercise. */
   noteIndex: number
-  /** Expected pitch name. */
+  /** Expected scientific pitch name (e.g., "A4"). */
   targetPitch: string
   /** Number of attempts/frames spent on this note. */
   attempts: number
@@ -64,7 +63,7 @@ interface NoteResult {
  *
  * @public
  */
-interface UserProgress {
+export interface UserProgress {
   /** Unique user identifier. */
   userId: string
   /** Count of all sessions ever started. */
@@ -219,6 +218,7 @@ const DAY_MS = 86_400_000
 
 /**
  * Normalizes a timestamp to the beginning of the day.
+ * @internal
  */
 function startOfDayMs(ms: number): number {
   const d = new Date(ms)
@@ -228,6 +228,7 @@ function startOfDayMs(ms: number): number {
 
 /**
  * Coerces unknown values into a numeric timestamp in milliseconds.
+ * @internal
  */
 function toMs(value: unknown): number {
   if (typeof value === 'number') return value
@@ -239,23 +240,16 @@ function toMs(value: unknown): number {
   return 0
 }
 
-type JsonPrimitive = string | number | boolean | null
-type JsonObject = { [key: string]: JsonValue }
-type JsonArray = JsonValue[]
-type JsonValue = JsonPrimitive | JsonObject | JsonArray
-
 /**
  * Zustand store for persistent analytics, progress tracking, and achievement management.
  *
  * @remarks
  * This store uses `persist` middleware to save user progress to local storage.
  * It manages:
- * - Session recording and history (limited to 100 entries).
- * - Lifetime exercise statistics and skill level calculations.
- * - Practice streaks (daily).
- * - Achievement system integration.
- *
- * All time values are stored as Unix timestamps in milliseconds for consistency.
+ * 1. **Session Lifecycle**: Handles the transition from active recording to historical data.
+ * 2. **Skill Level Heuristics**: Calculates normalized intonation and rhythm scores based on recent performance.
+ * 3. **Daily Streaks**: Tracks consistency using a rolling 24-hour window.
+ * 4. **Schema Migrations**: Implements robust logic for handling legacy data formats (versions 1-3).
  *
  * @public
  */
@@ -598,6 +592,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
 /**
  * Calculates a normalized skill level for intonation based on recent sessions.
+ * @internal
  */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
@@ -610,6 +605,7 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 
 /**
  * Updates lifetime statistics for a specific exercise.
+ * @internal
  */
 function updateExerciseStats(
   exerciseStats: Record<string, ExerciseStats>,
@@ -635,6 +631,7 @@ function updateExerciseStats(
 
 /**
  * Updates the user's daily practice streak.
+ * @internal
  */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
@@ -652,6 +649,7 @@ function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
 
 /**
  * Recalculates all skill metrics for the user.
+ * @internal
  */
 function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
   progress.intonationSkill = calculateIntonationSkill(sessions)
@@ -661,6 +659,7 @@ function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
 
 /**
  * Calculates the total number of unique days practiced.
+ * @internal
  */
 function calculatePracticeDays(sessions: PracticeSession[]): number {
   const uniqueDays = new Set(sessions.map((s) => new Date(s.endTimeMs).toDateString()))
@@ -669,6 +668,7 @@ function calculatePracticeDays(sessions: PracticeSession[]): number {
 
 /**
  * Helper to update the note results array with a new attempt.
+ * @internal
  */
 function updateNoteResults(
   noteResults: NoteResult[],
@@ -707,6 +707,7 @@ function updateNoteResults(
 
 /**
  * Calculates a normalized skill level for rhythm based on recent sessions.
+ * @internal
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
@@ -738,6 +739,7 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
  * @remarks
  * This function handles simple achievements that don't require the full
  * `achievement-checker` logic.
+ * @internal
  */
 function checkLegacyAchievements(
   progress: UserProgress,

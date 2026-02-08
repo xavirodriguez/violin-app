@@ -2,7 +2,8 @@
  * Musical Domain
  *
  * Defines the canonical types and normalization logic for musical concepts
- * shared across the application.
+ * shared across the application. This module serves as the source of truth for
+ * scientific pitch notation and accidental mapping.
  */
 
 /**
@@ -10,9 +11,9 @@
  *
  * @remarks
  * Values:
- * - -1: Flat (b)
- * - 0: Natural
- * - 1: Sharp (#)
+ * - `-1`: Flat (b)
+ * - `0`: Natural
+ * - `1`: Sharp (#)
  *
  * @public
  */
@@ -24,9 +25,9 @@ export type CanonicalAccidental = -1 | 0 | 1
  * @remarks
  * This function handles the conversion from multiple input formats (numeric, string, symbol)
  * into a strictly typed {@link CanonicalAccidental}. It is primarily used during
- * exercise definition and MusicXML parsing.
+ * exercise definition and MusicXML parsing to ensure consistency across the pipeline.
  *
- * Supported inputs:
+ * **Supported inputs**:
  * - **Numbers**: -1, 0, 1. (Also supports -2/2 for double accidentals, mapping them to single).
  * - **Strings**: "sharp", "#", "flat", "b", "natural", "", etc.
  * - **Null/Undefined**: Defaults to 0 (natural).

@@ -1,5 +1,6 @@
 /**
  * TunerMode
+ *
  * Provides the user interface for the violin tuner.
  * Handles the audio analysis loop and visualizes pitch detection results.
  */
@@ -20,11 +21,11 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * This component provides a focused interface for tuning the violin. It manages its own
  * high-frequency analysis loop using `requestAnimationFrame` when active.
  *
- * The tuner displays:
- * - A connection prompt if audio is not initialized.
- * - An active fingerboard visualization with cents deviation.
- * - Controls for starting and stopping the session.
- * - Error handling for microphone access issues.
+ * Key features:
+ * 1. **Visual Tuning**: Displays a high-accuracy fingerboard with cents deviation.
+ * 2. **Audio Lifecycle**: Manages the start/stop of the analyzer loop and synchronization with `TunerStore`.
+ * 3. **Error Resilience**: Handles microphone access errors and provides retry mechanisms.
+ * 4. **Hardware Selection**: Integrates with the store's device enumeration (via settings).
  *
  * @public
  */
@@ -50,6 +51,9 @@ export function TunerMode() {
    * When the tuner is active and resources (analyser, detector) are available,
    * it starts a `requestAnimationFrame` loop that pulls time-domain data and
    * updates the store with detected pitch.
+   *
+   * This effect ensures that the loop is cleaned up when the component unmounts
+   * or when the tuner is stopped.
    */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {

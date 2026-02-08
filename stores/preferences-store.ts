@@ -11,13 +11,13 @@ import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
  * @public
  */
 interface PreferencesStore extends UserPreferences {
-  /** Persistence schema version. */
+  /** Persistence schema version. Used for migrations. */
   schemaVersion: 1
 
   /**
    * Sets the pedagogical feedback level.
    *
-   * @param level - The new feedback level.
+   * @param level - The new feedback level (e.g., 'beginner', 'advanced').
    */
   setFeedbackLevel: (level: FeedbackLevel) => void
 
@@ -38,7 +38,8 @@ interface PreferencesStore extends UserPreferences {
 }
 
 /**
- * Initial/Default preference values.
+ * Initial/Default preference values for a new user.
+ * @internal
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
   feedbackLevel: 'beginner',
@@ -53,7 +54,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  *
  * @remarks
  * This store handles UI and pedagogical settings that customize the user experience.
- * Settings are persisted across sessions and validated against `PreferencesStateSchema`.
+ * It uses `validatedPersist` to ensure that data stored in `localStorage` remains
+ * compliant with the `PreferencesStateSchema`.
+ *
+ * All changes are automatically tracked via the `analytics` service.
  *
  * @public
  */
