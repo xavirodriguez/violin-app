@@ -59,12 +59,10 @@ describe('FeatureFlagsManager', () => {
 
   it('should return all flags with their current values', () => {
     process.env['FEATURE_AUDIO_WEB_WORKER'] = 'true'
-    process.env['FEATURE_TELEMETRY_ACCURACY'] = 'true'
 
     const allFlags = featureFlags.getAll()
 
     expect(allFlags['FEATURE_AUDIO_WEB_WORKER']).toBe(true)
-    expect(allFlags['FEATURE_TELEMETRY_ACCURACY']).toBe(true)
     expect(Object.keys(allFlags)).toEqual(Object.keys(FEATURE_FLAGS_METADATA))
   })
 

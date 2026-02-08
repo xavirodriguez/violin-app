@@ -1,0 +1,37 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "risk_level": "medium",
+      "risks": [
+        {
+          "id": "RISK_ADAPT_001",
+          "type": "performance",
+          "description": "Adaptive logic runs in the high-frequency engine loop.",
+          "probability": 0.1,
+          "impact": 0.3,
+          "risk_score": 0.03,
+          "mitigation_strategy": "Keep calculations simple and O(1).",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of visual feedback to the user about difficulty changes",
+          "blocking_feature": null,
+          "resolution_steps": ["Add a UI indicator for current difficulty level"]
+        }
+      ],
+      "growth_enablers": [
+        {
+          "enabler": "Better telemetry from FEATURE_TELEMETRY_ACCURACY",
+          "effort": "low",
+          "impact": "More data to tune the adaptive algorithm"
+        }
+      ]
+    }
+  ],
+  "critical_path_features": [
+    "FEATURE_TELEMETRY_ACCURACY"
+  ]
+}
