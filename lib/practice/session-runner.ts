@@ -33,6 +33,10 @@ export interface PracticeSessionRunner {
   /**
    * Starts the practice session and runs until completion, cancellation, or error.
    *
+   * @remarks
+   * This is a long-running process that consumes audio data in real-time. It
+   * should be executed within a try-catch block to handle unexpected pipeline failures.
+   *
    * @param signal - An external {@link AbortSignal} to cancel the session.
    * @returns A promise that resolves with the {@link SessionResult}.
    */
@@ -46,6 +50,9 @@ export interface PracticeSessionRunner {
 
 /**
  * Dependencies required by the {@link PracticeSessionRunnerImpl}.
+ *
+ * @remarks
+ * Uses a Dependency Injection pattern to facilitate testing with mock ports and stores.
  */
 interface SessionRunnerDependencies {
   /** The source of audio frames (Hardware/Web Audio). */
@@ -60,7 +67,12 @@ interface SessionRunnerDependencies {
   store: {
     /** Retrieves the current domain and UI observation state. */
     getState: () => { practiceState: PracticeState | null; liveObservations?: Observation[] }
-    /** Updates the store state using functional updaters. */
+    /**
+     * Updates the store state using functional updaters.
+     *
+     * @param partial - Partial state or updater function.
+     * @param replace - Whether to replace the entire state.
+     */
     setState: (
       partial:
         | { practiceState: PracticeState | null; liveObservations?: Observation[] }
@@ -95,11 +107,16 @@ interface SessionRunnerDependencies {
  *
  * @remarks
  * This class acts as the "glue" between the pure domain logic of the `PracticeEngine`
- * and the external world. It manages:
- * 1. **Loop Orchestration**: Consumes engine events using an async iterator.
- * 2. **State Synchronization**: Maps domain events to store updates via `handlePracticeEvent`.
- * 3. **Side Effects**: Triggers analytics, telemetry, and pitch feedback.
- * 4. **Lifecycle Management**: Handles graceful cancellation via {@link AbortController}.
+ * and the external world.
+ *
+ * **Core Responsibilities**:
+ * 1. **Loop Orchestration**: Consumes engine events using an async iterator derived from the audio hardware.
+ * 2. **State Synchronization**: Maps domain-level events to store updates via `handlePracticeEvent`.
+ * 3. **Side Effects**: Triggers analytics recording, telemetry logging, and pitch feedback updates.
+ * 4. **Lifecycle Management**: Handles graceful cancellation via {@link AbortController} and ensures no stale events are processed.
+ *
+ * **Performance**: The loop runs at the frequency of the `audioLoop` (typically 60Hz).
+ * Internal processing is optimized to avoid allocations in the hot path.
  *
  * @public
  */
@@ -117,7 +134,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   /**
    * Executes the session loop until completion, error, or external cancellation.
    *
-   * @param signal - External abort signal.
+   * @remarks
+   * This method is reentrant-safe; calling it while already running will cancel
+   * the previous execution before starting the new one.
+   *
+   * @param signal - External abort signal from the caller (e.g., a component unmounting).
    * @returns The session outcome result.
    */
   async run(signal: AbortSignal): Promise<SessionResult> {
@@ -147,7 +168,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   /**
-   * Cancels the current execution and triggers internal cleanup.
+   * Immediately cancels the current execution and triggers internal cleanup.
    */
   cancel(): void {
     this.controller?.abort()
@@ -156,6 +177,9 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Performs internal cleanup of session-specific resources.
+   *
+   * @remarks
+   * Currently a no-op, but reserved for future resource management (e.g., closing workers).
    * @internal
    */
   private cleanup(): void {
@@ -165,7 +189,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   /**
    * Internal async loop that consumes event streams from the Practice Engine.
    *
-   * @param signal - Abort signal for the loop.
+   * @remarks
+   * Connects the `AudioLoopPort` to the `PracticeEngine`. The `engineEvents`
+   * generator yields high-level musical events as the audio hardware provides frames.
+   *
+   * @param signal - Abort signal specifically for this internal loop execution.
    */
   private async runInternal(signal: AbortSignal): Promise<void> {
     const { audioLoop, detector, exercise } = this.deps
@@ -190,6 +218,13 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Maps formalized engine events to legacy domain events.
+   *
+   * @remarks
+   * This translation layer ensures that the new engine remains compatible with
+   * existing event consumers without requiring a full refactor of the event sink.
+   *
+   * @param event - The event emitted by the practice engine.
+   * @returns A compatible {@link PracticeEvent}.
    * @internal
    */
   private mapEngineEventToPracticeEvent(event: PracticeEngineEvent): PracticeEvent {
@@ -210,8 +245,15 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   /**
    * Processes a single practice event, updating state and triggering side effects.
    *
+   * @remarks
+   * This method coordinates:
+   * 1. **Visual Feedback**: Updates the tuner/pitch feedback callbacks.
+   * 2. **Telemetry**: Logs accuracy data for offline analysis.
+   * 3. **Persistence**: Triggers analytics recording via matched note side effects.
+   * 4. **State Transition**: Delegates store updates to `handlePracticeEvent`.
+   *
    * @param event - The event to process.
-   * @param signal - Current session signal.
+   * @param signal - Current session signal to prevent processing after abort.
    * @internal
    */
   private processEvent(event: PracticeEvent, signal: AbortSignal): void {
@@ -224,7 +266,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       if (event.type === 'NOTE_DETECTED') {
         this.deps.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
 
-        // Accuracy Telemetry (Promoted to Permanent)
+        // Accuracy Telemetry
         console.log('[TELEMETRY] Pitch Accuracy:', {
           pitch: event.payload.pitch,
           cents: event.payload.cents,
@@ -254,6 +296,13 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Handles side effects specific to matching a note, such as recording analytics.
+   *
+   * @remarks
+   * Ensures that analytics are only recorded once per note to avoid duplicates
+   * during transient detection states.
+   *
+   * @param event - The NOTE_MATCHED event.
+   * @param currentState - Current practice domain state.
    * @internal
    */
   private handleMatchedNoteSideEffects(
@@ -280,6 +329,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
 /**
  * Runs a practice session using the provided dependencies.
+ *
+ * @remarks
+ * This is a convenience wrapper for one-off sessions. For better lifecycle
+ * management in React components, prefer using the `PracticeSessionRunnerImpl`
+ * class directly.
  *
  * @deprecated Use `PracticeSessionRunnerImpl` directly for better lifecycle management.
  *

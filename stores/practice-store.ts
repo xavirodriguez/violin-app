@@ -40,20 +40,28 @@ import { Observation, NoteTechnique } from '@/lib/technique-types'
  * 3. **High-Frequency Analysis**: Consumes events from the audio pipeline and updates the UI state.
  * 4. **Telemetry & Analytics**: Synchronizes session data with `SessionStore` and `ProgressStore`.
  *
+ * **Concurrency & Safety**:
  * It implements a `sessionToken` pattern (UUID) to guard against race conditions during
- * asynchronous state updates in real-time loops.
+ * asynchronous state updates in real-time loops. Functional updaters are used in all
+ * `set()` calls to ensure state consistency.
  *
  * @public
  */
 interface PracticeStore {
   /**
    * The current formalized state of the practice system (FSM).
+   *
+   * @remarks
+   * Use this to determine the high-level lifecycle (e.g., 'idle', 'active', 'error').
    */
   state: PracticeStoreState
 
   /**
    * Domain-specific practice state (backward compatibility).
-   * @deprecated Use `state.practiceState` when in 'active' status.
+   *
+   * @remarks
+   * Contains real-time metrics like `currentIndex` and `detectionHistory`.
+   * @deprecated Use `state.practiceState` when `state.status` is 'active'.
    */
   practiceState: PracticeState | null
 
@@ -63,7 +71,7 @@ interface PracticeStore {
   error: AppError | null
 
   /**
-   * Real-time observations about the user's playing (intonation, stability, etc.).
+   * Real-time observations about the user's playing (intonation, stability, tone quality).
    */
   liveObservations: Observation[]
 
@@ -73,7 +81,7 @@ interface PracticeStore {
   autoStartEnabled: boolean
 
   /**
-   * The Web Audio AnalyserNode used for visualization.
+   * The Web Audio AnalyserNode used for real-time visualization (e.g., Oscilloscope).
    */
   analyser: AnalyserNode | null
 
@@ -88,7 +96,7 @@ interface PracticeStore {
   detector: PitchDetectionPort | null
 
   /**
-   * Flag indicating if a start operation is currently in progress.
+   * Flag indicating if a start operation (including hardware init) is currently in progress.
    */
   isStarting: boolean
 
@@ -98,12 +106,15 @@ interface PracticeStore {
   isInitializing: boolean
 
   /**
-   * Unique identifier for the current active session to prevent stale updates.
+   * Unique identifier for the current active session to prevent stale updates from previous sessions.
    */
   sessionToken: string | null
 
   /**
    * Loads an exercise into the store and prepares for practice.
+   *
+   * @remarks
+   * This method automatically stops any active session before loading the new exercise.
    *
    * @param exercise - The musical exercise to load.
    * @returns A promise that resolves when the exercise is loaded and the store is reset.
@@ -111,7 +122,7 @@ interface PracticeStore {
   loadExercise: (exercise: Exercise) => Promise<void>
 
   /**
-   * Enables or disables automatic start of the practice session.
+   * Enables or disables automatic start of the practice session upon exercise load.
    *
    * @param enabled - True to enable auto-start.
    */
@@ -119,6 +130,9 @@ interface PracticeStore {
 
   /**
    * Manually sets the current note index in the exercise.
+   *
+   * @remarks
+   * Useful for "Jump to Note" functionality in the UI. Resets the `holdDuration` and history for the new note.
    *
    * @param index - The index of the note to jump to.
    */
@@ -129,10 +143,10 @@ interface PracticeStore {
    *
    * @remarks
    * This method is retriable from 'idle' or 'error' states. It coordinates with the
-   * `audioManager` and creates the necessary port adapters.
+   * `audioManager` and creates the necessary port adapters for the pipeline.
    *
    * @returns A promise that resolves when audio is successfully initialized.
-   * @throws {@link AppError} if microphone access is denied.
+   * @throws {@link AppError} if microphone access is denied or hardware fails.
    */
   initializeAudio: () => Promise<void>
 
@@ -140,14 +154,14 @@ interface PracticeStore {
    * Begins the active practice session.
    *
    * @remarks
-   * This method:
-   * 1. Ensures audio is initialized.
+   * **Workflow**:
+   * 1. Ensures audio is initialized (triggers `initializeAudio` if needed).
    * 2. Generates a new `sessionToken`.
    * 3. Instantiates the `PracticeSessionRunnerImpl`.
-   * 4. Starts the analytics session.
+   * 4. Starts the analytics session in `SessionStore`.
    * 5. Commences the asynchronous audio processing loop.
    *
-   * @returns A promise that resolves when the session has started.
+   * @returns A promise that resolves once the session has successfully transitioned to 'active'.
    */
   start: () => Promise<void>
 
@@ -156,18 +170,18 @@ interface PracticeStore {
    *
    * @remarks
    * This method is idempotent and performs a "resource-first" cleanup:
-   * 1. Aborts the runner and loop.
-   * 2. Closes the audio manager.
-   * 3. Finalizes the analytics session.
+   * 1. Aborts the runner and underlying audio loop via `AbortSignal`.
+   * 2. Closes the `audioManager` and releases hardware handles.
+   * 3. Finalizes the analytics session and pushes data to `ProgressStore`.
    *
-   * @returns A promise that resolves when cleanup is complete.
+   * @returns A promise that resolves when all cleanup tasks are complete.
    */
   stop: () => Promise<void>
 
   /**
    * Completely resets the store, stopping any active sessions and clearing the selected exercise.
    *
-   * @returns A promise that resolves when reset is complete.
+   * @returns A promise that resolves when the store has returned to the absolute 'idle' state.
    */
   reset: () => Promise<void>
 
@@ -175,11 +189,12 @@ interface PracticeStore {
    * Consumes a stream of events from the practice pipeline and updates the store state.
    *
    * @remarks
-   * This is a high-frequency internal method that bridge the async generator pipeline
-   * with the reactive store. It uses `sessionToken` to ensure updates belong to the current session.
+   * This is a high-frequency internal method that bridges the async generator pipeline
+   * with the reactive store. It uses `sessionToken` guards to ensure that events from
+   * previous (cancelled) sessions do not update the current state.
    *
-   * @param pipeline - An async iterable of practice events.
-   * @returns A promise that resolves when the pipeline is closed.
+   * @param pipeline - An async iterable of practice events emitted by the runner.
+   * @returns A promise that resolves when the pipeline is closed or aborted.
    * @internal
    */
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
@@ -187,6 +202,9 @@ interface PracticeStore {
 
 /**
  * Returns the initial domain state for a given exercise.
+ *
+ * @param exercise - The exercise to initialize.
+ * @returns The initial {@link PracticeState}.
  * @internal
  */
 function getInitialState(exercise: Exercise): PracticeState {
@@ -201,6 +219,13 @@ function getInitialState(exercise: Exercise): PracticeState {
 
 /**
  * Calculates updated live observations based on the current practice state.
+ *
+ * @remarks
+ * Delegates to `calculateLiveObservations` but handles the extraction of
+ * the target pitch name from the current exercise note.
+ *
+ * @param state - The current practice domain state.
+ * @returns An array of pedagogical observations.
  * @internal
  */
 function getUpdatedLiveObservations(state: PracticeState): Observation[] {
@@ -219,6 +244,15 @@ type SafePartial = Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpda
 
 /**
  * Implementation of the PracticeStore using Zustand.
+ *
+ * @remarks
+ * This hook provides access to the centralized practice state. Components
+ * should select only the specific state they need to minimize re-renders.
+ *
+ * @example
+ * ```ts
+ * const { start, stop, state } = usePracticeStore();
+ * ```
  *
  * @public
  */

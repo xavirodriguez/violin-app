@@ -18,13 +18,24 @@ import type { TunerStore } from '@/lib/domain/musical-types'
  * Zustand hook for accessing the TunerStore.
  *
  * @remarks
- * The TunerStore manages the state of the standalone violin tuner. It handles:
- * - **Permission Lifecycle**: Tracks microphone authorization states.
+ * The TunerStore manages the state of the standalone violin tuner. It is designed
+ * for high-frequency updates and robust hardware orchestration.
+ *
+ * **Core Responsibilities**:
+ * - **Permission Lifecycle**: Tracks and triggers microphone authorization states.
  * - **Signal Analysis**: Interfaces with `PitchDetector` to extract note and deviation.
  * - **Device Management**: Allows selection and enumeration of audio input hardware.
- * - **Gain Control**: Adjusts sensitivity to match different environments.
+ * - **Gain Control**: Adjusts sensitivity to match different environments (quiet rooms vs. loud studios).
  *
- * It uses a session token pattern to handle race conditions during asynchronous initialization.
+ * **Concurrency & Safety**:
+ * It uses an internal `initToken` pattern to handle race conditions during asynchronous
+ * initialization. If `initialize()` is called multiple times, only the result of the
+ * latest call is applied to the store.
+ *
+ * @example
+ * ```ts
+ * const { state, initialize, updatePitch } = useTunerStore();
+ * ```
  *
  * @public
  */
@@ -42,6 +53,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Getter that returns the shared Web Audio AnalyserNode from the audio manager.
+     *
+     * @remarks
+     * This node can be used by visualization components (e.g., Oscilloscopes)
+     * without needing to manage the audio context themselves.
      */
     get analyser() {
       return audioManager.getAnalyser()
@@ -51,9 +66,14 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Initializes the microphone and audio pipeline for tuning.
      *
      * @remarks
-     * This method requests user permissions if not already granted and sets up
-     * the audio context. It implements a token-based guard to prevent stale
-     * initialization results from being applied if a reset occurs during the process.
+     * This method:
+     * 1. Requests user permissions via the `audioManager`.
+     * 2. Sets up the Web Audio context and analyzer.
+     * 3. Instantiates the `PitchDetector` algorithm.
+     *
+     * **Token-based Guard**: It implements a token-based guard to prevent stale
+     * initialization results from being applied if a reset or another initialize
+     * call occurs during the async process.
      *
      * @returns A promise that resolves when initialization is complete.
      * @throws {@link AppError} if microphone access is denied or hardware fails.
@@ -111,6 +131,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Resets the store and attempts to re-initialize the audio pipeline.
+     *
+     * @remarks
+     * Useful for recovering from error states or refreshing hardware connections.
+     *
+     * @returns A promise that resolves when re-initialization is complete.
      */
     retry: async () => {
       await get().reset()
@@ -118,7 +143,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Stops the tuner, releases audio resources, and resets the state to IDLE.
+     * Stops the tuner, releases hardware resources, and resets the state to IDLE.
+     *
+     * @remarks
+     * Effectively invalidates any in-flight `initialize` calls by incrementing `initToken`.
      *
      * @returns A promise that resolves when cleanup is complete.
      */
@@ -136,9 +164,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Processes a raw pitch/confidence pair and updates the detected note state.
      *
      * @remarks
-     * Implements a confidence threshold (0.85) to filter out ambient noise.
-     * Automatically transitions to `DETECTED` when a valid signal is found,
-     * or back to `LISTENING` when the signal is lost.
+     * **Signal Processing**:
+     * - Implements a confidence threshold (0.85) to filter out ambient noise.
+     * - Automatically transitions to `DETECTED` when a valid signal is found.
+     * - Reverts to `LISTENING` when the signal is lost.
+     * - Uses scientific pitch notation for note naming.
      *
      * @param pitch - The detected frequency in Hz.
      * @param confidence - The detector's confidence (0.0 to 1.0).
@@ -183,6 +213,9 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Starts the listening phase of the tuner.
+     *
+     * @remarks
+     * Requires the tuner to be in the `READY` state.
      */
     startListening: () => {
       const { state } = get()
@@ -195,6 +228,9 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Pauses the listening phase, keeping the microphone active but ignoring input.
+     *
+     * @remarks
+     * Transitions the state back to `READY`.
      */
     stopListening: () => {
       const { state } = get()
@@ -209,8 +245,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Enumerates available audio input devices and updates the `devices` list.
      *
      * @remarks
-     * Triggers a brief initialization cycle if permissions are missing to
-     * ensure device labels can be read.
+     * **Permission Handling**: Triggers a brief initialization cycle if permissions
+     * are missing to ensure device labels can be read (browsers hide labels for
+     * un-authorized hardware).
+     *
+     * @returns A promise that resolves when the device list is updated.
      */
     loadDevices: async () => {
       // To get device labels, we need microphone permission. If we haven't asked yet,
@@ -232,7 +271,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     /**
      * Sets the preferred audio input device and re-initializes the pipeline.
      *
-     * @param deviceId - The ID of the device to use.
+     * @remarks
+     * Automatically restarts the tuner if it was already active.
+     *
+     * @param deviceId - The hardware ID of the device to use.
+     * @returns A promise that resolves when the new device is active.
      */
     setDeviceId: async (deviceId: string) => {
       set({ deviceId })
@@ -247,7 +290,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     /**
      * Adjusts the input gain/sensitivity.
      *
-     * @param sensitivity - Sensitivity value (0-100). Maps to gain (0.0 to 2.0).
+     * @remarks
+     * Values from 0 to 100 are mapped to a gain range of 0.0 to 2.0.
+     *
+     * @param sensitivity - Sensitivity value (0-100).
      */
     setSensitivity: (sensitivity: number) => {
       set({ sensitivity })
