@@ -2,7 +2,7 @@ import * as React from 'react';
 import { type VariantProps } from 'class-variance-authority';
 declare const buttonVariants: (props?: ({
     variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
-    size?: "default" | "icon" | "sm" | "lg" | "icon-sm" | "icon-lg" | null | undefined;
+    size?: "default" | "sm" | "lg" | "icon" | "icon-sm" | "icon-lg" | null | undefined;
 } & import("class-variance-authority/types").ClassProp) | undefined) => string;
 /**
  * Un componente de botón personalizable con variantes de estilo y tamaño.

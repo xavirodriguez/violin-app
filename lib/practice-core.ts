@@ -15,16 +15,24 @@ export type { TargetNote }
 
 /**
  * A valid note name in scientific pitch notation.
+ *
+ * @example "C4", "F#5", "Bb3"
+ * @pattern ^[A-G][#b]?[0-8]$
  */
-export type NoteName = MusicalNoteName
+export type NoteName = string & { readonly __brand: unique symbol }
 
 /**
  * Type guard to validate note name format.
+ *
+ * @param name - The string to validate.
+ *
+ * @remarks
+ * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
-  if (!/^[A-G](?:b{1,2}|#{1,2})?-?\d+$/.test(name)) {
+  if (!/^[A-G](?:b{1,2}|#{1,2})?[0-8]$/.test(name)) {
     throw new AppError({
-      message: `Invalid note name format: "${name}"`,
+      message: `Invalid note name format: "${name}" (expected scientific pitch notation, e.g., "A4", "Bb3", octave 0-8)`,
       code: ERROR_CODES.NOTE_PARSING_FAILED,
     })
   }
@@ -82,24 +90,30 @@ export class MusicalNote {
     return MusicalNote.fromFrequency(frequency)
   }
 
+  /**
+   * Parses a note name in scientific pitch notation.
+   *
+   * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
+   * @returns A MusicalNote instance
+   * @throws {AppError} CODE: NOTE_PARSING_FAILED if format is invalid
+   *
+   * @example
+   * ```ts
+   * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
+   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
+   * ```
+   */
   static fromName(fullName: NoteName): MusicalNote {
-    const match = fullName.match(/^([A-G])(b{1,2}|#{1,2})?(-?\d+)$/)
+    const match = (fullName as string).match(/^([A-G])(b{1,2}|#{1,2})?([0-8])$/)
     if (!match) {
       throw new AppError({
-        message: `Invalid note name format: "${fullName}"`,
+        message: `Invalid note name format: "${fullName}" (octave must be 0-8)`,
         code: ERROR_CODES.NOTE_PARSING_FAILED,
       })
     }
 
     const [, step, accidental = '', octaveStr] = match
     const octave = parseInt(octaveStr, 10)
-
-    if (!Number.isInteger(octave)) {
-      throw new AppError({
-        message: `Invalid octave: "${octaveStr}" in note "${fullName}"`,
-        code: ERROR_CODES.NOTE_PARSING_FAILED,
-      })
-    }
 
     const stepValue = STEP_VALUES[step]
     const accidentalValue = ACCIDENTAL_MODIFIERS[accidental]
@@ -173,6 +187,15 @@ export type PracticeEvent =
 
 /**
  * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
+ *
+ * @remarks
+ * This function handles various `alter` formats, including numeric (`1`, `-1`) and
+ * string-based (`"sharp"`, `"#"`), normalizing them into a format that `MusicalNote`
+ * can parse (e.g., "C#4"). It will throw an error if the `alter` value is
+ * unsupported, as this indicates a data validation issue upstream.
+ *
+ * @param pitch - The pitch object from a `TargetNote`.
+ * @returns A standardized branded note name string like `"C#4"`.
  */
 export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
   const canonicalAlter = normalizeAccidental(pitch.alter)

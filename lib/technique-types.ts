@@ -61,7 +61,12 @@ export interface VibratoMetrics {
   readonly widthCents?: Cents
   /**
    * Vibrato regularity score.
-   * Range: 0.0 to 1.0.
+   *
+   * @range 0.0 to 1.0
+   * @remarks
+   * - 0.0: Completely irregular/random oscillation
+   * - 0.5: Moderately regular
+   * - 1.0: Perfect sinusoidal regularity
    */
   readonly regularity?: Ratio01
 }
@@ -123,17 +128,52 @@ export interface TransitionMetrics {
  * Configuration options for the technique analysis agent.
  */
 export interface AnalysisOptions {
-  /** Time to wait for pitch to settle (ms). Default: 150. */
+  /**
+   * Time to wait for pitch to settle after note onset.
+   *
+   * @range 50-500 ms
+   * @default 150
+   */
   settlingTimeMs?: TimestampMs
-  /** Max pitch deviation for "in tune" (cents). Default: 25. */
+
+  /**
+   * Maximum pitch deviation to consider "in tune".
+   *
+   * @range 5-50 cents
+   * @default 25
+   */
   inTuneThresholdCents?: Cents
-  /** Min vibrato rate (Hz). Default: 4. */
+
+  /**
+   * Minimum vibrato rate to detect.
+   *
+   * @range 3-6 Hz
+   * @default 4
+   */
   vibratoMinRateHz?: Hz
-  /** Max vibrato rate (Hz). Default: 8. */
+
+  /**
+   * Maximum vibrato rate to detect.
+   *
+   * @range 6-10 Hz
+   * @default 8
+   */
   vibratoMaxRateHz?: Hz
-  /** Min vibrato width (cents). Default: 10. */
+
+  /**
+   * Minimum vibrato width to consider present.
+   *
+   * @range 5-20 cents
+   * @default 10
+   */
   vibratoMinWidthCents?: Cents
-  /** Min regularity score for intentional vibrato. Default: 0.5. */
+
+  /**
+   * Minimum regularity score to classify as intentional vibrato.
+   *
+   * @range 0.3-0.8
+   * @default 0.5
+   */
   vibratoMinRegularity?: Ratio01
 }
 
@@ -187,11 +227,43 @@ export interface NoteSegment {
  * Represents a piece of pedagogical feedback.
  */
 export interface Observation {
-  readonly type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
+  /** The category of the technical observation. */
+  readonly type:
+    | 'intonation'
+    | 'vibrato'
+    | 'rhythm'
+    | 'attack'
+    | 'stability'
+    | 'resonance'
+    | 'transition'
+
+  /**
+   * Severity level of the technical issue.
+   *
+   * @remarks
+   * - 1: Minor issue (cosmetic, does not affect musicality)
+   * - 2: Moderate issue (noticeable, affects quality)
+   * - 3: Critical issue (fundamental flaw, requires immediate attention)
+   */
   readonly severity: 1 | 2 | 3
+
+  /**
+   * Confidence in this observation.
+   *
+   * @range 0.0 to 1.0
+   * @remarks
+   * - < 0.5: Low confidence (speculative, may be noise)
+   * - 0.5-0.8: Moderate confidence (likely accurate)
+   * - > 0.8: High confidence (very reliable)
+   */
   readonly confidence: Ratio01
+
+  /** User-facing description of the issue. */
   readonly message: string
+
+  /** Actionable pedagogical advice. */
   readonly tip: string
-  /** Structured evidence supporting this observation. */
+
+  /** Optional raw data supporting this observation (for debugging). */
   readonly evidence?: Record<string, unknown>
 }

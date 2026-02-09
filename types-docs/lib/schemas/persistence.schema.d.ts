@@ -362,11 +362,15 @@ export declare const PracticeSessionSchema: z.ZodObject<{
     accuracy: z.ZodNumber;
     averageCents: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    accuracy: number;
+    mode: "tuner" | "practice";
+    id: string;
     startTimeMs: number;
     endTimeMs: number;
-    id: string;
+    accuracy: number;
+    averageCents: number;
+    exerciseName: string;
     durationMs: number;
+    exerciseId: string;
     noteResults: {
         averageCents: number;
         noteIndex: number;
@@ -393,18 +397,18 @@ export declare const PracticeSessionSchema: z.ZodObject<{
             };
         } | undefined;
     }[];
-    exerciseId: string;
-    exerciseName: string;
-    mode: "practice" | "tuner";
-    averageCents: number;
     notesAttempted: number;
     notesCompleted: number;
 }, {
-    accuracy: number;
+    mode: "tuner" | "practice";
+    id: string;
     startTimeMs: number;
     endTimeMs: number;
-    id: string;
+    accuracy: number;
+    averageCents: number;
+    exerciseName: string;
     durationMs: number;
+    exerciseId: string;
     noteResults: {
         averageCents: number;
         noteIndex: number;
@@ -431,10 +435,6 @@ export declare const PracticeSessionSchema: z.ZodObject<{
             };
         } | undefined;
     }[];
-    exerciseId: string;
-    exerciseName: string;
-    mode: "practice" | "tuner";
-    averageCents: number;
     notesAttempted: number;
     notesCompleted: number;
 }>;
@@ -448,17 +448,17 @@ export declare const ExerciseStatsSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     lastPracticedMs: number;
     exerciseId: string;
-    fastestCompletionMs: number;
     timesCompleted: number;
     bestAccuracy: number;
     averageAccuracy: number;
+    fastestCompletionMs: number;
 }, {
     lastPracticedMs: number;
     exerciseId: string;
-    fastestCompletionMs: number;
     timesCompleted: number;
     bestAccuracy: number;
     averageAccuracy: number;
+    fastestCompletionMs: number;
 }>;
 export declare const ProgressEventSchema: z.ZodObject<{
     ts: z.ZodNumber;
@@ -508,7 +508,7 @@ export declare const ProgressSnapshotSchema: z.ZodObject<{
     lastSessionId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     userId: string;
-    window: "7d" | "30d" | "all";
+    window: "all" | "7d" | "30d";
     aggregates: {
         intonation: number;
         rhythm: number;
@@ -517,7 +517,7 @@ export declare const ProgressSnapshotSchema: z.ZodObject<{
     lastSessionId: string;
 }, {
     userId: string;
-    window: "7d" | "30d" | "all";
+    window: "all" | "7d" | "30d";
     aggregates: {
         intonation: number;
         rhythm: number;
@@ -545,17 +545,17 @@ export declare const ProgressStateSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         lastPracticedMs: number;
         exerciseId: string;
-        fastestCompletionMs: number;
         timesCompleted: number;
         bestAccuracy: number;
         averageAccuracy: number;
+        fastestCompletionMs: number;
     }, {
         lastPracticedMs: number;
         exerciseId: string;
-        fastestCompletionMs: number;
         timesCompleted: number;
         bestAccuracy: number;
         averageAccuracy: number;
+        fastestCompletionMs: number;
     }>>;
     eventBuffer: z.ZodDefault<z.ZodArray<z.ZodObject<{
         ts: z.ZodNumber;
@@ -592,7 +592,7 @@ export declare const ProgressStateSchema: z.ZodObject<{
         lastSessionId: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         userId: string;
-        window: "7d" | "30d" | "all";
+        window: "all" | "7d" | "30d";
         aggregates: {
             intonation: number;
             rhythm: number;
@@ -601,7 +601,7 @@ export declare const ProgressStateSchema: z.ZodObject<{
         lastSessionId: string;
     }, {
         userId: string;
-        window: "7d" | "30d" | "all";
+        window: "all" | "7d" | "30d";
         aggregates: {
             intonation: number;
             rhythm: number;
@@ -614,10 +614,10 @@ export declare const ProgressStateSchema: z.ZodObject<{
     exerciseStats: Record<string, {
         lastPracticedMs: number;
         exerciseId: string;
-        fastestCompletionMs: number;
         timesCompleted: number;
         bestAccuracy: number;
         averageAccuracy: number;
+        fastestCompletionMs: number;
     }>;
     currentStreak: number;
     longestStreak: number;
@@ -636,7 +636,7 @@ export declare const ProgressStateSchema: z.ZodObject<{
     }[];
     snapshots: {
         userId: string;
-        window: "7d" | "30d" | "all";
+        window: "all" | "7d" | "30d";
         aggregates: {
             intonation: number;
             rhythm: number;
@@ -649,10 +649,10 @@ export declare const ProgressStateSchema: z.ZodObject<{
     exerciseStats: Record<string, {
         lastPracticedMs: number;
         exerciseId: string;
-        fastestCompletionMs: number;
         timesCompleted: number;
         bestAccuracy: number;
         averageAccuracy: number;
+        fastestCompletionMs: number;
     }>;
     currentStreak: number;
     longestStreak: number;
@@ -671,7 +671,7 @@ export declare const ProgressStateSchema: z.ZodObject<{
     }[] | undefined;
     snapshots?: {
         userId: string;
-        window: "7d" | "30d" | "all";
+        window: "all" | "7d" | "30d";
         aggregates: {
             intonation: number;
             rhythm: number;
@@ -688,17 +688,17 @@ export declare const AchievementSchema: z.ZodObject<{
     icon: z.ZodString;
     unlockedAtMs: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
+    icon: string;
+    id: string;
     name: string;
     unlockedAtMs: number;
-    id: string;
     description: string;
-    icon: string;
 }, {
+    icon: string;
+    id: string;
     name: string;
     unlockedAtMs: number;
-    id: string;
     description: string;
-    icon: string;
 }>;
 export declare const AchievementsStateSchema: z.ZodObject<{
     schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
@@ -709,17 +709,17 @@ export declare const AchievementsStateSchema: z.ZodObject<{
         icon: z.ZodString;
         unlockedAtMs: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }, {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }>, "many">;
     pending: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
@@ -728,48 +728,48 @@ export declare const AchievementsStateSchema: z.ZodObject<{
         icon: z.ZodString;
         unlockedAtMs: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }, {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     schemaVersion: 1;
     unlocked: {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }[];
     pending: {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }[];
 }, {
     unlocked: {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }[];
     pending: {
+        icon: string;
+        id: string;
         name: string;
         unlockedAtMs: number;
-        id: string;
         description: string;
-        icon: string;
     }[];
     schemaVersion?: 1 | undefined;
 }>;
@@ -923,11 +923,15 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
         accuracy: z.ZodNumber;
         averageCents: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -954,18 +958,18 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }, {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -992,20 +996,20 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     sessions: {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -1032,20 +1036,20 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }[];
 }, {
     sessions: {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -1072,10 +1076,6 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }[];

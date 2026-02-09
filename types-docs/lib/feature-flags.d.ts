@@ -24,7 +24,7 @@ export declare const FEATURE_FLAGS_METADATA: {
         readonly description: "Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.";
         readonly defaultValue: true;
         readonly riskLevel: "MEDIUM";
-        readonly affectedFiles: ["lib/practice-core.ts"];
+        readonly affectedFiles: ["lib/practice-engine/engine.ts"];
         readonly rollbackStrategy: "Revert to fixed difficulty levels.";
     };
     readonly FEATURE_AUDIO_WEB_WORKER: {
