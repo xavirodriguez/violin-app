@@ -2,13 +2,19 @@
  * Musical Domain
  *
  * Defines the canonical types and normalization logic for musical concepts
- * shared across the application.
+ * shared across the application. This module serves as the source of truth for
+ * scientific pitch notation and accidental mapping.
  */
 /**
  * Represents a pitch alteration in a canonical numeric format.
- * -1: Flat (b)
- *  0: Natural
- *  1: Sharp (#)
+ *
+ * @remarks
+ * Values:
+ * - `-1`: Flat (b)
+ * - `0`: Natural
+ * - `1`: Sharp (#)
+ *
+ * @public
  */
 export type CanonicalAccidental = -1 | 0 | 1;
 /**
@@ -20,12 +26,14 @@ export type CanonicalAccidental = -1 | 0 | 1;
  *   - null/undefined: Treated as 0 (natural)
  *
  * @returns A CanonicalAccidental (-1, 0, or 1)
- * @throws Error - if input is invalid
+ * @throws {AppError} CODE: DATA_VALIDATION_ERROR if input is invalid
  *
  * @example
  * normalizeAccidental(1);        // 1
  * normalizeAccidental("#");      // 1
  * normalizeAccidental("flat");   // -1
- * normalizeAccidental("X");      // ❌ Throws Error
+ * normalizeAccidental("X");      // ❌ Throws AppError
+ *
+ * @public
  */
 export declare function normalizeAccidental(input: number | string | null | undefined): CanonicalAccidental;

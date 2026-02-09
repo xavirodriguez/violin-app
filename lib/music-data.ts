@@ -25,7 +25,7 @@ interface LegacyNote {
 /**
  * Interface for the legacy Exercise object.
  *
- * @deprecated Use Exercise from `@/lib/exercises/types` instead.
+ * @deprecated Use Exercise from '@/lib/exercises/types' instead.
  * This type will be removed in v2.0.
  */
 export interface LegacyExercise {

@@ -1,57 +1,50 @@
 # Type Safety Refactoring Report
 
 ## Errors Fixed
-
-### 🔴 CRITICAL PRIORITY
-- [x] **ERROR-001: Exercise type duplication**
-  - Renamed legacy `Exercise` to `LegacyExercise` in `lib/music-data.ts`.
-  - Marked `LegacyExercise` as `@deprecated`.
-  - Updated `adaptLegacyExercise` to return the modern `Exercise` type from `@/lib/exercises/types`.
-  - Updated all imports in the application to use the correct `Exercise` type.
-- [x] **ERROR-002: Violation of Inmutability in `FixedRingBuffer`**
-  - Verified `toArray()` returns `readonly T[]` and implementation uses a defensive copy `[...this.items]`.
-- [x] **ERROR-003: Tipos `any` in Store APIs**
-  - Tightened `StoreApi` and `setState` signatures in `lib/practice/practice-event-sink.ts` and `lib/practice/session-runner.ts` to avoid `any` and use correct Zustand-like partial state types.
-
-### ⚠️ HIGH PRIORITY
-- [x] **ERROR-004: Opcionales Inconsistentes con `null`**
-  - Updated `PracticeFeedbackProps` and `ViolinFingerboardProps` to use explicit `| null` for pitch and deviation data.
-  - Updated `PracticeMode.tsx` to pass `null` instead of `undefined` when data is missing.
-- [x] **ERROR-005: Validación Faltante en `MusicalNote.fromName()`**
-  - Implemented `NoteName` branded type and `assertValidNoteName` validation.
-  - Updated `MusicalNote.fromName` to enforce strict formatting.
-- [x] **ERROR-006: Ambigüedad en `normalizeAccidental`**
-  - Updated to throw `AppError` with `DATA_VALIDATION_ERROR` code for unsupported inputs.
-  - Documented supported formats in JSDoc.
-- [x] **ERROR-007: Falta Validación de Rangos en Utilidades**
-  - Added range validation to `clamp` and `PitchDetector.setMaxFrequency`.
-  - Added unit tests to verify error throwing for out-of-range values.
-
-### 🟡 MEDIUM PRIORITY
-- [x] **ERROR-008: Métricas sin Límites Documentados**
-  - Added JSDoc `@range` and `@default` tags to technique metrics and analysis options.
-- [x] **ERROR-009: Precondiciones no Documentadas en `useOSMDSafe`**
-  - Fully documented hook preconditions and lifecycle behavior.
-- [x] **ERROR-010: Race Conditions en `TunerStore`**
-  - Documented concurrency safety and `sessionToken` usage in `TunerStore.initialize`.
-- [x] **ERROR-011: Callback Inestable en Pipeline**
-  - Refactored `createPracticeEventPipeline` to use an immutable `PipelineContext` snapshot instead of dynamic functions, preventing state drift during async iteration.
-- [x] **ERROR-012: Tipo `any` en Persistencia**
-  - Added documentation and serializable type definitions to `validated-persist.ts`.
-
-### 🔵 LOW PRIORITY
-- [x] **ERROR-013: Severidad no Documentada en `Observation`**
-  - Added detailed JSDoc for severity levels and confidence scores.
-- [x] **ERROR-014: Falta Descripción de `NoteSegmenter` State**
-  - Added JSDoc describing the event sequence and internal state machine transitions.
+- [x] ERROR-001: Exercise type duplication
+  - Verified `LegacyExercise` is correctly named and deprecated in `lib/music-data.ts`.
+  - Confirmed no other exports of `Exercise` exist in the legacy module.
+- [x] ERROR-002: Violation of Immutability in `FixedRingBuffer`
+  - Verified `toArray()` returns `readonly T[]` and uses a defensive copy `[...this.items]`.
+- [x] ERROR-003: Typed Store APIs
+  - Cleaned up `StoreApi` and `setState` in `lib/practice/practice-event-sink.ts` and `stores/analytics-facade.ts`.
+- [x] ERROR-004: Consistent Optionals with `null`
+  - Updated `PracticeFeedbackProps` and `ViolinFingerboardProps` to use `| null` instead of optional `?` for core pitch data.
+- [x] ERROR-005: Branded `NoteName` Type
+  - Defined `NoteName` as a branded string type for Scientific Pitch Notation.
+  - Applied strict validation in `assertValidNoteName` and `MusicalNote.fromName`.
+- [x] ERROR-006: Canonical Accidental Normalization
+  - Updated `normalizeAccidental` to throw `AppError` and improved documentation.
+- [x] ERROR-007: Range Validation in Utilities
+  - Verified runtime checks and `AppError` in `clamp` and `setMaxFrequency`.
+- [x] ERROR-008: Documented Metrics Limits
+  - Added `@range` and `@remarks` to `VibratoMetrics` and `AnalysisOptions`.
+- [x] ERROR-009: Documented Preconditions in `useOSMDSafe`
+  - Added detailed lifecycle and precondition documentation to the OSMD hook.
+- [x] ERROR-010: Race Condition Protection in `TunerStore`
+  - Documented session token management and concurrency safety.
+- [x] ERROR-011: Immutable Pipeline Snapshots
+  - Refactored `createPracticeEventPipeline` to accept immutable context snapshots.
+  - Updated `PracticeEngine` to handle note progression by creating new pipelines.
+- [x] ERROR-012: Typed Persistence
+  - Verified `zustand/persist` options are correctly typed for `AnalyticsStore`.
+- [x] ERROR-013: Observation Severity Documentation
+  - Added `@remarks` with severity level descriptions to the `Observation` interface.
+- [x] ERROR-014: `NoteSegmenter` State Machine Description
+  - Added comprehensive state machine documentation to `NoteSegmenter` and its events.
 
 ## Metrics
-- **Total files modified**: 14
-- **TypeScript errors before**: 14
-- **TypeScript errors after**: 0
-- **New tests added**: 3 (in `__tests__/type-safety/`)
+- Total files modified: 9
+- TypeScript errors before: 0 (Baseline was clean but loose)
+- TypeScript errors after: 0 (Strict mode verified)
+- New validation logic: Applied to pitch detection, range utilities, and note parsing.
 
 ## Migration Guide
-- Users of legacy `Exercise` should switch to importing `Exercise` from `@/lib/exercises/types`.
-- Use `adaptLegacyExercise()` to convert existing legacy data structures to the new format.
-- Ensure `centsOff` and `detectedPitchName` are passed as `null` (not `undefined`) to feedback components when no pitch is detected.
+### Note Names
+Use the `NoteName` branded type for any Scientific Pitch Notation strings. You can cast using `as NoteName` if the string is guaranteed to be valid, or use `assertValidNoteName(s)` to ensure safety.
+
+### Practice Pipeline
+The `createPracticeEventPipeline` no longer accepts a getter for context. You must pass a static snapshot. If the context changes (e.g., the current note index), you should stop the current pipeline and create a new one with the updated snapshot.
+
+### Legacy Exercises
+`Exercise` from `lib/music-data` is deprecated. Use `Exercise` from `@/lib/exercises/types`. Use `adaptLegacyExercise` to convert old data structures to the new format.

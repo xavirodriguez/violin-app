@@ -221,7 +221,11 @@ export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
  */
 export interface TunerStore {
   /**
-   * The current state of the tuner machine.
+   * Current state with session tracking.
+   *
+   * @remarks
+   * States with `sessionToken` prevent stale updates from previous sessions.
+   * If you call `initialize()` twice, only the latest session updates state.
    */
   state: TunerState
 
@@ -259,10 +263,19 @@ export interface TunerStore {
   analyser: AnalyserNode | null
 
   /**
-   * Initializes the audio pipeline and requests microphone access.
+   * Initializes audio pipeline with automatic session management.
    *
    * @remarks
-   * Handles concurrency via session tokens to prevent stale initialization.
+   * **Concurrency Safety**:
+   * - Multiple calls are safe: previous sessions are automatically invalidated
+   * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
+   * - If a previous initialization is pending, it will be cancelled
+   *
+   * **State Transitions**:
+   * - IDLE → INITIALIZING → READY (success)
+   * - IDLE → INITIALIZING → ERROR (failure)
+   *
+   * @throws Never throws - errors are captured in state.error
    */
   initialize: () => Promise<void>
 

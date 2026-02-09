@@ -5,6 +5,7 @@
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
+ * Refactored for documented lifecycle behavior.
  *
  * @param musicXML - Valid MusicXML 3.1 string
  * @param options - OSMD configuration

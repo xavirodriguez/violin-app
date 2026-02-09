@@ -6,6 +6,8 @@
  * scientific pitch notation and accidental mapping.
  */
 
+import { AppError, ERROR_CODES } from '../errors/app-error'
+
 /**
  * Represents a pitch alteration in a canonical numeric format.
  *
@@ -20,29 +22,21 @@
 export type CanonicalAccidental = -1 | 0 | 1
 
 /**
- * Normalizes various accidental representations to the canonical format.
+ * Normalizes various accidental representations to canonical format.
  *
- * @remarks
- * This function handles the conversion from multiple input formats (numeric, string, symbol)
- * into a strictly typed {@link CanonicalAccidental}. It is primarily used during
- * exercise definition and MusicXML parsing to ensure consistency across the pipeline.
+ * @param input - Accidental in any supported format:
+ *   - Number: -1 (flat), 0 (natural), 1 (sharp)
+ *   - String: "b"/"flat" (-1), "natural"/"" (0), "#"/"sharp" (1)
+ *   - null/undefined: Treated as 0 (natural)
  *
- * **Supported inputs**:
- * - **Numbers**: -1, 0, 1. (Also supports -2/2 for double accidentals, mapping them to single).
- * - **Strings**: "sharp", "#", "flat", "b", "natural", "", etc.
- * - **Null/Undefined**: Defaults to 0 (natural).
- *
- * @param input - The raw accidental representation.
- * @returns A {@link CanonicalAccidental} (-1, 0, or 1).
- *
- * @throws Error - If the input format is unrecognized or unsupported.
+ * @returns A CanonicalAccidental (-1, 0, or 1)
+ * @throws {AppError} CODE: DATA_VALIDATION_ERROR if input is invalid
  *
  * @example
- * ```ts
- * normalizeAccidental("#");      // returns 1
- * normalizeAccidental("flat");   // returns -1
- * normalizeAccidental(undefined); // returns 0
- * ```
+ * normalizeAccidental(1);        // 1
+ * normalizeAccidental("#");      // 1
+ * normalizeAccidental("flat");   // -1
+ * normalizeAccidental("X");      // ❌ Throws AppError
  *
  * @public
  */
@@ -76,5 +70,8 @@ export function normalizeAccidental(
     return mapping[key]
   }
 
-  throw new Error(`Unsupported alter value: ${input}`)
+  throw new AppError({
+    message: `Unsupported alter value: ${input}`,
+    code: ERROR_CODES.DATA_VALIDATION_ERROR,
+  })
 }
