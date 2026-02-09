@@ -11,28 +11,28 @@ The system is powered by:
 
 ## 🚀 Adding a New Feature Flag
 
-1.  **Define the flag name**: Use the convention `FEATURE_[CATEGORY]_[NAME]` (e.g., `FEATURE_UI_NEW_THEME`).
+1.  **Define the flag name**: Use the convention `FEATURE_[CATEGORY]_[NAME]` (e.g., `FEATURE_UI_INTONATION_HEATMAPS`).
 2.  **Add metadata to `lib/feature-flags.ts`**:
     ```typescript
     export const FEATURE_FLAGS_METADATA: Record<string, FeatureFlagMetadata> = {
       // ...
-      FEATURE_UI_NEW_THEME: {
-        name: 'FEATURE_UI_NEW_THEME',
-        key: 'uiNewTheme',
-        type: 'EXPERIMENTAL',
-        description: 'Enable the new experimental dark theme.',
+      FEATURE_UI_INTONATION_HEATMAPS: {
+        name: 'FEATURE_UI_INTONATION_HEATMAPS',
+        key: 'uiIntonationHeatmaps',
+        type: 'BETA',
+        description: 'Show intonation heatmaps in the analytics dashboard.',
         defaultValue: false,
         riskLevel: 'LOW',
-        affectedFiles: ['components/theme-provider.tsx'],
-        rollbackStrategy: 'Revert to the default theme.'
+        affectedFiles: ['components/analytics-dashboard.tsx'],
+        rollbackStrategy: 'Disable the heatmap visualization.'
       }
     }
     ```
 3.  **Add to `.env.example`**:
     ```env
-    # Enable the new experimental dark theme.
-    FEATURE_UI_NEW_THEME=false
-    NEXT_PUBLIC_FEATURE_UI_NEW_THEME=false
+    # Show intonation heatmaps in the analytics dashboard.
+    FEATURE_UI_INTONATION_HEATMAPS=false
+    NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS=false
     ```
 
 ## 💻 Usage in Code
@@ -44,11 +44,11 @@ Use the `useFeatureFlag` hook:
 import { useFeatureFlag } from '@/lib/feature-flags'
 
 export function MyComponent() {
-  const isEnabled = useFeatureFlag('FEATURE_UI_NEW_THEME')
+  const isEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
 
   return (
     <div>
-      {isEnabled ? <NewThemeView /> : <OldThemeView />}
+      {isEnabled ? <HeatmapView /> : <PlaceholderView />}
     </div>
   )
 }
@@ -60,7 +60,7 @@ Use the `featureFlags` singleton:
 ```typescript
 import { featureFlags } from '@/lib/feature-flags'
 
-if (featureFlags.isEnabled('FEATURE_UI_NEW_THEME')) {
+if (featureFlags.isEnabled('FEATURE_UI_INTONATION_HEATMAPS')) {
   // Execute experimental logic
 }
 ```

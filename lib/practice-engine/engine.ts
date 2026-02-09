@@ -51,14 +51,9 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
               sessionStartTime,
             },
             () => {
-              let centsTolerance = 25
-              let requiredHoldTime = 500
-
-              if (featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')) {
-                // Evolutionary Logic: Adjust both tolerance and hold time
-                centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
-                requiredHoldTime = Math.min(800, 500 + Math.floor(state.perfectNoteStreak / 5) * 100)
-              }
+              // Adaptive Difficulty (Permanent): Adjust both tolerance and hold time based on performance
+              const centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
+              const requiredHoldTime = Math.min(800, 500 + Math.floor(state.perfectNoteStreak / 5) * 100)
 
               return {
                 exercise: ctx.exercise,

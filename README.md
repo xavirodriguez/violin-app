@@ -800,7 +800,7 @@ Based on my analysis of the violin-app codebase, here are the major components a
 ### High Priority
 
 - **Web Worker Audio Processing**: Planned to offload DSP tasks but not implemented [26](#1-25)
-- **Adaptive Difficulty Engine**: Logic defined but not integrated [27](#1-26)
+- **Adaptive Difficulty Engine**: Promoted to permanent core logic. [27](#1-26)
 - **State Machine Complexity**: Growing complexity in PracticeStore needs management strategy [28](#1-27)
 
 ### Medium Priority
@@ -811,7 +811,7 @@ Based on my analysis of the violin-app codebase, here are the major components a
 
 ### Low Priority
 
-- **Intonation Heatmaps**: UI components being designed [32](#1-31)
+- **Intonation Heatmaps**: BETA. Integrated into Analytics Dashboard. [32](#1-31)
 - **Social Practice Rooms**: Concept stage, requires WebSocket architecture [33](#1-32)
 
 **No TODO/FIXME tracking system**: Only one occurrence found [34](#1-33)

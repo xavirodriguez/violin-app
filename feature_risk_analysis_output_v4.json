@@ -1,0 +1,56 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "critical",
+      "risks": [
+        {
+          "id": "risk_infra_001",
+          "type": "compatibility",
+          "description": "Some browsers or older devices may have limited support for Audio Worklets or SharedArrayBuffer.",
+          "probability": 0.4,
+          "impact": 0.9,
+          "risk_score": 0.36,
+          "mitigation_strategy": "Implement a robust fallback to main-thread processing.",
+          "blocker": true
+        },
+        {
+          "id": "risk_infra_002",
+          "type": "performance",
+          "description": "Potential for synchronization lag between the UI thread and the audio worker.",
+          "probability": 0.3,
+          "impact": 0.7,
+          "risk_score": 0.21,
+          "mitigation_strategy": "Use high-precision timestamps for synchronization.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of WebWorker-compatible Pitch Detection build.",
+          "resolution_steps": ["Refactor YIN algorithm for worker-safe environment."]
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "risk_level": "low",
+      "risks": [
+        {
+          "id": "risk_ped_001",
+          "type": "behavioral",
+          "description": "Adaptive difficulty might feel unpredictable to users if thresholds jump too sharply.",
+          "probability": 0.2,
+          "impact": 0.4,
+          "risk_score": 0.08,
+          "mitigation_strategy": "Implement smoothing/hysteresis in threshold changes.",
+          "blocker": false
+        }
+      ],
+      "growth_enablers": [
+        { "enabler": "Promoting to permanent reduces code complexity.", "effort": "low", "impact": "Better DX" }
+      ]
+    }
+  ],
+  "critical_path_features": ["FEATURE_AUDIO_WEB_WORKER"]
+}
