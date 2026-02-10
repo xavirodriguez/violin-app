@@ -1,0 +1,84 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "OP_PROMOTE_ADAPTIVE",
+      "primary_feature": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "growth_type": "expand_to_all_users",
+      "current_state": "Stable flag, enabled by default",
+      "opportunity_description": "Promote to permanent core logic and remove the feature flag.",
+      "rationale": {
+        "why_now": "High maturity, proven value, no reported issues in current cycle.",
+        "user_benefit": "Consistency in practice experience.",
+        "business_benefit": "Reduced code complexity and maintenance overhead.",
+        "technical_readiness": "100% ready"
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Flag Removal",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["Zero regressions in engine tests"],
+          "go_no_go_criteria": "All unit tests pass"
+        }
+      },
+      "required_work": [
+        { "task": "Remove flag from lib/feature-flags.ts", "effort_hours": 1, "priority": "high", "blocking": true },
+        { "task": "Make logic unconditional in lib/practice-engine/engine.ts", "effort_hours": 2, "priority": "high", "blocking": true }
+      ],
+      "resource_requirements": { "engineering_hours": 4, "product_involvement": "low", "qe_hours": 2, "design_review": false },
+      "success_metrics": {
+        "adoption_rate": { "target": 100, "current": 100, "unit": "percentage" },
+        "error_rate": { "target": 0.01, "current": 0.01, "unit": "percentage" }
+      },
+      "rollback_plan": {
+        "trigger": "Critical engine failure",
+        "steps": ["Git revert", "Redeploy"],
+        "recovery_time_estimate_minutes": 10
+      },
+      "confidence_score": 0.95,
+      "recommendation_strength": "STRONG"
+    },
+    {
+      "opportunity_id": "OP_EVOLVE_HEATMAPS",
+      "primary_feature": "FEATURE_UI_INTONATION_HEATMAPS",
+      "growth_type": "increase_capabilities",
+      "current_state": "Experimental flag, disabled by default",
+      "opportunity_description": "Evolve to BETA, enable by default, and integrate into Analytics Dashboard.",
+      "rationale": {
+        "why_now": "UI components are ready, adds immediate value to existing analytics.",
+        "user_benefit": "Visual feedback on intonation patterns.",
+        "business_benefit": "Improved student engagement and perceived value.",
+        "technical_readiness": "80% ready, integration needed"
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Dashboard Integration",
+          "duration_weeks": 2,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["Successful rendering in dashboard", "Positive user feedback"],
+          "go_no_go_criteria": "No UI crashes reported"
+        }
+      },
+      "required_work": [
+        { "task": "Update flag to BETA/true", "effort_hours": 1, "priority": "medium", "blocking": false },
+        { "task": "Integrate PracticeSummaryChart into AnalyticsDashboard", "effort_hours": 4, "priority": "high", "blocking": true }
+      ],
+      "resource_requirements": { "engineering_hours": 8, "product_involvement": "medium", "qe_hours": 4, "design_review": true },
+      "success_metrics": {
+        "adoption_rate": { "target": 70, "current": 0, "unit": "percentage" }
+      },
+      "rollback_plan": {
+        "trigger": "Dashboard rendering issues",
+        "steps": ["Flip flag to false in env"],
+        "recovery_time_estimate_minutes": 2
+      },
+      "confidence_score": 0.85,
+      "recommendation_strength": "STRONG"
+    }
+  ],
+  "prioritized_queue": [
+    { "rank": 1, "opportunity_id": "OP_PROMOTE_ADAPTIVE", "impact_if_successful": "Code simplification" },
+    { "rank": 2, "opportunity_id": "OP_EVOLVE_HEATMAPS", "impact_if_successful": "User value increase" }
+  ],
+  "next_30_days_focus": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_UI_INTONATION_HEATMAPS"]
+}

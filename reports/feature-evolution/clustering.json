@@ -1,0 +1,45 @@
+{
+  "clusters": [
+    {
+      "cluster_id": "pedagogical_intelligence",
+      "type": "business_domain",
+      "features": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"],
+      "characteristics": {
+        "shared_context": "Core learning logic and adaptive feedback",
+        "can_grow_together": true,
+        "combined_impact": "high",
+        "shared_risks": ["Pedagogical effectiveness"]
+      }
+    },
+    {
+      "cluster_id": "visual_analytics",
+      "type": "technical_initiative",
+      "features": ["FEATURE_UI_INTONATION_HEATMAPS"],
+      "characteristics": {
+        "shared_context": "Visualizing performance data for students",
+        "can_grow_together": true,
+        "combined_impact": "medium",
+        "shared_risks": ["Data accuracy", "UI complexity"]
+      }
+    },
+    {
+      "cluster_id": "system_performance",
+      "type": "technical_initiative",
+      "features": ["FEATURE_AUDIO_WEB_WORKER"],
+      "characteristics": {
+        "shared_context": "Optimizing audio pipeline and concurrency",
+        "can_grow_together": false,
+        "combined_impact": "high",
+        "shared_risks": ["Stability", "Race conditions"]
+      }
+    }
+  ],
+  "optimization_opportunities": [
+    {
+      "opportunity": "Combine Heatmaps with Adaptive Difficulty feedback",
+      "features_involved": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_UI_INTONATION_HEATMAPS"],
+      "synergy_benefit": "Students see WHY difficulty changed through heatmaps",
+      "implementation_complexity": "medium"
+    }
+  ]
+}

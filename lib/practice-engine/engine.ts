@@ -2,7 +2,6 @@ import { PracticeEngineEvent } from './engine.types'
 import { AudioFramePort, PitchDetectorPort } from './engine.ports'
 import { createRawPitchStream, createPracticeEventPipeline } from '../note-stream'
 import { Exercise } from '../exercises/types'
-import { featureFlags } from '../feature-flags'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 
@@ -51,14 +50,12 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
               sessionStartTime,
             },
             () => {
-              let centsTolerance = 25
-              let requiredHoldTime = 500
-
-              if (featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')) {
-                // Evolutionary Logic: Adjust both tolerance and hold time
-                centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
-                requiredHoldTime = Math.min(800, 500 + Math.floor(state.perfectNoteStreak / 5) * 100)
-              }
+              // Evolutionary Logic: Adjust both tolerance and hold time
+              const centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
+              const requiredHoldTime = Math.min(
+                800,
+                500 + Math.floor(state.perfectNoteStreak / 5) * 100,
+              )
 
               return {
                 exercise: ctx.exercise,
