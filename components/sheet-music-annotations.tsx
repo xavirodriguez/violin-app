@@ -7,14 +7,28 @@ import { ArrowUp, ArrowDown, AlertCircle } from 'lucide-react'
 /**
  * Visual metadata for a specific note on the sheet music.
  *
+ * @remarks
+ * Encapsulates the pedagogical hints that are rendered as an overlay on the SVG staff.
+ *
  * @public
  */
 export interface Annotation {
-  /** Suggested finger number (1-4). 0 for open string. */
+  /**
+   * Suggested finger number (1-4).
+   * `0` represents an open string.
+   */
   fingerNumber?: 0 | 1 | 2 | 3 | 4
-  /** Suggested bowing direction ('up' for push, 'down' for pull). */
+
+  /**
+   * Suggested bowing direction.
+   * - `up`: Push the bow (V symbol).
+   * - `down`: Pull the bow (bridge symbol).
+   */
   bowDirection?: 'up' | 'down'
-  /** Whether to show a visual warning flag (e.g., for difficult shifts). */
+
+  /**
+   * Whether to show a visual warning flag (e.g., for difficult shifts or accidentals).
+   */
   warningFlag?: boolean
 }
 
@@ -23,36 +37,54 @@ export interface Annotation {
  *
  * @public
  */
-export interface SheetMusicAnnotationsProps {
-  /** Map of note index to its respective annotations. */
+interface SheetMusicAnnotationsProps {
+  /**
+   * Map of note index to its respective pedagogical annotations.
+   */
   annotations: Record<number, Annotation>
-  /** Index of the currently active note being practiced. */
+
+  /**
+   * Index of the currently active note being practiced in the session.
+   */
   currentNoteIndex: number
-  /** The active OSMD instance used for calculating musical coordinates. */
+
+  /**
+   * The active OpenSheetMusicDisplay (OSMD) instance.
+   * Required to calculate the precise SVG coordinates for each note.
+   */
   osmd: OpenSheetMusicDisplay | null
-  /** Reference to the container element holding the rendered SVG staff. */
+
+  /**
+   * Reference to the container element holding the rendered SVG staff.
+   */
   containerRef: React.RefObject<HTMLDivElement | null>
 }
 
 /**
- * Overlay component that renders pedagogical annotations directly over the sheet music.
+ * Overlay component that renders pedagogical annotations directly over the sheet music staff.
  *
  * @remarks
- * This component uses the OSMD cursor position to dynamically calculate where to
- * place annotations (fingerings, bowing signs) in relation to the rendered staff.
- * It synchronizes with the `currentNoteIndex` to show relevant hints exactly where
- * the user should be looking.
+ * This component acts as a "Head-Up Display" (HUD) for students. It uses the OSMD
+ * cursor position to dynamically calculate where to place annotations (fingerings,
+ * bowing signs) in relation to the rendered SVG elements.
  *
- * **Performance Note**:
- * Coordinate calculations are debounced (100ms) and respond to window resize events
- * to maintain visual alignment with the underlying SVG.
+ * **Implementation Details**:
+ * - **Coordinate Mapping**: Translates raw SVG/Canvas coordinates from OSMD to
+ *   absolute CSS positioning for React-based overlay elements.
+ * - **Synchronization**: Updates alignment whenever `currentNoteIndex` changes or
+ *   on window resize.
+ * - **Visual Design**: Uses backdrop blurs and transitions to ensure annotations
+ *   are readable without obscuring the underlying musical notation.
+ *
+ * **Performance**: Coordinate lookups are debounced (100ms) to ensure smooth
+ * rendering without blocking the main UI thread during resizing or rapid playback.
  *
  * @param props - Component props.
  *
  * @example
  * ```tsx
  * <SheetMusicAnnotations
- *   annotations={{ 0: { fingerNumber: 1, bowDirection: 'down' } }}
+ *   annotations={{ 0: { fingerNumber: 1 } }}
  *   currentNoteIndex={0}
  *   osmd={osmdInstance}
  *   containerRef={ref}
@@ -67,19 +99,28 @@ export function SheetMusicAnnotations({
   osmd,
   containerRef,
 }: SheetMusicAnnotationsProps) {
+  /** Stores calculated screen coordinates for each annotated note. */
   const [coords, setCoords] = useState<Record<number, { x: number; y: number }>>({})
 
+  /**
+   * Effect to calculate and update visual coordinates.
+   */
   useEffect(() => {
     if (!osmd || !osmd.GraphicSheet || !containerRef.current) return
 
     /**
      * Updates the local coordinate map based on the current OSMD cursor position.
+     *
+     * @remarks
+     * Calculates the offset relative to the container component to ensure
+     * correct absolute positioning.
      */
     const updateCoords = () => {
       const newCoords: Record<number, { x: number; y: number }> = {}
       const containerRect = containerRef.current?.getBoundingClientRect()
       if (!containerRect) return
 
+      // Find the OSMD cursor element to get its bounding box
       const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
       if (cursorElement) {
         const rect = cursorElement.getBoundingClientRect()
@@ -91,7 +132,10 @@ export function SheetMusicAnnotations({
       setCoords(newCoords)
     }
 
+    // Delay calculation slightly to allow OSMD to finish layout updates
     const timeout = setTimeout(updateCoords, 100)
+
+    // Listen for resize to re-align annotations
     window.addEventListener('resize', updateCoords)
 
     return () => {

@@ -252,9 +252,9 @@ export interface Observation {
    *
    * @range 0.0 to 1.0
    * @remarks
-   * - < 0.5: Low confidence (speculative, may be noise)
-   * - 0.5-0.8: Moderate confidence (likely accurate)
-   * - > 0.8: High confidence (very reliable)
+   * - `< 0.5`: Low confidence (speculative, may be noise)
+   * - `0.5-0.8`: Moderate confidence (likely accurate)
+   * - `> 0.8`: High confidence (very reliable)
    */
   readonly confidence: Ratio01
 

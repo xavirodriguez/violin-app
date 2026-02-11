@@ -7,10 +7,13 @@ import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
 /**
  * Event representing a completed exercise within the progress history.
  *
+ * @remarks
+ * Used in the high-density circular buffer to track historical trends.
+ *
  * @public
  */
 export interface ProgressEvent {
-  /** Unix timestamp of the event. */
+  /** Unix timestamp of when the session ended. */
   ts: number
   /** ID of the exercise practiced. */
   exerciseId: string
@@ -21,16 +24,16 @@ export interface ProgressEvent {
 }
 
 /**
- * Aggregated skill metrics across multiple domains.
+ * Aggregated skill metrics across multiple technical domains.
  *
  * @public
  */
 export interface SkillAggregates {
-  /** Intonation accuracy score (0-100). */
+  /** Intonation accuracy score (0-100). Higher is better. */
   intonation: number
-  /** Rhythmic precision score (0-100). */
+  /** Rhythmic precision score (0-100). Based on onset timing error. */
   rhythm: number
-  /** Overall combined skill level based on multiple heuristics. */
+  /** Overall combined skill level based on pedagogical heuristics. */
   overall: number
 }
 
@@ -38,48 +41,56 @@ export interface SkillAggregates {
  * A snapshot of the user's progress at a specific point in time.
  *
  * @remarks
- * Snapshots are used to track trends over time (e.g., 7-day or 30-day improvements).
+ * Snapshots provide a historical record of technical growth, allowing the UI
+ * to render progress charts over different time windows (7d, 30d).
  *
  * @public
  */
 export interface ProgressSnapshot {
-  /** The user identifier. */
+  /** The user identifier (defaults to 'anonymous' in standalone mode). */
   userId: string
-  /** The time window covered by this specific snapshot. */
+  /** The time window covered by this snapshot. */
   window: '7d' | '30d' | 'all'
-  /** Aggregated skills at the time of the snapshot. */
+  /** Aggregated skill levels captured at the time of snapshot creation. */
   aggregates: SkillAggregates
-  /** ID of the session that triggered the creation of this snapshot. */
+  /** ID of the practice session that triggered this snapshot. */
   lastSessionId: string
 }
 
 /**
  * Lifetime statistics for an individual exercise.
  *
+ * @remarks
+ * These metrics are used by the `ExerciseRecommender` to determine mastery
+ * and suggest review cycles.
+ *
  * @public
  */
 export interface ExerciseStats {
   /** ID of the exercise. */
   exerciseId: string
-  /** Total number of times this exercise was completed. */
+  /** Total number of times this exercise was successfully completed. */
   timesCompleted: number
-  /** Highest accuracy percentage ever recorded. */
+  /** Highest accuracy percentage ever recorded for this exercise. */
   bestAccuracy: number
-  /** Rolling average of accuracy across all attempts. */
+  /** Rolling average of accuracy across all historical attempts. */
   averageAccuracy: number
-  /** Fastest completion time in milliseconds. */
+  /** Fastest completion time ever recorded (ms). */
   fastestCompletionMs: number
-  /** Unix timestamp of the most recent attempt. */
+  /** Unix timestamp of the most recent practice attempt. */
   lastPracticedMs: number
 }
 
 /**
  * State structure for the Progress Store.
  *
+ * @remarks
+ * This interface defines the shape of the user's persistent technical profile.
+ *
  * @public
  */
 export interface ProgressState {
-  /** Version of the persistence schema for migrations. */
+  /** Version of the persistence schema for handling automated migrations. */
   schemaVersion: 1
   /** Lifetime count of all started practice sessions. */
   totalPracticeSessions: number
@@ -87,9 +98,9 @@ export interface ProgressState {
   totalPracticeTime: number
   /** IDs of unique exercises that have been completed at least once. */
   exercisesCompleted: string[]
-  /** Current daily practice streak. */
+  /** Current daily practice streak (number of consecutive days). */
   currentStreak: number
-  /** Highest daily streak recorded for this user. */
+  /** Highest daily streak recorded since account creation. */
   longestStreak: number
   /** Current calculated intonation skill level (0-100). */
   intonationSkill: number
@@ -97,37 +108,43 @@ export interface ProgressState {
   rhythmSkill: number
   /** Combined overall skill level (0-100). */
   overallSkill: number
-  /** Map of exercise IDs to their lifetime statistics. */
+  /** Map of exercise IDs to their detailed lifetime statistics. */
   exerciseStats: Record<string, ExerciseStats>
-  /** Circular buffer of recent progress events (maximum 1000). */
+  /** Circular buffer of recent progress events (maximum 1000 items). */
   eventBuffer: ProgressEvent[]
-  /** Historical snapshots of progress used for charting trends. */
+  /** Historical snapshots used for long-term trend analysis and charting. */
   snapshots: ProgressSnapshot[]
-  /** Internal counter of events processed, used to trigger periodic snapshots. */
+  /** Internal counter of sessions processed since last snapshot. */
   eventCounter: number
 }
 
 /**
  * Actions available in the Progress Store for updating user performance.
- * @internal
+ *
+ * @public
  */
 interface ProgressActions {
   /**
    * Integrates a completed session into the long-term progress history.
    *
    * @remarks
-   * This method performs several side effects:
-   * 1. Updates lifetime counters and exercise-specific stats.
-   * 2. Manages the circular event buffer.
-   * 3. Triggers a new snapshot every 50 events.
-   * 4. Prunes events older than 90 days.
+   * **Side Effects**:
+   * 1. Updates lifetime session count and total practice time.
+   * 2. Recalculates exercise-specific mastery stats.
+   * 3. Pushes a new event to the circular `eventBuffer`.
+   * 4. Automatically triggers a technical `snapshot` every 50 events.
+   * 5. Prunes the event buffer to remove items older than 90 days.
    *
-   * @param session - The completed session data to integrate.
+   * @param session - The completed session data to persist and analyze.
    */
   addSession: (session: PracticeSession) => void
 
   /**
-   * Re-calculates domain-specific skill levels based on the provided session history.
+   * Re-calculates domain-specific skill levels (intonation, rhythm).
+   *
+   * @remarks
+   * Skill levels are calculated using weighted heuristics that prioritize recent
+   * session performance over historical data.
    *
    * @param sessions - Recent session history to analyze.
    */
@@ -158,14 +175,20 @@ const DEFAULT_PROGRESS: ProgressState = {
  * Zustand store for high-density, persistent progress tracking.
  *
  * @remarks
- * This store is designed for durability and performance when handling large volumes
- * of historical practice data.
+ * This store is the "Brain" of the user's progress. It is optimized for
+ * durability and efficient historical analysis.
  *
- * **Key Features**:
- * - **High-Density Storage**: Uses a circular buffer to limit memory usage while keeping detailed recent history.
- * - **Incremental Snapshots**: Efficiently tracks long-term trends without re-processing all history.
- * - **Schema Migrations**: Safely handles data format changes over time.
- * - **Zod Validation**: Ensures the integrity of persisted data in `localStorage`.
+ * **Architecture**:
+ * - **Persistence**: Uses `validatedPersist` to ensure `localStorage` data remains
+ *   valid according to the `ProgressStateSchema`.
+ * - **Data Lifecycle**: Implements automatic pruning of old high-frequency data (90-day TTL)
+ *   while preserving long-term aggregates in `snapshots`.
+ * - **Skill Engine**: Encapsulates heuristics for determining violin mastery levels.
+ *
+ * @example
+ * ```ts
+ * const { overallSkill, addSession } = useProgressStore();
+ * ```
  *
  * @public
  */
@@ -274,6 +297,12 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
 
 /**
  * Heuristic for calculating intonation skill from session history.
+ *
+ * @remarks
+ * Analyzes the last 10 sessions to determine a normalized accuracy score.
+ *
+ * @param sessions - Recent historical data.
+ * @returns Skill score (0-100).
  * @internal
  */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
@@ -287,6 +316,13 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 
 /**
  * Heuristic for calculating rhythm skill from session history.
+ *
+ * @remarks
+ * Combines Mean Absolute Error (MAE) and "In Window" percentage (timing errors `<= 40ms`)
+ * to determine rhythmic stability.
+ *
+ * @param sessions - Recent historical data.
+ * @returns Skill score (0-100).
  * @internal
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {

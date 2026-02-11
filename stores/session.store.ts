@@ -64,6 +64,7 @@ export interface PracticeSession {
 
 /**
  * Internal state of the session store.
+ *
  * @internal
  */
 interface SessionState {
@@ -77,11 +78,15 @@ interface SessionState {
 
 /**
  * Actions for managing practice sessions and recording real-time metrics.
- * @internal
+ *
+ * @public
  */
 interface SessionActions {
   /**
    * Starts a new practice session recording.
+   *
+   * @remarks
+   * Resets the `current` session state with initial metadata.
    *
    * @param exerciseId - Unique ID of the exercise.
    * @param exerciseName - Display name of the exercise.
@@ -92,18 +97,22 @@ interface SessionActions {
   /**
    * Ends the current session, calculates final metrics, and returns the data.
    *
+   * @remarks
+   * This method calculates the final accuracy and duration before clearing the active session.
+   *
    * @returns The completed {@link PracticeSession} or null if no session was active.
    */
   end: () => PracticeSession | null
 
   /**
-   * Records a single attempt at a specific note.
+   * Records a single attempt (audio frame) at a specific note.
    *
    * @remarks
    * This method updates the rolling average of cents deviation for the note.
+   * It is intended to be called at high frequency from the audio pipeline.
    *
    * @param noteIndex - Index of the note in the exercise.
-   * @param pitch - Detected pitch name.
+   * @param pitch - Detected scientific pitch name.
    * @param cents - Pitch deviation in cents.
    * @param inTune - Whether the attempt was within the current tolerance.
    */
@@ -117,7 +126,7 @@ interface SessionActions {
    *
    * @param noteIndex - Index of the completed note.
    * @param timeMs - Total time taken to complete the note.
-   * @param technique - Optional technique metrics.
+   * @param technique - Optional technique metrics (e.g. onset error).
    */
   recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void
 }
@@ -127,8 +136,12 @@ interface SessionActions {
  *
  * @remarks
  * This store serves as a high-frequency accumulator for session data. It is
- * decoupled from the long-term `ProgressStore` to ensure that real-time
- * updates don't trigger expensive persistence logic on every audio frame.
+ * decoupled from the long-term `ProgressStore` and `AnalyticsStore` to ensure
+ * that real-time updates don't trigger expensive persistence logic or
+ * heavy recalculations on every audio frame.
+ *
+ * **Concurrency**: Updates are performed using Zustand's functional set state,
+ * which is safe for high-frequency calls from the audio processing loop.
  *
  * **Metric Calculation**:
  * - Accuracy is calculated as the ratio of `notesCompleted` to `notesAttempted`.

@@ -1,7 +1,7 @@
 /**
  * TunerMode
  *
- * Provides the user interface for the violin tuner.
+ * Provides the user interface for the standalone violin tuner.
  * Handles the audio analysis loop and visualizes pitch detection results.
  */
 
@@ -18,14 +18,23 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * Main component for the Standalone Tuner Mode.
  *
  * @remarks
- * This component provides a focused interface for tuning the violin. It manages its own
- * high-frequency analysis loop using `requestAnimationFrame` when active.
+ * This component provides a focused interface for tuning the violin strings. It manages its own
+ * high-frequency analysis loop using `requestAnimationFrame` when the tuner is active.
  *
  * **Key Features**:
- * 1. **Visual Tuning**: Displays a high-accuracy fingerboard with cents deviation.
- * 2. **Audio Lifecycle**: Manages the start/stop of the analyzer loop and synchronization with `TunerStore`.
- * 3. **Error Resilience**: Handles microphone access errors and provides retry mechanisms.
- * 4. **Hardware Selection**: Integrates with the store's device enumeration (via settings).
+ * 1. **Visual Tuning**: Displays a high-accuracy `ViolinFingerboard` with cents deviation indicators.
+ * 2. **Audio Lifecycle**: Manages the start/stop of the analyzer loop and synchronizes with the `TunerStore`.
+ * 3. **Error Resilience**: Handles microphone access errors and provides a specialized retry mechanism.
+ * 4. **State Orchestration**: Uses a formal state machine from the store to handle UI transitions (IDLE, INITIALIZING, READY, LISTENING, ERROR).
+ *
+ * **Performance**: The analysis loop pulls raw PCM samples and runs the pitch detection algorithm
+ * every animation frame (approx. 16ms). The `updatePitch` action in the store is optimized for
+ * this frequency.
+ *
+ * @example
+ * ```tsx
+ * <TunerMode />
+ * ```
  *
  * @example
  * ```tsx
@@ -37,7 +46,7 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 export function TunerMode() {
   const { state, analyser, detector, initialize, retry, reset, updatePitch } = useTunerStore()
 
-  // Derived state for UI logic
+  // Derived state for UI logic orchestration
   const isIdle = state.kind === 'IDLE'
   const isInitializing = state.kind === 'INITIALIZING'
   const isError = state.kind === 'ERROR'
@@ -47,22 +56,21 @@ export function TunerMode() {
   const centsDeviation = state.kind === 'DETECTED' ? state.cents : null
   const errorMessage = state.kind === 'ERROR' ? state.error.message : null
 
+  /** Reference to the current animation frame to ensure clean teardown. */
   const animationFrameRef = useRef<number>(undefined)
 
   /**
    * Effect that manages the real-time audio analysis loop.
    *
    * @remarks
-   * When the tuner is active and resources (analyser, detector) are available,
-   * it starts a `requestAnimationFrame` loop that pulls time-domain data and
-   * updates the store with detected pitch.
+   * **Workflow**:
+   * 1. Check if the audio graph (analyser) and algorithm (detector) are available.
+   * 2. Initialize a pre-allocated `Float32Array` for time-domain data.
+   * 3. Define the `analyze` recursive function driven by `requestAnimationFrame`.
+   * 4. Call `updatePitch` with the detected results to trigger reactive UI updates.
    *
-   * This effect ensures that the loop is cleaned up when the component unmounts
-   * or when the tuner is stopped.
-   *
-   * **Performance**:
-   * Pulling data at 60fps requires minimal work in the callback. The `detector`
-   * is optimized to handle frames within the animation budget.
+   * **Memory Management**: The `buffer` is allocated once per effect cycle to
+   * minimize garbage collection pressure during the 60FPS loop.
    */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {
@@ -72,9 +80,16 @@ export function TunerMode() {
     const buffer = new Float32Array(analyser.fftSize)
 
     const analyze = () => {
+      // Pull PCM samples from the Web Audio AnalyserNode
       analyser.getFloatTimeDomainData(buffer)
+
+      // Run pitch detection with domain-specific validation (e.g., confidence thresholds)
       const result = detector.detectPitchWithValidation(buffer)
+
+      // Update the store. The store handles thresholding and scientific pitch mapping.
       updatePitch(result.pitchHz, result.confidence)
+
+      // Schedule the next frame
       animationFrameRef.current = requestAnimationFrame(analyze)
     }
 
@@ -90,21 +105,22 @@ export function TunerMode() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="space-y-6">
-        {/* Title */}
+        {/* Title and description */}
         <div className="text-center">
           <h2 className="text-foreground mb-2 text-3xl font-bold">Violin Tuner</h2>
-          <p className="text-muted-foreground">Play a note on your violin to see its pitch</p>
+          <p className="text-muted-foreground">Play a note on your violin to see its pitch accuracy</p>
         </div>
 
-        {/* Tuner Display */}
+        {/* Central Tuner Card */}
         <Card className="p-8">
+          {/* IDLE State: Waiting for user to start */}
           {isIdle && (
             <div className="space-y-4 text-center">
               <Mic className="text-muted-foreground mx-auto h-16 w-16" />
               <div>
                 <h3 className="mb-2 text-xl font-semibold">Ready to tune?</h3>
                 <p className="text-muted-foreground mb-4">
-                  Grant microphone access to start tuning your violin
+                  Grant microphone access to start tuning your violin strings (G, D, A, E)
                 </p>
                 <Button onClick={initialize} size="lg" className="gap-2">
                   <Mic className="h-4 w-4" />
@@ -114,13 +130,15 @@ export function TunerMode() {
             </div>
           )}
 
+          {/* INITIALIZING State: Hardware acquisition */}
           {isInitializing && (
             <div className="space-y-4 text-center">
               <div className="border-primary mx-auto h-16 w-16 animate-spin rounded-full border-4 border-t-transparent" />
-              <p className="text-muted-foreground">Initializing microphone...</p>
+              <p className="text-muted-foreground">Initializing microphone and audio pipeline...</p>
             </div>
           )}
 
+          {/* ERROR State: Hardware or Permission failure */}
           {isError && (
             <div className="space-y-4 text-center">
               <AlertCircle className="text-destructive mx-auto h-16 w-16" />
@@ -129,16 +147,17 @@ export function TunerMode() {
                 <p className="text-muted-foreground mb-4">{errorMessage}</p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={retry} variant="default">
-                    Retry
+                    Retry Connection
                   </Button>
                   <Button onClick={reset} variant="outline">
-                    Cancel
+                    Go Back
                   </Button>
                 </div>
               </div>
             </div>
           )}
 
+          {/* ACTIVE States: Tuning interface */}
           {isActive && (
             <div className="space-y-6">
               <ViolinFingerboard

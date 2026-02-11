@@ -47,6 +47,7 @@ import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
+/** Default tolerance in cents for the tuner and feedback UI. */
 const DEFAULT_CENTS_TOLERANCE = 25
 
 /**
@@ -349,8 +350,9 @@ function SheetMusicView({
  * 4. **User Interaction**: Manages keyboard shortcuts (Space for Start/Stop, Z for Zen Mode)
  *    and UI layout toggles.
  *
- * It relies on the `usePracticeStore` for centralized state and the `useOSMDSafe` hook
- * for robust notation rendering.
+ * **Architecture**:
+ * It relies on the `usePracticeStore` for centralized state management and the
+ * `useOSMDSafe` hook for robust notation rendering in React.
  *
  * @example
  * ```tsx
@@ -388,6 +390,9 @@ export function PracticeMode() {
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
+  /**
+   * Effect to load the default exercise upon initial mount if none is selected.
+   */
   useEffect(() => {
     if (!loadedRef.current && !practiceState && allExercises.length > 0) {
       loadExercise(allExercises[0])
@@ -395,11 +400,21 @@ export function PracticeMode() {
     }
   }, [loadExercise, practiceState])
 
+  /**
+   * Effect to sync the OSMD cursor and highlighting whenever the current note changes.
+   */
   useEffect(() => {
     syncCursorWithNote(osmdHook, status, currentNoteIndex)
   }, [currentNoteIndex, status, osmdHook])
 
-  // Real-time audio loop connected to the practice pipeline
+  /**
+   * High-frequency audio pipeline effect.
+   *
+   * @remarks
+   * This effect initializes the `createPracticeEventPipeline` when the user enters
+   * the 'listening' status. It connects raw audio data to the store via `consumePipelineEvents`.
+   * It handles clean-up via an `AbortController` to prevent memory leaks and race conditions.
+   */
   useEffect(() => {
     if (practiceState?.status !== 'listening') return
     if (!audioLoop || !detector) return
@@ -459,6 +474,13 @@ export function PracticeMode() {
     practiceState?.exercise
   ])
 
+  /**
+   * Keyboard shortcuts effect.
+   *
+   * @remarks
+   * - Space: Toggle start/stop.
+   * - Z: Toggle Zen Mode.
+   */
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'z') {
@@ -618,10 +640,10 @@ export function PracticeMode() {
 }
 
 /**
- * Derives calculated UI state from the raw practice state.
+ * Derives calculated UI state from the raw practice domain state.
  *
  * @param practiceState - The current domain-level practice state.
- * @returns Derived properties for UI consumption.
+ * @returns Derived properties (status, progress, totalNotes) for UI consumption.
  * @internal
  */
 function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
@@ -639,9 +661,13 @@ function derivePracticeState(practiceState: import('@/lib/practice-core').Practi
 /**
  * Synchronizes the sheet music cursor and highlighting with the current practice note.
  *
+ * @remarks
+ * Uses the OSMD instance to advance the cursor and apply visual highlighting.
+ * Also performs smooth auto-scrolling to keep the current note centered in view.
+ *
  * @param osmdHook - The OSMD hook state.
  * @param status - Current practice status.
- * @param currentNoteIndex - Current note index.
+ * @param currentNoteIndex - Index of the note to highlight.
  * @internal
  */
 function syncCursorWithNote(

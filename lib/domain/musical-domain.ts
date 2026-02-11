@@ -4,6 +4,11 @@
  * Defines the canonical types and normalization logic for musical concepts
  * shared across the application. This module serves as the source of truth for
  * scientific pitch notation and accidental mapping.
+ *
+ * @remarks
+ * All musical logic in the application follows the standards defined here to
+ * ensure consistency between the audio engine, the notation renderer, and
+ * the persistence layer.
  */
 
 import { AppError, ERROR_CODES } from '../errors/app-error'
@@ -12,7 +17,10 @@ import { AppError, ERROR_CODES } from '../errors/app-error'
  * Represents a pitch alteration in a canonical numeric format.
  *
  * @remarks
- * Values:
+ * This numeric representation is used for internal calculations and
+ * pitch-to-frequency mapping.
+ *
+ * **Canonical Values**:
  * - `-1`: Flat (b)
  * - `0`: Natural
  * - `1`: Sharp (#)
@@ -22,22 +30,30 @@ import { AppError, ERROR_CODES } from '../errors/app-error'
 export type CanonicalAccidental = -1 | 0 | 1
 
 /**
- * Normalizes various accidental representations to canonical format.
+ * Normalizes various accidental representations to the canonical numeric format.
  *
- * @param input - Accidental in any supported format:
- *   - Number: -1 (flat), 0 (natural), 1 (sharp), -2 (double-flat), 2 (double-sharp)
- *   - String: "b"/"flat" (-1), "natural"/"" (0), "#"/"sharp" (1), "double-sharp"/"##" (1)
- *   - null/undefined: Treated as 0 (natural)
+ * @remarks
+ * This function handles the variability of accidental representation in
+ * different formats (MusicXML, user input, internal constants).
  *
- * @returns A {@link CanonicalAccidental} (-1, 0, or 1). Double accidentals are mapped to single counterparts.
- * @throws AppError - CODE: DATA_VALIDATION_ERROR if input is invalid or unsupported.
+ * **Supported Formats**:
+ * - **Numeric**: -1 (flat), 0 (natural), 1 (sharp).
+ * - **MusicXML Labels**: "flat", "natural", "sharp", "double-flat", "double-sharp".
+ * - **Notation Symbols**: "b", "#", "##", "bb".
+ * - **Nullability**: `null` or `undefined` are treated as `0` (natural).
+ *
+ * @param input - Accidental in any supported format.
+ *
+ * @returns A {@link CanonicalAccidental} (-1, 0, or 1).
+ *
+ * @throws {@link AppError} with code `DATA_VALIDATION_ERROR` if the input
+ *         cannot be mapped to a known accidental.
  *
  * @example
  * ```ts
- * normalizeAccidental(1);        // 1
- * normalizeAccidental("#");      // 1
- * normalizeAccidental("flat");   // -1
- * normalizeAccidental(null);     // 0
+ * normalizeAccidental(1);        // returns 1
+ * normalizeAccidental("#");      // returns 1
+ * normalizeAccidental("flat");   // returns -1
  * ```
  *
  * @public
