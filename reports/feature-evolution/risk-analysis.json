@@ -1,0 +1,52 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "risk_level": "low",
+      "risks": [
+        {
+          "id": "RISK_PED_001",
+          "type": "compatibility",
+          "description": "Potential conflict with manual difficulty settings if they are introduced.",
+          "probability": 0.2,
+          "impact": 0.4,
+          "risk_score": 0.08,
+          "mitigation_strategy": "Ensure manual settings have priority or explicitly disable adaptive mode when manual is used.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [],
+      "growth_enablers": [
+        {
+          "enabler": "Stable core engine",
+          "effort": "low",
+          "impact": "Facilitates seamless promotion"
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "high",
+      "risks": [
+        {
+          "id": "RISK_PERF_001",
+          "type": "performance",
+          "description": "Synchronization lag between worker and main thread.",
+          "probability": 0.6,
+          "impact": 0.9,
+          "risk_score": 0.54,
+          "mitigation_strategy": "Use SharedArrayBuffer or optimized message passing.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of comprehensive cross-browser audio worker tests",
+          "resolution_steps": ["Implement Vitest environment for workers", "Run E2E on multiple browsers"]
+        }
+      ],
+      "growth_enablers": []
+    }
+  ],
+  "critical_path_features": ["FEATURE_AUDIO_WEB_WORKER"]
+}

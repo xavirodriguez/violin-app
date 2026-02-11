@@ -7,8 +7,8 @@
 
 import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { PracticeSummaryChart } from './practice-summary-chart'
 import { useFeatureFlag } from '@/lib/feature-flags'
+import { PracticeSummaryChart } from './practice-summary-chart'
 
 /**
  * Main dashboard component that aggregates various analytics visualizations.
@@ -22,7 +22,7 @@ import { useFeatureFlag } from '@/lib/feature-flags'
  */
 export function AnalyticsDashboard() {
   const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
-  const isHeatmapEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
+  const showHeatmaps = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
   const recentSessions = getSessionHistory(7)
@@ -31,13 +31,17 @@ export function AnalyticsDashboard() {
   // Prepare chart data
   const practiceTimeData = getLast7DaysData(recentSessions)
 
-  // Map last session data for heatmap if available
-  const heatmapData = lastSession?.noteResults?.map((r) => ({
-    noteIndex: r.noteIndex,
-    targetPitch: r.targetPitch,
-    accuracy: r.wasInTune ? 100 : Math.max(0, 100 - Math.abs(r.averageCents)),
-    cents: r.averageCents,
-  }))
+  // Prepare heatmap data for the most recent session
+  const lastSession = recentSessions[0]
+  const heatmapData =
+    lastSession && lastSession.noteResults
+      ? lastSession.noteResults.map((nr) => ({
+          noteIndex: nr.noteIndex,
+          targetPitch: nr.targetPitch,
+          accuracy: Math.max(0, 100 - Math.abs(nr.averageCents) * 4),
+          cents: nr.averageCents,
+        }))
+      : []
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -64,6 +68,13 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Practice Time Chart */}
+      {showHeatmaps && heatmapData.length > 0 && (
+        <div className="bg-card border-border mb-6 rounded-lg border p-6">
+          <h2 className="mb-4 text-xl font-bold">Recent Session Heatmap</h2>
+          <PracticeSummaryChart noteAttempts={heatmapData} />
+        </div>
+      )}
+
       <div className="bg-card border-border mb-6 rounded-lg border p-4">
         <h2 className="mb-4 text-xl font-bold">Practice Time (Last 7 Days)</h2>
         <ResponsiveContainer width="100%" height={200}>

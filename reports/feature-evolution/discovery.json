@@ -1,0 +1,91 @@
+{
+  "discovery_timestamp": "2025-02-10T14:45:00Z",
+  "total_features_detected": 4,
+  "features": [
+    {
+      "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "name": "Adaptive Practice Difficulty",
+      "type": "Algorithm",
+      "current_state": "stable",
+      "locations": ["lib/feature-flags.ts", "lib/practice-engine/engine.ts", "next.config.mjs"],
+      "enabled": true,
+      "lines_of_code_affected": 25,
+      "users_affected_estimate": 100,
+      "dependencies": [],
+      "dependent_features": [],
+      "last_modified": "2025-02-10T10:00:00Z",
+      "author": "ViolinMentor Team",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 90,
+        "error_rate": 0.01,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_AUDIO_WEB_WORKER",
+      "name": "Web Worker Audio Processing",
+      "type": "Performance",
+      "current_state": "experimental",
+      "locations": ["lib/feature-flags.ts", "next.config.mjs"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "dependent_features": [],
+      "last_modified": "2025-02-10T09:00:00Z",
+      "author": "ViolinMentor Team",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "name": "Intonation Heatmaps UI",
+      "type": "UI",
+      "current_state": "experimental",
+      "locations": ["lib/feature-flags.ts", "next.config.mjs", "components/analytics-dashboard.tsx"],
+      "enabled": false,
+      "lines_of_code_affected": 5,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "dependent_features": [],
+      "last_modified": "2025-02-10T11:00:00Z",
+      "author": "ViolinMentor Team",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "name": "Social Practice Rooms",
+      "type": "Infrastructure",
+      "current_state": "experimental",
+      "locations": ["lib/feature-flags.ts", "next.config.mjs"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "dependent_features": [],
+      "last_modified": "2025-02-10T08:00:00Z",
+      "author": "ViolinMentor Team",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    }
+  ],
+  "relationships": {
+    "dependency_graph": {},
+    "conflicts": [],
+    "orphaned": ["FEATURE_SOCIAL_PRACTICE_ROOMS", "FEATURE_AUDIO_WEB_WORKER"]
+  }
+}

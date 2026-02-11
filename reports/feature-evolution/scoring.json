@@ -1,0 +1,82 @@
+[
+  {
+    "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+    "scoring": {
+      "maturity": {
+        "score": 9,
+        "rationale": "Marked as STABLE and integrated into core engine with high test coverage.",
+        "factors": { "code_quality": 9, "test_coverage": 9, "documentation": 9, "stability_over_time": 9, "bug_frequency": 1 }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "Critical for personalized learning experience and student retention.",
+        "factors": { "user_impact": 9, "revenue_potential": 8, "strategic_alignment": 10, "competitive_advantage": 9, "market_demand": 8 }
+      },
+      "adoption_readiness": {
+        "score": 9,
+        "rationale": "Already enabled by default and stable.",
+        "factors": { "current_users": 10, "feature_discoverability": 10, "onboarding_complexity": 8, "performance_impact": 9, "ui_ux_quality": 8 }
+      },
+      "technical_debt": {
+        "score": 2,
+        "rationale": "Clean implementation, ready for promotion to permanent code.",
+        "factors": { "code_complexity": 2, "refactor_needs": 1, "performance_debt": 2, "security_concerns": 1, "scalability_limits": 2 }
+      },
+      "growth_potential": {
+        "score": 8,
+        "rationale": "Can be expanded with more sophisticated pedagogical models.",
+        "factors": { "feature_expansion_possibilities": 8, "market_expansion": 7, "integration_opportunities": 9, "monetization_potential": 7, "ecosystem_value": 8 }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Low risk as it is already the default behavior.",
+        "factors": { "breaking_change_risk": 2, "security_risk": 1, "performance_risk": 2, "compatibility_risk": 2, "migration_risk": 1 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 9.2,
+      "weighted_score": 8.8,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+    "scoring": {
+      "maturity": {
+        "score": 6,
+        "rationale": "Components exist but are not yet fully integrated into the main dashboard.",
+        "factors": { "code_quality": 7, "test_coverage": 4, "documentation": 8, "stability_over_time": 6, "bug_frequency": 2 }
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "High visual value for students to understand their mistakes.",
+        "factors": { "user_impact": 9, "revenue_potential": 6, "strategic_alignment": 8, "competitive_advantage": 8, "market_demand": 9 }
+      },
+      "adoption_readiness": {
+        "score": 5,
+        "rationale": "Needs dashboard integration to be discoverable.",
+        "factors": { "current_users": 0, "feature_discoverability": 2, "onboarding_complexity": 9, "performance_impact": 9, "ui_ux_quality": 9 }
+      },
+      "technical_debt": {
+        "score": 3,
+        "rationale": "Low debt, just needs wiring.",
+        "factors": { "code_complexity": 3, "refactor_needs": 4, "performance_debt": 2, "security_concerns": 1, "scalability_limits": 2 }
+      },
+      "growth_potential": {
+        "score": 7,
+        "rationale": "Can be expanded with more detailed heatmaps (rhythm, dynamics).",
+        "factors": { "feature_expansion_possibilities": 8, "market_expansion": 6, "integration_opportunities": 7, "monetization_potential": 5, "ecosystem_value": 7 }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Very low risk, UI only.",
+        "factors": { "breaking_change_risk": 1, "security_risk": 1, "performance_risk": 2, "compatibility_risk": 1, "migration_risk": 1 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 6.5,
+      "weighted_score": 7.2,
+      "recommendation": "GRADUAL"
+    }
+  }
+]
