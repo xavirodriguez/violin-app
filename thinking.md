@@ -1,38 +1,45 @@
 # AI Architecture Analysis
 
 ## 1. Stack Capabilities
-This stack enables the construction of a **High-Performance Pedagogical Music Engine**. By integrating Next.js 16 and React 19 with specialized musical libraries, it allows for a low-latency, type-safe environment suitable for real-time audio analysis and interactive notation.
 
-| Domain | Key Packages | Problem Solved | Capabilities Enabled | Competitive Advantage |
-| :--- | :--- | :--- | :--- | :--- |
-| **Data** | `zustand`, `zod`, `immer`, `iter-tools`, `pako` | State fragmentation and lack of type-safe data validation in high-frequency environments. | Complex practice session orchestration with reactive state and validated, compressed performance history. | High reliability and predictable state transitions in real-time pedagogical contexts. |
-| **UI** | `osmd`, `framer-motion`, `radix-ui`, `tailwindcss` | The gap between complex music notation and fluid, accessible user interaction. | Immersive dashboards that react to sound with professional-grade notation rendering and smooth animations. | "DAW-like" user experience that reduces cognitive friction and increases student engagement. |
-| **Observability** | `@vercel/analytics`, `react-error-boundary` | Lack of visibility into pitch detection performance across diverse hardware. | Data-driven improvement loop for algorithm precision and error resilience. | Rapid iteration based on real-world audio performance metrics at the edge. |
-| **Security** | `next-safe-action`, `zod` | Unsafe server-side operations and data integrity risks in practice sessions. | Type-safe, validated server actions that protect user progress and session integrity by design. | Enhanced user trust and architectural resilience against malformed data injections. |
-| **Performance** | `pako`, `iter-tools`, `next` (App Router) | High memory usage and main-thread blocking during complex music analysis. | Lazy processing of note-streams and efficient compression of large musical datasets. | Millisecond-precise feedback loop, essential for musical practice "feel". |
-| **DX** | `vitest`, `playwright`, `dependency-cruiser`, `tsdoc` | Architectural decay and high onboarding costs in complex technical domains. | Automated architectural guardrails and self-documenting, highly-tested codebase. | High velocity of feature delivery and sustainable maintenance of complex audio logic. |
-| **Scalability** | `zod-to-openapi`, `next`, `zustand` | Difficulty evolving from a single-user tool to an integrated educational platform. | Modular, contract-first architecture ready for API formalization and future integrations. | Strategic positioning for B2B collaborations and expansion into a broader musical ecosystem. |
+The Violin Mentor stack is a **high-performance, real-time MusicTech engine** optimized for pedagogical feedback. By orchestrating Next.js 16 (Turbopack) and React 19 with specialized low-level audio libraries, it enables millisecond-precise pitch detection and interactive notation rendering within a strictly type-safe environment.
+
+### Domain Classification & Potential
+
+| Domain             | Key Packages                                         | Problem Solved                                                                       | Capabilities Enabled                                                                          | Competitive Advantage                                                                        |
+| :----------------- | :--------------------------------------------------- | :----------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
+| **Datos**          | `zustand`, `zod`, `immer`, `iter-tools`              | State fragmentation and lack of validation in high-frequency audio streams.          | Atomic, predictable state management for complex practice orchestration.                      | Rock-solid reliability and data integrity in real-time pedagogical loops.                    |
+| **UI**             | `osmd`, `framer-motion`, `radix-ui`, `tailwindcss 4` | Static, generic, and inaccessible musical notation interfaces.                       | Immersive, fluid sheet music that reacts instantly to sound with professional rendering.      | "DAW-like" high-fidelity experience that significantly reduces student cognitive friction.   |
+| **Observabilidad** | `@vercel/analytics`, `react-error-boundary`          | Blindness to pitch detection accuracy and algorithm failure across diverse hardware. | Data-driven algorithm optimization and graceful error recovery.                               | Rapid iteration cycle based on real-world audio performance metrics at the edge.             |
+| **Seguridad**      | `next-safe-action`, `zod`                            | Insecure server-side operations and malformed input risks in practice sessions.      | Secure-by-default, type-safe server actions that protect user progress and session integrity. | High user trust and resilient infrastructure against malformed musical data.                 |
+| **Rendimiento**    | `pako`, `iter-tools`, `next 16`                      | Main-thread blocking and large session payload overhead.                             | Efficient compression of performance history and lazy, non-blocking iteration of notes.       | Millisecond-precise "feel" essential for the psychological flow of musical practice.         |
+| **DX**             | `vitest`, `playwright`, `dependency-cruiser`         | Architectural decay and high onboarding costs in complex technical domains.          | Automated architectural guardrails and a highly-tested, self-documenting core.                | High feature velocity and sustainable management of complex digital signal processing (DSP). |
+| **Escalabilidad**  | `zod-to-openapi`, `next`, `zustand`                  | Monolithic growth constraints and difficulty in platform/ecosystem expansion.        | Contract-first architecture ready for API formalization and LMS integration.                  | Strategic positioning for B2B educational collaborations and multi-instrument growth.        |
 
 ## 2. Package Synergies
-- **Type-Safe Audio Pipeline (`Zod` + `Zustand` + `Iter-tools`):** Ensures that high-frequency audio events (pitch, RMS, confidence) are validated and processed efficiently without runtime overhead, maintaining a pure domain logic.
-- **Validated Server Actions (`Next-Safe-Action` + `Zod` + `React Hook Form`):** Creates an end-to-end type-safe bridge between user input and persistent storage, eliminating "impedance mismatch" bugs.
-- **Interactive Notation Orchestration (`OSMD` + `Framer Motion` + `Audio API`):** Sincronizes real-time pitch detection with visual notation updates, providing immediate pedagogical feedback.
-- **Architectural Integrity (`Dependency-Cruiser` + `TypeScript` + `Vitest`):** Enforces Hexagonal Architecture boundaries, ensuring the musical domain remains isolated from infrastructure concerns like Web Audio or LocalStorage.
+
+- **Zero-Latency Data Bridge (`React 19` + `Next-Safe-Action` + `Zod`):** Allows for "Optimistic Practice" where user achievements and progress are reflected instantly in the UI while being securely validated and persisted in the background.
+- **High-Fidelity Interaction (`Tailwind 4` + `Radix` + `Framer Motion`):** Enables the creation of complex UI components (like the Zen Mode or Practice Assistant) that maintain 60fps even while the browser is performing heavy pitch detection.
+- **Pedagogical Visualization (`OSMD` + `Recharts` + `Web Audio`):** Synchronizes real-time performance data with traditional notation, allowing the system to "see" what the student plays and provide immediate visual corrections.
+- **Architectural Enclosure (`Dependency-Cruiser` + `TypeScript` + `Vitest`):** Enforces a strict Hexagonal Architecture, ensuring the musical domain (YIN algorithm, note segmentation) remains pure and decoupled from framework volatility.
 
 ## 3. Product Opportunities
-- **Adaptive Difficulty Engine:** Use `Zod` mastery schemas to dynamically adjust intonation thresholds and exercise complexity in real-time based on `ProgressStore` metrics.
-- **Intonation Heatmaps & Analytics:** Leverage `Recharts` and `OSMD` to overlay precision maps on sheet music, allowing students to visually identify their "weak notes".
-- **Contextual Practice Assistant:** A global `cmdk` palette that provides real-time technical tips (e.g., "Vibrato instability detected on G string") using `TechniqueAnalysisAgent` data.
-- **Gamified Mastery System:** High-impact visual rewards for technical milestones (e.g., "100 perfect notes") using `canvas-confetti` triggered by the validated event pipeline.
+
+- **Adaptive Difficulty Engine:** Utilize the `zod` mastery schemas to dynamically adjust intonation tolerance (-5 cents) and required hold time based on the user's `perfectNoteStreak` in real-time.
+- **Intonation Heatmaps & Analytics:** Leverage `Recharts` and `OSMD` cursor tracking to overlay precision maps on sheet music, identifying specific "problem notes" across different scales.
+- **Contextual Practice Assistant:** A global `cmdk` palette that provides real-time technical tips (e.g., "Vibrato instability detected") by tapping into the `TechniqueAnalysisAgent` event stream.
+- **Gamified Mastery Pipeline:** High-impact visual rewards and technical milestones (e.g., "Centurión of Accuracy") using `canvas-confetti` triggered by the validated performance pipeline.
 
 ## 4. Architectural Risks
-- **Main Thread Contention:** Heavy OSMD rendering and real-time DSP (Digital Signal Processing) compete for resources. Moving audio analysis to `Web Workers` is a critical future step.
-- **Client-Side Storage Limits:** `localStorage` may saturate with years of practice data. A transition to `IndexedDB` or a cloud sync strategy will be necessary.
-- **Renderer Coupling:** Deep integration with `OpenSheetMusicDisplay` creates a single point of failure for the UI. Visualizing music should be abstracted into a generic port.
-- **State Machine Complexity:** The asynchronous nature of practice sessions and the multiple stores involved increase the risk of race conditions if not managed with strict session tokens.
+
+- **Main Thread DSP Contention:** Real-time pitch detection and OSMD rendering both compete for main-thread resources. Moving audio analysis to `Web Workers` or `AudioWorklets` is a critical next step to avoid UI jank.
+- **Client-Side Storage Saturation:** As user history grows, `localStorage` will hit its 5MB limit. A migration to `IndexedDB` or a cloud-sync strategy (leveraging `pako` compression) is mandatory.
+- **Renderer Coupling:** The project is deeply coupled with `OpenSheetMusicDisplay`. Abstracting notation into a generic "Notation Port" would mitigate the risk of this dependency becoming a bottleneck.
+- **State Machine Complexity:** The asynchronous nature of audio sessions and multiple stores (Practice, Tuner, Analytics) increases the risk of race conditions. Stricter session-token guarding is required.
 
 ## 5. Strategic Recommendations
-- **Formalize the "Practice Engine":** Extract the coordination logic into a standalone, pure domain module to facilitate testing and potential reuse in other instruments.
-- **Implement AudioWorklets/Web Workers:** Offload the YIN algorithm and note segmentation to background threads to guarantee a constant 60fps for the UI.
-- **Evolve toward OpenAPI:** Utilize `zod-to-openapi` to formalize the musical data model, paving the way for an ecosystem of third-party educational tools.
-- **Proactive Schema Migration:** Implement a robust versioning system for persistent stores to handle disruptive data model changes without impacting user progress.
+
+- **Formalize the "Practice Engine" Domain:** Extract the coordination logic between Audio, OSMD, and Zustand into a standalone, pure TypeScript module to facilitate cross-platform reuse.
+- **Implement AudioWorklets:** Offload the YIN algorithm and Note Segmenter to background threads to guarantee a constant 60fps for the UI regardless of device performance.
+- **Contract-Driven API Evolution:** Use `zod-to-openapi` to formalize the musical data model, paving the way for an ecosystem of third-party educational tools and VST integrations.
+- **Proactive Schema Migration:** Implement a versioned persistence strategy for all stores to handle disruptive data model changes without impacting long-term user progress.
