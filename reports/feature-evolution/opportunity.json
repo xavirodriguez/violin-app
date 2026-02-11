@@ -1,0 +1,86 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "OPP001",
+      "primary_feature": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "growth_type": "expand_to_all_users",
+      "current_state": "Stable, enabled by default, flag remains in code.",
+      "opportunity_description": "Promote to core capability by removing the feature flag.",
+      "rationale": {
+        "why_now": "The feature is mature (9/10), has high value, and no reported major bugs.",
+        "user_benefit": "Ensures all users always have the best learning experience.",
+        "business_benefit": "Reduces code complexity and maintenance cost.",
+        "technical_readiness": "100% ready."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Code Cleanup",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["Zero regressions"],
+          "go_no_go_criteria": "Tests pass"
+        }
+      },
+      "required_work": [
+        { "task": "Remove flag from lib/feature-flags.ts", "effort_hours": 1, "priority": "high", "blocking": false },
+        { "task": "Inline logic in engine.ts", "effort_hours": 2, "priority": "high", "blocking": false }
+      ],
+      "resource_requirements": { "engineering_hours": 3, "product_involvement": "low", "qe_hours": 1, "design_review": false },
+      "success_metrics": {
+        "adoption_rate": { "target": 100, "current": 100, "unit": "percentage" },
+        "error_rate": { "target": 0.01, "current": 0.01, "unit": "percentage" }
+      },
+      "rollback_plan": {
+        "trigger": "Critical regression in engine",
+        "steps": ["Git revert"],
+        "recovery_time_estimate_minutes": 10
+      },
+      "confidence_score": 0.95,
+      "recommendation_strength": "STRONG"
+    },
+    {
+      "opportunity_id": "OPP002",
+      "primary_feature": "FEATURE_UI_INTONATION_HEATMAPS",
+      "growth_type": "increase_capabilities",
+      "current_state": "Experimental, disabled, placeholder.",
+      "opportunity_description": "Move to Alpha/Beta by implementing the initial heatmap UI.",
+      "rationale": {
+        "why_now": "High user demand for better visual feedback.",
+        "user_benefit": "Easier to see where intonation errors happen.",
+        "business_benefit": "Increases app stickiness.",
+        "technical_readiness": "Infrastructure for intonation tracking already exists."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Initial Implementation",
+          "duration_weeks": 2,
+          "rollout_percentage": 0.1,
+          "success_metrics": ["Positive beta feedback"],
+          "go_no_go_criteria": "Performance impact < 5%"
+        }
+      },
+      "required_work": [
+        { "task": "Implement heatmap component", "effort_hours": 8, "priority": "medium", "blocking": false }
+      ],
+      "resource_requirements": { "engineering_hours": 8, "product_involvement": "medium", "qe_hours": 2, "design_review": true },
+      "success_metrics": {
+        "user_satisfaction": { "target": 8, "current": 0, "unit": "NPS" }
+      },
+      "rollback_plan": {
+        "trigger": "Performance degradation",
+        "steps": ["Disable flag"],
+        "recovery_time_estimate_minutes": 1
+      },
+      "confidence_score": 0.8,
+      "recommendation_strength": "MODERATE"
+    }
+  ],
+  "prioritized_queue": [
+    { "rank": 1, "opportunity_id": "OPP001", "recommended_start_date": "2025-05-16", "impact_if_successful": "Code quality improvement" },
+    { "rank": 2, "opportunity_id": "OPP002", "recommended_start_date": "2025-06-01", "impact_if_successful": "User experience improvement" }
+  ],
+  "next_30_days_focus": [
+    "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY promotion",
+    "FEATURE_UI_INTONATION_HEATMAPS initial implementation"
+  ]
+}

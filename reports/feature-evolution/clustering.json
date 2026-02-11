@@ -1,0 +1,45 @@
+{
+  "clusters": [
+    {
+      "cluster_id": "pedagogical_intelligence",
+      "type": "business_domain",
+      "features": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"],
+      "characteristics": {
+        "shared_context": "Core learning logic and personalization.",
+        "can_grow_together": true,
+        "combined_impact": "high",
+        "shared_risks": ["Pedagogical accuracy"]
+      }
+    },
+    {
+      "cluster_id": "performance_and_infra",
+      "type": "technical_initiative",
+      "features": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"],
+      "characteristics": {
+        "shared_context": "Low-level system capabilities and connectivity.",
+        "can_grow_together": false,
+        "combined_impact": "very high",
+        "shared_risks": ["Architectural complexity", "Concurrency"]
+      }
+    },
+    {
+      "cluster_id": "visual_analytics",
+      "type": "product_experience",
+      "features": ["FEATURE_UI_INTONATION_HEATMAPS"],
+      "characteristics": {
+        "shared_context": "User-facing data visualization.",
+        "can_grow_together": true,
+        "combined_impact": "medium",
+        "shared_risks": ["UI clutter", "Performance"]
+      }
+    }
+  ],
+  "optimization_opportunities": [
+    {
+      "opportunity": "Merge adaptive difficulty logic with telemetry enhancements",
+      "features_involved": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "Telemetría (Core)"],
+      "synergy_benefit": "More data-driven adaptation.",
+      "implementation_complexity": "low"
+    }
+  ]
+}
