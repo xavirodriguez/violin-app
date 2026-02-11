@@ -20,8 +20,10 @@ export interface Annotation {
 
 /**
  * Props for the {@link SheetMusicAnnotations} component.
+ *
+ * @public
  */
-interface SheetMusicAnnotationsProps {
+export interface SheetMusicAnnotationsProps {
   /** Map of note index to its respective annotations. */
   annotations: Record<number, Annotation>
   /** Index of the currently active note being practiced. */
@@ -41,10 +43,22 @@ interface SheetMusicAnnotationsProps {
  * It synchronizes with the `currentNoteIndex` to show relevant hints exactly where
  * the user should be looking.
  *
- * **Performance Note**: Coordinate calculations are debounced and respond to
- * window resize events to maintain visual alignment.
+ * **Performance Note**:
+ * Coordinate calculations are debounced (100ms) and respond to window resize events
+ * to maintain visual alignment with the underlying SVG.
  *
  * @param props - Component props.
+ *
+ * @example
+ * ```tsx
+ * <SheetMusicAnnotations
+ *   annotations={{ 0: { fingerNumber: 1, bowDirection: 'down' } }}
+ *   currentNoteIndex={0}
+ *   osmd={osmdInstance}
+ *   containerRef={ref}
+ * />
+ * ```
+ *
  * @public
  */
 export function SheetMusicAnnotations({

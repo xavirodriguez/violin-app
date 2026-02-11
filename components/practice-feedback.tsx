@@ -5,8 +5,10 @@ import { Observation } from '@/lib/technique-types'
 
 /**
  * Props for the {@link PracticeFeedback} component.
+ *
+ * @public
  */
-interface PracticeFeedbackProps {
+export interface PracticeFeedbackProps {
   /** The scientific pitch name of the target note (e.g., "A4"). */
   targetNote: string
   /** The scientific pitch name detected by the audio engine, if any. */
@@ -39,7 +41,22 @@ interface PracticeFeedbackProps {
  * 3. **Pedagogical Observations**: Displays high-level tips (e.g., "Consistently sharp")
  *    derived from long-term analysis of the current note.
  *
+ * **Design Goal**:
+ * The UI is optimized for "at-a-glance" recognition while playing an instrument,
+ * using color coding (Green/Yellow/Red) and large iconography.
+ *
  * @param props - Component props.
+ *
+ * @example
+ * ```tsx
+ * <PracticeFeedback
+ *   targetNote="A4"
+ *   detectedPitchName="A4"
+ *   centsOff={3}
+ *   status="listening"
+ * />
+ * ```
+ *
  * @public
  */
 export function PracticeFeedback({

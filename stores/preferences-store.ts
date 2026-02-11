@@ -10,7 +10,7 @@ import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
  *
  * @public
  */
-interface PreferencesStore extends UserPreferences {
+export interface PreferencesStore extends UserPreferences {
   /** Persistence schema version. Used for migrations. */
   schemaVersion: 1
 
@@ -58,6 +58,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * compliant with the `PreferencesStateSchema`.
  *
  * All changes are automatically tracked via the `analytics` service.
+ *
+ * **Persistence Strategy**:
+ * Uses Zod validation on load to prevent corrupt local storage data from
+ * crashing the application. Includes an incremental migrator for schema updates.
  *
  * @public
  */

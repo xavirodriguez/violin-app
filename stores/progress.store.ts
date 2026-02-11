@@ -109,6 +109,7 @@ export interface ProgressState {
 
 /**
  * Actions available in the Progress Store for updating user performance.
+ * @internal
  */
 interface ProgressActions {
   /**
@@ -158,7 +159,9 @@ const DEFAULT_PROGRESS: ProgressState = {
  *
  * @remarks
  * This store is designed for durability and performance when handling large volumes
- * of historical practice data. Key features include:
+ * of historical practice data.
+ *
+ * **Key Features**:
  * - **High-Density Storage**: Uses a circular buffer to limit memory usage while keeping detailed recent history.
  * - **Incremental Snapshots**: Efficiently tracks long-term trends without re-processing all history.
  * - **Schema Migrations**: Safely handles data format changes over time.

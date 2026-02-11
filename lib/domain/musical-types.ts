@@ -12,6 +12,9 @@ export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 /**
  * Represents a specific pitch on the musical staff, including its octave and accidental.
  *
+ * @remarks
+ * Violin strings start at G3 (G string), D4 (D string), A4 (A string), E5 (E string).
+ *
  * @public
  */
 export interface Pitch {
@@ -19,7 +22,6 @@ export interface Pitch {
   step: PitchName
   /**
    * The octave number in scientific pitch notation (e.g., 4 for Middle C).
-   * Violin strings start at G3 (G string), D4 (D string), A4 (A string), E5 (E string).
    */
   octave: number
   /**
@@ -253,7 +255,7 @@ export interface TunerStore {
    * Sensitivity of the input (0-100).
    *
    * @remarks
-   * Maps to internal gain: `0 -> 0x`, `50 -> 1x`, `100 -> 2x`.
+   * Maps to internal gain: `0 -\> 0x`, `50 -\> 1x`, `100 -\> 2x`.
    */
   sensitivity: number
 
@@ -272,20 +274,23 @@ export interface TunerStore {
    * - If a previous initialization is pending, it will be cancelled
    *
    * **State Transitions**:
-   * - IDLE → INITIALIZING → READY (success)
-   * - IDLE → INITIALIZING → ERROR (failure)
+   * - IDLE -\> INITIALIZING -\> READY (success)
+   * - IDLE -\> INITIALIZING -\> ERROR (failure)
    *
    * @throws Never throws - errors are captured in state.error
+   * @returns A promise that resolves when initialization is complete.
    */
   initialize: () => Promise<void>
 
   /**
    * Resets and re-initializes the tuner.
+   * @returns A promise that resolves when retry is complete.
    */
   retry: () => Promise<void>
 
   /**
    * Stops the tuner and releases hardware resources.
+   * @returns A promise that resolves when reset is complete.
    */
   reset: () => Promise<void>
 
@@ -309,6 +314,7 @@ export interface TunerStore {
 
   /**
    * Refreshes the list of available audio input hardware.
+   * @returns A promise that resolves when devices are loaded.
    */
   loadDevices: () => Promise<void>
 
@@ -316,6 +322,7 @@ export interface TunerStore {
    * Switches to a different input device.
    *
    * @param deviceId - ID of the new device to use.
+   * @returns A promise that resolves when the device is set.
    */
   setDeviceId: (deviceId: string) => Promise<void>
 

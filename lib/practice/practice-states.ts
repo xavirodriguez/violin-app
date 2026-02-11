@@ -12,6 +12,9 @@ import { PracticeSessionRunner } from './session-runner'
  * type safety and eliminate invalid states (e.g., an active session without a runner).
  * This FSM (Finite State Machine) governs the high-level lifecycle of the practice experience.
  *
+ * **State Flow**:
+ * `idle` -\> `initializing` -\> `ready` -\> `active` -\> `idle` (or `error`)
+ *
  * @public
  */
 export type PracticeStoreState =
@@ -54,6 +57,10 @@ export interface InitializingState {
 /**
  * Represents the state when resources are loaded and the session is ready to start.
  *
+ * @remarks
+ * In this state, the microphone has been acquired and the pitch detector is ready,
+ * but the real-time processing loop has not yet started.
+ *
  * @public
  */
 export interface ReadyState {
@@ -74,6 +81,7 @@ export interface ReadyState {
  *
  * @remarks
  * In this state, the audio pipeline is running and events are being processed.
+ * The `abortController` is used to signal the termination of the asynchronous loop.
  *
  * @public
  */

@@ -19,12 +19,15 @@ import type { TunerStore } from '@/lib/domain/musical-types'
  *
  * @remarks
  * The TunerStore manages the state of the standalone violin tuner. It handles:
- * - **Permission Lifecycle**: Tracks microphone authorization states.
+ * - **Permission Lifecycle**: Tracks microphone authorization states (PROMPT, GRANTED, DENIED).
  * - **Signal Analysis**: Interfaces with `PitchDetector` to extract note and deviation.
  * - **Device Management**: Allows selection and enumeration of audio input hardware.
  * - **Gain Control**: Adjusts sensitivity to match different environments.
  *
- * It uses a session token pattern to handle race conditions during asynchronous initialization.
+ * **Concurrency Safety**:
+ * It uses a session token pattern (`initToken`) to handle race conditions during
+ * asynchronous initialization. If a new initialization starts before a previous one
+ * finishes, the old results are discarded.
  *
  * @public
  */
@@ -42,6 +45,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Getter that returns the shared Web Audio AnalyserNode from the audio manager.
+     *
+     * @returns The active {@link AnalyserNode} or null if not initialized.
      */
     get analyser() {
       return audioManager.getAnalyser()
@@ -55,8 +60,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * the audio context. It implements a token-based guard to prevent stale
      * initialization results from being applied if a reset occurs during the process.
      *
+     * **State Transitions**:
+     * `IDLE` -\> `INITIALIZING` -\> `READY` (success) or `ERROR` (failure).
+     *
      * @returns A promise that resolves when initialization is complete.
-     * @throws {@link AppError} if microphone access is denied or hardware fails.
+     * @throws AppError - If microphone access is denied or hardware fails.
      */
     initialize: async () => {
       const { state: currentState, deviceId, sensitivity } = get()
@@ -111,6 +119,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
     /**
      * Resets the store and attempts to re-initialize the audio pipeline.
+     *
+     * @returns A promise that resolves when retry is complete.
      */
     retry: async () => {
       await get().reset()
@@ -211,6 +221,8 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * @remarks
      * Triggers a brief initialization cycle if permissions are missing to
      * ensure device labels can be read.
+     *
+     * @returns A promise that resolves when devices are loaded.
      */
     loadDevices: async () => {
       // To get device labels, we need microphone permission. If we haven't asked yet,
@@ -230,9 +242,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Sets the preferred audio input device and re-initializes the pipeline.
+     * Switches the preferred audio input device and re-initializes the pipeline.
      *
      * @param deviceId - The ID of the device to use.
+     * @returns A promise that resolves when the device is set and pipeline re-initialized.
      */
     setDeviceId: async (deviceId: string) => {
       set({ deviceId })

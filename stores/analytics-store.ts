@@ -40,6 +40,7 @@ export interface PracticeSession {
 
 /**
  * Metric summary for an individual note within a session.
+ * @internal
  */
 interface NoteResult {
   /** Index of the note in the exercise. */
@@ -90,6 +91,7 @@ export interface UserProgress {
 
 /**
  * Persistent statistics for a specific exercise.
+ * @internal
  */
 interface ExerciseStats {
   /** ID of the exercise. */
@@ -126,6 +128,10 @@ export interface Achievement {
 
 /**
  * Interface for the Analytics Store, managing long-term progress and session history.
+ *
+ * @remarks
+ * This store handles the persistence of user performance data.
+ * It coordinates session finalization, skill level recalculation, and achievement checks.
  *
  * @public
  */
@@ -187,7 +193,7 @@ export interface AnalyticsStore {
   checkAndUnlockAchievements: () => void
 
   /**
-   * Current streak of notes played with high accuracy (`< 5` cents).
+   * Current streak of notes played with high accuracy (\< 5 cents).
    */
   currentPerfectStreak: number
 
@@ -200,6 +206,8 @@ export interface AnalyticsStore {
 
   /**
    * Gets stats for a specific exercise.
+   *
+   * @param exerciseId - ID of the exercise to look up.
    */
   getExerciseStats: (exerciseId: string) => ExerciseStats | null
 

@@ -40,12 +40,14 @@ import { Observation, NoteTechnique } from '@/lib/technique-types'
  * 3. **High-Frequency Analysis**: Consumes events from the audio pipeline and updates the UI state.
  * 4. **Telemetry & Analytics**: Synchronizes session data with `SessionStore` and `ProgressStore`.
  *
+ * **Concurrency & Safety**:
  * It implements a `sessionToken` pattern (UUID) to guard against race conditions during
- * asynchronous state updates in real-time loops.
+ * asynchronous state updates in real-time loops. Updates are only applied if the
+ * current `sessionToken` matches the one active when the update was scheduled.
  *
  * @public
  */
-interface PracticeStore {
+export interface PracticeStore {
   /**
    * The current formalized state of the practice system (FSM).
    */
@@ -107,6 +109,9 @@ interface PracticeStore {
    *
    * @param exercise - The musical exercise to load.
    * @returns A promise that resolves when the exercise is loaded and the store is reset.
+   *
+   * @remarks
+   * Calling this method automatically stops any currently running session.
    */
   loadExercise: (exercise: Exercise) => Promise<void>
 
@@ -131,8 +136,12 @@ interface PracticeStore {
    * This method is retriable from 'idle' or 'error' states. It coordinates with the
    * `audioManager` and creates the necessary port adapters.
    *
+   * **Side Effects**:
+   * - Triggers microphone permission prompt if not already granted.
+   * - Updates `state` to 'initializing' and then 'ready' on success.
+   *
    * @returns A promise that resolves when audio is successfully initialized.
-   * @throws {@link AppError} if microphone access is denied.
+   * @throws AppError - If microphone access is denied or hardware fails.
    */
   initializeAudio: () => Promise<void>
 
@@ -141,11 +150,14 @@ interface PracticeStore {
    *
    * @remarks
    * This method:
-   * 1. Ensures audio is initialized.
+   * 1. Ensures audio is initialized (auto-initializes if in 'idle').
    * 2. Generates a new `sessionToken`.
    * 3. Instantiates the `PracticeSessionRunnerImpl`.
    * 4. Starts the analytics session.
    * 5. Commences the asynchronous audio processing loop.
+   *
+   * **Re-entrancy**:
+   * Subsequent calls while `isStarting` is true are ignored.
    *
    * @returns A promise that resolves when the session has started.
    */
@@ -159,6 +171,8 @@ interface PracticeStore {
    * 1. Aborts the runner and loop.
    * 2. Closes the audio manager.
    * 3. Finalizes the analytics session.
+   *
+   * The store state transitions back to 'idle'.
    *
    * @returns A promise that resolves when cleanup is complete.
    */
@@ -175,7 +189,7 @@ interface PracticeStore {
    * Consumes a stream of events from the practice pipeline and updates the store state.
    *
    * @remarks
-   * This is a high-frequency internal method that bridge the async generator pipeline
+   * This is a high-frequency internal method that bridges the async generator pipeline
    * with the reactive store. It uses `sessionToken` to ensure updates belong to the current session.
    *
    * @param pipeline - An async iterable of practice events.

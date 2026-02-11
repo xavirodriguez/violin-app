@@ -46,6 +46,7 @@ export interface PracticeSessionRunner {
 
 /**
  * Dependencies required by the {@link PracticeSessionRunnerImpl}.
+ * @internal
  */
 interface SessionRunnerDependencies {
   /** The source of audio frames (Hardware/Web Audio). */
@@ -95,11 +96,23 @@ interface SessionRunnerDependencies {
  *
  * @remarks
  * This class acts as the "glue" between the pure domain logic of the `PracticeEngine`
- * and the external world. It manages:
- * 1. **Loop Orchestration**: Consumes engine events using an async iterator.
+ * and the external world.
+ *
+ * **Orchestration Logic**:
+ * 1. **Loop Management**: Consumes high-frequency engine events using an async iterator.
  * 2. **State Synchronization**: Maps domain events to store updates via `handlePracticeEvent`.
- * 3. **Side Effects**: Triggers analytics, telemetry, and pitch feedback.
- * 4. **Lifecycle Management**: Handles graceful cancellation via {@link AbortController}.
+ * 3. **Side Effects**: Triggers analytics recording and real-time tuner feedback.
+ * 4. **Resource Lifecycle**: Manages an internal {@link AbortController} to ensure
+ *    that only one active loop exists at a time.
+ *
+ * @example
+ * ```ts
+ * const runner = new PracticeSessionRunnerImpl(deps);
+ * const result = await runner.run(abortSignal);
+ * if (result.completed) {
+ *   console.log("Bravo!");
+ * }
+ * ```
  *
  * @public
  */
@@ -116,6 +129,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Executes the session loop until completion, error, or external cancellation.
+   *
+   * @remarks
+   * This method is re-entrant safe: calling it while a session is running will
+   * automatically cancel the previous session before starting the new one.
    *
    * @param signal - External abort signal.
    * @returns The session outcome result.
@@ -147,7 +164,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   /**
-   * Cancels the current execution and triggers internal cleanup.
+   * Immediately stops the active execution and triggers internal cleanup.
+   *
+   * @remarks
+   * Aborts the internal controller which cascades down to the engine and audio loop.
    */
   cancel(): void {
     this.controller?.abort()
