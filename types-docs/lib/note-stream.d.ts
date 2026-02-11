@@ -64,7 +64,27 @@ export declare function createRawPitchStream(audioLoop: AudioLoopPort, detector:
  * @remarks
  * This design prevents context drift during async iteration.
  * When the exercise note changes, create a new pipeline.
+ *
+ * **Critical Performance**: The pipeline runs at 60+ fps.
+ * Ensure that any dynamic options provided as getters:
+ * 1. Are fast (< 1ms)
+ * 2. Return consistent values for the same underlying state
+ * 3. Use memoized selectors if possible
+ *
+ * @example
+ * ```ts
+ * const pipeline = createPracticeEventPipeline(
+ *   rawStream,
+ *   {
+ *     targetNote: usePracticeStore.getState().practiceState?.exercise.notes[0] || null,
+ *     currentIndex: 0,
+ *     sessionStartTime: Date.now(),
+ *   },
+ *   options,
+ *   signal
+ * );
+ * ```
  */
-export declare function createPracticeEventPipeline(rawPitchStream: AsyncIterable<RawPitchEvent>, context: PipelineContext, options: Partial<NoteStreamOptions> & {
+export declare function createPracticeEventPipeline(rawPitchStream: AsyncIterable<RawPitchEvent>, context: PipelineContext, options: (Partial<NoteStreamOptions> & {
     exercise: Exercise;
-}, signal: AbortSignal): AsyncIterable<PracticeEvent>;
+}) | (() => NoteStreamOptions), signal: AbortSignal): AsyncIterable<PracticeEvent>;

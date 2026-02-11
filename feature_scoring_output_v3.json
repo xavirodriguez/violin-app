@@ -1,0 +1,82 @@
+[
+  {
+    "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+    "scoring": {
+      "maturity": {
+        "score": 8,
+        "rationale": "Well integrated in the engine, has clear logic and beta status.",
+        "factors": { "code_quality": 8, "test_coverage": 8, "documentation": 7, "stability_over_time": 9, "bug_frequency": 2 }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "High pedagogical value, personalizes the experience.",
+        "factors": { "user_impact": 9, "revenue_potential": 7, "strategic_alignment": 10, "competitive_advantage": 8, "market_demand": 9 }
+      },
+      "adoption_readiness": {
+        "score": 8,
+        "rationale": "Transparent to users but provides immediate value.",
+        "factors": { "current_users": 8, "feature_discoverability": 5, "onboarding_complexity": 10, "performance_impact": 10, "ui_ux_quality": 8 }
+      },
+      "technical_debt": {
+        "score": 3,
+        "rationale": "Clean implementation using functional engine patterns.",
+        "factors": { "code_complexity": 4, "refactor_needs": 2, "performance_debt": 1, "security_concerns": 1, "scalability_limits": 2 }
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "Can be expanded to other musical dimensions (rhythm, dynamics).",
+        "factors": { "feature_expansion_possibilities": 10, "market_expansion": 7, "integration_opportunities": 8, "monetization_potential": 6, "ecosystem_value": 9 }
+      },
+      "risk_profile": {
+        "score": 4,
+        "rationale": "Low risk as it only adjusts tolerance parameters.",
+        "factors": { "breaking_change_risk": 2, "security_risk": 1, "performance_risk": 1, "compatibility_risk": 2, "migration_risk": 3 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 8.5,
+      "weighted_score": 8.2,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_TELEMETRY_ACCURACY",
+    "scoring": {
+      "maturity": {
+        "score": 9,
+        "rationale": "Stable, enabled by default, used for monitoring.",
+        "factors": { "code_quality": 9, "test_coverage": 9, "documentation": 8, "stability_over_time": 10, "bug_frequency": 1 }
+      },
+      "business_value": {
+        "score": 7,
+        "rationale": "Critical for internal observability and debugging.",
+        "factors": { "user_impact": 4, "revenue_potential": 2, "strategic_alignment": 9, "competitive_advantage": 5, "market_demand": 3 }
+      },
+      "adoption_readiness": {
+        "score": 10,
+        "rationale": "Already in use for 100% of users where enabled.",
+        "factors": { "current_users": 10, "feature_discoverability": 1, "onboarding_complexity": 10, "performance_impact": 9, "ui_ux_quality": 10 }
+      },
+      "technical_debt": {
+        "score": 1,
+        "rationale": "Minimal footprint.",
+        "factors": { "code_complexity": 1, "refactor_needs": 1, "performance_debt": 2, "security_concerns": 1, "scalability_limits": 1 }
+      },
+      "growth_potential": {
+        "score": 6,
+        "rationale": "Could feed into more advanced analytics dashboards.",
+        "factors": { "feature_expansion_possibilities": 7, "market_expansion": 4, "integration_opportunities": 8, "monetization_potential": 2, "ecosystem_value": 7 }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Minimal risk.",
+        "factors": { "breaking_change_risk": 1, "security_risk": 2, "performance_risk": 2, "compatibility_risk": 1, "migration_risk": 1 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 9.2,
+      "weighted_score": 7.8,
+      "recommendation": "FAST_TRACK"
+    }
+  }
+]

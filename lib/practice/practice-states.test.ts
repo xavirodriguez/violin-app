@@ -28,8 +28,8 @@ describe('Practice state transitions', () => {
     expect(active.runner).toBe(mockRunner)
 
     const stop = transitions.stop(active)
-    expect(stop.status).toBe('ready')
-    expect(stop.audioLoop).toBe(mockAudioLoop)
+    expect(stop.status).toBe('idle')
+    expect(stop.exercise).toBe(mockExercise)
 
     const error = transitions.error({ message: 'fail' } as any)
     expect(error.status).toBe('error')

@@ -6,63 +6,95 @@ import { createMigrator } from '@/lib/persistence/migrator'
 import { AchievementsStateSchema } from '@/lib/schemas/persistence.schema'
 
 /**
- * Represents a musical achievement unlocked by the user.
+ * Represents a musical achievement or milestone unlocked by the user.
+ *
+ * @remarks
+ * This model is used to reward consistency, accuracy, and technical growth.
  *
  * @public
  */
 export interface Achievement {
-  /** Unique identifier for the achievement. */
+  /**
+   * Unique identifier for the achievement (e.g., 'first-perfect-scale').
+   * Used as a key for translations and UI rendering.
+   */
   id: string
   /** Human-readable display name. */
   name: string
-  /** Description of the accomplishment. */
+  /** Detailed description of the accomplishment required to unlock this achievement. */
   description: string
-  /** Icon or emoji representing the achievement. */
+  /** Icon or emoji representation for visual feedback. */
   icon: string
-  /** Unix timestamp when the achievement was unlocked. */
+  /** Unix timestamp of the exact moment the achievement was first unlocked. */
   unlockedAtMs: number
 }
 
 /**
  * State structure for the achievements store.
+ *
+ * @internal
  */
 interface AchievementsState {
-  /** Persistence schema version. */
+  /** Version of the persistence schema for automated migrations. */
   schemaVersion: 1
-  /** List of all unlocked achievements. */
+  /** List of all permanently unlocked achievements in the user's history. */
   unlocked: Achievement[]
-  /** List of achievements that have been unlocked but not yet acknowledged by the user. */
+  /** Queue of achievements that have been unlocked but not yet acknowledged (toasted) in the UI. */
   pending: Achievement[]
 }
 
 /**
- * Actions for managing achievements.
+ * Actions for managing the achievement lifecycle and state transitions.
+ *
+ * @public
  */
 interface AchievementsActions {
   /**
-   * Checks current statistics against achievement criteria.
+   * Checks current practice metrics against the global achievement library.
    *
-   * @param stats - Current practice and progress metrics.
-   * @returns Array of newly unlocked achievements.
+   * @remarks
+   * This method performs several tasks:
+   * 1. Evaluates `stats` using the `checkAchievements` domain logic.
+   * 2. Identifies new milestones not present in the `unlocked` list.
+   * 3. Updates both `unlocked` and `pending` states atomically.
+   *
+   * @param stats - Current practice performance and long-term progress metrics.
+   * @returns Array of newly unlocked achievements in this specific check cycle.
    */
   check: (stats: AchievementCheckStats) => Achievement[]
 
   /**
-   * Clears an achievement from the pending queue.
+   * Removes an achievement from the `pending` queue.
    *
-   * @param id - ID of the achievement.
+   * @remarks
+   * Call this method once the UI (e.g., a toast notification) has successfully
+   * displayed the achievement to the user.
+   *
+   * @param id - The unique ID of the achievement to acknowledge.
    */
   markShown: (id: string) => void
 }
 
 /**
- * Zustand store for managing the achievement system.
+ * Zustand store for managing the persistent achievement system.
  *
  * @remarks
- * This store handles the persistence and state of user achievements. It separates
- * achievements into "unlocked" (permanent history) and "pending" (queued for UI notification).
+ * This store handles the "Gamification" layer of the application. It is decoupled
+ * from the core practice engine to ensure that achievement logic doesn't block
+ * the audio processing pipeline.
  *
- * It uses `validatedPersist` to ensure the stored data matches the expected schema.
+ * **Architecture**:
+ * - **Validation**: Uses Zod-based persistence (`validatedPersist`) to ensure
+ *   milestone data is never corrupted.
+ * - **Notification Queue**: Implements a `pending` queue to ensure that no
+ *   achievement notification is missed, even if multiple are unlocked simultaneously.
+ * - **Domain Delegation**: Delegates the actual "Check" logic to the pure
+ *   `achievement-checker` module for better testability.
+ *
+ * @example
+ * ```ts
+ * const { unlocked, check } = useAchievementsStore();
+ * ```
  *
  * @public
  */

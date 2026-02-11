@@ -1,5 +1,6 @@
 /**
  * PracticeMode
+ *
  * The main container component for the interactive practice session.
  * It orchestrates exercise selection, audio processing, sheet music rendering,
  * and real-time feedback.
@@ -10,7 +11,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
-import { useFeatureFlag } from '@/lib/feature-flags'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -47,16 +47,15 @@ import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
 import { createRawPitchStream, createPracticeEventPipeline } from '@/lib/note-stream'
 
+/** Default tolerance in cents for the tuner and feedback UI. */
 const DEFAULT_CENTS_TOLERANCE = 25
 
 /**
  * Header component for the practice mode, displaying the exercise name.
  *
  * @param props - Component props.
- * @param props.exerciseName - The name of the current exercise.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
   return (
     <div className="text-center">
@@ -73,17 +72,18 @@ function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
  * Includes filtering by difficulty and progress, as well as an AI-driven recommender.
  *
  * @param props - Component props.
- * @param props.selectedId - ID of the currently selected exercise.
- * @param props.onSelect - Callback when an exercise is chosen.
- * @param props.disabled - Whether interaction is disabled.
+ * @internal
  */
 function ExerciseLibrary({
   selectedId,
   onSelect,
   disabled,
 }: {
+  /** ID of the currently selected exercise. */
   selectedId?: string
+  /** Callback triggered when an exercise is chosen. */
   onSelect: (exercise: Exercise) => void
+  /** Whether interaction is disabled. */
   disabled: boolean
 }) {
   const [activeTab, setActiveTab] = useState('all')
@@ -151,8 +151,7 @@ function ExerciseLibrary({
  * Display for application-level errors during practice.
  *
  * @param props - Component props.
- * @param props.error - Error message.
- * @param props.onReset - Callback to clear the error and reset.
+ * @internal
  */
 function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }) {
   return (
@@ -175,6 +174,7 @@ function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }
  * Control bar for starting, stopping, and monitoring practice progress.
  *
  * @param props - Component props.
+ * @internal
  */
 function PracticeControls({
   status,
@@ -186,13 +186,13 @@ function PracticeControls({
   currentNoteIndex,
   totalNotes,
 }: {
-  /** Current status of the practice machine. */
+  /** Current status of the practice state machine. */
   status: string
-  /** Whether an exercise is currently loaded. */
+  /** Whether an exercise is currently loaded in the store. */
   hasExercise: boolean
-  /** Callback to start practice. */
+  /** Callback to start the practice session. */
   onStart: () => void
-  /** Callback to stop practice. */
+  /** Callback to stop the practice session. */
   onStop: () => void
   /** Callback to restart the current exercise. */
   onRestart: () => void
@@ -245,6 +245,7 @@ function PracticeControls({
  * View displaying real-time feedback and fingerboard visualization during practice.
  *
  * @param props - Component props.
+ * @internal
  */
 function PracticeActiveView({
   status,
@@ -305,9 +306,10 @@ function PracticeActiveView({
 }
 
 /**
- * Displays the musical notation using OpenSheetMusicDisplay.
+ * Display for musical notation using OpenSheetMusicDisplay.
  *
  * @param props - Component props.
+ * @internal
  */
 function SheetMusicView({
   musicXML,
@@ -321,7 +323,7 @@ function SheetMusicView({
   isReady: boolean
   /** Rendering error, if any. */
   error: string | null
-  /** Reference to the container element. */
+  /** Reference to the container element for OSMD. */
   containerRef: React.RefObject<HTMLDivElement | null>
 }) {
   if (!musicXML) return null
@@ -339,14 +341,23 @@ function SheetMusicView({
  * Main component for the Interactive Practice Mode.
  *
  * @remarks
- * This component orchestrates the entire practice experience, including:
- * - Loading and selecting exercises.
- * - Managing the audio analysis pipeline.
- * - Synchronizing sheet music with the user's progress.
- * - Providing real-time visual feedback via the fingerboard and feedback indicators.
- * - Handling keyboard shortcuts (e.g., 'Space' to start/stop, 'Z' for Zen Mode).
+ * This component is the primary entry point for the practice experience. It coordinates:
+ * 1. **Exercise Management**: Loading, previewing, and selecting exercises from the library.
+ * 2. **Audio Pipeline**: Orchestrates the `createPracticeEventPipeline` which connects
+ *    raw audio frames to musical domain events.
+ * 3. **Real-time Visualization**: Synchronizes progress with `SheetMusic` (via OSMD)
+ *    and provides feedback through the `ViolinFingerboard`.
+ * 4. **User Interaction**: Manages keyboard shortcuts (Space for Start/Stop, Z for Zen Mode)
+ *    and UI layout toggles.
  *
- * It relies on the `usePracticeStore` for state management and `useOSMDSafe` for music notation.
+ * **Architecture**:
+ * It relies on the `usePracticeStore` for centralized state management and the
+ * `useOSMDSafe` hook for robust notation rendering in React.
+ *
+ * @example
+ * ```tsx
+ * <PracticeMode />
+ * ```
  *
  * @public
  */
@@ -379,6 +390,9 @@ export function PracticeMode() {
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
+  /**
+   * Effect to load the default exercise upon initial mount if none is selected.
+   */
   useEffect(() => {
     if (!loadedRef.current && !practiceState && allExercises.length > 0) {
       loadExercise(allExercises[0])
@@ -386,13 +400,22 @@ export function PracticeMode() {
     }
   }, [loadExercise, practiceState])
 
+  /**
+   * Effect to sync the OSMD cursor and highlighting whenever the current note changes.
+   */
   useEffect(() => {
     syncCursorWithNote(osmdHook, status, currentNoteIndex)
   }, [currentNoteIndex, status, osmdHook])
 
-  // NUEVO: Loop de audio conectado al pipeline
+  /**
+   * High-frequency audio pipeline effect.
+   *
+   * @remarks
+   * This effect initializes the `createPracticeEventPipeline` when the user enters
+   * the 'listening' status. It connects raw audio data to the store via `consumePipelineEvents`.
+   * It handles clean-up via an `AbortController` to prevent memory leaks and race conditions.
+   */
   useEffect(() => {
-    // Solo ejecutar si estamos en modo listening
     if (practiceState?.status !== 'listening') return
     if (!audioLoop || !detector) return
 
@@ -401,14 +424,14 @@ export function PracticeMode() {
 
     const runPipeline = async () => {
       try {
-        // 1. Crear stream de pitch crudo
+        // 1. Create raw pitch stream from audio adapters
         const rawPitchStream = createRawPitchStream(
           audioLoop,
           detector,
           abortController.signal
         )
 
-        // 2. Crear pipeline de eventos
+        // 2. Create the domain-aware event pipeline
         const eventPipeline = createPracticeEventPipeline(
           rawPitchStream,
           {
@@ -419,7 +442,7 @@ export function PracticeMode() {
           {
             minRms: 0.015,
             minConfidence: 0.85,
-            centsTolerance: 20, // Más estricto que los 25 default
+            centsTolerance: 20,
             requiredHoldTime: 500,
             exercise: practiceState?.exercise,
             bpm: 60,
@@ -451,6 +474,13 @@ export function PracticeMode() {
     practiceState?.exercise
   ])
 
+  /**
+   * Keyboard shortcuts effect.
+   *
+   * @remarks
+   * - Space: Toggle start/stop.
+   * - Z: Toggle Zen Mode.
+   */
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'z') {
@@ -596,7 +626,7 @@ export function PracticeMode() {
         {status !== 'idle' && (
           <PracticeQuickActions
             status={status}
-            onRepeatNote={() => {}} // Note: setNoteIndex was removed from store in simplified version
+            onRepeatNote={() => {}}
             onRepeatMeasure={() => {}}
             onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
@@ -610,10 +640,11 @@ export function PracticeMode() {
 }
 
 /**
- * Derives calculated UI state from the raw practice state.
+ * Derives calculated UI state from the raw practice domain state.
  *
  * @param practiceState - The current domain-level practice state.
- * @returns Derived properties for UI consumption.
+ * @returns Derived properties (status, progress, totalNotes) for UI consumption.
+ * @internal
  */
 function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
   const status = practiceState?.status ?? 'idle'
@@ -630,9 +661,14 @@ function derivePracticeState(practiceState: import('@/lib/practice-core').Practi
 /**
  * Synchronizes the sheet music cursor and highlighting with the current practice note.
  *
+ * @remarks
+ * Uses the OSMD instance to advance the cursor and apply visual highlighting.
+ * Also performs smooth auto-scrolling to keep the current note centered in view.
+ *
  * @param osmdHook - The OSMD hook state.
  * @param status - Current practice status.
- * @param currentNoteIndex - Current note index.
+ * @param currentNoteIndex - Index of the note to highlight.
+ * @internal
  */
 function syncCursorWithNote(
   osmdHook: ReturnType<typeof useOSMDSafe>,
@@ -645,12 +681,10 @@ function syncCursorWithNote(
     if (currentNoteIndex === 0) {
       osmdHook.resetCursor()
     } else {
-      // OSMD cursor might need multiple advances if there are rests,
-      // but for this simple app, we assume 1 advance = 1 note.
       osmdHook.advanceCursor()
     }
 
-    // Auto-scroll suave para mantener 2-3 compases visibles
+    // Smooth auto-scroll to keep the cursor centered
     const cursorElement = osmdHook.containerRef.current?.querySelector('.osmd-cursor')
     if (cursorElement) {
       cursorElement.scrollIntoView({
@@ -660,7 +694,7 @@ function syncCursorWithNote(
       })
     }
 
-    // Apply highlight
+    // Apply highlighting to the current note
     osmdHook.highlightCurrentNote(currentNoteIndex)
   }
 }

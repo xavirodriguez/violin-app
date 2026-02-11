@@ -1,38 +1,85 @@
-/**
- * Puerto para análisis de audio independiente de Web Audio API
- * Permite testing con datos sintéticos
- */
 import { PitchDetectionResult } from '../pitch-detector';
+/**
+ * Port for retrieving raw audio frames from an input source.
+ *
+ * @remarks
+ * This interface abstracts the source of audio data (e.g., Web Audio AnalyserNode,
+ * File API, or synthetic generators), facilitating testing and platform independence.
+ *
+ * @public
+ */
 export interface AudioFramePort {
     /**
-     * Obtiene el siguiente frame de audio
-     * @returns Buffer de muestras PCM float32 [-1, 1]
+     * Retrieves the next available frame of audio data.
+     *
+     * @returns A buffer of PCM samples as 32-bit floats, typically in the range [-1.0, 1.0].
      */
     getFrame(): Float32Array;
     /**
-     * Sample rate del stream
+     * The sample rate of the audio stream in Hz (e.g., 44100).
+     *
+     * @remarks
+     * This value is critical for accurate pitch detection algorithms that rely on
+     * time-frequency transformations.
      */
     readonly sampleRate: number;
 }
+/**
+ * Port for pitch detection and signal analysis.
+ *
+ * @remarks
+ * Encapsulates the logic for extracting musical information from raw audio frames.
+ * Implementations should be stateless or handle state internally to ensure
+ * detection consistency across frames.
+ *
+ * @public
+ */
 export interface PitchDetectionPort {
     /**
-     * Detecta pitch del frame
-     * @throws Never - retorna confidence=0 en fallo
+     * Detects the pitch and confidence of a given audio frame.
+     *
+     * @param frame - The raw audio samples to analyze.
+     * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
+     *
+     * @throws Never - Returns confidence 0 or NaN frequency on failure rather than throwing to avoid pipeline disruption.
      */
     detect(frame: Float32Array): PitchDetectionResult;
     /**
-     * Calcula el RMS (volumen) del frame
+     * Calculates the Root Mean Square (RMS) of the frame, representing its volume/intensity.
+     *
+     * @param frame - The raw audio samples.
+     * @returns The calculated RMS value (typically between 0.0 and 1.0).
      */
     calculateRMS(frame: Float32Array): number;
 }
 /**
- * Puerto para obtener frames en loop (reemplaza RAF)
+ * Port for managing an asynchronous audio processing loop.
+ *
+ * @remarks
+ * Standardizes the execution of real-time audio analysis. Replaces manual
+ * `requestAnimationFrame` or `setInterval` with a managed lifecycle that
+ * respects an {@link AbortSignal}.
+ *
+ * @public
  */
 export interface AudioLoopPort {
     /**
-     * Ejecuta callback en cada frame disponible
-     * @param onFrame Callback ejecutado con cada nuevo frame
-     * @param signal Cancela el loop
+     * Starts the audio processing loop.
+     *
+     * @param onFrame - A callback executed for each new frame delivered by the hardware/source.
+     * @param signal - An {@link AbortSignal} to gracefully terminate the loop.
+     * @returns A promise that resolves when the loop has stopped.
+     *
+     * @example
+     * ```ts
+     * const controller = new AbortController();
+     * await loopPort.start((frame) => {
+     *   const result = detector.detect(frame);
+     *   if (result.confidence > 0.9) {
+     *     console.log(`Detected: ${result.pitchHz} Hz`);
+     *   }
+     * }, controller.signal);
+     * ```
      */
     start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>;
 }

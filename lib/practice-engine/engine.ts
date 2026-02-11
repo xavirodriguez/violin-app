@@ -40,32 +40,35 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 
       const sessionStartTime = Date.now()
 
-      const pipeline = createPracticeEventPipeline(
-        rawPitchStream,
-        () => ({
-          targetNote: ctx.exercise.notes[state.currentNoteIndex] ?? null,
-          currentIndex: state.currentNoteIndex,
-          sessionStartTime,
-        }),
-        () => {
-          let centsTolerance = 25
-          if (featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')) {
-            centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
-          }
-          return {
-            exercise: ctx.exercise,
-            bpm: 60,
-            centsTolerance
-          } as any
-        },
-        signal
-      )
-
       try {
-        for await (const event of pipeline) {
-          if (signal.aborted) break
+        while (state.currentNoteIndex < state.scoreLength && !signal.aborted) {
+          const currentNoteIndex = state.currentNoteIndex
+          const pipeline = createPracticeEventPipeline(
+            rawPitchStream,
+            {
+              targetNote: ctx.exercise.notes[currentNoteIndex] ?? null,
+              currentIndex: currentNoteIndex,
+              sessionStartTime,
+            },
+            () => {
+              // Adaptive Difficulty (Permanent): Adjust both tolerance and hold time based on performance
+              const centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
+              const requiredHoldTime = Math.min(800, 500 + Math.floor(state.perfectNoteStreak / 5) * 100)
 
-          let engineEvent: PracticeEngineEvent | null = null
+              return {
+                exercise: ctx.exercise,
+                bpm: 60,
+                centsTolerance,
+                requiredHoldTime
+              } as any
+            },
+            signal
+          )
+
+          for await (const event of pipeline) {
+            if (signal.aborted) break
+
+            let engineEvent: PracticeEngineEvent | null = null
 
           // Map pipeline events to Engine events
           if (event.type === 'NOTE_DETECTED') {
@@ -78,15 +81,23 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
             engineEvent = { type: 'NO_NOTE' }
           }
 
-          if (engineEvent) {
-            state = reducer(state, engineEvent)
-            yield engineEvent
+            if (engineEvent) {
+              state = reducer(state, engineEvent)
+              yield engineEvent
 
-            if (state.currentNoteIndex >= state.scoreLength && engineEvent.type === 'NOTE_MATCHED') {
-                const completionEvent: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
-                state = reducer(state, completionEvent)
-                yield completionEvent
-                break
+              if (engineEvent.type === 'NOTE_MATCHED') {
+                // If the note changed, we need a new pipeline snapshot
+                if (state.currentNoteIndex !== currentNoteIndex) {
+                  break // Exit inner loop to recreate pipeline
+                }
+
+                if (state.currentNoteIndex >= state.scoreLength) {
+                  const completionEvent: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
+                  state = reducer(state, completionEvent)
+                  yield completionEvent
+                  return // End the generator
+                }
+              }
             }
           }
         }

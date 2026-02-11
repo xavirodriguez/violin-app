@@ -9,36 +9,95 @@ import { Observation } from '@/lib/technique-types'
  * @public
  */
 interface PracticeFeedbackProps {
-  /** The scientific pitch name of the target note (e.g., "A4"). */
+  /**
+   * The scientific pitch name of the target note (e.g., "A4").
+   */
   targetNote: string
-  /** The scientific pitch name detected by the audio engine, if any. */
+
+  /**
+   * The scientific pitch name detected by the audio engine.
+   * `null` indicates no signal or signal below confidence threshold.
+   */
   detectedPitchName: string | null
-  /** Pitch deviation in cents from the target. */
+
+  /**
+   * Pitch deviation in cents from the target note's ideal frequency.
+   * Positive values are sharp, negative values are flat.
+   */
   centsOff: number | null
-  /** Current status of the practice machine. */
+
+  /**
+   * Current status of the practice state machine.
+   *
+   * @remarks
+   * Values like 'listening', 'validating', 'correct', 'completed' affect
+   * which UI feedback layers are prioritized.
+   */
   status: string
-  /** Maximum allowed deviation in cents to be considered "in tune". Defaults to 10. */
+
+  /**
+   * Maximum allowed deviation in cents to be considered "in tune".
+   *
+   * @defaultValue 10
+   */
   centsTolerance?: number
-  /** List of real-time technical observations to display. */
+
+  /**
+   * List of real-time technical observations (intonation, stability, etc.).
+   *
+   * @remarks
+   * These are derived from a rolling window of detections. Usually limited
+   * to the top 2 most severe/confident observations.
+   */
   liveObservations?: Observation[]
-  /** Duration the current note has been held correctly, in milliseconds. */
+
+  /**
+   * Duration the current note has been held correctly in tune (ms).
+   */
   holdDuration?: number
-  /** Required hold time for a note to be considered matched. */
+
+  /**
+   * Required hold time for a note to be considered successfully matched (ms).
+   */
   requiredHoldTime?: number
-  /** Current number of consecutive perfect notes. */
+
+  /**
+   * Current count of consecutive notes played with high accuracy (< 5 cents).
+   */
   perfectNoteStreak?: number
 }
 
 /**
- * Component that provides real-time visual feedback during a practice session.
+ * Component that provides real-time pedagogical feedback during a practice session.
  *
  * @remarks
- * This component displays three levels of feedback:
- * 1. **Primary Status**: Large indicators for "Perfect", "Wrong Note", or "Adjust" (sharp/flat).
- * 2. **Technical Details**: Detailed cents deviation and tolerance (collapsible).
- * 3. **Live Observations**: Specific pedagogical tips based on technique analysis.
+ * This component implements a hierarchical feedback system designed to guide
+ * students from raw pitch matching toward technical mastery:
+ *
+ * **Feedback Levels**:
+ * 1. **Primary Status (Reactive)**: Large, high-contrast indicators for "Perfect", "Wrong Note", or "Adjust" (arrows). Optimized for peripheral vision while reading sheet music.
+ * 2. **Technical Details (Optional)**: Provides exact numeric cents deviation for advanced students requiring precise data.
+ * 3. **Live Observations (Heuristic)**: Displays actionable, human-readable tips (e.g., "Consistently sharp") derived from analysis of the audio stream patterns.
+ *
+ * **Performance**: This component is updated at the frequency of the audio pipeline (up to 60Hz).
+ * Layout shifts are minimized to ensure a stable reading environment for the student.
+ *
+ * **Design Goal**:
+ * The UI is optimized for "at-a-glance" recognition while playing an instrument,
+ * using color coding (Green/Yellow/Red) and large iconography.
  *
  * @param props - Component props.
+ *
+ * @example
+ * ```tsx
+ * <PracticeFeedback
+ *   targetNote="A4"
+ *   detectedPitchName="A#4"
+ *   centsOff={15}
+ *   status="listening"
+ * />
+ * ```
+ *
  * @public
  */
 export function PracticeFeedback({
@@ -56,7 +115,7 @@ export function PracticeFeedback({
   return (
     <div className="space-y-8">
 
-      {/* LEVEL 1: Main Status - Occupies 60% of visual space */}
+      {/* LEVEL 1: Main Status - Dominant feedback for quick recognition */}
       <div className="flex items-center justify-center min-h-[200px]">
         {status === 'listening' && !isPlaying && (
           <div className="text-center">
@@ -108,7 +167,7 @@ export function PracticeFeedback({
         )}
       </div>
 
-      {/* LEVEL 2: Precise Metrics - Collapsible, small font */}
+      {/* LEVEL 2: Precise Metrics - For students who want exact data */}
       {isPlaying && centsOff !== null && centsOff !== undefined && (
         <details className="text-center">
           <summary className="text-sm text-muted-foreground cursor-pointer">
@@ -131,7 +190,7 @@ export function PracticeFeedback({
         </details>
       )}
 
-      {/* LEVEL 3: Live Observations - Top 2 only */}
+      {/* LEVEL 3: Live Observations - Actionable pedagogical tips */}
       {liveObservations.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">

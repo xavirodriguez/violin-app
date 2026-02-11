@@ -1,0 +1,65 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "risk_level": "medium",
+      "risks": [
+        {
+          "id": "risk_adaptive_001",
+          "type": "performance",
+          "description": "Calculation of adaptive thresholds in high-frequency audio loop might cause lag.",
+          "probability": 0.2,
+          "impact": 0.5,
+          "risk_score": 0.1,
+          "mitigation_strategy": "Perform complex calculations in a separate worker or throttle updates.",
+          "blocker": false
+        },
+        {
+          "id": "risk_adaptive_002",
+          "type": "user_frustration",
+          "description": "If the algorithm is too strict, beginners might feel stuck.",
+          "probability": 0.4,
+          "impact": 0.8,
+          "risk_score": 0.32,
+          "mitigation_strategy": "Add a 'manual override' and clear UI feedback on why difficulty is changing.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of persistent user performance history across sessions.",
+          "blocking_feature": "None (Infrastructure needed)",
+          "resolution_steps": [
+            "Integrate with a database/backend for long-term storage."
+          ]
+        }
+      ],
+      "growth_enablers": [
+        {
+          "enabler": "Higher accuracy pitch detection",
+          "effort": "high",
+          "impact": "Reduces false negatives, making adaptive logic more reliable."
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "high",
+      "risks": [
+        {
+          "id": "risk_audio_001",
+          "type": "breaking_change",
+          "description": "Asynchronous communication with Worker may introduce race conditions in the Practice Engine state.",
+          "probability": 0.6,
+          "impact": 1.0,
+          "risk_score": 0.6,
+          "mitigation_strategy": "Use a robust message queue and immutable state snapshots for communication.",
+          "blocker": true
+        }
+      ]
+    }
+  ],
+  "critical_path_features": [
+    "FEATURE_TELEMETRY_ACCURACY"
+  ]
+}

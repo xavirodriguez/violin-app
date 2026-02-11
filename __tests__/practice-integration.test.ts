@@ -93,7 +93,7 @@ describe('Practice Store Integration', () => {
 
   it('consumePipelineEvents should process NOTE_DETECTED and update liveObservations', async () => {
     const store = usePracticeStore.getState()
-    store.loadExercise(mockExercise)
+    await store.loadExercise(mockExercise)
     await store.start()
 
     const mockDetection = {
@@ -117,7 +117,7 @@ describe('Practice Store Integration', () => {
 
   it('liveObservations should update in real-time with consistent sharp detections', async () => {
     const store = usePracticeStore.getState()
-    store.loadExercise(mockExercise)
+    await store.loadExercise(mockExercise)
     await store.start()
 
     const mockPipeline = async function* () {
@@ -145,7 +145,7 @@ describe('Practice Store Integration', () => {
 
   it('should clear liveObservations after NOTE_MATCHED', async () => {
     const store = usePracticeStore.getState()
-    store.loadExercise(mockExercise)
+    await store.loadExercise(mockExercise)
     await store.start()
 
     // 1. First some detections to generate observations

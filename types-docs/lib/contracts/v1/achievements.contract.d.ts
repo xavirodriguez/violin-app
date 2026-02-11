@@ -10,17 +10,17 @@ export declare const AchievementsContractV1: z.ZodObject<{
             icon: z.ZodString;
             unlockedAtMs: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }, {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }>, "many">;
         pending: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
@@ -29,87 +29,87 @@ export declare const AchievementsContractV1: z.ZodObject<{
             icon: z.ZodString;
             unlockedAtMs: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }, {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }>, "many">;
     }, "strip", z.ZodTypeAny, {
         schemaVersion: 1;
         unlocked: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         pending: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
     }, {
         unlocked: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         pending: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         schemaVersion?: 1 | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
     state: {
         schemaVersion: 1;
         unlocked: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         pending: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
     };
-}, {
     schemaVersion: 1;
+}, {
     state: {
         unlocked: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         pending: {
+            icon: string;
+            id: string;
             name: string;
             unlockedAtMs: number;
-            id: string;
             description: string;
-            icon: string;
         }[];
         schemaVersion?: 1 | undefined;
     };
+    schemaVersion: 1;
 }>;

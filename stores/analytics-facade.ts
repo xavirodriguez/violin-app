@@ -137,7 +137,12 @@ export const useAnalyticsStore = Object.assign(
       }
     },
     /** Imperative state update (for compatibility). */
-    setState: (partial: any) => {
+    setState: (partial: Partial<{
+      progress: any;
+      sessions: any[];
+      currentSession: any;
+      currentPerfectStreak: number;
+    }>) => {
       if (partial.progress) {
         useProgressStore.setState(partial.progress)
         if (partial.progress.achievements) {

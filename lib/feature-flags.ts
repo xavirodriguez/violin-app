@@ -8,6 +8,7 @@
 export type FeatureFlagType =
   | 'EXPERIMENTAL'
   | 'BETA'
+  | 'STABLE'
   | 'UNSTABLE'
   | 'INTEGRATION'
   | 'PERFORMANCE'
@@ -27,17 +28,6 @@ export interface FeatureFlagMetadata {
 }
 
 export const FEATURE_FLAGS_METADATA = {
-  FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
-    name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
-    key: 'practiceAdaptiveDifficulty',
-    type: 'EXPERIMENTAL',
-    description: 'Enable adaptive difficulty based on performance metrics.',
-    defaultValue: false,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['lib/practice-core.ts'],
-    rollbackStrategy: 'Revert to fixed difficulty levels.',
-    dependencies: ['FEATURE_TELEMETRY_ACCURACY']
-  },
   FEATURE_AUDIO_WEB_WORKER: {
     name: 'FEATURE_AUDIO_WEB_WORKER',
     key: 'audioWebWorker',
@@ -51,7 +41,7 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_UI_INTONATION_HEATMAPS: {
     name: 'FEATURE_UI_INTONATION_HEATMAPS',
     key: 'uiIntonationHeatmaps',
-    type: 'EXPERIMENTAL',
+    type: 'BETA',
     description: 'Show intonation heatmaps in the analytics dashboard.',
     defaultValue: false,
     riskLevel: 'LOW',
@@ -68,16 +58,6 @@ export const FEATURE_FLAGS_METADATA = {
     affectedFiles: [],
     rollbackStrategy: 'Disable real-time synchronization features.'
   },
-  FEATURE_TELEMETRY_ACCURACY: {
-    name: 'FEATURE_TELEMETRY_ACCURACY',
-    key: 'telemetryAccuracy',
-    type: 'INTEGRATION',
-    description: 'Track detection confidence via Vercel Analytics to identify environment issues.',
-    defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: [],
-    rollbackStrategy: 'Disable accuracy telemetry tracking.'
-  }
 } as const satisfies Record<string, FeatureFlagMetadata>
 
 /**
@@ -92,16 +72,12 @@ class FeatureFlagsManager {
    */
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
-      case 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY':
-        return process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY
       case 'FEATURE_AUDIO_WEB_WORKER':
         return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
       case 'FEATURE_UI_INTONATION_HEATMAPS':
         return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
         return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
-      case 'FEATURE_TELEMETRY_ACCURACY':
-        return process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
       default:
         return undefined
     }

@@ -145,7 +145,7 @@ interface TechnicalAnalysisState {
 
 async function* technicalAnalysisWindow(
   source: AsyncIterable<RawPitchEvent>,
-  contextOrGetter: PipelineContext | (() => PipelineContext),
+  context: PipelineContext,
   optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
@@ -164,7 +164,6 @@ async function* technicalAnalysisWindow(
 
   for await (const raw of source) {
     if (signal.aborted) break
-    const context = typeof contextOrGetter === 'function' ? contextOrGetter() : contextOrGetter
     const options = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
     if (signal.aborted) break
@@ -380,10 +379,41 @@ function calculateRhythmExpectations(
 
 /**
  * Creates a practice event processing pipeline with immutable context.
+ *
+ * @param rawPitchStream - Raw pitch detection events
+ * @param context - Immutable context snapshot. Pipeline processes events
+ *   relative to THIS context. To change context, create a new pipeline.
+ * @param options - Pipeline configuration
+ * @param signal - AbortSignal to stop the pipeline
+ * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
+ *
+ * @remarks
+ * This design prevents context drift during async iteration.
+ * When the exercise note changes, create a new pipeline.
+ *
+ * **Critical Performance**: The pipeline runs at 60+ fps.
+ * Ensure that any dynamic options provided as getters:
+ * 1. Are fast (< 1ms)
+ * 2. Return consistent values for the same underlying state
+ * 3. Use memoized selectors if possible
+ *
+ * @example
+ * ```ts
+ * const pipeline = createPracticeEventPipeline(
+ *   rawStream,
+ *   {
+ *     targetNote: usePracticeStore.getState().practiceState?.exercise.notes[0] || null,
+ *     currentIndex: 0,
+ *     sessionStartTime: Date.now(),
+ *   },
+ *   options,
+ *   signal
+ * );
+ * ```
  */
 export function createPracticeEventPipeline(
   rawPitchStream: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext | (() => PipelineContext),
+  context: PipelineContext,
   options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncIterable<PracticeEvent> {

@@ -150,11 +150,15 @@ export declare const PracticeContractV1: z.ZodObject<{
         accuracy: z.ZodNumber;
         averageCents: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -181,18 +185,18 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }, {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -219,21 +223,21 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     }>;
 }, "strip", z.ZodTypeAny, {
     schemaVersion: 1;
     session: {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -260,21 +264,21 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     };
 }, {
     schemaVersion: 1;
     session: {
-        accuracy: number;
+        mode: "tuner" | "practice";
+        id: string;
         startTimeMs: number;
         endTimeMs: number;
-        id: string;
+        accuracy: number;
+        averageCents: number;
+        exerciseName: string;
         durationMs: number;
+        exerciseId: string;
         noteResults: {
             averageCents: number;
             noteIndex: number;
@@ -301,10 +305,6 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
     };

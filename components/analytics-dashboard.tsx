@@ -7,6 +7,8 @@
 
 import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { PracticeSummaryChart } from './practice-summary-chart'
+import { useFeatureFlag } from '@/lib/feature-flags'
 
 /**
  * Main dashboard component that aggregates various analytics visualizations.
@@ -20,12 +22,22 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
  */
 export function AnalyticsDashboard() {
   const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
+  const isHeatmapEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
   const recentSessions = getSessionHistory(7)
+  const lastSession = recentSessions[0]
 
   // Prepare chart data
   const practiceTimeData = getLast7DaysData(recentSessions)
+
+  // Map last session data for heatmap if available
+  const heatmapData = lastSession?.noteResults?.map((r) => ({
+    noteIndex: r.noteIndex,
+    targetPitch: r.targetPitch,
+    accuracy: r.wasInTune ? 100 : Math.max(0, 100 - Math.abs(r.averageCents)),
+    cents: r.averageCents,
+  }))
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -63,6 +75,14 @@ export function AnalyticsDashboard() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Intonation Heatmap (Beta) */}
+      {isHeatmapEnabled && heatmapData && heatmapData.length > 0 && (
+        <div className="bg-card border-border mb-6 rounded-lg border p-6">
+          <h2 className="mb-4 text-xl font-bold">Last Session Intonation Heatmap</h2>
+          <PracticeSummaryChart noteAttempts={heatmapData} />
+        </div>
+      )}
 
       {/* Recent Achievements */}
       <div className="bg-card border-border rounded-lg border p-4">

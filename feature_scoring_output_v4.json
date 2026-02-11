@@ -1,0 +1,106 @@
+[
+  {
+    "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+    "scoring": {
+      "maturity": {
+        "score": 10,
+        "rationale": "STABLE status in metadata, fully integrated and tested.",
+        "factors": { "code_quality": 9, "test_coverage": 9, "documentation": 10, "stability_over_time": 9, "bug_frequency": 1 }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "Core pedagogical value by personalizing difficulty.",
+        "factors": { "user_impact": 10, "revenue_potential": 7, "strategic_alignment": 10, "competitive_advantage": 9, "market_demand": 8 }
+      },
+      "adoption_readiness": {
+        "score": 9,
+        "rationale": "Enabled by default, no reported issues.",
+        "factors": { "current_users": 9, "feature_discoverability": 10, "onboarding_complexity": 10, "performance_impact": 9, "ui_ux_quality": 9 }
+      },
+      "technical_debt": {
+        "score": 1,
+        "rationale": "Clean implementation, minimal debt.",
+        "factors": { "code_complexity": 2, "refactor_needs": 1, "performance_debt": 1, "security_concerns": 0, "scalability_limits": 1 }
+      },
+      "growth_potential": {
+        "score": 8,
+        "rationale": "Can be expanded to other musical domains.",
+        "factors": { "feature_expansion_possibilities": 9, "market_expansion": 7, "integration_opportunities": 8, "monetization_potential": 6, "ecosystem_value": 8 }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Low risk, already stable.",
+        "factors": { "breaking_change_risk": 2, "security_risk": 0, "performance_risk": 1, "compatibility_risk": 1, "migration_risk": 2 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 9.5,
+      "weighted_score": 9.2,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+    "scoring": {
+      "maturity": {
+        "score": 5,
+        "rationale": "Component ready but not yet integrated into the dashboard.",
+        "factors": { "code_quality": 8, "test_coverage": 0, "documentation": 5, "stability_over_time": 5, "bug_frequency": 0 }
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "High visual value for students to track progress.",
+        "factors": { "user_impact": 9, "revenue_potential": 5, "strategic_alignment": 9, "competitive_advantage": 8, "market_demand": 8 }
+      },
+      "adoption_readiness": {
+        "score": 4,
+        "rationale": "Not yet visible to users.",
+        "factors": { "current_users": 0, "feature_discoverability": 0, "onboarding_complexity": 9, "performance_impact": 8, "ui_ux_quality": 9 }
+      },
+      "technical_debt": {
+        "score": 3,
+        "rationale": "Need integration work and tests.",
+        "factors": { "code_complexity": 3, "refactor_needs": 4, "performance_debt": 2, "security_concerns": 0, "scalability_limits": 2 }
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "Can lead to deep technical analytics.",
+        "factors": { "feature_expansion_possibilities": 10, "market_expansion": 7, "integration_opportunities": 9, "monetization_potential": 7, "ecosystem_value": 9 }
+      },
+      "risk_profile": {
+        "score": 3,
+        "rationale": "Low risk as it is a visual enhancement.",
+        "factors": { "breaking_change_risk": 1, "security_risk": 0, "performance_risk": 4, "compatibility_risk": 2, "migration_risk": 1 }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 6.5,
+      "weighted_score": 7.0,
+      "recommendation": "GRADUAL"
+    }
+  },
+  {
+    "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+    "scoring": {
+      "maturity": { "score": 2, "rationale": "Placeholder state.", "factors": { "code_quality": 5, "test_coverage": 0, "documentation": 5, "stability_over_time": 2, "bug_frequency": 0 } },
+      "business_value": { "score": 7, "rationale": "Critical for low-end device performance.", "factors": { "user_impact": 8, "revenue_potential": 4, "strategic_alignment": 9, "competitive_advantage": 6, "market_demand": 7 } },
+      "adoption_readiness": { "score": 1, "rationale": "Not implemented.", "factors": { "current_users": 0, "feature_discoverability": 0, "onboarding_complexity": 10, "performance_impact": 10, "ui_ux_quality": 5 } },
+      "technical_debt": { "score": 5, "rationale": "High complexity change.", "factors": { "code_complexity": 9, "refactor_needs": 8, "performance_debt": 1, "security_concerns": 0, "scalability_limits": 2 } },
+      "growth_potential": { "score": 6, "rationale": "Foundation for more complex DSP.", "factors": { "feature_expansion_possibilities": 8, "market_expansion": 5, "integration_opportunities": 6, "monetization_potential": 3, "ecosystem_value": 7 } },
+      "risk_profile": { "score": 8, "rationale": "High architectural risk.", "factors": { "breaking_change_risk": 9, "security_risk": 0, "performance_risk": 5, "compatibility_risk": 9, "migration_risk": 8 } }
+    },
+    "composite_score": { "growth_readiness": 3.0, "weighted_score": 4.5, "recommendation": "MAINTAIN" }
+  },
+  {
+    "feature_id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+    "scoring": {
+      "maturity": { "score": 1, "rationale": "Concept stage.", "factors": { "code_quality": 0, "test_coverage": 0, "documentation": 5, "stability_over_time": 1, "bug_frequency": 0 } },
+      "business_value": { "score": 9, "rationale": "Massive potential for engagement and social learning.", "factors": { "user_impact": 10, "revenue_potential": 9, "strategic_alignment": 10, "competitive_advantage": 10, "market_demand": 9 } },
+      "adoption_readiness": { "score": 1, "rationale": "Not implemented.", "factors": { "current_users": 0, "feature_discoverability": 0, "onboarding_complexity": 5, "performance_impact": 5, "ui_ux_quality": 5 } },
+      "technical_debt": { "score": 2, "rationale": "No debt yet as it is not built.", "factors": { "code_complexity": 8, "refactor_needs": 1, "performance_debt": 5, "security_concerns": 7, "scalability_limits": 9 } },
+      "growth_potential": { "score": 10, "rationale": "Unlimited social growth.", "factors": { "feature_expansion_possibilities": 10, "market_expansion": 10, "integration_opportunities": 10, "monetization_potential": 9, "ecosystem_value": 10 } },
+      "risk_profile": { "score": 9, "rationale": "Extreme infrastructure risk.", "factors": { "breaking_change_risk": 5, "security_risk": 9, "performance_risk": 8, "compatibility_risk": 5, "migration_risk": 5 } }
+    },
+    "composite_score": { "growth_readiness": 2.0, "weighted_score": 5.0, "recommendation": "MAINTAIN" }
+  }
+]

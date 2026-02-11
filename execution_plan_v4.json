@@ -1,0 +1,43 @@
+{
+  "execution_plan": {
+    "plan_version": 4.0,
+    "generated_date": "2025-05-20T11:15:00Z",
+    "workstreams": [
+      {
+        "workstream_id": "promotion_adaptive_difficulty",
+        "items": [
+          {
+            "task_id": "PROM001",
+            "description": "Remove FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY from lib/feature-flags.ts",
+            "priority": "critical"
+          },
+          {
+            "task_id": "PROM002",
+            "description": "Make adaptive difficulty logic permanent in lib/practice-engine/engine.ts",
+            "priority": "critical"
+          },
+          {
+            "task_id": "PROM003",
+            "description": "Remove flag mapping in next.config.mjs",
+            "priority": "medium"
+          }
+        ]
+      },
+      {
+        "workstream_id": "evolution_heatmaps",
+        "items": [
+          {
+            "task_id": "EVOL001",
+            "description": "Update FEATURE_UI_INTONATION_HEATMAPS to BETA type in lib/feature-flags.ts",
+            "priority": "high"
+          },
+          {
+            "task_id": "EVOL002",
+            "description": "Integrate PracticeSummaryChart into AnalyticsDashboard",
+            "priority": "high"
+          }
+        ]
+      }
+    ]
+  }
+}
