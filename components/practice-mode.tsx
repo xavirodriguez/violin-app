@@ -352,6 +352,11 @@ function SheetMusicView({
  * It relies on the `usePracticeStore` for centralized state and the `useOSMDSafe` hook
  * for robust notation rendering.
  *
+ * @example
+ * ```tsx
+ * <PracticeMode />
+ * ```
+ *
  * @public
  */
 export function PracticeMode() {

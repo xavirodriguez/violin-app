@@ -21,11 +21,16 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * This component provides a focused interface for tuning the violin. It manages its own
  * high-frequency analysis loop using `requestAnimationFrame` when active.
  *
- * Key features:
+ * **Key Features**:
  * 1. **Visual Tuning**: Displays a high-accuracy fingerboard with cents deviation.
  * 2. **Audio Lifecycle**: Manages the start/stop of the analyzer loop and synchronization with `TunerStore`.
  * 3. **Error Resilience**: Handles microphone access errors and provides retry mechanisms.
  * 4. **Hardware Selection**: Integrates with the store's device enumeration (via settings).
+ *
+ * @example
+ * ```tsx
+ * <TunerMode />
+ * ```
  *
  * @public
  */
@@ -54,6 +59,10 @@ export function TunerMode() {
    *
    * This effect ensures that the loop is cleaned up when the component unmounts
    * or when the tuner is stopped.
+   *
+   * **Performance**:
+   * Pulling data at 60fps requires minimal work in the callback. The `detector`
+   * is optimized to handle frames within the animation budget.
    */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {

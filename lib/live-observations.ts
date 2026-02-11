@@ -14,9 +14,21 @@ import { Observation, Ratio01 } from './technique-types'
  *
  * It uses a sliding window of recent frames (minimum 5) to ensure high confidence in its findings.
  *
+ * **Prioritization**:
+ * To avoid overwhelming the student, only the top 2 most relevant observations are returned,
+ * sorted by a combination of severity and confidence.
+ *
  * @param recentDetections - Readonly array of recently detected notes/frames from the pipeline.
  * @param targetPitch - The scientific pitch name (e.g., "A4") of the currently practiced note.
- * @returns An array of {@link Observation} objects, prioritized and limited to the top 2 most relevant ones.
+ * @returns An array of {@link Observation} objects, prioritized and limited to the top 2.
+ *
+ * @example
+ * ```ts
+ * const observations = calculateLiveObservations(history, "A4");
+ * if (observations.length > 0) {
+ *   displayTip(observations[0].tip);
+ * }
+ * ```
  *
  * @public
  */

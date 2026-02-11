@@ -64,6 +64,7 @@ export interface PracticeSession {
 
 /**
  * Internal state of the session store.
+ * @internal
  */
 interface SessionState {
   /** The current active session data, or null if no session is active. */
@@ -76,6 +77,7 @@ interface SessionState {
 
 /**
  * Actions for managing practice sessions and recording real-time metrics.
+ * @internal
  */
 interface SessionActions {
   /**
@@ -127,6 +129,10 @@ interface SessionActions {
  * This store serves as a high-frequency accumulator for session data. It is
  * decoupled from the long-term `ProgressStore` to ensure that real-time
  * updates don't trigger expensive persistence logic on every audio frame.
+ *
+ * **Metric Calculation**:
+ * - Accuracy is calculated as the ratio of `notesCompleted` to `notesAttempted`.
+ * - Average Cents uses a rolling mean to incorporate every detected frame.
  *
  * @public
  */

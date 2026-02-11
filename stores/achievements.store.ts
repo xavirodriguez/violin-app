@@ -25,6 +25,7 @@ export interface Achievement {
 
 /**
  * State structure for the achievements store.
+ * @internal
  */
 interface AchievementsState {
   /** Persistence schema version for migrations. */
@@ -37,6 +38,7 @@ interface AchievementsState {
 
 /**
  * Actions for managing the achievement lifecycle.
+ * @internal
  */
 interface AchievementsActions {
   /**
@@ -64,7 +66,8 @@ interface AchievementsActions {
  *
  * @remarks
  * This store coordinates the detection and persistence of user milestones.
- * Key responsibilities:
+ *
+ * **Key Responsibilities**:
  * - **Achievement Detection**: Leverages pure domain logic to evaluate user performance.
  * - **UI Notification Queue**: Manages a `pending` list for "toast" style notifications.
  * - **Persistence**: Ensures achievements are saved across sessions using Zod-validated persistence.

@@ -3,6 +3,7 @@ import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/l
 /**
  * A type representing the core state management functions of a Zustand store,
  * generic over the state type `T`.
+ * @internal
  */
 type StoreApi<T> = {
   /** Retrieves the current state from the store. */
@@ -23,11 +24,16 @@ type StoreApi<T> = {
  * Handles state transitions and side effects for practice events emitted by the audio pipeline.
  *
  * @remarks
- * This function acts as the "event sink" that bridge the gap between the event-driven
+ * This function acts as the "event sink" that bridges the gap between the event-driven
  * audio pipeline and the reactive Zustand stores. It ensures that:
- * 1. **Pure State Transitions**: Performed via the `reducePracticeEvent` reducer.
+ * 1. **Pure State Transitions**: Performed via the `reducePracticeEvent` reducer to maintain consistency.
  * 2. **Side Effect Detection**: Detects transitions to 'completed' and triggers callbacks.
  * 3. **Error Resilience**: Implements defensive guards against null states or invalid events.
+ *
+ * **Architectural Role**:
+ * This is a critical bridge component. It must remain pure in its state update logic
+ * (relying on the reducer) while safely managing the asynchronous side effects
+ * (analytics, completions) that occur when specific thresholds are met.
  *
  * @param event - The practice event to process.
  * @param store - The Zustand store API to update.
