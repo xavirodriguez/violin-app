@@ -279,7 +279,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     loadExercise: async (exercise) => {
       await get().stop()
-      set({
+      set((s) => ({
+        ...s,
         practiceState: getInitialState(exercise),
         state: { status: 'idle', exercise, error: null },
         error: null,
@@ -288,7 +289,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       })
     },
 
-    setAutoStart: (enabled) => set({ autoStartEnabled: enabled }),
+    setAutoStart: (enabled) => set((s) => ({ ...s, autoStartEnabled: enabled })),
 
     setNoteIndex: (index) => {
       const { practiceState } = get()
@@ -300,7 +301,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           holdDuration: 0,
           detectionHistory: [],
         }
-        set({ practiceState: newPracticeState })
+        set((s) => ({ ...s, practiceState: newPracticeState }))
       }
     },
 
@@ -456,9 +457,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           console.error('[PracticeStore] Failed to start session', e)
         }
 
-        set({
+        // Sync with TunerStore
+        useTunerStore.setState({
+          state: { kind: 'LISTENING', sessionToken: newSessionId },
+          detector: (storeState as any).detector?.detector || null
+        })
+
+        set((s) => ({
+          ...s,
           state: nextState,
-          practiceState: reducePracticeEvent(get().practiceState!, { type: 'START' }),
+          practiceState: s.practiceState ? reducePracticeEvent(s.practiceState, { type: 'START' }) : null,
           sessionToken: currentToken,
           isStarting: false,
           error: null,
