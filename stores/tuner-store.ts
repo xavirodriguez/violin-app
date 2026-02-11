@@ -75,8 +75,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * initialization results from being applied if a reset or another initialize
      * call occurs during the async process.
      *
+     * **State Transitions**:
+     * `IDLE` -\> `INITIALIZING` -\> `READY` (success) or `ERROR` (failure).
+     *
      * @returns A promise that resolves when initialization is complete.
-     * @throws {@link AppError} if microphone access is denied or hardware fails.
+     * @throws AppError - If microphone access is denied or hardware fails.
      */
     initialize: async () => {
       const { state: currentState, deviceId, sensitivity } = get()
@@ -269,7 +272,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Sets the preferred audio input device and re-initializes the pipeline.
+     * Switches the preferred audio input device and re-initializes the pipeline.
      *
      * @remarks
      * Automatically restarts the tuner if it was already active.

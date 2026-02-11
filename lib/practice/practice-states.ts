@@ -19,6 +19,9 @@ import { PracticeSessionRunner } from './session-runner'
  * 4. `active`: Practice session is running; audio is being processed.
  * 5. `error`: A terminal error occurred (e.g., mic access denied).
  *
+ * **State Flow**:
+ * `idle` -\> `initializing` -\> `ready` -\> `active` -\> `idle` (or `error`)
+ *
  * @public
  */
 export type PracticeStoreState =
@@ -68,7 +71,8 @@ export interface InitializingState {
  * Represents the state when resources are loaded and the session is ready to start.
  *
  * @remarks
- * In this state, the microphone is calibrated and the UI is waiting for user input.
+ * In this state, the microphone has been acquired and the pitch detector is ready,
+ * but the real-time processing loop has not yet started.
  *
  * @public
  */

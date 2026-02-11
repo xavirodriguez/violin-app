@@ -143,6 +143,10 @@ interface SessionActions {
  * **Concurrency**: Updates are performed using Zustand's functional set state,
  * which is safe for high-frequency calls from the audio processing loop.
  *
+ * **Metric Calculation**:
+ * - Accuracy is calculated as the ratio of `notesCompleted` to `notesAttempted`.
+ * - Average Cents uses a rolling mean to incorporate every detected frame.
+ *
  * @public
  */
 export const useSessionStore = create<SessionState & SessionActions>((set, get) => ({

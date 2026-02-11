@@ -47,7 +47,7 @@ import { Observation, NoteTechnique } from '@/lib/technique-types'
  *
  * @public
  */
-interface PracticeStore {
+export interface PracticeStore {
   /**
    * The current formalized state of the practice system (FSM).
    *
@@ -118,6 +118,9 @@ interface PracticeStore {
    *
    * @param exercise - The musical exercise to load.
    * @returns A promise that resolves when the exercise is loaded and the store is reset.
+   *
+   * @remarks
+   * Calling this method automatically stops any currently running session.
    */
   loadExercise: (exercise: Exercise) => Promise<void>
 
@@ -144,6 +147,10 @@ interface PracticeStore {
    * @remarks
    * This method is retriable from 'idle' or 'error' states. It coordinates with the
    * `audioManager` and creates the necessary port adapters for the pipeline.
+   *
+   * **Side Effects**:
+   * - Triggers microphone permission prompt if not already granted.
+   * - Updates `state` to 'initializing' and then 'ready' on success.
    *
    * @returns A promise that resolves when audio is successfully initialized.
    * @throws {@link AppError} if microphone access is denied or hardware fails.

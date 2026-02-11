@@ -96,6 +96,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * const { feedbackLevel, setFeedbackLevel } = usePreferencesStore();
  * ```
  *
+ * **Persistence Strategy**:
+ * Uses Zod validation on load to prevent corrupt local storage data from
+ * crashing the application. Includes an incremental migrator for schema updates.
+ *
  * @public
  */
 export const usePreferencesStore = create<PreferencesStore>()(

@@ -19,6 +19,10 @@ import { Observation, Ratio01 } from './technique-types'
  * - Implements a priority-based sorting to avoid "feedback overload".
  * - Metrics are normalized to the {@link Observation} interface.
  *
+ * **Prioritization**:
+ * To avoid overwhelming the student, only the top 2 most relevant observations are returned,
+ * sorted by a combination of severity and confidence.
+ *
  * @param recentDetections - Readonly array of recently detected notes/frames from the pipeline.
  *                           Expected to be in chronological order (newest first).
  * @param targetPitch - The scientific pitch name (e.g., "A4") of the currently practiced note.

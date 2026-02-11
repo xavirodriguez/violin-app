@@ -36,6 +36,11 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * <TunerMode />
  * ```
  *
+ * @example
+ * ```tsx
+ * <TunerMode />
+ * ```
+ *
  * @public
  */
 export function TunerMode() {

@@ -38,7 +38,9 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    * This method uses `getFloatTimeDomainData` which provides PCM samples
    * in the range [-1.0, 1.0]. The returned buffer is shared across calls.
    *
-   * @returns A {@link Float32Array} containing the audio samples.
+   * @returns A {@link Float32Array} containing the audio samples. Note that
+   * this is a reference to the internal pre-allocated buffer; if you need to
+   * store the data across frames, you must copy it.
    */
   getFrame(): Float32Array {
     this.analyser.getFloatTimeDomainData(this.buffer as any)
@@ -88,6 +90,12 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
    * @param onFrame - Callback for each audio frame.
    * @param signal - AbortSignal to stop the loop.
    * @returns A promise that resolves when the loop is terminated.
+   *
+   * @example
+   * ```ts
+   * const controller = new AbortController();
+   * await loop.start((frame) => analyze(frame), controller.signal);
+   * ```
    */
   async start(
     onFrame: (frame: Float32Array) => void,
@@ -154,7 +162,7 @@ export class PitchDetectorAdapter implements PitchDetectionPort {
    * enough for reliable pitch detection.
    *
    * @param frame - Audio samples.
-   * @returns RMS value (typically 0.0 to 1.0).
+   * @returns Root Mean Square value (typically 0.0 to 1.0).
    */
   calculateRMS(frame: Float32Array): number {
     return this.detector.calculateRMS(frame)

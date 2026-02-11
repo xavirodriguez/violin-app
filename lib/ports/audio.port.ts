@@ -22,6 +22,10 @@ export interface AudioFramePort {
    * and should copy the data if it needs to be persisted across multiple frames.
    *
    * @returns A buffer of PCM samples as 32-bit floats, typically in the range [-1.0, 1.0].
+   *
+   * @remarks
+   * For performance reasons, implementations may return a reference to a recycled internal buffer.
+   * Consumers should copy the data if it needs to be preserved.
    */
   getFrame(): Float32Array
 
@@ -41,8 +45,10 @@ export interface AudioFramePort {
  *
  * @remarks
  * Encapsulates the logic for extracting musical information from raw audio frames.
- * Implementations should be stateless or handle state internally to ensure
- * detection consistency across frames.
+ *
+ * **Statelessness**:
+ * Implementations should ideally be stateless or handle internal state such that
+ * detections are consistent and re-entrant.
  *
  * @public
  */
@@ -57,7 +63,10 @@ export interface PitchDetectionPort {
    * @param frame - The raw audio samples to analyze.
    * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
    *
-   * @throws Never - Returns confidence 0 or NaN frequency on failure rather than throwing to avoid pipeline disruption.
+   * @remarks
+   * **Error Handling**:
+   * This method should not throw. If detection fails or signal is too weak, it should
+   * return a result with `confidence: 0` and `pitchHz: 0` (or `NaN`).
    */
   detect(frame: Float32Array): PitchDetectionResult
 
@@ -69,7 +78,7 @@ export interface PitchDetectionPort {
    * Useful for noise gating and onset detection.
    *
    * @param frame - The raw audio samples.
-   * @returns The calculated RMS value (typically between 0.0 and 1.0).
+   * @returns The calculated RMS value, normalized between 0.0 (silence) and 1.0 (full scale).
    */
   calculateRMS(frame: Float32Array): number
 }
@@ -78,7 +87,7 @@ export interface PitchDetectionPort {
  * Port for managing an asynchronous audio processing loop.
  *
  * @remarks
- * Standardizes the execution of real-time audio analysis. Replaces manual
+ * Standardizes the execution of real-time audio analysis. This port replaces manual
  * `requestAnimationFrame` or `setInterval` with a managed lifecycle that
  * respects an {@link AbortSignal}.
  *
@@ -86,7 +95,7 @@ export interface PitchDetectionPort {
  */
 export interface AudioLoopPort {
   /**
-   * Starts the audio processing loop.
+   * Starts the high-frequency audio processing loop.
    *
    * @remarks
    * The loop execution is tied to the provided `signal`. Once the signal is aborted,
@@ -102,10 +111,12 @@ export interface AudioLoopPort {
    * await loopPort.start((frame) => {
    *   const result = detector.detect(frame);
    *   if (result.confidence > 0.9) {
-   *     console.log(`Detected: ${result.pitchHz} Hz`);
+   *     console.log(`Frequency: ${result.pitchHz.toFixed(1)} Hz`);
    *   }
    * }, controller.signal);
    * ```
+   *
+   * @throws Error - If the loop fails to start or encounters a fatal hardware error.
    */
   start(
     onFrame: (frame: Float32Array) => void,

@@ -82,6 +82,10 @@ interface PracticeFeedbackProps {
  * **Performance**: This component is updated at the frequency of the audio pipeline (up to 60Hz).
  * Layout shifts are minimized to ensure a stable reading environment for the student.
  *
+ * **Design Goal**:
+ * The UI is optimized for "at-a-glance" recognition while playing an instrument,
+ * using color coding (Green/Yellow/Red) and large iconography.
+ *
  * @param props - Component props.
  *
  * @example
