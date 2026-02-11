@@ -49,26 +49,24 @@ These features were previously behind flags but are now a permanent part of the 
 - **Description**: Tracks and unlocks rewards for technical milestones.
 - **Status**: Permanent. Integrated with ProgressStore.
 
+### Adaptive Difficulty Engine
+- **ID**: `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` (Promoted)
+- **Description**: Automatically adjusts intonation thresholds and exercise complexity based on user performance.
+- **Status**: Permanent. Integrated into the Practice Engine.
+
 ---
 
 ## 📋 Active Feature Flags
 
 | Flag | Category | Status | Risk |
 | :--- | :--- | :--- | :--- |
-| `FEATURE_TELEMETRY_ACCURACY` | INTEGRATION | ACTIVE (Log) | LOW |
-| `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | EXPERIMENTAL | DEFINED | MEDIUM |
 | `FEATURE_AUDIO_WEB_WORKER` | PERFORMANCE | DEFINED | HIGH |
-| `FEATURE_UI_INTONATION_HEATMAPS` | EXPERIMENTAL | DEFINED | LOW |
+| `FEATURE_UI_INTONATION_HEATMAPS` | UI_UX | BETA | LOW |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS` | EXPERIMENTAL | PLANNED | HIGH |
 
 ---
 
 ## 🧪 Experimental & In-Progress
-
-### Adaptive Difficulty Engine
-- **ID**: `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY`
-- **Description**: Automatically adjusts intonation thresholds and exercise complexity based on user performance.
-- **Status**: Logic defined but not yet integrated into the practice loop.
 
 ### Web Worker Audio Processing
 - **ID**: `FEATURE_AUDIO_WEB_WORKER`
@@ -77,8 +75,8 @@ These features were previously behind flags but are now a permanent part of the 
 
 ### Intonation Heatmaps
 - **ID**: `FEATURE_UI_INTONATION_HEATMAPS`
-- **Description**: Visualizes pitch accuracy patterns over time on a staff or fingerboard overlay.
-- **Status**: UI components being designed.
+- **Description**: Visualizes pitch accuracy patterns from the last session in the Analytics Dashboard.
+- **Status**: BETA. Integrated into Dashboard.
 
 ---
 
@@ -89,10 +87,6 @@ These features were previously behind flags but are now a permanent part of the 
 - **Description**: Collaborative practice spaces for students and teachers.
 - **Status**: Concept stage.
 
-### Accuracy Telemetry
-- **ID**: `FEATURE_TELEMETRY_ACCURACY`
-- **Description**: Anonymous tracking of detection confidence levels to optimize the algorithm for different hardware.
-- **Status**: Integrated (Basic Logging). Enabled to collect real-world detection data.
 
 ---
 

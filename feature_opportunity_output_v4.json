@@ -1,0 +1,30 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "opp_001",
+      "primary_feature": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "growth_type": "expand_to_all_users",
+      "current_state": "Stable and enabled by default.",
+      "opportunity_description": "Remove the feature flag entirely to make adaptive difficulty a core, permanent part of the engine.",
+      "rationale": {
+        "why_now": "High maturity and positive performance indicators.",
+        "user_benefit": "Seamless, personalized practice experience without configuration overhead.",
+        "business_benefit": "Simplifies code maintenance and technical debt reduction.",
+        "technical_readiness": "100% ready."
+      }
+    },
+    {
+      "opportunity_id": "opp_002",
+      "primary_feature": "FEATURE_UI_INTONATION_HEATMAPS",
+      "growth_type": "increase_capabilities",
+      "current_state": "Component ready but unlinked.",
+      "opportunity_description": "Integrate the Intonation Heatmap into the Analytics Dashboard and promote to BETA.",
+      "rationale": {
+        "why_now": "Component is stable; user demand for visual progress is high.",
+        "user_benefit": "Identifies specific problem areas in their intonation.",
+        "business_benefit": "Increases app stickiness and visual 'wow' factor.",
+        "technical_readiness": "80% ready (needs integration and data wiring)."
+      }
+    }
+  ]
+}
