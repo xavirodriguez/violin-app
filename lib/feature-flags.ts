@@ -28,16 +28,6 @@ export interface FeatureFlagMetadata {
 }
 
 export const FEATURE_FLAGS_METADATA = {
-  FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
-    name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
-    key: 'practiceAdaptiveDifficulty',
-    type: 'STABLE',
-    description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.',
-    defaultValue: true,
-    riskLevel: 'MEDIUM',
-    affectedFiles: ['lib/practice-engine/engine.ts'],
-    rollbackStrategy: 'Revert to fixed difficulty levels.'
-  },
   FEATURE_AUDIO_WEB_WORKER: {
     name: 'FEATURE_AUDIO_WEB_WORKER',
     key: 'audioWebWorker',
@@ -82,8 +72,6 @@ class FeatureFlagsManager {
    */
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
-      case 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY':
-        return process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ?? process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY
       case 'FEATURE_AUDIO_WEB_WORKER':
         return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
       case 'FEATURE_UI_INTONATION_HEATMAPS':

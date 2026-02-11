@@ -1,0 +1,67 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "risk_level": "low",
+      "risks": [
+        {
+          "id": "risk_001",
+          "type": "pedagogical",
+          "description": "Difficulty adjustments might frustrate users if they are too aggressive.",
+          "probability": 0.2,
+          "impact": 0.4,
+          "risk_score": 0.08,
+          "mitigation_strategy": "Allow manual override and use gradual changes.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [],
+      "growth_enablers": [
+        { "enabler": "Better telemetry precision", "effort": "low", "impact": "Higher confidence in adjustments" }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "high",
+      "risks": [
+        {
+          "id": "risk_002",
+          "type": "performance",
+          "description": "Synchronization lag between main thread and worker.",
+          "probability": 0.6,
+          "impact": 0.9,
+          "risk_score": 0.54,
+          "mitigation_strategy": "Use SharedArrayBuffer or optimized MessagePort transfers.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        { "blocker": "Main thread dependency in current audio loop", "resolution_steps": ["Refactor AudioWorklet/Worker boundary"] }
+      ],
+      "growth_enablers": []
+    },
+    {
+      "feature_id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "risk_level": "critical",
+      "risks": [
+        {
+          "id": "risk_003",
+          "type": "security",
+          "description": "Data privacy and unauthorized access to rooms.",
+          "probability": 0.4,
+          "impact": 1.0,
+          "risk_score": 0.4,
+          "mitigation_strategy": "Implement robust JWT-based session guarding.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        { "blocker": "Lack of real-time infrastructure", "resolution_steps": ["Evaluate Socket.io vs WebRTC"] }
+      ],
+      "growth_enablers": []
+    }
+  ],
+  "critical_path_features": [
+    "FEATURE_AUDIO_WEB_WORKER (needed for advanced real-time analysis)"
+  ]
+}
