@@ -9,6 +9,10 @@ import { analytics } from '@/lib/analytics-tracker'
 /**
  * Data model for a completed practice session.
  *
+ * @remarks
+ * This model captures the summarized outcome of a session once it has
+ * finished. It is used for history tracking and skill calculation.
+ *
  * @public
  */
 export interface PracticeSession {
@@ -24,7 +28,7 @@ export interface PracticeSession {
   exerciseId: string
   /** Name of the exercise. */
   exerciseName: string
-  /** Mode of the session. */
+  /** Mode of the session ('tuner' or 'practice'). */
   mode: 'tuner' | 'practice'
   /** Total number of pitch analysis frames processed. */
   notesAttempted: number
@@ -34,12 +38,14 @@ export interface PracticeSession {
   accuracy: number
   /** Overall average pitch deviation in cents. */
   averageCents: number
-  /** Detailed results for each note played. */
+  /** Detailed results for each note played during the session. */
   noteResults: NoteResult[]
 }
 
 /**
  * Metric summary for an individual note within a session.
+ *
+ * @internal
  */
 interface NoteResult {
   /** Index of the note in the exercise. */
@@ -61,6 +67,10 @@ interface NoteResult {
 /**
  * Long-term progress and skill model for the user.
  *
+ * @remarks
+ * This object is the primary target for local persistence. It tracks the
+ * user's growth over time across different technical domains.
+ *
  * @public
  */
 export interface UserProgress {
@@ -74,22 +84,24 @@ export interface UserProgress {
   exercisesCompleted: Exercise['id'][]
   /** Consecutive days practiced. */
   currentStreak: number
-  /** Highest streak ever achieved. */
+  /** Highest streak ever achieved by the user. */
   longestStreak: number
-  /** Normalized skill level for intonation (0-100). */
+  /** Normalized skill level for intonation (0-100), based on accuracy trends. */
   intonationSkill: number
-  /** Normalized skill level for rhythm (0-100). */
+  /** Normalized skill level for rhythm (0-100), based on timing precision. */
   rhythmSkill: number
   /** Combined overall skill level (0-100). */
   overallSkill: number
-  /** List of unlocked achievements. */
+  /** List of unlocked achievements and milestones. */
   achievements: Achievement[]
-  /** Map of per-exercise lifetime statistics. */
+  /** Map of per-exercise lifetime statistics, indexed by exercise ID. */
   exerciseStats: Record<string, ExerciseStats>
 }
 
 /**
  * Persistent statistics for a specific exercise.
+ *
+ * @internal
  */
 interface ExerciseStats {
   /** ID of the exercise. */
@@ -107,7 +119,7 @@ interface ExerciseStats {
 }
 
 /**
- * Represents a musical achievement or milestone.
+ * Represents a musical achievement or milestone earned by the user.
  *
  * @public
  */
@@ -116,9 +128,9 @@ export interface Achievement {
   id: string
   /** Display name. */
   name: string
-  /** Description of how it was earned. */
+  /** Description of the criteria met to earn this achievement. */
   description: string
-  /** Icon or emoji representation. */
+  /** Icon or emoji representation for the UI. */
   icon: string
   /** Unix timestamp of when it was unlocked. */
   unlockedAtMs: number
@@ -127,6 +139,10 @@ export interface Achievement {
 /**
  * Interface for the Analytics Store, managing long-term progress and session history.
  *
+ * @remarks
+ * This store coordinates the persistence of user data and the calculation
+ * of pedagogical metrics.
+ *
  * @public
  */
 export interface AnalyticsStore {
@@ -134,27 +150,36 @@ export interface AnalyticsStore {
   currentSession: PracticeSession | null
   /** History of the last 100 completed sessions. */
   sessions: PracticeSession[]
-  /** Aggregated user progress and achievements. */
+  /** Aggregated user progress, skill levels, and achievements. */
   progress: UserProgress
-  /** Optional callback for when a new achievement is unlocked. */
+  /** Optional callback for when a new achievement is unlocked (used for toasts/animations). */
   onAchievementUnlocked?: (achievement: Achievement) => void
 
   /**
    * Initializes a new practice session recording.
    *
-   * @param exerciseId - The ID of the exercise.
-   * @param exerciseName - The name of the exercise.
+   * @remarks
+   * Resets the `currentSession` state and tracks the start event.
+   *
+   * @param exerciseId - The ID of the exercise to practice.
+   * @param exerciseName - The display name of the exercise.
    * @param mode - The session mode.
    */
   startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
 
   /**
    * Finalizes the current session, updates lifetime stats, and checks for achievements.
+   *
+   * @remarks
+   * Triggers the `updateStreak`, `calculateSkills`, and `checkAndUnlockAchievements` processes.
    */
   endSession: () => void
 
   /**
-   * Records a pitch detection attempt for the current session.
+   * Records a pitch detection attempt for the current active session.
+   *
+   * @remarks
+   * High-frequency call that updates rolling averages for the current note.
    *
    * @param noteIndex - Index of the note being played.
    * @param targetPitch - Expected pitch name.
@@ -171,9 +196,12 @@ export interface AnalyticsStore {
   /**
    * Records the successful completion of a note.
    *
+   * @remarks
+   * Updates the session progress and triggers achievement checks for streaks.
+   *
    * @param noteIndex - Index of the note.
-   * @param timeToCompleteMs - Time taken.
-   * @param technique - Detected technique details.
+   * @param timeToCompleteMs - Time taken to hold the note in tune.
+   * @param technique - Detected technique details (e.g., rhythm metrics).
    */
   recordNoteCompletion: (
     noteIndex: number,
@@ -182,29 +210,39 @@ export interface AnalyticsStore {
   ) => void
 
   /**
-   * Evaluates current stats against achievement criteria and unlocks any new milestones.
+   * Evaluates current user stats against defined achievement criteria.
+   *
+   * @remarks
+   * If new achievements are found, they are added to the progress state and
+   * the `onAchievementUnlocked` callback is triggered.
    */
   checkAndUnlockAchievements: () => void
 
   /**
-   * Current streak of notes played with high accuracy (`< 5` cents).
+   * Current streak of notes played with high accuracy (`< 5` cents) in the current session.
    */
   currentPerfectStreak: number
 
   /**
-   * Retrieves session history for a specific number of days.
+   * Retrieves a filtered history of sessions within a time window.
    *
-   * @param days - Number of days to look back.
+   * @param days - Number of days to look back. Defaults to 7.
+   * @returns Filtered session array.
    */
   getSessionHistory: (days?: number) => PracticeSession[]
 
   /**
-   * Gets stats for a specific exercise.
+   * Gets the persistent statistics for a specific exercise.
+   *
+   * @param exerciseId - The ID to look up.
+   * @returns The stats object or null if never practiced.
    */
   getExerciseStats: (exerciseId: string) => ExerciseStats | null
 
   /**
-   * Calculates aggregated stats for the current calendar day.
+   * Calculates aggregated performance stats for the current calendar day.
+   *
+   * @returns Summary of duration, accuracy, and session count.
    */
   getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
 
@@ -245,11 +283,17 @@ function toMs(value: unknown): number {
  *
  * @remarks
  * This store uses `persist` middleware to save user progress to local storage.
- * It manages:
+ *
+ * **Key Features**:
  * 1. **Session Lifecycle**: Handles the transition from active recording to historical data.
- * 2. **Skill Level Heuristics**: Calculates normalized intonation and rhythm scores based on recent performance.
+ * 2. **Skill Level Heuristics**: Calculates normalized intonation and rhythm scores based on recent performance trends.
  * 3. **Daily Streaks**: Tracks consistency using a rolling 24-hour window.
- * 4. **Schema Migrations**: Implements robust logic for handling legacy data formats (versions 1-3).
+ * 4. **Schema Migrations**: Implements robust logic for handling legacy data formats (versions 1-3) during rehydration.
+ *
+ * @example
+ * ```ts
+ * const { progress, endSession } = useAnalyticsStore();
+ * ```
  *
  * @public
  */
@@ -592,6 +636,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
 /**
  * Calculates a normalized skill level for intonation based on recent sessions.
+ *
+ * @remarks
+ * Uses a weighted average where recent performance has more impact on the score.
+ *
+ * @param sessions - History of completed sessions.
+ * @returns Normalized skill score (0-100).
  * @internal
  */
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
@@ -604,7 +654,14 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 }
 
 /**
- * Updates lifetime statistics for a specific exercise.
+ * Updates persistent lifetime statistics for a specific exercise.
+ *
+ * @param exerciseStats - Current exercise stats map.
+ * @param exerciseId - Target exercise ID.
+ * @param accuracy - Accuracy achieved in the latest attempt.
+ * @param durationMs - Time taken to complete.
+ * @param endTimeMs - Completion timestamp.
+ * @returns Updated exercise stats map.
  * @internal
  */
 function updateExerciseStats(
@@ -630,7 +687,13 @@ function updateExerciseStats(
 }
 
 /**
- * Updates the user's daily practice streak.
+ * Updates the user's daily practice streak based on the latest activity.
+ *
+ * @remarks
+ * A streak is maintained if the user practices at least once every calendar day.
+ *
+ * @param progress - The user progress object to mutate.
+ * @param sessions - Session history for context.
  * @internal
  */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
@@ -648,7 +711,10 @@ function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
 }
 
 /**
- * Recalculates all skill metrics for the user.
+ * Recalculates all high-level skill metrics for the user.
+ *
+ * @param progress - The user progress object to update.
+ * @param sessions - Recent session history.
  * @internal
  */
 function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
@@ -658,7 +724,10 @@ function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
 }
 
 /**
- * Calculates the total number of unique days practiced.
+ * Calculates the total number of unique calendar days practiced.
+ *
+ * @param sessions - Full session history.
+ * @returns Count of unique days.
  * @internal
  */
 function calculatePracticeDays(sessions: PracticeSession[]): number {
@@ -668,6 +737,16 @@ function calculatePracticeDays(sessions: PracticeSession[]): number {
 
 /**
  * Helper to update the note results array with a new attempt.
+ *
+ * @remarks
+ * Implements an incremental average calculation for cents deviation.
+ *
+ * @param noteResults - Current results array.
+ * @param noteIndex - Target note index.
+ * @param targetPitch - Scientific pitch name.
+ * @param cents - Pitch deviation in cents.
+ * @param wasInTune - Whether the note was played in tune.
+ * @returns New results array.
  * @internal
  */
 function updateNoteResults(
@@ -707,6 +786,12 @@ function updateNoteResults(
 
 /**
  * Calculates a normalized skill level for rhythm based on recent sessions.
+ *
+ * @remarks
+ * Uses Mean Absolute Error (MAE) of onset times to determine rhythmic precision.
+ *
+ * @param sessions - Recent session history.
+ * @returns Normalized rhythm score (0-100).
  * @internal
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
@@ -738,7 +823,12 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
  *
  * @remarks
  * This function handles simple achievements that don't require the full
- * `achievement-checker` logic.
+ * asynchronous `achievement-checker` logic.
+ *
+ * @param progress - Current user progress.
+ * @param session - The latest completed session.
+ * @param allSessions - History of all sessions.
+ * @returns Array of newly unlocked achievements.
  * @internal
  */
 function checkLegacyAchievements(

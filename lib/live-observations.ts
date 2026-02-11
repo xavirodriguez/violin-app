@@ -5,18 +5,29 @@ import { Observation, Ratio01 } from './technique-types'
  * Calculates real-time technical observations based on a history of recent detections.
  *
  * @remarks
- * This function provides immediate pedagogical feedback to the student while they are
- * actively playing. It analyzes patterns in the audio stream to detect:
- * 1. **Persistent Intonation Errors**: Detects if the user is consistently sharp or flat.
- * 2. **Pitch Stability**: Identifies "jitter" or wavering in the pitch, often due to bow pressure or finger tension.
- * 3. **Note Accuracy**: Flags when the user is playing a completely different note than intended.
- * 4. **Tone Quality**: Uses confidence metrics to infer clarity of tone.
+ * This function is a core part of the pedagogical feedback loop. It processes high-frequency
+ * pitch detection data into actionable, human-readable advice.
  *
- * It uses a sliding window of recent frames (minimum 5) to ensure high confidence in its findings.
+ * **Analysis Domains**:
+ * 1. **Persistent Intonation**: Detects systematic sharp/flat tendencies using mean deviation.
+ * 2. **Pitch Stability**: Measures "jitter" or micro-variations using standard deviation.
+ * 3. **Note Accuracy**: Direct comparison against target scientific pitch notation.
+ * 4. **Tone Quality**: Infers clarity from the detector's confidence/signal-to-noise ratio.
+ *
+ * **Implementation Details**:
+ * - Uses a sliding window of the last 10 frames (minimum 5 required for results).
+ * - Implements a priority-based sorting to avoid "feedback overload".
+ * - Metrics are normalized to the {@link Observation} interface.
+ *
+ * **Prioritization**:
+ * To avoid overwhelming the student, only the top 2 most relevant observations are returned,
+ * sorted by a combination of severity and confidence.
  *
  * @param recentDetections - Readonly array of recently detected notes/frames from the pipeline.
+ *                           Expected to be in chronological order (newest first).
  * @param targetPitch - The scientific pitch name (e.g., "A4") of the currently practiced note.
  * @returns An array of {@link Observation} objects, prioritized and limited to the top 2 most relevant ones.
+ *          Returns an empty array if there is insufficient data or signal is lost.
  *
  * @public
  */
@@ -104,6 +115,10 @@ export function calculateLiveObservations(
 
 /**
  * Calculates the standard deviation of an array of numbers.
+ *
+ * @remarks
+ * Standard deviation is used here to quantify pitch jitter. High SD values
+ * correlate with technical instability in the student's left hand or bow arm.
  *
  * @param values - The numeric values.
  * @returns The standard deviation.

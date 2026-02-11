@@ -1,0 +1,34 @@
+{
+  "clusters": [
+    {
+      "cluster_id": "pedagogical_intelligence",
+      "type": "domain_logic",
+      "features": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_UI_INTONATION_HEATMAPS"],
+      "characteristics": {
+        "shared_context": "Improving student learning through data-driven feedback and adjustment.",
+        "can_grow_together": true,
+        "combined_impact": "high",
+        "shared_risks": ["Pedagogical frustration"]
+      }
+    },
+    {
+      "cluster_id": "advanced_infrastructure",
+      "type": "technical_foundation",
+      "features": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"],
+      "characteristics": {
+        "shared_context": "Scaling the platform for performance and real-time social interaction.",
+        "can_grow_together": false,
+        "combined_impact": "critical",
+        "shared_risks": ["High implementation complexity", "Hardware compatibility"]
+      }
+    }
+  ],
+  "optimization_opportunities": [
+    {
+      "opportunity": "Merge adaptive difficulty with intonation heatmaps for 'Smart Practice' mode",
+      "features_involved": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_UI_INTONATION_HEATMAPS"],
+      "synergy_benefit": "Students get visual proof of why difficulty is changing.",
+      "implementation_complexity": "medium"
+    }
+  ]
+}

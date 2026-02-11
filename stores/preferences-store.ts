@@ -8,37 +8,64 @@ import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
 /**
  * Interface for the Preferences Store, extending base {@link UserPreferences}.
  *
+ * @remarks
+ * This store manages the persistent configuration for the application's
+ * behavior and UI.
+ *
  * @public
  */
 interface PreferencesStore extends UserPreferences {
-  /** Persistence schema version. Used for migrations. */
+  /**
+   * Persistence schema version.
+   *
+   * @remarks
+   * Used by the migrator to handle state structure changes across versions.
+   */
   schemaVersion: 1
 
   /**
    * Sets the pedagogical feedback level.
    *
+   * @remarks
+   * This level affects how many observations and what kind of technical
+   * details are shown to the user during practice.
+   *
    * @param level - The new feedback level (e.g., 'beginner', 'advanced').
    */
   setFeedbackLevel: (level: FeedbackLevel) => void
 
-  /** Toggles visibility of technical cents/hertz details in the UI. */
+  /**
+   * Toggles visibility of technical cents/hertz details in the UI.
+   *
+   * @remarks
+   * When disabled, the UI shows more abstract "In Tune" / "Sharp" feedback.
+   */
   toggleTechnicalDetails: () => void
 
-  /** Toggles celebratory UI effects (e.g., confetti) on success. */
+  /**
+   * Toggles celebratory UI effects (e.g., confetti) on exercise completion.
+   */
   toggleCelebrations: () => void
 
-  /** Toggles haptic feedback (if supported by device). */
+  /**
+   * Toggles haptic feedback for mobile devices.
+   */
   toggleHaptics: () => void
 
-  /** Toggles audio-based correctness feedback. */
+  /**
+   * Toggles audio-based feedback cues (beeps/tones) for correctness.
+   */
   toggleSoundFeedback: () => void
 
-  /** Resets all preferences to their default values. */
+  /**
+   * Resets all preferences to their initial factory default values.
+   */
   resetToDefaults: () => void
 }
 
 /**
- * Initial/Default preference values for a new user.
+ * Initial/Default preference values for a new user session.
+ *
  * @internal
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -54,10 +81,24 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  *
  * @remarks
  * This store handles UI and pedagogical settings that customize the user experience.
- * It uses `validatedPersist` to ensure that data stored in `localStorage` remains
- * compliant with the `PreferencesStateSchema`.
  *
- * All changes are automatically tracked via the `analytics` service.
+ * **Persistence Layer**:
+ * It uses `validatedPersist` to ensure that data stored in `localStorage` remains
+ * compliant with the `PreferencesStateSchema`. This prevents crashes due to corrupted
+ * or outdated local storage data.
+ *
+ * **Telemetry**:
+ * All critical preference changes are automatically tracked via the `analytics` service
+ * to understand user engagement with different features.
+ *
+ * @example
+ * ```ts
+ * const { feedbackLevel, setFeedbackLevel } = usePreferencesStore();
+ * ```
+ *
+ * **Persistence Strategy**:
+ * Uses Zod validation on load to prevent corrupt local storage data from
+ * crashing the application. Includes an incremental migrator for schema updates.
  *
  * @public
  */

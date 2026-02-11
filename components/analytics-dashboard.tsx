@@ -26,6 +26,7 @@ export function AnalyticsDashboard() {
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
   const recentSessions = getSessionHistory(7)
+  const lastSession = recentSessions[0]
 
   // Prepare chart data
   const practiceTimeData = getLast7DaysData(recentSessions)
@@ -85,6 +86,14 @@ export function AnalyticsDashboard() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Intonation Heatmap (Beta) */}
+      {isHeatmapEnabled && heatmapData && heatmapData.length > 0 && (
+        <div className="bg-card border-border mb-6 rounded-lg border p-6">
+          <h2 className="mb-4 text-xl font-bold">Last Session Intonation Heatmap</h2>
+          <PracticeSummaryChart noteAttempts={heatmapData} />
+        </div>
+      )}
 
       {/* Recent Achievements */}
       <div className="bg-card border-border rounded-lg border p-4">

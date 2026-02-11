@@ -12,6 +12,9 @@ export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 /**
  * Represents a specific pitch on the musical staff, including its octave and accidental.
  *
+ * @remarks
+ * Uses scientific pitch notation (SPN) for octave numbering.
+ *
  * @public
  */
 export interface Pitch {
@@ -19,7 +22,12 @@ export interface Pitch {
   step: PitchName
   /**
    * The octave number in scientific pitch notation (e.g., 4 for Middle C).
-   * Violin strings start at G3 (G string), D4 (D string), A4 (A string), E5 (E string).
+   *
+   * **Violin Standard Tuning**:
+   * - G3 (G string)
+   * - D4 (D string)
+   * - A4 (A string)
+   * - E5 (E string)
    */
   octave: number
   /**
@@ -35,8 +43,10 @@ export interface Pitch {
  * Represents the rhythmic duration of a note relative to a whole note.
  *
  * @remarks
- * Values:
- * - `1`: Whole note (4 beats)
+ * Expressed as the denominator of the division of a whole note.
+ *
+ * **Standard Mappings**:
+ * - `1`: Whole note (4 beats in 4/4)
  * - `2`: Half note (2 beats)
  * - `4`: Quarter note (1 beat)
  * - `6`: Dotted quarter note (1.5 beats)
@@ -90,7 +100,7 @@ export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
  *
  * @remarks
  * This information is used by the MusicXML engine to create valid headers
- * and staff definitions compatible with OSMD.
+ * and staff definitions compatible with OpenSheetMusicDisplay (OSMD).
  *
  * @public
  */
@@ -105,7 +115,7 @@ export interface ScoreMetadata {
     beatType: number
   }
   /**
-   * The key signature, represented as the number of sharps (positive) or flats (negative).
+   * The key signature, represented as the number of sharps (positive) or flats (negative) in the circle of fifths.
    *
    * @example
    * - `2`: D Major / B Minor (F#, C#)
@@ -118,6 +128,10 @@ export interface ScoreMetadata {
 /**
  * Raw definition of an exercise, containing structured musical data.
  *
+ * @remarks
+ * This interface represents the "blueprint" of an exercise before it's converted
+ * to visual MusicXML for rendering.
+ *
  * @public
  */
 export interface ExerciseData {
@@ -127,11 +141,11 @@ export interface ExerciseData {
   name: string
   /** Detailed description of the exercise's objective and technical focus. */
   description: string
-  /** The pedagogical category it belongs to. */
+  /** The pedagogical category it belongs to (e.g., "Scales"). */
   category: ExerciseCategory
-  /** The intended difficulty level. */
+  /** The intended difficulty level for student progression. */
   difficulty: Difficulty
-  /** Metadata required for rendering the musical score. */
+  /** Metadata required for rendering the musical score (clef, time signature, etc.). */
   scoreMetadata: ScoreMetadata
   /** Ordered array of notes that make up the exercise. */
   notes: Note[]
@@ -148,6 +162,9 @@ export interface ExerciseData {
 /**
  * A fully-realized exercise including its visual MusicXML representation.
  *
+ * @remarks
+ * This is the final object used by the `PracticeStore` and `SheetMusic` components.
+ *
  * @public
  */
 export interface Exercise extends ExerciseData {
@@ -160,7 +177,14 @@ export interface Exercise extends ExerciseData {
  *
  * @remarks
  * Implements a Discriminated Union pattern to handle the complex lifecycle
- * of microphone acquisition and pitch detection.
+ * of microphone acquisition and real-time pitch detection.
+ *
+ * **Lifecycle**:
+ * 1. `IDLE`: Waiting for initialization.
+ * 2. `INITIALIZING`: Requesting microphone access.
+ * 3. `READY`: Audio pipeline is warm; listening.
+ * 4. `DETECTED`: A stable pitch has been found.
+ * 5. `ERROR`: Hardware or permission failure.
  *
  * @public
  */
@@ -170,25 +194,25 @@ export type TunerState =
       kind: 'IDLE'
     }
   | {
-      /** State while acquiring microphone and setting up audio. */
+      /** State while acquiring microphone and setting up audio graph. */
       kind: 'INITIALIZING'
-      /** Unique token for the current initialization attempt. */
+      /** Unique token for the current initialization attempt to prevent race conditions. */
       readonly sessionToken: number | string
     }
   | {
-      /** State when audio is ready but analysis hasn't started. */
+      /** State when audio is ready but no analysis results have been received. */
       kind: 'READY'
       /** Unique token for the current session. */
       readonly sessionToken: number | string
     }
   | {
-      /** State when the engine is actively pulling audio but no clear pitch is found. */
+      /** State when the engine is actively listening but signal strength/confidence is low. */
       kind: 'LISTENING'
       /** Unique token for the current session. */
       readonly sessionToken: number | string
     }
   | {
-      /** State when a clear, confident pitch has been detected. */
+      /** State when a clear, confident pitch has been detected and mapped to a note. */
       kind: 'DETECTED'
       /** Detected frequency in Hz. */
       pitch: number
@@ -204,12 +228,18 @@ export type TunerState =
   | {
       /** Terminal or recoverable error state (e.g., permission denied). */
       kind: 'ERROR'
-      /** Details of the error encountered. */
+      /** Details of the application-level error encountered. */
       error: AppError
     }
 
 /**
  * States for microphone permission handling.
+ *
+ * @remarks
+ * - `PROMPT`: Browser hasn't asked for permissions yet.
+ * - `GRANTED`: Access allowed.
+ * - `DENIED`: Access blocked by user or system.
+ *
  * @public
  */
 export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
@@ -217,20 +247,23 @@ export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
 /**
  * Interface representing the tuner store's state and available actions.
  *
+ * @remarks
+ * This store manages the entire lifecycle of the standalone violin tuner.
+ *
  * @public
  */
 export interface TunerStore {
   /**
-   * Current state with session tracking.
+   * Current reactive state with session tracking.
    *
    * @remarks
-   * States with `sessionToken` prevent stale updates from previous sessions.
-   * If you call `initialize()` twice, only the latest session updates state.
+   * States with `sessionToken` prevent stale updates from previous sessions
+   * during asynchronous initialization.
    */
   state: TunerState
 
   /**
-   * User's microphone permission status.
+   * User's current microphone permission status.
    */
   permissionState: PermissionState
 
@@ -245,7 +278,7 @@ export interface TunerStore {
   devices: MediaDeviceInfo[]
 
   /**
-   * ID of the device currently used for input.
+   * ID of the device currently used for input. `null` uses the default system device.
    */
   deviceId: string | null
 
@@ -253,44 +286,50 @@ export interface TunerStore {
    * Sensitivity of the input (0-100).
    *
    * @remarks
-   * Maps to internal gain: `0 -> 0x`, `50 -> 1x`, `100 -> 2x`.
+   * Maps to internal gain: `0 -\> 0x`, `50 -\> 1x`, `100 -\> 2x`.
    */
   sensitivity: number
 
   /**
-   * AnalyserNode for real-time visualization.
+   * Web Audio AnalyserNode for real-time visualization (e.g., waveforms).
    */
   analyser: AnalyserNode | null
 
   /**
-   * Initializes audio pipeline with automatic session management.
+   * Initializes the audio pipeline and requests hardware permissions.
    *
    * @remarks
    * **Concurrency Safety**:
-   * - Multiple calls are safe: previous sessions are automatically invalidated
-   * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
-   * - If a previous initialization is pending, it will be cancelled
+   * - Multiple calls are idempotent: previous sessions are automatically invalidated.
+   * - Uses an internal `initToken` to ensure only the latest attempt updates the state.
    *
-   * **State Transitions**:
-   * - IDLE → INITIALIZING → READY (success)
-   * - IDLE → INITIALIZING → ERROR (failure)
+   * **Transitions**:
+   * - `IDLE` → `INITIALIZING` → `READY` (on success)
+   * - `IDLE` → `INITIALIZING` → `ERROR` (on failure)
    *
-   * @throws Never throws - errors are captured in state.error
+   * @returns A promise that resolves when initialization is complete.
    */
   initialize: () => Promise<void>
 
   /**
-   * Resets and re-initializes the tuner.
+   * Resets the current state and attempts to re-initialize the audio hardware.
+   *
+   * @returns A promise that resolves when re-initialization is complete.
    */
   retry: () => Promise<void>
 
   /**
-   * Stops the tuner and releases hardware resources.
+   * Stops the tuner, invalidates pending sessions, and releases hardware resources.
+   *
+   * @returns A promise that resolves when cleanup is complete.
    */
   reset: () => Promise<void>
 
   /**
-   * Feeds raw analysis data into the store to update the detected note.
+   * Processes a raw frequency/confidence pair from the detector and updates the store state.
+   *
+   * @remarks
+   * Implementation should include signal thresholding to filter out ambient noise.
    *
    * @param pitch - Detected frequency in Hz.
    * @param confidence - Detection confidence (0.0 to 1.0).
@@ -298,29 +337,32 @@ export interface TunerStore {
   updatePitch: (pitch: number, confidence: number) => void
 
   /**
-   * Starts the high-frequency analysis loop.
+   * Transitions the tuner into the 'LISTENING' state.
    */
   startListening: () => void
 
   /**
-   * Stops the analysis loop while keeping audio resources alive.
+   * Transitions the tuner back to 'READY', pausing input analysis.
    */
   stopListening: () => void
 
   /**
-   * Refreshes the list of available audio input hardware.
+   * Refreshes the list of available audio input hardware from the browser.
+   *
+   * @returns A promise that resolves when the device list is updated.
    */
   loadDevices: () => Promise<void>
 
   /**
-   * Switches to a different input device.
+   * Switches the active input source to a different device.
    *
-   * @param deviceId - ID of the new device to use.
+   * @param deviceId - Unique ID of the new device.
+   * @returns A promise that resolves when the switch is complete.
    */
   setDeviceId: (deviceId: string) => Promise<void>
 
   /**
-   * Adjusts the detector's input gain/sensitivity.
+   * Adjusts the detector's input gain to improve sensitivity in quiet or noisy environments.
    *
    * @param sensitivity - Value from 0 to 100.
    */
