@@ -1,0 +1,103 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "high",
+      "risks": [
+        {
+          "id": "risk_perf_001",
+          "type": "performance",
+          "description": "Messaging overhead between main thread and worker might exceed DSP benefits for small buffers.",
+          "probability": 0.4,
+          "impact": 0.6,
+          "risk_score": 0.24,
+          "mitigation_strategy": "Use SharedArrayBuffer or transferable objects to minimize copying.",
+          "blocker": false
+        },
+        {
+          "id": "risk_sync_002",
+          "type": "breaking_change",
+          "description": "Difficulty in synchronizing visual state with audio events processed in worker.",
+          "probability": 0.6,
+          "impact": 0.8,
+          "risk_score": 0.48,
+          "mitigation_strategy": "Implement a robust timestamp-based synchronization protocol.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Missing Web Worker implementation for PitchDetector.",
+          "resolution_steps": ["Create AudioWorker adapter", "Refactor PitchDetector for non-DOM environment"]
+        }
+      ],
+      "growth_enablers": [
+        {
+          "enabler": "Separation of pure DSP logic from DOM-dependent code in lib/pitch-detector.ts.",
+          "effort": "low",
+          "impact": "Facilitates easy porting to Worker."
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "risk_level": "low",
+      "risks": [
+        {
+          "id": "risk_ui_001",
+          "type": "performance",
+          "description": "Rendering many heatmap cells might slow down the dashboard on mobile.",
+          "probability": 0.2,
+          "impact": 0.3,
+          "risk_score": 0.06,
+          "mitigation_strategy": "Use canvas rendering or virtualization for very long sessions.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [],
+      "growth_enablers": [
+        {
+          "enabler": "Promoted Analytics Infrastructure.",
+          "effort": "low",
+          "impact": "Provides reliable data source."
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "risk_level": "critical",
+      "risks": [
+        {
+          "id": "risk_sec_001",
+          "type": "security",
+          "description": "Unauthorized access to private practice sessions.",
+          "probability": 0.3,
+          "impact": 1.0,
+          "risk_score": 0.3,
+          "mitigation_strategy": "Implement robust session-token based authentication.",
+          "blocker": true
+        },
+        {
+          "id": "risk_net_002",
+          "type": "performance",
+          "description": "Network jitter affecting real-time audio synchronization.",
+          "probability": 0.8,
+          "impact": 0.9,
+          "risk_score": 0.72,
+          "mitigation_strategy": "Use WebRTC for low-latency peer-to-peer data.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of real-time backend infrastructure.",
+          "resolution_steps": ["Evaluate Socket.io vs WebRTC vs Supabase Realtime", "Set up staging infrastructure"]
+        }
+      ],
+      "growth_enablers": []
+    }
+  ],
+  "critical_path_features": [
+    "FEATURE_AUDIO_WEB_WORKER"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "opp_heatmap_001",
+      "primary_feature": "FEATURE_UI_INTONATION_HEATMAPS",
+      "growth_type": "expand_to_all_users",
+      "current_state": "BETA (Disabled by default)",
+      "opportunity_description": "Promote to Stable and enable by default in the Analytics Dashboard.",
+      "rationale": {
+        "why_now": "The feature is mature, low-risk, and adds immediate visual value to the analytics experience.",
+        "user_benefit": "Users get better insights into their practice quality without any additional effort.",
+        "business_benefit": "Higher engagement with the analytics dashboard.",
+        "technical_readiness": "95% ready. Only needs default value change and minor cleanup."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Default Enablement",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["Dashboard view time increase > 10%"],
+          "go_no_go_criteria": "No negative impact on dashboard load time."
+        },
+        "phase_2": {
+          "name": "Core Integration",
+          "duration_weeks": 2,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["User satisfaction survey > 4/5"],
+          "go_no_go_criteria": "Positive user feedback."
+        }
+      },
+      "required_work": [
+        {
+          "task": "Change defaultValue to true in lib/feature-flags.ts",
+          "effort_hours": 0.5,
+          "priority": "high",
+          "blocking": false
+        },
+        {
+          "task": "Add unit tests for heatmap data processing",
+          "effort_hours": 4,
+          "priority": "medium",
+          "blocking": false
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 6,
+        "product_involvement": "low",
+        "qe_hours": 2,
+        "design_review": true
+      },
+      "success_metrics": {
+        "adoption_rate": { "target": 100, "current": 0, "unit": "percentage" },
+        "user_satisfaction": { "target": 8.5, "current": 0, "unit": "NPS" }
+      },
+      "rollback_plan": {
+        "trigger": "If dashboard load time increases by > 500ms",
+        "steps": ["Revert default value to false", "Deploy fix"],
+        "recovery_time_estimate_minutes": 5
+      },
+      "confidence_score": 0.95,
+      "recommendation_strength": "STRONG"
+    },
+    {
+      "opportunity_id": "opp_audio_worker_001",
+      "primary_feature": "FEATURE_AUDIO_WEB_WORKER",
+      "growth_type": "increase_capabilities",
+      "current_state": "ALPHA (Experimental)",
+      "opportunity_description": "Implement the Web Worker adapter for the PitchDetector to improve mobile performance.",
+      "rationale": {
+        "why_now": "Mobile users are reporting audio crackling and UI jank during practice sessions.",
+        "user_benefit": "Smoother practice experience on lower-end devices.",
+        "business_benefit": "Improved retention on mobile platforms.",
+        "technical_readiness": "Initial architecture defined, needs execution."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Worker Adapter Implementation",
+          "duration_weeks": 2,
+          "rollout_percentage": 0.05,
+          "success_metrics": ["Main thread load reduction > 30%"],
+          "go_no_go_criteria": "Detection accuracy remains equal to main thread."
+        }
+      },
+      "required_work": [
+        {
+          "task": "Develop AudioWorker adapter class",
+          "effort_hours": 16,
+          "priority": "high",
+          "blocking": true
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 24,
+        "product_involvement": "low",
+        "qe_hours": 8,
+        "design_review": false
+      },
+      "success_metrics": {
+        "performance": { "target": " < 16ms frame time", "current": "~25ms", "unit": "time" }
+      },
+      "rollback_plan": {
+        "trigger": "Accuracy drop > 5%",
+        "steps": ["Disable FEATURE_AUDIO_WEB_WORKER"],
+        "recovery_time_estimate_minutes": 1
+      },
+      "confidence_score": 0.75,
+      "recommendation_strength": "MODERATE"
+    }
+  ],
+  "prioritized_queue": [
+    {
+      "rank": 1,
+      "opportunity_id": "opp_heatmap_001",
+      "recommended_start_date": "2025-05-23T09:00:00Z",
+      "expected_completion_date": "2025-05-30T18:00:00Z",
+      "impact_if_successful": "Improved user value and feature awareness."
+    }
+  ],
+  "next_30_days_focus": [
+    "Promote Intonation Heatmaps to Stable",
+    "Complete Web Worker prototype for Pitch Detection"
+  ]
+}

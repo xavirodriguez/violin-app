@@ -1,0 +1,229 @@
+{
+  "discovery_timestamp": "2025-05-22T14:00:00Z",
+  "total_features_detected": 12,
+  "features": [
+    {
+      "id": "FEATURE_AUDIO_WEB_WORKER",
+      "name": "Audio Web Worker",
+      "type": "Performance",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts", "lib/pitch-detector.ts", "lib/note-stream.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-15T09:00:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "name": "Intonation Heatmaps",
+      "type": "UI",
+      "current_state": "beta",
+      "locations": ["lib/feature-flags.ts", "components/analytics-dashboard.tsx", "components/practice-summary-chart.tsx"],
+      "enabled": false,
+      "lines_of_code_affected": 25,
+      "users_affected_estimate": 500,
+      "dependencies": [],
+      "last_modified": "2025-05-20T11:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 40,
+        "error_rate": 0.05,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "name": "Social Practice Rooms",
+      "type": "Infrastructure",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-10T11:00:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+      "name": "Adaptive Difficulty Engine",
+      "type": "Algorithm",
+      "current_state": "stable",
+      "locations": ["lib/practice-engine/engine.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 15,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-18T12:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 95,
+        "error_rate": 0.01,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_TECHNICAL_FEEDBACK",
+      "name": "Advanced Technical Feedback",
+      "type": "Algorithm",
+      "current_state": "stable",
+      "locations": ["lib/technique-analysis-agent.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 120,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-12T08:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 85,
+        "error_rate": 0.02,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_ANALYTICS_DASHBOARD",
+      "name": "Progress Analytics Dashboard",
+      "type": "UI",
+      "current_state": "stable",
+      "locations": ["components/analytics-dashboard.tsx"],
+      "enabled": true,
+      "lines_of_code_affected": 300,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-14T10:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 70,
+        "error_rate": 0.03,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_UI_VIOLIN_FINGERBOARD",
+      "name": "Violin Fingerboard Visualization",
+      "type": "UI",
+      "current_state": "stable",
+      "locations": ["components/violin-fingerboard.tsx"],
+      "enabled": true,
+      "lines_of_code_affected": 200,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-08T15:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 80,
+        "error_rate": 0.01,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_ASSISTANT",
+      "name": "Contextual Practice Assistant",
+      "type": "UI",
+      "current_state": "stable",
+      "locations": ["components/practice-assistant.tsx"],
+      "enabled": true,
+      "lines_of_code_affected": 150,
+      "users_affected_estimate": 800,
+      "dependencies": [],
+      "last_modified": "2025-05-15T11:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 60,
+        "error_rate": 0.04,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_ZEN_MODE",
+      "name": "Zen Mode",
+      "type": "UI",
+      "current_state": "stable",
+      "locations": ["hooks/use-zen-mode.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 50,
+      "users_affected_estimate": 400,
+      "dependencies": [],
+      "last_modified": "2025-05-16T09:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 90,
+        "error_rate": 0.01,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_AUTO_START",
+      "name": "Auto-start Listening",
+      "type": "Infrastructure",
+      "current_state": "stable",
+      "locations": ["stores/practice-store.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 20,
+      "users_affected_estimate": 600,
+      "dependencies": [],
+      "last_modified": "2025-05-17T14:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 85,
+        "error_rate": 0.02,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
+      "name": "Exercise Recommender",
+      "type": "Algorithm",
+      "current_state": "stable",
+      "locations": ["lib/exercise-recommender.ts"],
+      "enabled": true,
+      "lines_of_code_affected": 180,
+      "users_affected_estimate": 900,
+      "dependencies": [],
+      "last_modified": "2025-05-19T10:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 75,
+        "error_rate": 0.03,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
+      "name": "Achievement System",
+      "type": "UI",
+      "current_state": "stable",
+      "locations": ["lib/achievements/"],
+      "enabled": true,
+      "lines_of_code_affected": 250,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-20T08:00:00Z",
+      "stability_indicators": {
+        "has_tests": true,
+        "test_coverage": 80,
+        "error_rate": 0.01,
+        "documentation": true
+      }
+    }
+  ],
+  "relationships": {
+    "dependency_graph": {
+      "FEATURE_UI_INTONATION_HEATMAPS": ["FEATURE_ANALYTICS_DASHBOARD"]
+    },
+    "conflicts": [],
+    "orphaned": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"]
+  }
+}
