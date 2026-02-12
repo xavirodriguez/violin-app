@@ -36,6 +36,8 @@ export interface AudioFramePort {
    * This value is critical for accurate pitch detection algorithms that rely on
    * time-frequency transformations. It is assumed to be constant for the duration
    * of the port's lifecycle.
+   *
+   * @returns The sample rate in Hz.
    */
   readonly sampleRate: number
 }
@@ -77,8 +79,14 @@ export interface PitchDetectionPort {
    * RMS provides a more stable representation of perceived loudness than peak amplitude.
    * Useful for noise gating and onset detection.
    *
-   * @param frame - The raw audio samples.
+   * @param frame - The raw audio samples as a `Float32Array`.
    * @returns The calculated RMS value, normalized between 0.0 (silence) and 1.0 (full scale).
+   *
+   * @example
+   * ```ts
+   * const rms = detectorPort.calculateRMS(frame);
+   * if (rms < 0.01) return; // Signal too quiet
+   * ```
    */
   calculateRMS(frame: Float32Array): number
 }

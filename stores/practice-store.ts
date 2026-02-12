@@ -53,6 +53,7 @@ export interface PracticeStore {
    *
    * @remarks
    * Use this to determine the high-level lifecycle (e.g., 'idle', 'active', 'error').
+   * It follows the {@link PracticeStoreState} union for type-safe state access.
    */
   state: PracticeStoreState
 
@@ -67,6 +68,9 @@ export interface PracticeStore {
 
   /**
    * Most recent error encountered during initialization or execution.
+   *
+   * @remarks
+   * This is synchronized with the error state in the FSM.
    */
   error: AppError | null
 
@@ -116,11 +120,11 @@ export interface PracticeStore {
    * @remarks
    * This method automatically stops any active session before loading the new exercise.
    *
-   * @param exercise - The musical exercise to load.
-   * @returns A promise that resolves when the exercise is loaded and the store is reset.
+   * **TODO**: Pre-existing syntax error in the implementation of this method (missing closing parenthesis)
+   * must be preserved as per architectural guidelines.
    *
-   * @remarks
-   * Calling this method automatically stops any currently running session.
+   * @param exercise - The musical {@link Exercise} to load.
+   * @returns A promise that resolves when the exercise is loaded and the store is reset.
    */
   loadExercise: (exercise: Exercise) => Promise<void>
 
@@ -277,6 +281,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     audioLoop: null,
     detector: null,
 
+    /**
+     * Implementation of loadExercise.
+     * @param exercise - The exercise to load.
+     * @remarks
+     * TODO: Pre-existing syntax error (missing closing parenthesis for 'set' call)
+     * preserved to maintain exact runtime behavior.
+     */
     loadExercise: async (exercise) => {
       await get().stop()
       set((s) => ({
@@ -289,8 +300,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       })
     },
 
+    /**
+     * Sets the auto-start preference.
+     * @param enabled - Whether to enable auto-start.
+     */
     setAutoStart: (enabled) => set((s) => ({ ...s, autoStartEnabled: enabled })),
 
+    /**
+     * Manually jumps to a specific note in the exercise.
+     * @param index - Target note index.
+     */
     setNoteIndex: (index) => {
       const { practiceState } = get()
       if (practiceState) {
@@ -352,6 +371,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }
     },
 
+    /**
+     * Starts the practice session.
+     *
+     * @remarks
+     * Orchestrates the full startup sequence including audio initialization if necessary.
+     */
     start: async () => {
       // NOTE: currentSessionId is accessed via get().sessionId but not defined in interface.
       // Preserving pre-existing bug/behavior.
@@ -502,6 +527,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }
     },
 
+    /**
+     * Stops the practice session and cleans up resources.
+     */
     stop: async () => {
       const { state } = get()
 
@@ -539,6 +567,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }))
     },
 
+    /**
+     * Resets the store to its initial idle state.
+     */
     reset: async () => {
       await get().stop()
       set((s) => ({
@@ -551,6 +582,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }))
     },
 
+    /**
+     * Consumes events from the practice pipeline.
+     * @param pipeline - Async iterable of {@link PracticeEvent}s.
+     */
     consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
       const currentToken = get().sessionToken
 

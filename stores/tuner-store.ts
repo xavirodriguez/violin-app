@@ -79,7 +79,12 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * `IDLE` -\> `INITIALIZING` -\> `READY` (success) or `ERROR` (failure).
      *
      * @returns A promise that resolves when initialization is complete.
-     * @throws AppError - If microphone access is denied or hardware fails.
+     * @throws {@link AppError} - If microphone access is denied or hardware fails.
+     *
+     * @example
+     * ```ts
+     * await tunerStore.initialize();
+     * ```
      */
     initialize: async () => {
       const { state: currentState, deviceId, sensitivity } = get()
@@ -139,6 +144,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Useful for recovering from error states or refreshing hardware connections.
      *
      * @returns A promise that resolves when re-initialization is complete.
+     *
+     * @example
+     * ```ts
+     * await tunerStore.retry();
+     * ```
      */
     retry: async () => {
       await get().reset()

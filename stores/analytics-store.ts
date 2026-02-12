@@ -164,6 +164,11 @@ export interface AnalyticsStore {
    * @param exerciseId - The ID of the exercise to practice.
    * @param exerciseName - The display name of the exercise.
    * @param mode - The session mode.
+   *
+   * @example
+   * ```ts
+   * analyticsStore.startSession("scale_c_major", "C Major Scale", "practice");
+   * ```
    */
   startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
 

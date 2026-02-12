@@ -5,6 +5,9 @@ import type { PitchDetector } from '@/lib/pitch-detector'
 /**
  * Represents the base name of a musical pitch (the white keys on a piano).
  *
+ * @remarks
+ * Following the scientific pitch notation standard letter names.
+ *
  * @public
  */
 export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'

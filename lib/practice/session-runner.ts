@@ -43,7 +43,11 @@ export interface PracticeSessionRunner {
   run(signal: AbortSignal): Promise<SessionResult>
 
   /**
-   * Immediately stops the running session.
+   * Immediately stops the running session and releases internal references.
+   *
+   * @remarks
+   * This method triggers the internal `AbortController`. Any pending async
+   * operations in the `run` method will be cancelled.
    */
   cancel(): void
 }
@@ -127,7 +131,19 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   /**
    * Creates an instance of PracticeSessionRunnerImpl.
    *
-   * @param deps - The dependencies required for session orchestration.
+   * @param deps - The dependencies required for session orchestration, following the DI pattern.
+   *
+   * @example
+   * ```ts
+   * const runner = new PracticeSessionRunnerImpl({
+   *   audioLoop,
+   *   detector,
+   *   exercise,
+   *   store,
+   *   analytics,
+   *   sessionStartTime: Date.now()
+   * });
+   * ```
    */
   constructor(private deps: SessionRunnerDependencies) {}
 
@@ -169,6 +185,9 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   /**
    * Immediately cancels the current execution and triggers internal cleanup.
+   *
+   * @remarks
+   * Idempotent. Can be called multiple times safely.
    */
   cancel(): void {
     this.controller?.abort()
@@ -223,8 +242,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * This translation layer ensures that the new engine remains compatible with
    * existing event consumers without requiring a full refactor of the event sink.
    *
-   * @param event - The event emitted by the practice engine.
-   * @returns A compatible {@link PracticeEvent}.
+   * @param event - The {@link PracticeEngineEvent} emitted by the practice engine.
+   * @returns A compatible {@link PracticeEvent} for the legacy sink.
    * @internal
    */
   private mapEngineEventToPracticeEvent(event: PracticeEngineEvent): PracticeEvent {
@@ -252,8 +271,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * 3. **Persistence**: Triggers analytics recording via matched note side effects.
    * 4. **State Transition**: Delegates store updates to `handlePracticeEvent`.
    *
-   * @param event - The event to process.
-   * @param signal - Current session signal to prevent processing after abort.
+   * @param event - The {@link PracticeEvent} to process.
+   * @param signal - Current session {@link AbortSignal} to prevent processing after abort.
    * @internal
    */
   private processEvent(event: PracticeEvent, signal: AbortSignal): void {
