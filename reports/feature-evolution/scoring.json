@@ -1,0 +1,230 @@
+[
+  {
+    "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+    "scoring": {
+      "maturity": {
+        "score": 2,
+        "rationale": "Alpha stage. Definition exists but implementation is pending in core files like pitch-detector.ts.",
+        "factors": {
+          "code_quality": 8,
+          "test_coverage": 0,
+          "documentation": 7,
+          "stability_over_time": 2,
+          "bug_frequency": 0
+        }
+      },
+      "business_value": {
+        "score": 8,
+        "rationale": "Critical for low-end devices and mobile performance. Reduces main thread jank.",
+        "factors": {
+          "user_impact": 9,
+          "revenue_potential": 5,
+          "strategic_alignment": 10,
+          "competitive_advantage": 7,
+          "market_demand": 8
+        }
+      },
+      "adoption_readiness": {
+        "score": 3,
+        "rationale": "High technical complexity for end-users (permissions, browser support) and needs more integration work.",
+        "factors": {
+          "current_users": 0,
+          "feature_discoverability": 1,
+          "onboarding_complexity": 8,
+          "performance_impact": 10,
+          "ui_ux_quality": 2
+        }
+      },
+      "technical_debt": {
+        "score": 4,
+        "rationale": "Incomplete implementation creates a 'placeholder' debt.",
+        "factors": {
+          "code_complexity": 7,
+          "refactor_needs": 5,
+          "performance_debt": 0,
+          "security_concerns": 2,
+          "scalability_limits": 3
+        }
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "Enables future high-frequency DSP features and more complex audio analysis.",
+        "factors": {
+          "feature_expansion_possibilities": 10,
+          "market_expansion": 8,
+          "integration_opportunities": 9,
+          "monetization_potential": 4,
+          "ecosystem_value": 9
+        }
+      },
+      "risk_profile": {
+        "score": 8,
+        "rationale": "High risk of synchronization issues between main thread and worker.",
+        "factors": {
+          "breaking_change_risk": 9,
+          "security_risk": 1,
+          "performance_risk": 10,
+          "compatibility_risk": 8,
+          "migration_risk": 7
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 4.5,
+      "weighted_score": 5.2,
+      "recommendation": "GRADUAL"
+    }
+  },
+  {
+    "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+    "scoring": {
+      "maturity": {
+        "score": 7,
+        "rationale": "Beta stage. Fully integrated into the AnalyticsDashboard and functional.",
+        "factors": {
+          "code_quality": 8,
+          "test_coverage": 40,
+          "documentation": 8,
+          "stability_over_time": 7,
+          "bug_frequency": 3
+        }
+      },
+      "business_value": {
+        "score": 7,
+        "rationale": "Provides visual value to users and helps them understand their progress.",
+        "factors": {
+          "user_impact": 8,
+          "revenue_potential": 4,
+          "strategic_alignment": 8,
+          "competitive_advantage": 6,
+          "market_demand": 7
+        }
+      },
+      "adoption_readiness": {
+        "score": 8,
+        "rationale": "Easy to understand and already integrated into the existing dashboard.",
+        "factors": {
+          "current_users": 20,
+          "feature_discoverability": 7,
+          "onboarding_complexity": 2,
+          "performance_impact": 2,
+          "ui_ux_quality": 9
+        }
+      },
+      "technical_debt": {
+        "score": 3,
+        "rationale": "Some logic inlined in components could be moved to stores or utils.",
+        "factors": {
+          "code_complexity": 4,
+          "refactor_needs": 4,
+          "performance_debt": 2,
+          "security_concerns": 1,
+          "scalability_limits": 3
+        }
+      },
+      "growth_potential": {
+        "score": 6,
+        "rationale": "Can be expanded to include rhythm heatmaps and historical trends.",
+        "factors": {
+          "feature_expansion_possibilities": 7,
+          "market_expansion": 4,
+          "integration_opportunities": 6,
+          "monetization_potential": 3,
+          "ecosystem_value": 6
+        }
+      },
+      "risk_profile": {
+        "score": 2,
+        "rationale": "Low risk, visualization-only feature.",
+        "factors": {
+          "breaking_change_risk": 2,
+          "security_risk": 1,
+          "performance_risk": 2,
+          "compatibility_risk": 1,
+          "migration_risk": 1
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 8.2,
+      "weighted_score": 7.5,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+    "scoring": {
+      "maturity": {
+        "score": 1,
+        "rationale": "Concept stage. Only metadata exists.",
+        "factors": {
+          "code_quality": 0,
+          "test_coverage": 0,
+          "documentation": 5,
+          "stability_over_time": 1,
+          "bug_frequency": 0
+        }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "High potential for user retention and social growth. Major differentiator.",
+        "factors": {
+          "user_impact": 10,
+          "revenue_potential": 8,
+          "strategic_alignment": 10,
+          "competitive_advantage": 10,
+          "market_demand": 9
+        }
+      },
+      "adoption_readiness": {
+        "score": 1,
+        "rationale": "Not yet available for users.",
+        "factors": {
+          "current_users": 0,
+          "feature_discoverability": 0,
+          "onboarding_complexity": 9,
+          "performance_impact": 8,
+          "ui_ux_quality": 0
+        }
+      },
+      "technical_debt": {
+        "score": 2,
+        "rationale": "No code yet, but architectural complexity will be high.",
+        "factors": {
+          "code_complexity": 9,
+          "refactor_needs": 1,
+          "performance_debt": 0,
+          "security_concerns": 8,
+          "scalability_limits": 9
+        }
+      },
+      "growth_potential": {
+        "score": 10,
+        "rationale": "Scales into full social network for musicians.",
+        "factors": {
+          "feature_expansion_possibilities": 10,
+          "market_expansion": 10,
+          "integration_opportunities": 8,
+          "monetization_potential": 9,
+          "ecosystem_value": 10
+        }
+      },
+      "risk_profile": {
+        "score": 9,
+        "rationale": "Critical risk due to real-time synchronization, security, and infrastructure requirements.",
+        "factors": {
+          "breaking_change_risk": 8,
+          "security_risk": 9,
+          "performance_risk": 9,
+          "compatibility_risk": 7,
+          "migration_risk": 6
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 3.0,
+      "weighted_score": 4.8,
+      "recommendation": "MAINTAIN"
+    }
+  }
+]
