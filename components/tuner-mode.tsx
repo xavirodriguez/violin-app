@@ -43,7 +43,7 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  *
  * @public
  */
-export function TunerMode() {
+export function TunerMode(): React.JSX.Element {
   const { state, analyser, detector, initialize, retry, reset, updatePitch } = useTunerStore()
 
   // Derived state for UI logic orchestration

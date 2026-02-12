@@ -14,7 +14,7 @@ type StoreApi<T> = {
   /**
    * Retrieves the current state from the store.
    *
-   * @returns The current state object.
+   * @returns The current state object of type `T`.
    */
   getState: () => T
 

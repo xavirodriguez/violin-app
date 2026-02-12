@@ -172,6 +172,15 @@ async function* technicalAnalysisWindow(
 
 /**
  * Processes a single raw pitch event and yields any resulting practice events.
+ *
+ * @param raw - The raw pitch event from the detector.
+ * @param state - Current technical analysis state.
+ * @param segmenter - Note segmenter instance.
+ * @param agent - Technique analysis agent.
+ * @param context - Pipeline context.
+ * @param options - Pipeline options.
+ * @returns A generator of practice events.
+ * @internal
  */
 function* processRawPitchEvent(
   raw: RawPitchEvent,
@@ -244,6 +253,15 @@ function* processRawPitchEvent(
   }
 }
 
+/**
+ * Validates the quality of a detection and yields appropriate events.
+ * @param raw - Raw pitch event.
+ * @param noteName - Detected note name.
+ * @param cents - Detected deviation.
+ * @param options - Quality thresholds.
+ * @returns Generator of practice events.
+ * @internal
+ */
 function* validateAndEmitDetections(
   raw: RawPitchEvent,
   noteName: string,
@@ -267,6 +285,17 @@ function* validateAndEmitDetections(
   }
 }
 
+/**
+ * Handles the completion of a note segment and performs technical analysis.
+ * @param state - Current analysis state.
+ * @param event - Segment event (offset or note change).
+ * @param currentTarget - The target note.
+ * @param options - Analysis options.
+ * @param getCurrentIndex - Getter for current note index.
+ * @param agent - Analysis agent.
+ * @returns A NOTE_MATCHED event if criteria are met, else null.
+ * @internal
+ */
 function handleSegmentCompletion(
   state: TechnicalAnalysisState,
   event: Extract<SegmenterEvent, { type: 'OFFSET' | 'NOTE_CHANGE' }>,
@@ -316,6 +345,15 @@ function handleSegmentCompletion(
   return { type: 'NOTE_MATCHED', payload: { technique, observations } }
 }
 
+/**
+ * Checks if the current frame maintains the required pitch for the target note.
+ * @param state - Segment state.
+ * @param currentTarget - Target note.
+ * @param frame - Current pitched frame.
+ * @param options - Tolerance options.
+ * @returns A HOLDING_NOTE event if matched, else null.
+ * @internal
+ */
 function checkHoldingStatus(
   state: { currentSegmentStart: number | null },
   currentTarget: TargetNote,
@@ -341,6 +379,12 @@ function checkHoldingStatus(
   return null
 }
 
+/**
+ * Parses a frequency into a musical note and cents deviation.
+ * @param pitchHz - Frequency in Hz.
+ * @returns Object with noteName and cents.
+ * @internal
+ */
 function parseMusicalNote(pitchHz: number) {
   let noteClass: MusicalNoteClass | null = null
   try {
@@ -358,6 +402,14 @@ function parseMusicalNote(pitchHz: number) {
 }
 
 
+/**
+ * Calculates the expected timing for a note based on BPM and exercise structure.
+ * @param options - Stream options including BPM and exercise.
+ * @param currentIndex - Current note index.
+ * @param firstOnsetTime - Actual start time of the first note in the session.
+ * @returns Expected start time and duration.
+ * @internal
+ */
 function calculateRhythmExpectations(
   options: NoteStreamOptions,
   currentIndex: number,
@@ -393,7 +445,7 @@ function calculateRhythmExpectations(
  *
  * **Critical Performance**: The pipeline runs at 60+ fps.
  * Ensure that any dynamic options provided as getters:
- * 1. Are fast (< 1ms)
+ * 1. Are fast (`< 1ms`)
  * 2. Return consistent values for the same underlying state
  * 3. Use memoized selectors if possible
  *

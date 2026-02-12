@@ -24,6 +24,12 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    * Creates an instance of WebAudioFrameAdapter.
    *
    * @param analyser - The Web Audio AnalyserNode to pull data from.
+   *
+   * @example
+   * ```ts
+   * const analyser = audioContext.createAnalyser();
+   * const adapter = new WebAudioFrameAdapter(analyser);
+   * ```
    */
   constructor(
     private analyser: AnalyserNode
@@ -52,6 +58,9 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    *
    * @remarks
    * The sample rate is determined by the hardware and browser settings (typically 44100Hz or 48000Hz).
+   * It is used by pitch detection algorithms to map frequency bins to Hertz.
+   *
+   * @returns The sample rate in Hz.
    */
   get sampleRate(): number {
     return this.analyser.context.sampleRate
@@ -76,7 +85,13 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
   /**
    * Creates an instance of WebAudioLoopAdapter.
    *
-   * @param framePort - The source of audio frames.
+   * @param framePort - The source of audio frames (Hardware/Web Audio).
+   *
+   * @example
+   * ```ts
+   * const frameAdapter = new WebAudioFrameAdapter(analyser);
+   * const loopAdapter = new WebAudioLoopAdapter(frameAdapter);
+   * ```
    */
   constructor(private framePort: AudioFramePort) {}
 
@@ -138,6 +153,12 @@ export class PitchDetectorAdapter implements PitchDetectionPort {
    * Creates an instance of PitchDetectorAdapter.
    *
    * @param detector - The underlying pitch detector implementation.
+   *
+   * @example
+   * ```ts
+   * const detector = new PitchDetector(44100);
+   * const adapter = new PitchDetectorAdapter(detector);
+   * ```
    */
   constructor(public readonly detector: PitchDetector) {}
 

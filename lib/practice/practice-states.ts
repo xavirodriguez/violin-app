@@ -153,8 +153,13 @@ export const transitions = {
   /**
    * Transitions the system to the initializing state.
    *
-   * @param exercise - The exercise to initialize resources for.
+   * @param exercise - The {@link Exercise} to initialize resources for.
    * @returns A new {@link InitializingState}.
+   *
+   * @example
+   * ```ts
+   * const nextState = transitions.initialize(exercise);
+   * ```
    */
   initialize: (exercise: Exercise | null): InitializingState => ({
     status: 'initializing',
@@ -168,6 +173,11 @@ export const transitions = {
    *
    * @param resources - The audio loop, detector, and exercise that are now initialized.
    * @returns A new {@link ReadyState}.
+   *
+   * @example
+   * ```ts
+   * const nextState = transitions.ready({ audioLoop, detector, exercise });
+   * ```
    */
   ready: (resources: {
     audioLoop: AudioLoopPort
@@ -182,10 +192,15 @@ export const transitions = {
   /**
    * Transitions from ready to active, commencing the session execution.
    *
-   * @param state - The current ready state containing initialized ports.
+   * @param state - The current {@link ReadyState} containing initialized ports.
    * @param runner - The implementation of the session orchestrator.
    * @param abortController - The controller that will be used to stop this specific session.
    * @returns A new {@link ActiveState}.
+   *
+   * @example
+   * ```ts
+   * const active = transitions.start(readyState, runner, controller);
+   * ```
    */
   start: (
     state: ReadyState,
@@ -211,7 +226,7 @@ export const transitions = {
   /**
    * Transitions back to idle from active or ready, performing a graceful stop.
    *
-   * @param state - The current state to stop.
+   * @param state - The current {@link ActiveState} or {@link ReadyState} to stop.
    * @returns A new {@link IdleState} with the exercise selection preserved.
    */
   stop: (state: ActiveState | ReadyState): IdleState => ({
@@ -223,7 +238,7 @@ export const transitions = {
   /**
    * Transitions to the error state due to a failure in initialization or execution.
    *
-   * @param error - The application-specific error encountered.
+   * @param error - The {@link AppError} encountered.
    * @param exercise - Optional exercise context for the error.
    * @returns A new {@link ErrorState}.
    */

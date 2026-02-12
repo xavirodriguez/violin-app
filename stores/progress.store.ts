@@ -135,7 +135,12 @@ interface ProgressActions {
    * 4. Automatically triggers a technical `snapshot` every 50 events.
    * 5. Prunes the event buffer to remove items older than 90 days.
    *
-   * @param session - The completed session data to persist and analyze.
+   * @param session - The completed {@link PracticeSession} data to persist and analyze.
+   *
+   * @example
+   * ```ts
+   * progressStore.addSession(completedSession);
+   * ```
    */
   addSession: (session: PracticeSession) => void
 

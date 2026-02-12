@@ -53,7 +53,7 @@ const DEFAULT_CENTS_TOLERANCE = 25
 /**
  * Header component for the practice mode, displaying the exercise name.
  *
- * @param props - Component props.
+ * @param exerciseName - The name of the exercise to display.
  * @internal
  */
 function PracticeHeader({ exerciseName }: { exerciseName?: string }) {
@@ -150,7 +150,8 @@ function ExerciseLibrary({
 /**
  * Display for application-level errors during practice.
  *
- * @param props - Component props.
+ * @param error - The error message to display.
+ * @param onReset - Callback to reset the practice state.
  * @internal
  */
 function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }) {
@@ -173,7 +174,14 @@ function ErrorDisplay({ error, onReset }: { error: string; onReset: () => void }
 /**
  * Control bar for starting, stopping, and monitoring practice progress.
  *
- * @param props - Component props.
+ * @param status - Current status of the practice state machine.
+ * @param hasExercise - Whether an exercise is currently loaded in the store.
+ * @param onStart - Callback to start the practice session.
+ * @param onStop - Callback to stop the practice session.
+ * @param onRestart - Callback to restart the current exercise.
+ * @param progress - Completion progress (0-100).
+ * @param currentNoteIndex - Index of the current target note.
+ * @param totalNotes - Total number of notes in the exercise.
  * @internal
  */
 function PracticeControls({
@@ -244,7 +252,14 @@ function PracticeControls({
 /**
  * View displaying real-time feedback and fingerboard visualization during practice.
  *
- * @param props - Component props.
+ * @param status - Machine status.
+ * @param targetNote - The note the user should be playing.
+ * @param targetPitchName - Formatted name of the target pitch.
+ * @param lastDetectedNote - Latest note detected by the audio pipeline.
+ * @param liveObservations - Heuristic observations about current performance.
+ * @param holdDuration - How long the current note has been held in tune.
+ * @param perfectNoteStreak - Number of consecutive notes played perfectly.
+ * @param zenMode - Whether Zen Mode is active (hides distractions).
  * @internal
  */
 function PracticeActiveView({
@@ -308,7 +323,10 @@ function PracticeActiveView({
 /**
  * Display for musical notation using OpenSheetMusicDisplay.
  *
- * @param props - Component props.
+ * @param musicXML - MusicXML string to render.
+ * @param isReady - Whether OSMD has finished rendering.
+ * @param error - Rendering error, if any.
+ * @param containerRef - Reference to the container element for OSMD.
  * @internal
  */
 function SheetMusicView({

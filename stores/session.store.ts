@@ -86,11 +86,16 @@ interface SessionActions {
    * Starts a new practice session recording.
    *
    * @remarks
-   * Resets the `current` session state with initial metadata.
+   * Resets the `current` session state with initial metadata and a new UUID.
    *
    * @param exerciseId - Unique ID of the exercise.
    * @param exerciseName - Display name of the exercise.
    * @param mode - The session mode. Defaults to 'practice'.
+   *
+   * @example
+   * ```ts
+   * sessionStore.start("scale_d_major", "D Major Scale", "practice");
+   * ```
    */
   start: (exerciseId: string, exerciseName: string, mode?: 'tuner' | 'practice') => void
 
@@ -98,9 +103,18 @@ interface SessionActions {
    * Ends the current session, calculates final metrics, and returns the data.
    *
    * @remarks
-   * This method calculates the final accuracy and duration before clearing the active session.
+   * This method calculates the final accuracy based on total attempts vs completions
+   * and the total duration before clearing the active session.
    *
-   * @returns The completed {@link PracticeSession} or null if no session was active.
+   * @returns The completed {@link PracticeSession} or `null` if no session was active.
+   *
+   * @example
+   * ```ts
+   * const session = sessionStore.end();
+   * if (session) {
+   *   console.log(`Session accuracy: ${session.accuracy}%`);
+   * }
+   * ```
    */
   end: () => PracticeSession | null
 
@@ -109,12 +123,17 @@ interface SessionActions {
    *
    * @remarks
    * This method updates the rolling average of cents deviation for the note.
-   * It is intended to be called at high frequency from the audio pipeline.
+   * It is intended to be called at high frequency from the audio pipeline (e.g. 60Hz).
    *
    * @param noteIndex - Index of the note in the exercise.
-   * @param pitch - Detected scientific pitch name.
-   * @param cents - Pitch deviation in cents.
-   * @param inTune - Whether the attempt was within the current tolerance.
+   * @param pitch - Detected scientific pitch name (e.g., "G3").
+   * @param cents - Pitch deviation in cents from the ideal frequency.
+   * @param inTune - Whether the attempt was within the current pedagogical tolerance.
+   *
+   * @example
+   * ```ts
+   * sessionStore.recordAttempt(0, "A4", -5, true);
+   * ```
    */
   recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
 
@@ -123,10 +142,16 @@ interface SessionActions {
    *
    * @remarks
    * Updates the perfect note streak if the average deviation is `< 5` cents.
+   * This signals that the user has held the note stable for the required duration.
    *
    * @param noteIndex - Index of the completed note.
-   * @param timeMs - Total time taken to complete the note.
-   * @param technique - Optional technique metrics (e.g. onset error).
+   * @param timeMs - Total time taken to complete the note in milliseconds.
+   * @param technique - Optional {@link NoteTechnique} metrics (e.g. onset error).
+   *
+   * @example
+   * ```ts
+   * sessionStore.recordCompletion(0, 500, { rhythm: { onsetErrorMs: 10 } });
+   * ```
    */
   recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void
 }

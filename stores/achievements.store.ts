@@ -59,7 +59,15 @@ interface AchievementsActions {
    * 3. Updates both `unlocked` and `pending` states atomically.
    *
    * @param stats - Current practice performance and long-term progress metrics.
-   * @returns Array of newly unlocked achievements in this specific check cycle.
+   * @returns Array of newly unlocked {@link Achievement} objects in this specific check cycle.
+   *
+   * @example
+   * ```ts
+   * const newUnlocked = achievementsStore.check(currentStats);
+   * if (newUnlocked.length > 0) {
+   *   console.log(`Unlocked: ${newUnlocked[0].name}`);
+   * }
+   * ```
    */
   check: (stats: AchievementCheckStats) => Achievement[]
 

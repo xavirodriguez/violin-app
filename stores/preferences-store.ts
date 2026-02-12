@@ -31,6 +31,11 @@ interface PreferencesStore extends UserPreferences {
    * details are shown to the user during practice.
    *
    * @param level - The new feedback level (e.g., 'beginner', 'advanced').
+   *
+   * @example
+   * ```ts
+   * preferencesStore.setFeedbackLevel("beginner");
+   * ```
    */
   setFeedbackLevel: (level: FeedbackLevel) => void
 
@@ -59,6 +64,11 @@ interface PreferencesStore extends UserPreferences {
 
   /**
    * Resets all preferences to their initial factory default values.
+   *
+   * @example
+   * ```ts
+   * preferencesStore.resetToDefaults();
+   * ```
    */
   resetToDefaults: () => void
 }
