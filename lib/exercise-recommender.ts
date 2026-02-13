@@ -30,12 +30,6 @@ type UserProgress = AnalyticsStore['progress']
  * if (rec) console.log(`We recommend: ${rec.name}`);
  * ```
  *
- * @example
- * ```ts
- * const nextExercise = getRecommendedExercise(allExercises, progress, "scale_c_major");
- * console.log(`Recommended: ${nextExercise.name}`);
- * ```
- *
  * @public
  */
 export function getRecommendedExercise(

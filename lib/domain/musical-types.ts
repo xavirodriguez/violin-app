@@ -286,7 +286,7 @@ export interface TunerStore {
    * Sensitivity of the input (0-100).
    *
    * @remarks
-   * Maps to internal gain: `0 -\> 0x`, `50 -\> 1x`, `100 -\> 2x`.
+   * Maps to internal gain: `0 -> 0x`, `50 -> 1x`, `100 -> 2x`.
    */
   sensitivity: number
 

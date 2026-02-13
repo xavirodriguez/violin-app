@@ -45,6 +45,9 @@ import { Observation, NoteTechnique } from '@/lib/technique-types'
  * asynchronous state updates in real-time loops. Functional updaters are used in all
  * `set()` calls to ensure state consistency.
  *
+ * **Performance**: The store is designed to handle high-frequency updates (60Hz) from the
+ * audio pipeline. To minimize re-renders, components should use selective selectors.
+ *
  * @public
  */
 export interface PracticeStore {
@@ -82,6 +85,9 @@ export interface PracticeStore {
 
   /**
    * The Web Audio AnalyserNode used for real-time visualization (e.g., Oscilloscope).
+   *
+   * @remarks
+   * This node can be connected to custom UI visualizers for waveforms or frequency spectrums.
    */
   analyser: AnalyserNode | null
 
@@ -118,9 +124,6 @@ export interface PracticeStore {
    *
    * @param exercise - The musical exercise to load.
    * @returns A promise that resolves when the exercise is loaded and the store is reset.
-   *
-   * @remarks
-   * Calling this method automatically stops any currently running session.
    */
   loadExercise: (exercise: Exercise) => Promise<void>
 
@@ -247,6 +250,7 @@ function getUpdatedLiveObservations(state: PracticeState): Observation[] {
 
 /** Types for safe functional updates within the store. */
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>
+/** A partial update or a function that returns a partial update for the store. */
 type SafePartial = Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
 
 /**
@@ -286,7 +290,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         error: null,
         liveObservations: [],
         sessionToken: null,
-      })
+      }))
     },
 
     setAutoStart: (enabled) => set((s) => ({ ...s, autoStartEnabled: enabled })),
@@ -373,7 +377,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
 
         const currentToken = crypto.randomUUID()
-        const sessionStartTime = Date.now()
         const abortController = new AbortController()
 
         const safeSet = (partial: SafePartial) => {
@@ -470,7 +473,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           sessionToken: currentToken,
           isStarting: false,
           error: null,
-        })
+        }))
 
         // Sync with TunerStore
         const detectorInstance = (storeState as any).detector?.detector || null

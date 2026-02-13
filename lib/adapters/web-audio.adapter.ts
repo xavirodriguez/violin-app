@@ -36,7 +36,10 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    *
    * @remarks
    * This method uses `getFloatTimeDomainData` which provides PCM samples
-   * in the range [-1.0, 1.0]. The returned buffer is shared across calls.
+   * in the range `[-1.0, 1.0]`. The returned buffer is shared across calls.
+   *
+   * **Performance**: This operation is $O(N)$ where $N$ is the `fftSize`. It is
+   * typically very fast as it is implemented in highly optimized browser C++ code.
    *
    * @returns A {@link Float32Array} containing the audio samples. Note that
    * this is a reference to the internal pre-allocated buffer; if you need to
@@ -87,6 +90,10 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
    * The loop uses a recursive `requestAnimationFrame` pattern. It handles
    * cleanup by removing the abort listener once the signal is triggered.
    *
+   * **Concurrency**: This method returns a Promise that only resolves when the
+   * `signal` is aborted. It is safe to call multiple times if using different signals,
+   * but typically only one loop should be active per hardware source.
+   *
    * @param onFrame - Callback for each audio frame.
    * @param signal - AbortSignal to stop the loop.
    * @returns A promise that resolves when the loop is terminated.
@@ -94,6 +101,7 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
    * @example
    * ```ts
    * const controller = new AbortController();
+   * const loop = new WebAudioLoopAdapter(framePort);
    * await loop.start((frame) => analyze(frame), controller.signal);
    * ```
    */

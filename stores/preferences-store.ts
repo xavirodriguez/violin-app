@@ -39,21 +39,31 @@ interface PreferencesStore extends UserPreferences {
    *
    * @remarks
    * When disabled, the UI shows more abstract "In Tune" / "Sharp" feedback.
+   * Useful for younger students who might be overwhelmed by raw numbers.
    */
   toggleTechnicalDetails: () => void
 
   /**
    * Toggles celebratory UI effects (e.g., confetti) on exercise completion.
+   *
+   * @remarks
+   * Celebrations provide positive reinforcement but can be distracting for some users.
    */
   toggleCelebrations: () => void
 
   /**
    * Toggles haptic feedback for mobile devices.
+   *
+   * @remarks
+   * Provides physical cues for note matching and errors. Requires hardware support.
    */
   toggleHaptics: () => void
 
   /**
    * Toggles audio-based feedback cues (beeps/tones) for correctness.
+   *
+   * @remarks
+   * Can assist students in maintaining focus without constantly looking at the screen.
    */
   toggleSoundFeedback: () => void
 

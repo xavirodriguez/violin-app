@@ -62,7 +62,7 @@ interface PracticeFeedbackProps {
   requiredHoldTime?: number
 
   /**
-   * Current count of consecutive notes played with high accuracy (< 5 cents).
+   * Current count of consecutive notes played with high accuracy (`< 5` cents).
    */
   perfectNoteStreak?: number
 }

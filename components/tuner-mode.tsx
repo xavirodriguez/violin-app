@@ -36,11 +36,6 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * <TunerMode />
  * ```
  *
- * @example
- * ```tsx
- * <TunerMode />
- * ```
- *
  * @public
  */
 export function TunerMode() {
@@ -71,6 +66,9 @@ export function TunerMode() {
    *
    * **Memory Management**: The `buffer` is allocated once per effect cycle to
    * minimize garbage collection pressure during the 60FPS loop.
+   *
+   * **Resource Cleanup**: The effect ensures the animation frame is cancelled
+   * when the component unmounts or the analyzer state changes.
    */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {

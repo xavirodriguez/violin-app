@@ -20,7 +20,7 @@ import { PracticeSessionRunner } from './session-runner'
  * 5. `error`: A terminal error occurred (e.g., mic access denied).
  *
  * **State Flow**:
- * `idle` -\> `initializing` -\> `ready` -\> `active` -\> `idle` (or `error`)
+ * `idle` → `initializing` → `ready` → `active` → `idle` (or `error`)
  *
  * @public
  */
