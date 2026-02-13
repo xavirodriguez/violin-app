@@ -29,6 +29,14 @@ import { Observation, Ratio01 } from './technique-types'
  * @returns An array of {@link Observation} objects, prioritized and limited to the top 2 most relevant ones.
  *          Returns an empty array if there is insufficient data or signal is lost.
  *
+ * @example
+ * ```ts
+ * const observations = calculateLiveObservations(history, "A4");
+ * if (observations.length > 0) {
+ *   console.log(observations[0].message); // e.g., "Consistently sharp"
+ * }
+ * ```
+ *
  * @public
  */
 export function calculateLiveObservations(

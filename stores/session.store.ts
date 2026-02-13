@@ -111,6 +111,9 @@ interface SessionActions {
    * This method updates the rolling average of cents deviation for the note.
    * It is intended to be called at high frequency from the audio pipeline.
    *
+   * **Side Effects**: Automatically updates the overall session accuracy based
+   * on the `wasInTune` status of the attempt.
+   *
    * @param noteIndex - Index of the note in the exercise.
    * @param pitch - Detected scientific pitch name.
    * @param cents - Pitch deviation in cents.

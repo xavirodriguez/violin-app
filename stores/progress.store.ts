@@ -300,6 +300,7 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
  *
  * @remarks
  * Analyzes the last 10 sessions to determine a normalized accuracy score.
+ * It also considers the trend (improvement or decline) over the last 5 sessions.
  *
  * @param sessions - Recent historical data.
  * @returns Skill score (0-100).
@@ -318,8 +319,12 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
  * Heuristic for calculating rhythm skill from session history.
  *
  * @remarks
- * Combines Mean Absolute Error (MAE) and "In Window" percentage (timing errors `<= 40ms`)
+ * Combines Mean Absolute Error (MAE) and "In Window" percentage (timing errors `\<= 40ms`)
  * to determine rhythmic stability.
+ *
+ * **Weighting**:
+ * - MAE Score (50%): Penalizes large timing deviations.
+ * - Window Success (50%): Rewards consistency within a professional tolerance.
  *
  * @param sessions - Recent historical data.
  * @returns Skill score (0-100).

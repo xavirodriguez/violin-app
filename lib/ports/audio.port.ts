@@ -21,11 +21,10 @@ export interface AudioFramePort {
    * pre-allocated internal buffer. Consumers should **not** mutate this buffer
    * and should copy the data if it needs to be persisted across multiple frames.
    *
-   * @returns A buffer of PCM samples as 32-bit floats, typically in the range [-1.0, 1.0].
+   * **Side Effects**: Calling this method may update internal pointers or indices
+   * in streaming implementations.
    *
-   * @remarks
-   * For performance reasons, implementations may return a reference to a recycled internal buffer.
-   * Consumers should copy the data if it needs to be preserved.
+   * @returns A buffer of PCM samples as 32-bit floats, typically in the range `[-1.0, 1.0]`.
    */
   getFrame(): Float32Array
 
@@ -36,6 +35,8 @@ export interface AudioFramePort {
    * This value is critical for accurate pitch detection algorithms that rely on
    * time-frequency transformations. It is assumed to be constant for the duration
    * of the port's lifecycle.
+   *
+   * @defaultValue 44100 (commonly)
    */
   readonly sampleRate: number
 }
@@ -60,13 +61,12 @@ export interface PitchDetectionPort {
    * The detection algorithm's complexity (e.g., YIN, McLeod, FFT-based) determines
    * the latency of this call. High-frequency pipelines should monitor execution time.
    *
-   * @param frame - The raw audio samples to analyze.
-   * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
-   *
-   * @remarks
    * **Error Handling**:
    * This method should not throw. If detection fails or signal is too weak, it should
    * return a result with `confidence: 0` and `pitchHz: 0` (or `NaN`).
+   *
+   * @param frame - The raw audio samples to analyze.
+   * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
    */
   detect(frame: Float32Array): PitchDetectionResult
 
@@ -100,6 +100,10 @@ export interface AudioLoopPort {
    * @remarks
    * The loop execution is tied to the provided `signal`. Once the signal is aborted,
    * the loop must terminate promptly and resolve the returned promise.
+   *
+   * **Resource Management**:
+   * Implementations should ensure that any hardware resources or background tasks
+   * started by the loop are cleaned up when the signal is aborted.
    *
    * @param onFrame - A callback executed for each new frame delivered by the hardware/source.
    * @param signal - An {@link AbortSignal} to gracefully terminate the loop.

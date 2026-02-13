@@ -104,6 +104,11 @@ export function SheetMusicAnnotations({
 
   /**
    * Effect to calculate and update visual coordinates.
+   *
+   * @remarks
+   * This effect recalculates the position of annotations whenever the active note
+   * changes or the window is resized. It uses `getBoundingClientRect` to map
+   * SVG elements to screen space.
    */
   useEffect(() => {
     if (!osmd || !osmd.GraphicSheet || !containerRef.current) return

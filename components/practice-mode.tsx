@@ -414,6 +414,9 @@ export function PracticeMode() {
    * This effect initializes the `createPracticeEventPipeline` when the user enters
    * the 'listening' status. It connects raw audio data to the store via `consumePipelineEvents`.
    * It handles clean-up via an `AbortController` to prevent memory leaks and race conditions.
+   *
+   * **Side Effects**: Automatically updates the store's `practiceState` and `liveObservations`
+   * as events flow through the pipeline.
    */
   useEffect(() => {
     if (practiceState?.status !== 'listening') return
@@ -478,8 +481,8 @@ export function PracticeMode() {
    * Keyboard shortcuts effect.
    *
    * @remarks
-   * - Space: Toggle start/stop.
-   * - Z: Toggle Zen Mode.
+   * - `Space`: Toggle start/stop.
+   * - `Z`: Toggle Zen Mode.
    */
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
