@@ -286,7 +286,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         error: null,
         liveObservations: [],
         sessionToken: null,
-      })
+      }))
     },
 
     setAutoStart: (enabled) => set((s) => ({ ...s, autoStartEnabled: enabled })),
@@ -470,7 +470,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           sessionToken: currentToken,
           isStarting: false,
           error: null,
-        })
+        }))
 
         // Sync with TunerStore
         const detectorInstance = (storeState as any).detector?.detector || null
