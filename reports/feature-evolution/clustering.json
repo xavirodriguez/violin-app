@@ -1,0 +1,34 @@
+{
+  "clusters": [
+    {
+      "cluster_id": "pedagogical_visuals",
+      "type": "business_domain",
+      "features": ["FEATURE_UI_INTONATION_HEATMAPS"],
+      "characteristics": {
+        "shared_context": "Visual feedback for music education",
+        "can_grow_together": true,
+        "combined_impact": "high",
+        "shared_risks": ["UI clutter"]
+      }
+    },
+    {
+      "cluster_id": "performance_engine",
+      "type": "technical_initiative",
+      "features": ["FEATURE_AUDIO_WEB_WORKER"],
+      "characteristics": {
+        "shared_context": "Core engine performance and latency",
+        "can_grow_together": true,
+        "combined_impact": "critical",
+        "shared_risks": ["Synchronization", "Threading complexity"]
+      }
+    }
+  ],
+  "optimization_opportunities": [
+    {
+      "opportunity": "Bundle Heatmaps with Analytics promotion",
+      "features_involved": ["FEATURE_UI_INTONATION_HEATMAPS"],
+      "synergy_benefit": "Strengthens the value proposition of the analytics dashboard.",
+      "implementation_complexity": "low"
+    }
+  ]
+}

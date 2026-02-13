@@ -1,0 +1,116 @@
+{
+  "growth_opportunities": [
+    {
+      "opportunity_id": "STABLE_PROMOTION_HEATMAPS",
+      "primary_feature": "FEATURE_UI_INTONATION_HEATMAPS",
+      "growth_type": "expand_to_all_users",
+      "current_state": "Beta, disabled by default",
+      "opportunity_description": "Promote to stable and enable for all users to enhance the pedagogical value of the analytics dashboard.",
+      "rationale": {
+        "why_now": "High maturity and positive internal feedback.",
+        "user_benefit": "Immediate visual feedback on intonation trends.",
+        "business_benefit": "Increases product value and student retention.",
+        "technical_readiness": "100% ready for stable."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "General Availability",
+          "duration_weeks": 1,
+          "rollout_percentage": 1.0,
+          "success_metrics": ["adoption_rate > 90%"],
+          "go_no_go_criteria": "No critical UI regressions"
+        }
+      },
+      "required_work": [
+        {
+          "task": "Update feature flag metadata and default value.",
+          "effort_hours": 1,
+          "priority": "high",
+          "blocking": false
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 1,
+        "product_involvement": "low",
+        "qe_hours": 2,
+        "design_review": true
+      },
+      "success_metrics": {
+        "adoption_rate": { "target": 90, "current": 10, "unit": "percentage" }
+      },
+      "rollback_plan": {
+        "trigger": "Unexpected layout breaking",
+        "steps": ["Revert default value to false"],
+        "recovery_time_estimate_minutes": 5
+      },
+      "confidence_score": 0.95,
+      "recommendation_strength": "STRONG"
+    },
+    {
+      "opportunity_id": "WORKER_IMPLEMENTATION_START",
+      "primary_feature": "FEATURE_AUDIO_WEB_WORKER",
+      "growth_type": "increase_capabilities",
+      "current_state": "Planned, no code",
+      "opportunity_description": "Start the technical implementation of the web worker to move DSP off the main thread.",
+      "rationale": {
+        "why_now": "Critical for mobile performance and complex analysis.",
+        "user_benefit": "Smoother UI and more reliable detection.",
+        "business_benefit": "Support for a wider range of user devices.",
+        "technical_readiness": "Architecture ready for transition."
+      },
+      "growth_path": {
+        "phase_1": {
+          "name": "Skeleton Implementation",
+          "duration_weeks": 2,
+          "rollout_percentage": 0.0,
+          "success_metrics": ["Worker communication established"],
+          "go_no_go_criteria": "Stable message passing"
+        }
+      },
+      "required_work": [
+        {
+          "task": "Create worker stub and message bridge.",
+          "effort_hours": 8,
+          "priority": "high",
+          "blocking": true
+        }
+      ],
+      "resource_requirements": {
+        "engineering_hours": 20,
+        "product_involvement": "low",
+        "qe_hours": 5,
+        "design_review": false
+      },
+      "success_metrics": {
+        "performance": { "target": "0ms main thread jank", "current": "Varies" }
+      },
+      "rollback_plan": {
+        "trigger": "Sync issues",
+        "steps": ["Disable flag"],
+        "recovery_time_estimate_minutes": 1
+      },
+      "confidence_score": 0.7,
+      "recommendation_strength": "MODERATE"
+    }
+  ],
+  "prioritized_queue": [
+    {
+      "rank": 1,
+      "opportunity_id": "STABLE_PROMOTION_HEATMAPS",
+      "recommended_start_date": "2025-05-22T00:00:00Z",
+      "expected_completion_date": "2025-05-22T23:59:59Z",
+      "impact_if_successful": "Immediate UI improvement for all users."
+    },
+    {
+      "rank": 2,
+      "opportunity_id": "WORKER_IMPLEMENTATION_START",
+      "recommended_start_date": "2025-05-23T00:00:00Z",
+      "expected_completion_date": "2025-06-05T00:00:00Z",
+      "impact_if_successful": "Major performance boost and technical debt reduction."
+    }
+  ],
+  "next_30_days_focus": [
+    "FEATURE_UI_INTONATION_HEATMAPS",
+    "FEATURE_AUDIO_WEB_WORKER"
+  ]
+}

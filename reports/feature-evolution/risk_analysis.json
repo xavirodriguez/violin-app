@@ -1,0 +1,64 @@
+{
+  "features_with_risks": [
+    {
+      "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+      "risk_level": "critical",
+      "risks": [
+        {
+          "id": "risk_001",
+          "type": "performance",
+          "description": "Post-message overhead might exceed processing savings if not carefully implemented.",
+          "probability": 0.4,
+          "impact": 0.8,
+          "risk_score": 0.32,
+          "mitigation_strategy": "Use SharedArrayBuffer or transferable objects for audio data.",
+          "blocker": false
+        },
+        {
+          "id": "risk_002",
+          "type": "breaking_change",
+          "description": "Refactoring the entire pipeline to async worker communication could break the 60Hz feedback loop.",
+          "probability": 0.6,
+          "impact": 1.0,
+          "risk_score": 0.6,
+          "mitigation_strategy": "Implement a fallback to main thread processing.",
+          "blocker": true
+        }
+      ],
+      "growth_blockers": [
+        {
+          "blocker": "Lack of SharedArrayBuffer support in some browsers",
+          "resolution_steps": ["Check for cross-origin isolation requirements", "Implement fallback"]
+        }
+      ],
+      "growth_enablers": [
+        {
+          "enabler": "Movable DSP logic",
+          "effort": "high",
+          "impact": "Enables much more complex analysis without jank."
+        }
+      ]
+    },
+    {
+      "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "risk_level": "low",
+      "risks": [
+        {
+          "id": "risk_003",
+          "type": "performance",
+          "description": "Rendering complex SVG heatmaps might slow down the dashboard.",
+          "probability": 0.2,
+          "impact": 0.3,
+          "risk_score": 0.06,
+          "mitigation_strategy": "Memoize chart components.",
+          "blocker": false
+        }
+      ],
+      "growth_blockers": [],
+      "growth_enablers": []
+    }
+  ],
+  "critical_path_features": [
+    "FEATURE_AUDIO_WEB_WORKER"
+  ]
+}

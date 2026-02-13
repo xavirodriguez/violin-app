@@ -1,0 +1,154 @@
+[
+  {
+    "feature_id": "FEATURE_UI_INTONATION_HEATMAPS",
+    "scoring": {
+      "maturity": {
+        "score": 8,
+        "rationale": "Code is integrated and functional in the analytics dashboard.",
+        "factors": {
+          "code_quality": 8,
+          "test_coverage": 0,
+          "documentation": 9,
+          "stability_over_time": 9,
+          "bug_frequency": 2
+        }
+      },
+      "business_value": {
+        "score": 9,
+        "rationale": "High pedagogical value for music students.",
+        "factors": {
+          "user_impact": 9,
+          "revenue_potential": 5,
+          "strategic_alignment": 10,
+          "competitive_advantage": 9,
+          "market_demand": 8
+        }
+      },
+      "adoption_readiness": {
+        "score": 9,
+        "rationale": "Ready for general rollout.",
+        "factors": {
+          "current_users": 100,
+          "feature_discoverability": 9,
+          "onboarding_complexity": 2,
+          "performance_impact": 3,
+          "ui_ux_quality": 8
+        }
+      },
+      "technical_debt": {
+        "score": 2,
+        "rationale": "Implementation is clean and follows project standards.",
+        "factors": {
+          "code_complexity": 3,
+          "refactor_needs": 2,
+          "performance_debt": 2,
+          "security_concerns": 0,
+          "scalability_limits": 2
+        }
+      },
+      "growth_potential": {
+        "score": 7,
+        "rationale": "Can be expanded with real-time feedback over notation.",
+        "factors": {
+          "feature_expansion_possibilities": 8,
+          "market_expansion": 5,
+          "integration_opportunities": 7,
+          "monetization_potential": 4,
+          "ecosystem_value": 8
+        }
+      },
+      "risk_profile": {
+        "score": 1,
+        "rationale": "Low risk as it is a visualization of existing data.",
+        "factors": {
+          "breaking_change_risk": 1,
+          "security_risk": 0,
+          "performance_risk": 2,
+          "compatibility_risk": 1,
+          "migration_risk": 1
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 8.5,
+      "weighted_score": 8.2,
+      "recommendation": "FAST_TRACK"
+    }
+  },
+  {
+    "feature_id": "FEATURE_AUDIO_WEB_WORKER",
+    "scoring": {
+      "maturity": {
+        "score": 2,
+        "rationale": "Only metadata defined, implementation pending.",
+        "factors": {
+          "code_quality": 0,
+          "test_coverage": 0,
+          "documentation": 5,
+          "stability_over_time": 0,
+          "bug_frequency": 0
+        }
+      },
+      "business_value": {
+        "score": 10,
+        "rationale": "Critical for low-end device performance and app stability.",
+        "factors": {
+          "user_impact": 10,
+          "revenue_potential": 3,
+          "strategic_alignment": 10,
+          "competitive_advantage": 7,
+          "market_demand": 6
+        }
+      },
+      "adoption_readiness": {
+        "score": 1,
+        "rationale": "Requires significant implementation before rollout.",
+        "factors": {
+          "current_users": 0,
+          "feature_discoverability": 0,
+          "onboarding_complexity": 0,
+          "performance_impact": 10,
+          "ui_ux_quality": 0
+        }
+      },
+      "technical_debt": {
+        "score": 5,
+        "rationale": "Current main-thread processing is a bottleneck (technical debt).",
+        "factors": {
+          "code_complexity": 8,
+          "refactor_needs": 9,
+          "performance_debt": 10,
+          "security_concerns": 0,
+          "scalability_limits": 8
+        }
+      },
+      "growth_potential": {
+        "score": 9,
+        "rationale": "Enables future advanced real-time DSP features.",
+        "factors": {
+          "feature_expansion_possibilities": 10,
+          "market_expansion": 7,
+          "integration_opportunities": 8,
+          "monetization_potential": 2,
+          "ecosystem_value": 9
+        }
+      },
+      "risk_profile": {
+        "score": 9,
+        "rationale": "High risk of breaking the core audio pipeline.",
+        "factors": {
+          "breaking_change_risk": 10,
+          "security_risk": 0,
+          "performance_risk": 5,
+          "compatibility_risk": 8,
+          "migration_risk": 9
+        }
+      }
+    },
+    "composite_score": {
+      "growth_readiness": 4.5,
+      "weighted_score": 5.8,
+      "recommendation": "GRADUAL"
+    }
+  }
+]
