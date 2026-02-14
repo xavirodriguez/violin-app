@@ -47,7 +47,10 @@ export function getRecommendedExercise(
   const now = Date.now()
   const DAY_MS = 86_400_000
 
-  // Rule 1: persistence on failure
+  // Rule 1: Persistence on failure
+  // If the user recently failed to reach a mastery threshold (80%),
+  // we encourage immediate re-attempt while the technical challenge
+  // is still fresh in their mind.
   if (lastPlayedId) {
     const lastStats = exerciseStats[lastPlayedId]
     if (lastStats && now - lastStats.lastPracticedMs < DAY_MS && lastStats.bestAccuracy < 80) {
@@ -56,7 +59,10 @@ export function getRecommendedExercise(
     }
   }
 
-  // Rule 2: review low accuracy (with possible difficulty step down)
+  // Rule 2: Review low accuracy (with possible difficulty step down)
+  // If historical accuracy is poor (< 70%), we suggest dropping down
+  // one difficulty level within the same category to reinforce
+  // prerequisite technical skills.
   const lowAccuracyExerciseId = Object.keys(exerciseStats).find(id => {
     const stats = exerciseStats[id]
     return stats.bestAccuracy < 70 && stats.timesCompleted > 0

@@ -168,10 +168,13 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      *
      * @remarks
      * **Signal Processing**:
-     * - Implements a confidence threshold (0.85) to filter out ambient noise.
-     * - Automatically transitions to `DETECTED` when a valid signal is found.
-     * - Reverts to `LISTENING` when the signal is lost.
-     * - Uses scientific pitch notation for note naming.
+     * - **Gating**: Implements a strict confidence threshold (0.85) to filter out
+     *   ambient noise and low-energy signals.
+     * - **State Machine**: Automatically transitions the store kind to `DETECTED`
+     *   when a valid signal is found, and reverts to `LISTENING` when the signal
+     *   is lost or falls below the threshold.
+     * - **Domain Mapping**: Uses scientific pitch notation (via {@link MusicalNote})
+     *   to determine the closest chromatic note and its deviation in cents.
      *
      * @param pitch - The detected frequency in Hz.
      * @param confidence - The detector's confidence (0.0 to 1.0).
@@ -275,10 +278,13 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * Switches the preferred audio input device and re-initializes the pipeline.
      *
      * @remarks
-     * Automatically restarts the tuner if it was already active.
+     * **Lifecycle Handling**:
+     * If the tuner is currently active (i.e., not in `IDLE` or `ERROR` state),
+     * this method will automatically trigger a `reset()` and `initialize()`
+     * sequence to apply the new hardware setting without manual user intervention.
      *
      * @param deviceId - The hardware ID of the device to use.
-     * @returns A promise that resolves when the new device is active.
+     * @returns A promise that resolves when the hardware switch and re-initialization are complete.
      */
     setDeviceId: async (deviceId: string) => {
       set({ deviceId })

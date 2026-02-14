@@ -60,17 +60,25 @@ export function TunerMode() {
   const animationFrameRef = useRef<number>(undefined)
 
   /**
-   * Effect that manages the real-time audio analysis loop.
+   * Effect that manages the real-time audio analysis loop for the tuner.
    *
    * @remarks
    * **Workflow**:
-   * 1. Check if the audio graph (analyser) and algorithm (detector) are available.
-   * 2. Initialize a pre-allocated `Float32Array` for time-domain data.
-   * 3. Define the `analyze` recursive function driven by `requestAnimationFrame`.
-   * 4. Call `updatePitch` with the detected results to trigger reactive UI updates.
+   * 1. **Guard**: Verifies that both the `analyser` (Web Audio) and `detector` (algorithm) are initialized.
+   * 2. **Buffer Allocation**: Creates a `Float32Array` sized to the analyser's `fftSize`.
+   * 3. **The Loop**: Uses a recursive `requestAnimationFrame` to achieve low-latency
+   *    visual feedback (approx. 60 updates per second).
+   * 4. **Analysis**: Pulls raw time-domain data and passes it to the pitch detector.
+   * 5. **Store Sync**: Updates the global `TunerStore` with raw frequency and
+   *    confidence values.
    *
-   * **Memory Management**: The `buffer` is allocated once per effect cycle to
-   * minimize garbage collection pressure during the 60FPS loop.
+   * **Memory Management**:
+   * The `buffer` is pre-allocated outside the recursive loop to prevent
+   * high-frequency garbage collection cycles, ensuring smooth UI animations.
+   *
+   * **Cleanup**:
+   * Automatically cancels the `requestAnimationFrame` handle on component
+   * unmount or state changes to prevent background processing.
    */
   useEffect(() => {
     if (!analyser || !detector || isIdle || isError) {

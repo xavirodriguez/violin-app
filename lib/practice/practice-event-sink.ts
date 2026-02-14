@@ -107,7 +107,10 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | n
     return { ...state, practiceState: nextState }
   })
 
-  // 2. Side effects (executed outside of the reducer/updater to ensure consistency and avoid store locking)
+  // 2. Side effects
+  // IMPORTANT: Side effects are executed outside of the store.setState functional
+  // updater to ensure that they don't block the reactive lifecycle or cause
+  // re-entrancy issues within the store itself.
   if (shouldTriggerCompletion) {
     try {
       analytics?.endSession()

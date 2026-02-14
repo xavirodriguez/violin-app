@@ -62,6 +62,8 @@ export function calculateLiveObservations(
   }
 
   // 2. STABILITY ANALYSIS (Pitch Jitter)
+  // Evaluates micro-variations in pitch. High jitter often indicates
+  // poor finger pressure or bow control.
   const centsValues = last10.map(d => d.cents)
   const stdDev = calculateStdDev(centsValues)
   const isUnstable = stdDev > 12
@@ -92,6 +94,8 @@ export function calculateLiveObservations(
   }
 
   // 4. LOW CONFIDENCE ANALYSIS (Tone Quality)
+  // Low confidence from the detector often correlates with poor tone
+  // production (e.g., scratchy bow, weak signal, or room noise).
   const avgConfidence = last10.reduce((sum, d) => sum + d.confidence, 0) / last10.length
   const isLowConfidence = avgConfidence < 0.7
 

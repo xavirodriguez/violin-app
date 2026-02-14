@@ -17,7 +17,7 @@ export type { TargetNote }
  * A valid note name in scientific pitch notation.
  *
  * @example "C4", "F#5", "Bb3"
- * @pattern ^[A-G][#b]?[0-8]$
+ * @remarks Pattern: `^[A-G][#b]?[0-8]$`
  */
 export type NoteName = string & { readonly __brand: unique symbol }
 
@@ -95,7 +95,7 @@ export class MusicalNote {
    *
    * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
    * @returns A MusicalNote instance
-   * @throws {AppError} CODE: NOTE_PARSING_FAILED if format is invalid
+   * @throws {@link AppError} with code `NOTE_PARSING_FAILED` if format is invalid
    *
    * @example
    * ```ts

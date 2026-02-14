@@ -132,10 +132,12 @@ export function SheetMusicAnnotations({
       setCoords(newCoords)
     }
 
-    // Delay calculation slightly to allow OSMD to finish layout updates
+    // Delay calculation slightly (100ms) to allow the OSMD engine to finish
+    // its asynchronous layout and SVG rendering cycle before we query
+    // the DOM for cursor coordinates.
     const timeout = setTimeout(updateCoords, 100)
 
-    // Listen for resize to re-align annotations
+    // Listen for resize to re-align annotations when the browser window changes
     window.addEventListener('resize', updateCoords)
 
     return () => {

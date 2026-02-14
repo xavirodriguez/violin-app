@@ -6,19 +6,71 @@ import { featureFlags } from '../feature-flags'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 
+/**
+ * Configuration context for the {@link PracticeEngine}.
+ *
+ * @public
+ */
 export interface PracticeEngineContext {
+  /** Source of raw audio frames. */
   audio: AudioFramePort
+  /** Algorithm used to detect pitch and confidence. */
   pitch: PitchDetectorPort
+  /** The musical exercise being practiced. */
   exercise: Exercise
+  /** Optional custom reducer for state transitions. Defaults to {@link engineReducer}. */
   reducer?: PracticeReducer
 }
 
+/**
+ * Interface for the core musical practice engine.
+ *
+ * @remarks
+ * The engine is a stateful orchestrator that processes raw audio signals
+ * into high-level musical events (e.g., "Note Matched").
+ *
+ * @public
+ */
 export interface PracticeEngine {
+  /**
+   * Starts the asynchronous engine loop.
+   *
+   * @param signal - An {@link AbortSignal} to terminate the loop.
+   * @returns An async iterator yielding musical events in real-time.
+   */
   start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent>
+
+  /**
+   * Immediately stops the engine and releases internal resources.
+   */
   stop(): void
+
+  /**
+   * Retrieves the current internal state of the engine.
+   */
   getState(): PracticeEngineState
 }
 
+/**
+ * Factory function to create a new {@link PracticeEngine} instance.
+ *
+ * @remarks
+ * **Implementation Details**:
+ * The engine uses a "Pipeline Re-creation" strategy. Whenever a note is
+ * successfully matched, it breaks the inner loop to re-create the
+ * `createPracticeEventPipeline` with the next target note. This ensures
+ * that pedagogical constraints (like required hold time) are accurately
+ * applied to each note in the sequence.
+ *
+ * **Adaptive Difficulty**:
+ * It dynamically calculates `centsTolerance` and `requiredHoldTime` based
+ * on the user's `perfectNoteStreak`.
+ *
+ * @param ctx - The initialization context.
+ * @returns A stateful {@link PracticeEngine} instance.
+ *
+ * @public
+ */
 export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer

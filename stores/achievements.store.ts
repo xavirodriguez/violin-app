@@ -53,10 +53,14 @@ interface AchievementsActions {
    * Checks current practice metrics against the global achievement library.
    *
    * @remarks
-   * This method performs several tasks:
-   * 1. Evaluates `stats` using the `checkAchievements` domain logic.
-   * 2. Identifies new milestones not present in the `unlocked` list.
-   * 3. Updates both `unlocked` and `pending` states atomically.
+   * **Workflow**:
+   * 1. **Evaluation**: Delegates to the pure `checkAchievements` domain logic
+   *    to identify milestones met by the provided `stats`.
+   * 2. **Deduplication**: Filters out milestones that have already been unlocked
+   *    in previous sessions.
+   * 3. **Persistence**: Updates the `unlocked` list with the new achievements.
+   * 4. **Notification**: Adds the new achievements to the `pending` queue to
+   *    ensure they are toasted in the UI.
    *
    * @param stats - Current practice performance and long-term progress metrics.
    * @returns Array of newly unlocked achievements in this specific check cycle.
@@ -67,8 +71,11 @@ interface AchievementsActions {
    * Removes an achievement from the `pending` queue.
    *
    * @remarks
-   * Call this method once the UI (e.g., a toast notification) has successfully
-   * displayed the achievement to the user.
+   * **UI Synchronization**:
+   * This method should be called once the UI (e.g., a `sonner` toast or
+   * `canvas-confetti` animation) has successfully acknowledged the achievement.
+   * It prevents the same milestone from being announced multiple times
+   * upon app reload or navigation.
    *
    * @param id - The unique ID of the achievement to acknowledge.
    */

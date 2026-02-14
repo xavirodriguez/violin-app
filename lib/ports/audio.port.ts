@@ -17,15 +17,17 @@ export interface AudioFramePort {
    * Retrieves the next available frame of audio data.
    *
    * @remarks
-   * For performance reasons, many implementations will return a reference to a
-   * pre-allocated internal buffer. Consumers should **not** mutate this buffer
-   * and should copy the data if it needs to be persisted across multiple frames.
+   * **Performance & Memory**:
+   * For performance reasons, many implementations (like {@link WebAudioFrameAdapter})
+   * will return a reference to a pre-allocated internal buffer. Consumers should
+   * **not** mutate this buffer and should copy the data (e.g., via `.slice()`)
+   * if it needs to be persisted across multiple frames.
    *
-   * @returns A buffer of PCM samples as 32-bit floats, typically in the range [-1.0, 1.0].
+   * **Signal Characteristics**:
+   * The returned buffer contains PCM samples as 32-bit floats, typically
+   * normalized in the range `[-1.0, 1.0]`.
    *
-   * @remarks
-   * For performance reasons, implementations may return a reference to a recycled internal buffer.
-   * Consumers should copy the data if it needs to be preserved.
+   * @returns A {@link Float32Array} of PCM samples.
    */
   getFrame(): Float32Array
 
@@ -57,16 +59,17 @@ export interface PitchDetectionPort {
    * Detects the pitch and confidence of a given audio frame.
    *
    * @remarks
+   * **Performance**:
    * The detection algorithm's complexity (e.g., YIN, McLeod, FFT-based) determines
-   * the latency of this call. High-frequency pipelines should monitor execution time.
+   * the latency of this call. High-frequency pipelines (e.g., 60Hz) should
+   * monitor execution time to avoid dropping frames or causing UI stutter.
    *
-   * @param frame - The raw audio samples to analyze.
+   * **Error Handling & Gating**:
+   * This method should not throw. If detection fails or the signal is too weak,
+   * it should return a result with `confidence: 0` and `pitchHz: 0` (or `NaN`).
+   *
+   * @param frame - The raw PCM audio samples to analyze.
    * @returns A {@link PitchDetectionResult} containing frequency (Hz) and confidence level (0.0 to 1.0).
-   *
-   * @remarks
-   * **Error Handling**:
-   * This method should not throw. If detection fails or signal is too weak, it should
-   * return a result with `confidence: 0` and `pitchHz: 0` (or `NaN`).
    */
   detect(frame: Float32Array): PitchDetectionResult
 
