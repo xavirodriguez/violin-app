@@ -84,4 +84,18 @@ describe('FeatureFlagsManager', () => {
   it('should return provided default value from get() when both env and metadata are missing', () => {
     expect(featureFlags.get('TOTALLY_MISSING' as any, 'custom-default')).toBe('custom-default')
   })
+
+  it('should verify FEATURE_UI_INTONATION_HEATMAPS is STABLE and true by default', () => {
+    const flagName = 'FEATURE_UI_INTONATION_HEATMAPS'
+    const metadata = FEATURE_FLAGS_METADATA[flagName]
+
+    expect(metadata.type).toBe('STABLE')
+    expect(metadata.defaultValue).toBe(true)
+
+    // Ensure it's not overridden in test env
+    delete process.env[flagName]
+    delete process.env[`NEXT_PUBLIC_${flagName}`]
+
+    expect(featureFlags.isEnabled(flagName)).toBe(true)
+  })
 })

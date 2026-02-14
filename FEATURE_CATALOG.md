@@ -54,6 +54,11 @@ These features were previously behind flags but are now a permanent part of the 
 - **Description**: Automatically adjusts intonation thresholds and exercise complexity based on user performance.
 - **Status**: Permanent. Integrated into the Practice Engine.
 
+### Intonation Heatmaps
+- **ID**: `FEATURE_UI_INTONATION_HEATMAPS` (Promoted)
+- **Description**: Visualizes pitch accuracy patterns from the last session in the Analytics Dashboard.
+- **Status**: Stable. Enabled by default.
+
 ---
 
 ## 📋 Active Feature Flags
@@ -61,7 +66,6 @@ These features were previously behind flags but are now a permanent part of the 
 | Flag | Category | Status | Risk |
 | :--- | :--- | :--- | :--- |
 | `FEATURE_AUDIO_WEB_WORKER` | PERFORMANCE | DEFINED | HIGH |
-| `FEATURE_UI_INTONATION_HEATMAPS` | UI_UX | BETA | LOW |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS` | EXPERIMENTAL | PLANNED | HIGH |
 
 ---
@@ -72,11 +76,6 @@ These features were previously behind flags but are now a permanent part of the 
 - **ID**: `FEATURE_AUDIO_WEB_WORKER`
 - **Description**: Moves heavy DSP (Digital Signal Processing) tasks to a background thread.
 - **Status**: Planned to improve UI responsiveness on low-end devices.
-
-### Intonation Heatmaps
-- **ID**: `FEATURE_UI_INTONATION_HEATMAPS`
-- **Description**: Visualizes pitch accuracy patterns from the last session in the Analytics Dashboard.
-- **Status**: BETA. Integrated into Dashboard.
 
 ---
 

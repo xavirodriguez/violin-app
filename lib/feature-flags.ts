@@ -41,9 +41,9 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_UI_INTONATION_HEATMAPS: {
     name: 'FEATURE_UI_INTONATION_HEATMAPS',
     key: 'uiIntonationHeatmaps',
-    type: 'BETA',
+    type: 'STABLE',
     description: 'Show intonation heatmaps in the analytics dashboard.',
-    defaultValue: false,
+    defaultValue: true,
     riskLevel: 'LOW',
     affectedFiles: ['components/analytics-dashboard.tsx'],
     rollbackStrategy: 'Disable the heatmap visualization.'
