@@ -38,6 +38,7 @@ Some features require others to be enabled or have infrastructure dependencies:
 | `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` | Stable | **PROMOTED**: Flag removed, recommendation system is now permanent. |
 | `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM` | Stable | **PROMOTED**: Flag removed, achievement system is now permanent. |
 | `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | Stable | **PROMOTED**: Flag removed, adaptive logic is now core. |
+| `FEATURE_UI_INTONATION_HEATMAPS` | Stable | **PROMOTED**: Feature promoted to stable and enabled by default in Cycle #5. |
 | `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
 
 ## 🚀 Architectural Recommendations

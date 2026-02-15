@@ -1,0 +1,67 @@
+{
+  "discovery_timestamp": "2025-05-22T10:00:00Z",
+  "total_features_detected": 3,
+  "features": [
+    {
+      "id": "FEATURE_AUDIO_WEB_WORKER",
+      "name": "Audio Web Worker",
+      "type": "Performance",
+      "current_state": "alpha",
+      "locations": ["lib/feature-flags.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-15T09:00:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_UI_INTONATION_HEATMAPS",
+      "name": "UI Intonation Heatmaps",
+      "type": "UI",
+      "current_state": "beta",
+      "locations": ["lib/feature-flags.ts", "components/analytics-dashboard.tsx"],
+      "enabled": false,
+      "lines_of_code_affected": 20,
+      "users_affected_estimate": 1000,
+      "dependencies": [],
+      "last_modified": "2025-05-20T14:30:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    },
+    {
+      "id": "FEATURE_SOCIAL_PRACTICE_ROOMS",
+      "name": "Social Practice Rooms",
+      "type": "Infrastructure",
+      "current_state": "experimental",
+      "locations": ["lib/feature-flags.ts"],
+      "enabled": false,
+      "lines_of_code_affected": 0,
+      "users_affected_estimate": 0,
+      "dependencies": [],
+      "last_modified": "2025-05-10T11:00:00Z",
+      "stability_indicators": {
+        "has_tests": false,
+        "test_coverage": 0,
+        "error_rate": 0,
+        "documentation": true
+      }
+    }
+  ],
+  "relationships": {
+    "dependency_graph": {
+        "FEATURE_UI_INTONATION_HEATMAPS": ["FEATURE_ANALYTICS_DASHBOARD"]
+    },
+    "conflicts": [],
+    "orphaned": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"]
+  }
+}

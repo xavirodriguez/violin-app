@@ -54,18 +54,22 @@ export const FEATURE_FLAGS_METADATA = {
     name: 'FEATURE_AUDIO_WEB_WORKER',
     key: 'audioWebWorker',
     type: 'PERFORMANCE',
-    description: 'Offload audio processing to a Web Worker.',
+    description: 'Offload audio processing to a Web Worker for 60Hz+ analysis.',
     defaultValue: false,
     riskLevel: 'HIGH',
-    affectedFiles: ['lib/pitch-detector.ts', 'lib/note-stream.ts'],
+    affectedFiles: [
+      'lib/pitch-detector.ts',
+      'lib/note-stream.ts',
+      'public/workers/audio-processor.worker.ts'
+    ],
     rollbackStrategy: 'Fallback to main-thread audio processing.'
   },
   FEATURE_UI_INTONATION_HEATMAPS: {
     name: 'FEATURE_UI_INTONATION_HEATMAPS',
     key: 'uiIntonationHeatmaps',
-    type: 'BETA',
+    type: 'STABLE',
     description: 'Show intonation heatmaps in the analytics dashboard.',
-    defaultValue: false,
+    defaultValue: true,
     riskLevel: 'LOW',
     affectedFiles: ['components/analytics-dashboard.tsx'],
     rollbackStrategy: 'Disable the heatmap visualization.'
