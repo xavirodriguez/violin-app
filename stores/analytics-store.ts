@@ -171,7 +171,14 @@ export interface AnalyticsStore {
    * Finalizes the current session, updates lifetime stats, and checks for achievements.
    *
    * @remarks
-   * Triggers the `updateStreak`, `calculateSkills`, and `checkAndUnlockAchievements` processes.
+   * This is a multi-step process that:
+   * 1. **Persistence**: Updates per-exercise `ExerciseStats` with new accuracy and timing data.
+   * 2. **Consistency**: Updates the user's daily practice streak.
+   * 3. **Pedagogy**: Recalculates intonation and rhythm skill levels based on new history.
+   * 4. **Gamification**: Checks for and unlocks any new achievements earned.
+   * 5. **Cleanup**: Clears the `currentSession` to ready the store for the next session.
+   *
+   * @returns The completed {@link PracticeSession} summary.
    */
   endSession: () => void
 
@@ -638,7 +645,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
  * Calculates a normalized skill level for intonation based on recent sessions.
  *
  * @remarks
- * Uses a weighted average where recent performance has more impact on the score.
+   * **Algorithm**:
+   * - Takes the last 10 sessions (windowed analysis).
+   * - Calculates a base `avgAccuracy` across the window.
+   * - Applies a `trend` factor: the difference between the most recent 5 sessions
+   *   and the 5 before them.
+   * - Result is clamped between 0 and 100.
  *
  * @param sessions - History of completed sessions.
  * @returns Normalized skill score (0-100).
@@ -788,7 +800,11 @@ function updateNoteResults(
  * Calculates a normalized skill level for rhythm based on recent sessions.
  *
  * @remarks
- * Uses Mean Absolute Error (MAE) of onset times to determine rhythmic precision.
+   * **Algorithm**:
+   * - Aggregates all note results from the last 10 sessions.
+   * - Calculates Mean Absolute Error (MAE) of rhythmic onsets.
+   * - Calculates the percentage of notes played within a "Professional" window (`<= 40ms`).
+   * - Combined score: `(maeScore + percentInWindow) / 2`.
  *
  * @param sessions - Recent session history.
  * @returns Normalized rhythm score (0-100).

@@ -38,22 +38,35 @@ interface PreferencesStore extends UserPreferences {
    * Toggles visibility of technical cents/hertz details in the UI.
    *
    * @remarks
-   * When disabled, the UI shows more abstract "In Tune" / "Sharp" feedback.
+   * When disabled, the UI provides simplified pedagogical feedback (e.g.,
+   * "Too High", "Good!"). When enabled, it reveals raw intonation metrics
+   * (e.g., "+12 cents", "441.2 Hz").
    */
   toggleTechnicalDetails: () => void
 
   /**
    * Toggles celebratory UI effects (e.g., confetti) on exercise completion.
+   *
+   * @remarks
+   * Aimed at increasing student motivation upon mastering an exercise.
    */
   toggleCelebrations: () => void
 
   /**
    * Toggles haptic feedback for mobile devices.
+   *
+   * @remarks
+   * Provides tactile pulses when a note is successfully held for the required
+   * duration. Requires a device that supports the Vibration API.
    */
   toggleHaptics: () => void
 
   /**
    * Toggles audio-based feedback cues (beeps/tones) for correctness.
+   *
+   * @remarks
+   * Useful for blind or low-vision users, or when the screen is not directly
+   * visible during practice.
    */
   toggleSoundFeedback: () => void
 

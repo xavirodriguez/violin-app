@@ -143,9 +143,14 @@ export interface ErrorState {
  * Factory for valid state transitions in the practice system.
  *
  * @remarks
- * These functions enforce the formal invariants of the FSM. They ensure that
- * state objects are always correctly shaped and that transitions follow
- * the intended business logic, preventing "impossible" states.
+ * These functions enforce the formal invariants of the Finite State Machine (FSM).
+ * They ensure that state objects are always correctly shaped and that transitions
+ * follow the intended business logic, preventing "impossible" states (e.g.,
+ * being `active` without a `runner`).
+ *
+ * **Immutability**: Every transition returns a new state object, following
+ * the principles of functional programming and ensuring compatibility with
+ * reactive stores like Zustand.
  *
  * @public
  */
@@ -181,6 +186,10 @@ export const transitions = {
 
   /**
    * Transitions from ready to active, commencing the session execution.
+   *
+   * @remarks
+   * This transition initializes the domain-level `practiceState` to its
+   * starting configuration (index 0, empty history).
    *
    * @param state - The current ready state containing initialized ports.
    * @param runner - The implementation of the session orchestrator.

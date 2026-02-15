@@ -344,15 +344,17 @@ function SheetMusicView({
  * This component is the primary entry point for the practice experience. It coordinates:
  * 1. **Exercise Management**: Loading, previewing, and selecting exercises from the library.
  * 2. **Audio Pipeline**: Orchestrates the `createPracticeEventPipeline` which connects
- *    raw audio frames to musical domain events.
+ *    raw audio frames to musical domain events (intonation, rhythm).
  * 3. **Real-time Visualization**: Synchronizes progress with `SheetMusic` (via OSMD)
- *    and provides feedback through the `ViolinFingerboard`.
- * 4. **User Interaction**: Manages keyboard shortcuts (Space for Start/Stop, Z for Zen Mode)
- *    and UI layout toggles.
+ *    and provides high-fidelity feedback through the `ViolinFingerboard` and `PracticeFeedback`.
+ * 4. **User Interaction**: Manages keyboard shortcuts and UI layout toggles like Zen Mode.
  *
- * **Architecture**:
- * It relies on the `usePracticeStore` for centralized state management and the
- * `useOSMDSafe` hook for robust notation rendering in React.
+ * **Lifecycle & Cleanup**:
+ * The component uses multiple `useEffect` hooks to manage:
+ * - **Shortcuts**: Global key listeners for hands-free control.
+ * - **Pipeline**: Automatic cleanup of the `AbortController` when the session stops
+ *   or the component unmounts, preventing memory leaks and orphaned audio processing.
+ * - **OSMD Sync**: Precise cursor placement and note highlighting during active play.
  *
  * @example
  * ```tsx

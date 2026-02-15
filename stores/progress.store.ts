@@ -128,12 +128,17 @@ interface ProgressActions {
    * Integrates a completed session into the long-term progress history.
    *
    * @remarks
-   * **Side Effects**:
-   * 1. Updates lifetime session count and total practice time.
-   * 2. Recalculates exercise-specific mastery stats.
-   * 3. Pushes a new event to the circular `eventBuffer`.
-   * 4. Automatically triggers a technical `snapshot` every 50 events.
-   * 5. Prunes the event buffer to remove items older than 90 days.
+   * **Side Effects & Logic**:
+   * 1. **Aggregation**: Updates lifetime session count and total practice time in seconds.
+   * 2. **Mastery Stats**: Recalculates `ExerciseStats` for the given ID, including
+   *    `bestAccuracy` and `fastestCompletionMs`.
+   * 3. **Circular Buffer**: Pushes a new {@link ProgressEvent} to the `eventBuffer`.
+   *    The buffer is capped at 1000 items to balance historical depth with memory usage.
+   * 4. **Incremental Snapshots**: Automatically triggers a {@link ProgressSnapshot}
+   *    every 50 events. This ensures long-term trends are preserved even if the
+   *    buffer is pruned.
+   * 5. **TTL Pruning**: Removes any events from the buffer that are older than
+   *    90 days to comply with data retention best practices.
    *
    * @param session - The completed session data to persist and analyze.
    */
@@ -315,13 +320,17 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
 }
 
 /**
- * Heuristic for calculating rhythm skill from session history.
+ * Heuristic for calculating rhythm skill level.
  *
  * @remarks
- * Combines Mean Absolute Error (MAE) and "In Window" percentage (timing errors `<= 40ms`)
- * to determine rhythmic stability.
+ * **Scoring Criteria**:
+ * - **Mean Absolute Error (MAE)**: Measures the average distance from perfect
+ *   rhythmic onset. A MAE of 0ms yields a score of 100, while 400ms yields 0.
+ * - **Professional Window**: Calculates the percentage of notes played with
+ *   less than 40ms of error (the standard for "in-time" performance in orchestral settings).
+ * - **Final Score**: An equal weight average of the MAE score and the window percentage.
  *
- * @param sessions - Recent historical data.
+ * @param sessions - The last 10 practice sessions.
  * @returns Skill score (0-100).
  * @internal
  */

@@ -108,12 +108,16 @@ interface SessionActions {
    * Records a single attempt (audio frame) at a specific note.
    *
    * @remarks
-   * This method updates the rolling average of cents deviation for the note.
-   * It is intended to be called at high frequency from the audio pipeline.
+   * This method updates the rolling average of cents deviation for the note using
+   * the formula: `nextAvg = (currentAvg * count + newCents) / (count + 1)`.
+   *
+   * **Frequency**: It is designed to be called at high frequency (60Hz+) from
+   * the audio pipeline. Updates are performed atomically using functional
+   * state updates to avoid race conditions.
    *
    * @param noteIndex - Index of the note in the exercise.
-   * @param pitch - Detected scientific pitch name.
-   * @param cents - Pitch deviation in cents.
+   * @param pitch - Detected scientific pitch name (e.g., "G3").
+   * @param cents - Pitch deviation in cents from the target.
    * @param inTune - Whether the attempt was within the current tolerance.
    */
   recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
@@ -122,11 +126,15 @@ interface SessionActions {
    * Records the successful completion of a note.
    *
    * @remarks
-   * Updates the perfect note streak if the average deviation is `< 5` cents.
+   * Updates the session progress and technical metrics.
+   *
+   * **Perfect Streak**: Increments the `perfectNoteStreak` if the final average
+   * deviation for the note is strictly less than 5 cents. Otherwise, the
+   * streak is reset to zero.
    *
    * @param noteIndex - Index of the completed note.
-   * @param timeMs - Total time taken to complete the note.
-   * @param technique - Optional technique metrics (e.g. onset error).
+   * @param timeMs - Total time taken to complete the note (from first detection to match).
+   * @param technique - Optional pedagogical metrics (e.g., rhythm, vibrato).
    */
   recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void
 }

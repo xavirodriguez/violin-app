@@ -62,7 +62,7 @@ interface PracticeFeedbackProps {
   requiredHoldTime?: number
 
   /**
-   * Current count of consecutive notes played with high accuracy (< 5 cents).
+   * Current count of consecutive notes played with high accuracy (`< 5` cents).
    */
   perfectNoteStreak?: number
 }
@@ -108,8 +108,11 @@ export function PracticeFeedback({
   centsTolerance = 10,
   liveObservations = [],
 }: PracticeFeedbackProps) {
+  /** Derived boolean: True if the detected pitch is within the user's current tolerance. */
   const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
+  /** Derived boolean: True if a valid audio signal is being processed. */
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
+  /** Derived boolean: True if the detected note matches the target scientific pitch. */
   const isCorrectNote = detectedPitchName === targetNote
 
   return (

@@ -5,6 +5,11 @@
  * and conditional code execution based on environment variables.
  */
 
+/**
+ * Categories of feature flags to define their maturity and lifecycle stage.
+ *
+ * @public
+ */
 export type FeatureFlagType =
   | 'EXPERIMENTAL'
   | 'BETA'
@@ -15,15 +20,32 @@ export type FeatureFlagType =
   | 'UI_UX'
   | 'DEPRECATED'
 
+/**
+ * Detailed metadata for a feature flag.
+ *
+ * @remarks
+ * This metadata is used for automated audits and risk assessment.
+ *
+ * @public
+ */
 export interface FeatureFlagMetadata {
+  /** Technical name of the flag (usually uppercase with underscores). */
   name: string
+  /** Human-readable key for use in configuration files or UIs. */
   key: string
+  /** The maturity type of the feature. */
   type: FeatureFlagType
+  /** Purpose and impact of the feature. */
   description: string
+  /** Fallback value if the environment variable is not defined. */
   defaultValue: boolean
+  /** List of files primarily affected by this feature. */
   affectedFiles?: string[]
+  /** Perceived impact on system stability. */
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  /** Plan for disabling the feature if it causes production issues. */
   rollbackStrategy?: string
+  /** Other flags that must be enabled for this one to function. */
   dependencies?: string[]
 }
 
@@ -65,9 +87,24 @@ export const FEATURE_FLAGS_METADATA = {
  */
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA
 
+/**
+ * Service for querying and validating feature flags across the application.
+ *
+ * @remarks
+ * This manager provides a unified API for both server-side and client-side
+ * feature gating. It handles the complexity of Next.js environment variable
+ * prefixing (`NEXT_PUBLIC_`).
+ *
+ * @internal
+ */
 class FeatureFlagsManager {
   /**
    * Internal mapping to ensure Next.js bundler replaces environment variables.
+   *
+   * @remarks
+   * Due to how Next.js static analysis works, environment variables must be
+   * accessed using their full literal name (e.g. `process.env.FLAG`).
+   *
    * @internal
    */
   private getClientValue(flagName: string): string | undefined {

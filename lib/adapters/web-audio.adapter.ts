@@ -36,11 +36,19 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    *
    * @remarks
    * This method uses `getFloatTimeDomainData` which provides PCM samples
-   * in the range [-1.0, 1.0]. The returned buffer is shared across calls.
+   * in the range [-1.0, 1.0]. The returned buffer is shared across calls
+   * to minimize garbage collection pressure in high-frequency loops.
+   *
+   * **Thread Safety**: This method is intended to be called from the main thread.
+   * If the underlying {@link AudioContext} is suspended or closed, the buffer
+   * will be filled with zeros.
    *
    * @returns A {@link Float32Array} containing the audio samples. Note that
    * this is a reference to the internal pre-allocated buffer; if you need to
-   * store the data across frames, you must copy it.
+   * store the data across frames, you must copy it using `.slice()` or `set()`.
+   *
+   * @throws This method does not throw, but will return silent data if the
+   *         hardware is unavailable.
    */
   getFrame(): Float32Array {
     this.analyser.getFloatTimeDomainData(this.buffer as any)
@@ -84,17 +92,35 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
    * Starts the animation-frame-based audio loop.
    *
    * @remarks
-   * The loop uses a recursive `requestAnimationFrame` pattern. It handles
-   * cleanup by removing the abort listener once the signal is triggered.
+   * The loop uses a recursive `requestAnimationFrame` pattern. This implementation
+   * provides the lowest possible latency for UI-synced visualizations, as it
+   * aligns audio processing with the browser's paint cycle.
    *
-   * @param onFrame - Callback for each audio frame.
-   * @param signal - AbortSignal to stop the loop.
-   * @returns A promise that resolves when the loop is terminated.
+   * **Resource Management**: It handles cleanup by removing the abort listener
+   * once the signal is triggered to avoid memory leaks.
+   *
+   * **Edge Cases**:
+   * - If the `signal` is already aborted, the loop will not start.
+   * - If the tab is hidden, the browser will throttle this loop, which may
+   *   lead to discontinuous audio analysis.
+   *
+   * @param onFrame - Callback invoked for each audio frame received from the hardware.
+   * @param signal - An {@link AbortSignal} used to gracefully terminate the loop.
+   * @returns A promise that resolves when the loop is terminated and all handlers are removed.
    *
    * @example
    * ```ts
    * const controller = new AbortController();
-   * await loop.start((frame) => analyze(frame), controller.signal);
+   * const loop = new WebAudioLoopAdapter(framePort);
+   *
+   * try {
+   *   await loop.start((frame) => {
+   *     const pitch = detector.detect(frame);
+   *     console.log('Pitch:', pitch);
+   *   }, controller.signal);
+   * } catch (err) {
+   *   console.error('Loop failed:', err);
+   * }
    * ```
    */
   async start(

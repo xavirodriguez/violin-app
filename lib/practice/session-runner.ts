@@ -135,11 +135,17 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * Executes the session loop until completion, error, or external cancellation.
    *
    * @remarks
+   * **Lifecycle**:
    * This method is reentrant-safe; calling it while already running will cancel
-   * the previous execution before starting the new one.
+   * the previous execution before starting the new one. It coordinates the
+   * transition from 'ready' to 'active' states.
    *
-   * @param signal - External abort signal from the caller (e.g., a component unmounting).
-   * @returns The session outcome result.
+   * **Error Handling**:
+   * It catches `AbortError` to provide a clean result. Any other unexpected
+   * errors are logged and returned as an `error` reason.
+   *
+   * @param signal - External {@link AbortSignal} (typically from a React effect or UI button).
+   * @returns The session outcome {@link SessionResult}.
    */
   async run(signal: AbortSignal): Promise<SessionResult> {
     this.cancel()
@@ -190,10 +196,17 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * Internal async loop that consumes event streams from the Practice Engine.
    *
    * @remarks
-   * Connects the `AudioLoopPort` to the `PracticeEngine`. The `engineEvents`
-   * generator yields high-level musical events as the audio hardware provides frames.
+   * **Pipeline Orchestration**:
+   * Connects the {@link AudioLoopPort} to the `PracticeEngine`. The `engineEvents`
+   * generator yields high-level musical events (e.g., `NOTE_DETECTED`) at the
+   * hardware sampling rate.
+   *
+   * **Iteration**:
+   * The loop uses a `for await...of` pattern. It is the core "pulse" of the
+   * practice session.
    *
    * @param signal - Abort signal specifically for this internal loop execution.
+   * @internal
    */
   private async runInternal(signal: AbortSignal): Promise<void> {
     const { audioLoop, detector, exercise } = this.deps
@@ -298,8 +311,13 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
    * Handles side effects specific to matching a note, such as recording analytics.
    *
    * @remarks
-   * Ensures that analytics are only recorded once per note to avoid duplicates
-   * during transient detection states.
+   * **Side Effects**:
+   * 1. **Timing**: Calculates `timeToComplete` by measuring the delta from the
+   *    previous note's completion.
+   * 2. **Telemetry**: Records the attempt and completion in the analytics store.
+   * 3. **State Tracking**: Updates `lastDispatchedNoteIndex` to ensure each note
+   *    is only finalized once, even if the engine emits multiple `NOTE_MATCHED`
+   *    events due to signal jitter.
    *
    * @param event - The NOTE_MATCHED event.
    * @param currentState - Current practice domain state.

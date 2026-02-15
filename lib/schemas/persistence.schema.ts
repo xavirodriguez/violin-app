@@ -3,6 +3,14 @@ import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
 
 extendZodWithOpenApi(z)
 
+/**
+ * Zod schema for validating the technical performance metrics of a single note.
+ *
+ * @remarks
+ * Used for both real-time validation and persistent storage of technique analysis results.
+ *
+ * @public
+ */
 export const NoteTechniqueSchema = z.object({
   vibrato: z.object({
     present: z.boolean(),
@@ -22,6 +30,11 @@ export const NoteTechniqueSchema = z.object({
   })
 })
 
+/**
+ * Zod schema for validating the summarized results of practicing a single note.
+ *
+ * @public
+ */
 export const NoteResultSchema = z.object({
   noteIndex: z.number(),
   targetPitch: z.string(),
@@ -32,6 +45,15 @@ export const NoteResultSchema = z.object({
   technique: NoteTechniqueSchema.optional()
 })
 
+/**
+ * Zod schema for validating a complete practice session.
+ *
+ * @remarks
+ * This schema ensures that session data is durable and can be safely rehydrated
+ * from `localStorage`.
+ *
+ * @public
+ */
 export const PracticeSessionSchema = z.object({
   id: z.string(),
   startTimeMs: z.number(),
@@ -47,6 +69,11 @@ export const PracticeSessionSchema = z.object({
   averageCents: z.number()
 })
 
+/**
+ * Zod schema for validating lifetime statistics for an individual exercise.
+ *
+ * @public
+ */
 export const ExerciseStatsSchema = z.object({
   exerciseId: z.string(),
   timesCompleted: z.number(),
@@ -76,6 +103,14 @@ export const ProgressSnapshotSchema = z.object({
   lastSessionId: z.string()
 })
 
+/**
+ * Zod schema for the entire persistent progress state.
+ *
+ * @remarks
+ * Defines the canonical structure of the user's technical profile in storage.
+ *
+ * @public
+ */
 export const ProgressStateSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   totalPracticeSessions: z.number(),
@@ -92,6 +127,11 @@ export const ProgressStateSchema = z.object({
   eventCounter: z.number().default(0)
 })
 
+/**
+ * Zod schema for a single user achievement milestone.
+ *
+ * @public
+ */
 export const AchievementSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -110,6 +150,11 @@ export const SessionHistoryStateSchema = z.object({
   sessions: z.array(PracticeSessionSchema)
 })
 
+/**
+ * Zod schema for validating persistent user preferences.
+ *
+ * @public
+ */
 export const PreferencesStateSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   feedbackLevel: z.enum(['beginner', 'intermediate', 'advanced']),

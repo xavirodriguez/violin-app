@@ -74,9 +74,9 @@ export function validateOptions(options: SegmenterOptions): void {
  *
  * @remarks
  * Event Sequence:
- * 1. ONSET: Sound begins -> new note detected
+ * 1. ONSET: Sound begins → new note detected
  * 2. NOTE_CHANGE: Pitch changes mid-sound (unusual, may indicate sliding)
- * 3. OFFSET: Sound ends -> note completed with full analysis
+ * 3. OFFSET: Sound ends → note completed with full analysis
  */
 export type SegmenterEvent =
   | {
@@ -163,9 +163,9 @@ export class NoteSegmenter {
    *
    * @remarks
    * **State Machine**:
-   * - SILENCE -> ONSET (when RMS > minRms)
-   * - ONSET -> OFFSET (when RMS < maxRmsSilence for offsetDebounceMs)
-   * - ONSET -> NOTE_CHANGE (when detected note changes)
+   * - SILENCE → ONSET (when RMS `>` minRms)
+   * - ONSET → OFFSET (when RMS `<` maxRmsSilence for offsetDebounceMs)
+   * - ONSET → NOTE_CHANGE (when detected note changes)
    *
    * Uses debouncing to prevent false triggers from noise.
    */

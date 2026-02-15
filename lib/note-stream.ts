@@ -393,7 +393,7 @@ function calculateRhythmExpectations(
  *
  * **Critical Performance**: The pipeline runs at 60+ fps.
  * Ensure that any dynamic options provided as getters:
- * 1. Are fast (< 1ms)
+ * 1. Are fast (`< 1ms`)
  * 2. Return consistent values for the same underlying state
  * 3. Use memoized selectors if possible
  *

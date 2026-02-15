@@ -45,6 +45,10 @@ import { Observation, NoteTechnique } from '@/lib/technique-types'
  * asynchronous state updates in real-time loops. Functional updaters are used in all
  * `set()` calls to ensure state consistency.
  *
+   * **Resource Management**:
+   * Calling `stop()` or `reset()` ensures that all Web Audio resources are released
+   * and any active asynchronous runners are cancelled via `AbortSignal`.
+   *
  * @public
  */
 export interface PracticeStore {
@@ -163,10 +167,14 @@ export interface PracticeStore {
    * @remarks
    * **Workflow**:
    * 1. Ensures audio is initialized (triggers `initializeAudio` if needed).
-   * 2. Generates a new `sessionToken`.
-   * 3. Instantiates the `PracticeSessionRunnerImpl`.
+   * 2. Generates a new `sessionToken` (UUID) to guard subsequent state updates.
+   * 3. Instantiates the {@link PracticeSessionRunnerImpl} with current dependencies.
    * 4. Starts the analytics session in `SessionStore`.
-   * 5. Commences the asynchronous audio processing loop.
+   * 5. Synchronizes state with `TunerStore` to set the detector instance.
+   * 6. Commences the asynchronous audio processing loop.
+   *
+   * **Reentrancy**: If a session is already starting, subsequent calls return early
+   * to avoid duplicate resource allocation.
    *
    * @returns A promise that resolves once the session has successfully transitioned to 'active'.
    */
@@ -176,10 +184,11 @@ export interface PracticeStore {
    * Stops the current practice session and releases all audio/hardware resources.
    *
    * @remarks
-   * This method is idempotent and performs a "resource-first" cleanup:
-   * 1. Aborts the runner and underlying audio loop via `AbortSignal`.
-   * 2. Closes the `audioManager` and releases hardware handles.
-   * 3. Finalizes the analytics session and pushes data to `ProgressStore`.
+   * This method is idempotent and performs a coordinated "resource-first" cleanup:
+   * 1. **Abort Signal**: Triggers the `AbortController` which stops the runner and audio loop.
+   * 2. **Hardware Release**: Closes the `audioManager` and releases microphone handles.
+   * 3. **Analytics**: Finalizes the current analytics session and pushes results to `ProgressStore`.
+   * 4. **State Reset**: Clears high-frequency metrics (`liveObservations`) and transitions to `idle`.
    *
    * @returns A promise that resolves when all cleanup tasks are complete.
    */
@@ -197,8 +206,15 @@ export interface PracticeStore {
    *
    * @remarks
    * This is a high-frequency internal method that bridges the async generator pipeline
-   * with the reactive store. It uses `sessionToken` guards to ensure that events from
-   * previous (cancelled) sessions do not update the current state.
+   * with the reactive store.
+   *
+   * **Atomic Updates**: It uses `reducePracticeEvent` to calculate the next state
+   * and applies it using functional updaters to ensure UI consistency even during
+   * rapid event emission (e.g., vibrato analysis).
+   *
+   * **Safety**: It uses `sessionToken` guards to ensure that events from
+   * previous (cancelled) sessions do not update the current state, preventing
+   * "ghost" updates after the user has stopped a session.
    *
    * @param pipeline - An async iterable of practice events emitted by the runner.
    * @returns A promise that resolves when the pipeline is closed or aborted.
@@ -245,8 +261,23 @@ function getUpdatedLiveObservations(state: PracticeState): Observation[] {
   return calculateLiveObservations(state.detectionHistory, targetPitchName)
 }
 
-/** Types for safe functional updates within the store. */
+/**
+ * Types for safe functional updates within the store during active sessions.
+ *
+ * @remarks
+ * These types define the subset of state that the {@link PracticeSessionRunnerImpl}
+ * is allowed to modify. This restriction prevents the runner from accidentally
+ * altering infrastructure-level state like `analyser` or `audioLoop`.
+ *
+ * @internal
+ */
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>
+
+/**
+ * Functional updater or partial state for safe store updates.
+ *
+ * @internal
+ */
 type SafePartial = Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
 
 /**
@@ -286,7 +317,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         error: null,
         liveObservations: [],
         sessionToken: null,
-      })
+      }))
     },
 
     setAutoStart: (enabled) => set((s) => ({ ...s, autoStartEnabled: enabled })),
@@ -373,7 +404,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         }
 
         const currentToken = crypto.randomUUID()
-        const sessionStartTime = Date.now()
         const abortController = new AbortController()
 
         const safeSet = (partial: SafePartial) => {
@@ -470,7 +500,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           sessionToken: currentToken,
           isStarting: false,
           error: null,
-        })
+        }))
 
         // Sync with TunerStore
         const detectorInstance = (storeState as any).detector?.detector || null
