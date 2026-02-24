@@ -1,10 +1,15 @@
 import { PracticeEngineEvent } from './engine.types'
 import { AudioFramePort, PitchDetectorPort } from './engine.ports'
-import { createRawPitchStream, createPracticeEventPipeline } from '../note-stream'
+import {
+  createRawPitchStream,
+  createPracticeEventPipeline,
+  NoteStreamOptions,
+} from '../note-stream'
 import { Exercise } from '../exercises/types'
-import { featureFlags } from '../feature-flags'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
+import { PracticeEvent } from '../practice-core'
+import { AudioLoopPort, PitchDetectionPort as AudioPitchPort } from '../ports/audio.port'
 
 /**
  * Configuration context for the {@link PracticeEngine}.
@@ -24,10 +29,6 @@ export interface PracticeEngineContext {
 
 /**
  * Interface for the core musical practice engine.
- *
- * @remarks
- * The engine is a stateful orchestrator that processes raw audio signals
- * into high-level musical events (e.g., "Note Matched").
  *
  * @public
  */
@@ -52,22 +53,40 @@ export interface PracticeEngine {
 }
 
 /**
+ * Calculates adaptive difficulty parameters based on performance history.
+ */
+function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
+  const centsTolerance = Math.max(10, 25 - Math.floor(perfectNoteStreak / 3) * 5)
+  const requiredHoldTime = Math.min(800, 500 + Math.floor(perfectNoteStreak / 5) * 100)
+  return { centsTolerance, requiredHoldTime }
+}
+
+/**
+ * Maps a low-level practice event to a high-level engine event.
+ */
+function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | null {
+  switch (event.type) {
+    case 'NOTE_DETECTED':
+    case 'HOLDING_NOTE':
+      return { type: event.type, payload: event.payload }
+    case 'NOTE_MATCHED':
+      return {
+        type: 'NOTE_MATCHED',
+        payload: {
+          technique: event.payload.technique,
+          observations: event.payload.observations ?? [],
+          isPerfect: event.payload.isPerfect ?? false,
+        },
+      }
+    case 'NO_NOTE_DETECTED':
+      return { type: 'NO_NOTE' }
+    default:
+      return null
+  }
+}
+
+/**
  * Factory function to create a new {@link PracticeEngine} instance.
- *
- * @remarks
- * **Implementation Details**:
- * The engine uses a "Pipeline Re-creation" strategy. Whenever a note is
- * successfully matched, it breaks the inner loop to re-create the
- * `createPracticeEventPipeline` with the next target note. This ensures
- * that pedagogical constraints (like required hold time) are accurately
- * applied to each note in the sequence.
- *
- * **Adaptive Difficulty**:
- * It dynamically calculates `centsTolerance` and `requiredHoldTime` based
- * on the user's `perfectNoteStreak`.
- *
- * @param ctx - The initialization context.
- * @returns A stateful {@link PracticeEngine} instance.
  *
  * @public
  */
@@ -76,79 +95,55 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
   const reducer = ctx.reducer ?? engineReducer
   let state: PracticeEngineState = {
     ...INITIAL_ENGINE_STATE,
-    scoreLength: ctx.exercise.notes.length
+    scoreLength: ctx.exercise.notes.length,
+  }
+
+  const getOptions = (): NoteStreamOptions => {
+    const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(state.perfectNoteStreak)
+    return {
+      exercise: ctx.exercise,
+      bpm: 60,
+      centsTolerance,
+      requiredHoldTime,
+      minRms: 0.01,
+      minConfidence: 0.85,
+    }
   }
 
   return {
     async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
       if (isRunning) return
       isRunning = true
-
-      const rawPitchStream = createRawPitchStream(
-        ctx.audio as any,
-        ctx.pitch as any,
-        signal
-      )
-
+      const audioPort = ctx.audio as unknown as AudioLoopPort
+      const pitchPort = ctx.pitch as unknown as AudioPitchPort
+      const rawPitchStream = createRawPitchStream(audioPort, pitchPort, signal)
       const sessionStartTime = Date.now()
 
       try {
         while (state.currentNoteIndex < state.scoreLength && !signal.aborted) {
-          const currentNoteIndex = state.currentNoteIndex
+          const noteIndex = state.currentNoteIndex
           const pipeline = createPracticeEventPipeline(
             rawPitchStream,
-            {
-              targetNote: ctx.exercise.notes[currentNoteIndex] ?? null,
-              currentIndex: currentNoteIndex,
-              sessionStartTime,
-            },
-            () => {
-              // Adaptive Difficulty (Permanent): Adjust both tolerance and hold time based on performance
-              const centsTolerance = Math.max(10, 25 - Math.floor(state.perfectNoteStreak / 3) * 5)
-              const requiredHoldTime = Math.min(800, 500 + Math.floor(state.perfectNoteStreak / 5) * 100)
-
-              return {
-                exercise: ctx.exercise,
-                bpm: 60,
-                centsTolerance,
-                requiredHoldTime
-              } as any
-            },
-            signal
+            { targetNote: ctx.exercise.notes[noteIndex] ?? null, currentIndex: noteIndex, sessionStartTime },
+            getOptions,
+            signal,
           )
 
           for await (const event of pipeline) {
             if (signal.aborted) break
+            const engineEvent = mapPipelineEventToEngineEvent(event)
+            if (!engineEvent) continue
 
-            let engineEvent: PracticeEngineEvent | null = null
+            state = reducer(state, engineEvent)
+            yield engineEvent
 
-          // Map pipeline events to Engine events
-          if (event.type === 'NOTE_DETECTED') {
-            engineEvent = { type: 'NOTE_DETECTED', payload: event.payload }
-          } else if (event.type === 'HOLDING_NOTE') {
-            engineEvent = { type: 'HOLDING_NOTE', payload: event.payload }
-          } else if (event.type === 'NOTE_MATCHED') {
-            engineEvent = { type: 'NOTE_MATCHED', payload: event.payload }
-          } else if (event.type === 'NO_NOTE_DETECTED') {
-            engineEvent = { type: 'NO_NOTE' }
-          }
-
-            if (engineEvent) {
-              state = reducer(state, engineEvent)
-              yield engineEvent
-
-              if (engineEvent.type === 'NOTE_MATCHED') {
-                // If the note changed, we need a new pipeline snapshot
-                if (state.currentNoteIndex !== currentNoteIndex) {
-                  break // Exit inner loop to recreate pipeline
-                }
-
-                if (state.currentNoteIndex >= state.scoreLength) {
-                  const completionEvent: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
-                  state = reducer(state, completionEvent)
-                  yield completionEvent
-                  return // End the generator
-                }
+            if (engineEvent.type === 'NOTE_MATCHED') {
+              if (state.currentNoteIndex !== noteIndex) break
+              if (state.currentNoteIndex >= state.scoreLength) {
+                const complete: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
+                state = reducer(state, complete)
+                yield complete
+                return
               }
             }
           }
@@ -157,13 +152,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
         isRunning = false
       }
     },
-
-    stop() {
-      isRunning = false
-    },
-
-    getState() {
-      return state
-    }
+    stop() { isRunning = false },
+    getState() { return state },
   }
 }
