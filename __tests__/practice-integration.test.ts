@@ -61,9 +61,9 @@ describe('Practice Store Integration', () => {
     usePracticeStore.getState().reset()
   })
 
-  it('should initialize with null practiceState', () => {
+  it('should initialize with undefined practiceState', () => {
     const store = usePracticeStore.getState()
-    expect(store.practiceState).toBeNull()
+    expect(store.practiceState).toBeUndefined()
   })
 
   it('loadExercise should set initial state', async () => {
@@ -86,8 +86,8 @@ describe('Practice Store Integration', () => {
     await store.start()
 
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
-    expect(usePracticeStore.getState().analyser).not.toBeNull()
-    expect(usePracticeStore.getState().detector).not.toBeNull()
+    expect(usePracticeStore.getState().analyser).toBeDefined()
+    expect(usePracticeStore.getState().detector).toBeDefined()
     expect(audioManager.initialize).toHaveBeenCalled()
   })
 

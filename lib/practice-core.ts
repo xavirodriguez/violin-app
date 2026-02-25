@@ -223,53 +223,74 @@ export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
 
 /**
  * Checks if a detected note matches a target note within a specified tolerance.
+ * Short-circuits if target or detected note is undefined.
  */
 export function isMatch(
-  target: TargetNote,
-  detected: DetectedNote,
+  target: TargetNote | undefined,
+  detected: DetectedNote | undefined,
   tolerance: number | MatchHysteresis = 25,
   isCurrentlyMatched = false,
 ): boolean {
-  if (!target || !detected) {
-    return false
-  }
+  if (!target || !detected) return false
 
-  const h: MatchHysteresis =
-    typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
+  const hysteresis = typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
+  const actualTolerance = isCurrentlyMatched ? hysteresis.exit : hysteresis.enter
 
-  const actualTolerance = isCurrentlyMatched ? h.exit : h.enter
+  return checkPitchAndTune(target, detected, actualTolerance)
+}
 
-  const targetPitchName = formatPitchName(target.pitch)
-  const targetNote = MusicalNote.fromName(targetPitchName)
-  const detectedPitch = detected.pitch
-  assertValidNoteName(detectedPitch)
-  const detectedNote = MusicalNote.fromName(detectedPitch)
+/**
+ * Validates both pitch name (enharmonic) and cent deviation.
+ * @internal
+ */
+function checkPitchAndTune(target: TargetNote, detected: DetectedNote, tolerance: number): boolean {
+  const targetNote = MusicalNote.fromName(formatPitchName(target.pitch))
+  assertValidNoteName(detected.pitch)
+  const detectedNote = MusicalNote.fromName(detected.pitch)
+
   const isPitchMatch = targetNote.isEnharmonic(detectedNote)
-  const isInTune = Math.abs(detected.cents) < actualTolerance
+  const isInTune = Math.abs(detected.cents) < tolerance
   return isPitchMatch && isInTune
+}
+
+/**
+ * Entry point for entering the matched state.
+ */
+export function isNewMatch(
+  target: TargetNote | undefined,
+  detected: DetectedNote | undefined,
+  tolerance: number | MatchHysteresis = 25,
+): boolean {
+  return isMatch(target, detected, tolerance, false)
+}
+
+/**
+ * Entry point for maintaining the matched state.
+ */
+export function isStillMatched(
+  target: TargetNote | undefined,
+  detected: DetectedNote | undefined,
+  tolerance: number | MatchHysteresis = 25,
+): boolean {
+  return isMatch(target, detected, tolerance, true)
 }
 
 /**
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
-  switch (event.type) {
-    case 'START':
-      return handleStart(state)
-    case 'STOP':
-    case 'RESET':
-      return handleStopReset(state)
-    case 'NOTE_DETECTED':
-      return handleNoteDetected(state, event.payload)
-    case 'HOLDING_NOTE':
-      return handleHoldingNote(state, event.payload.duration)
-    case 'NO_NOTE_DETECTED':
-      return handleNoNoteDetected(state)
-    case 'NOTE_MATCHED':
-      return handleNoteMatched(state, event.payload)
-    default:
-      return state
+  const handlers: Record<string, (s: PracticeState, e: any) => PracticeState> = {
+    START: handleStart,
+    STOP: handleStopReset,
+    RESET: handleStopReset,
+    NOTE_DETECTED: (s, e) => handleNoteDetected(s, e.payload),
+    HOLDING_NOTE: (s, e) => handleHoldingNote(s, e.payload.duration),
+    NO_NOTE_DETECTED: handleNoNoteDetected,
+    NOTE_MATCHED: (s, e) => handleNoteMatched(s, e.payload),
   }
+
+  const handler = handlers[event.type]
+  return handler ? handler(state, event) : state
 }
 
 function handleStart(state: PracticeState): PracticeState {
@@ -318,34 +339,51 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
   return { ...state, detectionHistory: [], status: 'listening', holdDuration: 0 }
 }
 
-function handleNoteMatched(
-  state: PracticeState,
-  payload: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload'],
-): PracticeState {
+type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
+
+function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
   if (state.status !== 'listening' && state.status !== 'validating') return state
 
+  const newStreak = calculateNewStreak(state, payload)
+  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
+
+  return isLastNote
+    ? finalizePracticeSession(state, payload, newStreak)
+    : advanceToNextNote(state, payload, newStreak)
+}
+
+function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {
   const lastDetection = state.detectionHistory[0]
   const isPerfect = payload?.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
-  const newStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
+  return isPerfect ? state.perfectNoteStreak + 1 : 0
+}
 
-  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
-  if (isLastNote) {
-    return {
-      ...state,
-      status: 'completed',
-      holdDuration: 0,
-      lastObservations: payload?.observations ?? [],
-      perfectNoteStreak: newStreak,
-    }
-  } else {
-    return {
-      ...state,
-      currentIndex: state.currentIndex + 1,
-      status: 'correct',
-      detectionHistory: [],
-      holdDuration: 0,
-      lastObservations: payload?.observations ?? [],
-      perfectNoteStreak: newStreak,
-    }
+function finalizePracticeSession(
+  state: PracticeState,
+  payload: NoteMatchedPayload,
+  streak: number,
+): PracticeState {
+  return {
+    ...state,
+    status: 'completed',
+    holdDuration: 0,
+    lastObservations: payload?.observations ?? [],
+    perfectNoteStreak: streak,
+  }
+}
+
+function advanceToNextNote(
+  state: PracticeState,
+  payload: NoteMatchedPayload,
+  streak: number,
+): PracticeState {
+  return {
+    ...state,
+    currentIndex: state.currentIndex + 1,
+    status: 'correct',
+    detectionHistory: [],
+    holdDuration: 0,
+    lastObservations: payload?.observations ?? [],
+    perfectNoteStreak: streak,
   }
 }

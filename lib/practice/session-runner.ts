@@ -44,17 +44,17 @@ export interface PracticeSessionRunner {
  * @internal
  */
 interface RunnerStore {
-  getState: () => { practiceState: PracticeState | null; liveObservations?: Observation[] }
+  getState: () => { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
   setState: (
     partial:
-      | { practiceState: PracticeState | null; liveObservations?: Observation[] }
-      | Partial<{ practiceState: PracticeState | null; liveObservations?: Observation[] }>
+      | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
+      | Partial<{ practiceState: PracticeState | undefined; liveObservations?: Observation[] }>
       | ((state: {
-          practiceState: PracticeState | null
+          practiceState: PracticeState | undefined
           liveObservations?: Observation[]
         }) =>
-          | { practiceState: PracticeState | null; liveObservations?: Observation[] }
-          | Partial<{ practiceState: PracticeState | null; liveObservations?: Observation[] }>),
+          | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
+          | Partial<{ practiceState: PracticeState | undefined; liveObservations?: Observation[] }>),
     replace?: boolean,
   ) => void
   stop: () => Promise<void>
@@ -92,7 +92,7 @@ export interface SessionRunnerDependencies {
  * @public
  */
 export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
-  private abortController: AbortController | null = null
+  private abortController: AbortController | undefined
   private sessionStats = { lastProcessedIndex: -1, noteStartTime: Date.now() }
 
   constructor(private environment: SessionRunnerDependencies) {}
@@ -144,20 +144,26 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
     for await (const event of engine.start(signal)) {
       if (signal.aborted) break
-      this.dispatchInternalEvent(this.mapToLegacyEvent(event), signal)
+      this.processEngineEvent(event, signal)
     }
   }
 
+  private processEngineEvent(event: PracticeEngineEvent, signal: AbortSignal): void {
+    const legacyEvent = this.mapToLegacyEvent(event)
+    this.dispatchInternalEvent(legacyEvent, signal)
+  }
+
   private mapToLegacyEvent(event: PracticeEngineEvent): PracticeEvent {
-    switch (event.type) {
-      case 'NOTE_DETECTED':
-      case 'HOLDING_NOTE':
-      case 'NOTE_MATCHED':
-        return { type: event.type, payload: event.payload }
-      case 'NO_NOTE':
-      default:
-        return { type: 'NO_NOTE_DETECTED' }
+    if (event.type === 'NOTE_DETECTED') {
+      return { type: 'NOTE_DETECTED', payload: event.payload }
     }
+    if (event.type === 'HOLDING_NOTE') {
+      return { type: 'HOLDING_NOTE', payload: event.payload }
+    }
+    if (event.type === 'NOTE_MATCHED') {
+      return { type: 'NOTE_MATCHED', payload: event.payload }
+    }
+    return { type: 'NO_NOTE_DETECTED' }
   }
 
   private dispatchInternalEvent(event: PracticeEvent, signal: AbortSignal): void {
@@ -166,28 +172,35 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const state = this.environment.store.getState().practiceState
     if (!state) return
 
-    this.provideRealtimeFeedback(event)
+    this.synchronizeFeedback(event)
     if (signal.aborted) return
 
-    if (event.type === 'NOTE_MATCHED') {
-      this.recordNoteMilestone(event, state)
-    }
-
-    handlePracticeEvent(
-      event,
-      this.environment.store,
-      () => void this.environment.store.stop(),
-      this.environment.analytics,
-    )
+    this.handleEventCompletion(event, state)
+    this.propagateToEventSink(event)
   }
 
-  private provideRealtimeFeedback(event: PracticeEvent): void {
+  private synchronizeFeedback(event: PracticeEvent): void {
     if (event.type === 'NOTE_DETECTED') {
       this.environment.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
       this.logTelemetry(event.payload)
     } else if (event.type === 'NO_NOTE_DETECTED') {
       this.environment.updatePitch?.(0, 0)
     }
+  }
+
+  private handleEventCompletion(event: PracticeEvent, state: PracticeState): void {
+    if (event.type === 'NOTE_MATCHED') {
+      this.recordNoteMilestone(event, state)
+    }
+  }
+
+  private propagateToEventSink(event: PracticeEvent): void {
+    handlePracticeEvent(
+      event,
+      this.environment.store,
+      () => void this.environment.store.stop(),
+      this.environment.analytics,
+    )
   }
 
   private logTelemetry(payload: { pitch: string; cents: number; confidence: number; timestamp: number }): void {
@@ -206,11 +219,17 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     if (!note || index === this.sessionStats.lastProcessedIndex) return
 
     const duration = Date.now() - this.sessionStats.noteStartTime
+    this.emitAnalytics(index, note, duration, event.payload?.technique)
+    this.updateRunnerStats(index)
+  }
+
+  private emitAnalytics(index: number, note: any, duration: number, technique: any): void {
     const pitch = formatPitchName(note.pitch)
-
     this.environment.analytics.recordNoteAttempt(index, pitch, 0, true)
-    this.environment.analytics.recordNoteCompletion(index, duration, event.payload?.technique)
+    this.environment.analytics.recordNoteCompletion(index, duration, technique)
+  }
 
+  private updateRunnerStats(index: number): void {
     this.sessionStats = { lastProcessedIndex: index, noteStartTime: Date.now() }
   }
 }

@@ -109,7 +109,7 @@ describe('PracticeStore Robustness', () => {
 
     await usePracticeStore.getState().stop()
     expect(usePracticeStore.getState().state.status).toBe('idle')
-    expect(usePracticeStore.getState().sessionToken).toBeNull()
+    expect(usePracticeStore.getState().sessionToken).toBeUndefined()
 
     // Second stop should not throw
     await expect(usePracticeStore.getState().stop()).resolves.toBeUndefined()
@@ -122,7 +122,7 @@ describe('PracticeStore Robustness', () => {
     vi.mocked(audioManager.initialize).mockRejectedValueOnce(new Error('Mic denied'))
     await usePracticeStore.getState().initializeAudio()
     expect(usePracticeStore.getState().state.status).toBe('error')
-    expect(usePracticeStore.getState().error).not.toBeNull()
+    expect(usePracticeStore.getState().error).not.toBeUndefined()
 
     // Second attempt succeeds
     vi.mocked(audioManager.initialize).mockResolvedValueOnce({
@@ -133,7 +133,7 @@ describe('PracticeStore Robustness', () => {
 
     await usePracticeStore.getState().initializeAudio()
     expect(usePracticeStore.getState().state.status).toBe('ready')
-    expect(usePracticeStore.getState().error).toBeNull()
+    expect(usePracticeStore.getState().error).toBeUndefined()
   })
 
   it('should ignore updates from old session tokens', async () => {
@@ -147,7 +147,7 @@ describe('PracticeStore Robustness', () => {
 
     await usePracticeStore.getState().start()
     const firstToken = usePracticeStore.getState().sessionToken
-    expect(firstToken).not.toBeNull()
+    expect(firstToken).not.toBeUndefined()
 
     // Get a reference to safeSet (it's passed to runner)
     const runnerArgs = vi.mocked(PracticeSessionRunnerImpl).mock.calls[0][0]

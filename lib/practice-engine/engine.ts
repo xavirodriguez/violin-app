@@ -64,25 +64,22 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
 /**
  * Maps a low-level practice event to a high-level engine event.
  */
-function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | null {
-  switch (event.type) {
-    case 'NOTE_DETECTED':
-    case 'HOLDING_NOTE':
-      return { type: event.type, payload: event.payload }
-    case 'NOTE_MATCHED':
-      return {
-        type: 'NOTE_MATCHED',
-        payload: {
-          technique: event.payload.technique,
-          observations: event.payload.observations ?? [],
-          isPerfect: event.payload.isPerfect ?? false,
-        },
-      }
-    case 'NO_NOTE_DETECTED':
-      return { type: 'NO_NOTE' }
-    default:
-      return null
+function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | undefined {
+  const mappings: Record<string, () => PracticeEngineEvent> = {
+    NOTE_DETECTED: () => ({ type: 'NOTE_DETECTED', payload: (event as any).payload }),
+    HOLDING_NOTE: () => ({ type: 'HOLDING_NOTE', payload: (event as any).payload }),
+    NOTE_MATCHED: () => ({
+      type: 'NOTE_MATCHED',
+      payload: {
+        technique: (event as any).payload.technique,
+        observations: (event as any).payload.observations ?? [],
+        isPerfect: (event as any).payload.isPerfect ?? false,
+      },
+    }),
+    NO_NOTE_DETECTED: () => ({ type: 'NO_NOTE' }),
   }
+
+  return mappings[event.type]?.()
 }
 
 /**
@@ -93,12 +90,9 @@ function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEven
 export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
-  let state: PracticeEngineState = {
-    ...INITIAL_ENGINE_STATE,
-    scoreLength: ctx.exercise.notes.length,
-  }
+  let state: PracticeEngineState = { ...INITIAL_ENGINE_STATE, scoreLength: ctx.exercise.notes.length }
 
-  const getOptions = (): NoteStreamOptions => {
+  const createOptions = (): NoteStreamOptions => {
     const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(state.perfectNoteStreak)
     return {
       exercise: ctx.exercise,
@@ -110,44 +104,12 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
     }
   }
 
-  return {
+  const engine = {
     async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
       if (isRunning) return
       isRunning = true
-      const audioPort = ctx.audio as unknown as AudioLoopPort
-      const pitchPort = ctx.pitch as unknown as AudioPitchPort
-      const rawPitchStream = createRawPitchStream(audioPort, pitchPort, signal)
-      const sessionStartTime = Date.now()
-
       try {
-        while (state.currentNoteIndex < state.scoreLength && !signal.aborted) {
-          const noteIndex = state.currentNoteIndex
-          const pipeline = createPracticeEventPipeline(
-            rawPitchStream,
-            { targetNote: ctx.exercise.notes[noteIndex] ?? null, currentIndex: noteIndex, sessionStartTime },
-            getOptions,
-            signal,
-          )
-
-          for await (const event of pipeline) {
-            if (signal.aborted) break
-            const engineEvent = mapPipelineEventToEngineEvent(event)
-            if (!engineEvent) continue
-
-            state = reducer(state, engineEvent)
-            yield engineEvent
-
-            if (engineEvent.type === 'NOTE_MATCHED') {
-              if (state.currentNoteIndex !== noteIndex) break
-              if (state.currentNoteIndex >= state.scoreLength) {
-                const complete: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
-                state = reducer(state, complete)
-                yield complete
-                return
-              }
-            }
-          }
-        }
+        yield* runEngineLoop(ctx, state, (s) => (state = reducer(state, s)), createOptions, signal)
       } finally {
         isRunning = false
       }
@@ -155,4 +117,67 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
     stop() { isRunning = false },
     getState() { return state },
   }
+  return engine
+}
+
+/**
+ * Orchestrates the main asynchronous loop for note progression.
+ * @internal
+ */
+async function* runEngineLoop(
+  ctx: PracticeEngineContext,
+  state: PracticeEngineState,
+  updateState: (e: PracticeEngineEvent) => void,
+  getOptions: () => NoteStreamOptions,
+  signal: AbortSignal,
+): AsyncGenerator<PracticeEngineEvent> {
+  const rawPitchStream = createRawPitchStream(ctx.audio as any, ctx.pitch as any, signal)
+  const sessionStartTime = Date.now()
+
+  while (state.currentNoteIndex < state.scoreLength && !signal.aborted) {
+    const noteIndex = state.currentNoteIndex
+    const pipeline = createPracticeEventPipeline(
+      rawPitchStream,
+      { targetNote: ctx.exercise.notes[noteIndex] ?? undefined, currentIndex: noteIndex, sessionStartTime },
+      getOptions,
+      signal,
+    )
+    yield* processPipeline(pipeline, state, noteIndex, updateState, signal)
+    if (state.currentNoteIndex >= state.scoreLength) break
+  }
+}
+
+async function* processPipeline(
+  pipeline: AsyncIterable<PracticeEvent>,
+  state: PracticeEngineState,
+  noteIndex: number,
+  updateState: (e: PracticeEngineEvent) => void,
+  signal: AbortSignal,
+): AsyncGenerator<PracticeEngineEvent> {
+  for await (const event of pipeline) {
+    if (signal.aborted) break
+    const engineEvent = mapPipelineEventToEngineEvent(event)
+    if (!engineEvent) continue
+
+    updateState(engineEvent)
+    yield engineEvent
+
+    if (isTerminalEvent(engineEvent, state)) {
+      if (state.currentNoteIndex >= state.scoreLength) yield* finalizeSession(updateState)
+      return
+    }
+    if (engineEvent.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex) break
+  }
+}
+
+function isTerminalEvent(event: PracticeEngineEvent, state: PracticeEngineState): boolean {
+  return event.type === 'NOTE_MATCHED' && state.currentNoteIndex >= state.scoreLength
+}
+
+async function* finalizeSession(
+  updateState: (e: PracticeEngineEvent) => void,
+): AsyncGenerator<PracticeEngineEvent> {
+  const complete: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
+  updateState(complete)
+  yield complete
 }
