@@ -648,10 +648,10 @@ export function PracticeMode() {
  * @returns Derived properties (status, progress, totalNotes) for UI consumption.
  * @internal
  */
-function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | null) {
+function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | undefined) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
-  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? null
+  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? undefined
   const totalNotes = practiceState?.exercise.notes.length ?? 0
   const isCompleted = status === 'completed'
   const progress =

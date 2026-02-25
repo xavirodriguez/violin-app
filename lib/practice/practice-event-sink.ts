@@ -63,60 +63,39 @@ type StoreApi<T> = {
  *
  * @public
  */
-export const handlePracticeEvent = <T extends { practiceState: PracticeState | null }>(
+export const handlePracticeEvent = <T extends { practiceState: PracticeState | undefined }>(
   event: PracticeEvent,
   store: StoreApi<T>,
   onCompleted: () => void,
   analytics?: { endSession: () => void },
 ) => {
-  if (!event || !event.type) {
-    console.warn('[EVENT SINK] [INVALID EVENT]', event)
-    return
-  }
+  if (!event?.type) return
 
-  const currentState = store.getState().practiceState
-  if (!currentState) {
-    console.error('[EVENT SINK] [STATE NULL] No practiceState in store', { type: event.type })
-    return
-  }
+  const practiceState = store.getState().practiceState
+  if (!practiceState) return
 
-  // 1. Pure state transition and side effect detection
   let shouldTriggerCompletion = false
 
   store.setState((state) => {
-    if (!state || !state.practiceState) {
-      console.warn('[EVENT SINK] Cannot reduce event: State or practiceState is null', {
-        type: event.type,
-      })
-      return state
-    }
+    if (!state.practiceState) return state
+    const nextState = reducePracticeEvent(state.practiceState, event)
 
-    const currentState = state.practiceState
-    const nextState = reducePracticeEvent(currentState, event)
-
-    if (!nextState) {
-      console.error('[EVENT SINK] Reducer returned null state', { event })
-      return state
-    }
-
-    // Detect transition to completed: Only trigger if we weren't already completed
-    if (nextState.status === 'completed' && currentState.status !== 'completed') {
+    if (nextState.status === 'completed' && state.practiceState.status !== 'completed') {
       shouldTriggerCompletion = true
     }
-
     return { ...state, practiceState: nextState }
   })
 
-  // 2. Side effects
-  // IMPORTANT: Side effects are executed outside of the store.setState functional
-  // updater to ensure that they don't block the reactive lifecycle or cause
-  // re-entrancy issues within the store itself.
   if (shouldTriggerCompletion) {
-    try {
-      analytics?.endSession()
-      onCompleted()
-    } catch (error) {
-      console.error('[EVENT SINK] Failed to handle practice completion side effect:', error)
-    }
+    executeCompletionSideEffects(onCompleted, analytics)
+  }
+}
+
+function executeCompletionSideEffects(onCompleted: () => void, analytics?: { endSession: () => void }) {
+  try {
+    analytics?.endSession()
+    onCompleted()
+  } catch (error) {
+    console.error('[EVENT SINK] Failed completion side effects:', error)
   }
 }

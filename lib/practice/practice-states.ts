@@ -40,9 +40,9 @@ export interface IdleState {
   /** The state machine status identifier. */
   status: 'idle'
   /** The currently selected exercise, if any. */
-  exercise: Exercise | null
+  exercise: Exercise | undefined
   /** No error is present in this state. */
-  error: null
+  error: undefined
 }
 
 /**
@@ -57,14 +57,14 @@ export interface InitializingState {
   /** The state machine status identifier. */
   status: 'initializing'
   /** The exercise being initialized. */
-  exercise: Exercise | null
+  exercise: Exercise | undefined
   /**
    * Progress percentage of the initialization (0-100).
    * Currently unused but reserved for long-running resource downloads.
    */
   progress: number
   /** No error is present while initializing. */
-  error: null
+  error: undefined
 }
 
 /**
@@ -86,7 +86,7 @@ export interface ReadyState {
   /** The exercise ready to be played. */
   exercise: Exercise
   /** No error is present in ready state. */
-  error: null
+  error: undefined
 }
 
 /**
@@ -118,7 +118,7 @@ export interface ActiveState {
   /** Controller used to signal cancellation of the session and the underlying pipeline. */
   abortController: AbortController
   /** No error is present while active. */
-  error: null
+  error: undefined
 }
 
 /**
@@ -134,7 +134,7 @@ export interface ErrorState {
   /** The state machine status identifier. */
   status: 'error'
   /** The exercise that was being used when the error occurred. */
-  exercise: Exercise | null
+  exercise: Exercise | undefined
   /** Detailed error information, conforming to the application error standard. */
   error: AppError
 }
@@ -157,22 +157,16 @@ export interface ErrorState {
 export const transitions = {
   /**
    * Transitions the system to the initializing state.
-   *
-   * @param exercise - The exercise to initialize resources for.
-   * @returns A new {@link InitializingState}.
    */
-  initialize: (exercise: Exercise | null): InitializingState => ({
+  initialize: (exercise: Exercise | undefined): InitializingState => ({
     status: 'initializing',
     exercise,
     progress: 0,
-    error: null,
+    error: undefined,
   }),
 
   /**
    * Transitions to the ready state once resources (microphone, detector) are acquired.
-   *
-   * @param resources - The audio loop, detector, and exercise that are now initialized.
-   * @returns A new {@link ReadyState}.
    */
   ready: (resources: {
     audioLoop: AudioLoopPort
@@ -181,20 +175,11 @@ export const transitions = {
   }): ReadyState => ({
     status: 'ready',
     ...resources,
-    error: null,
+    error: undefined,
   }),
 
   /**
    * Transitions from ready to active, commencing the session execution.
-   *
-   * @remarks
-   * This transition initializes the domain-level `practiceState` to its
-   * starting configuration (index 0, empty history).
-   *
-   * @param state - The current ready state containing initialized ports.
-   * @param runner - The implementation of the session orchestrator.
-   * @param abortController - The controller that will be used to stop this specific session.
-   * @returns A new {@link ActiveState}.
    */
   start: (
     state: ReadyState,
@@ -207,7 +192,7 @@ export const transitions = {
     exercise: state.exercise,
     runner,
     abortController,
-    error: null,
+    error: undefined,
     practiceState: {
       status: 'listening',
       exercise: state.exercise,
@@ -219,24 +204,17 @@ export const transitions = {
 
   /**
    * Transitions back to idle from active or ready, performing a graceful stop.
-   *
-   * @param state - The current state to stop.
-   * @returns A new {@link IdleState} with the exercise selection preserved.
    */
   stop: (state: ActiveState | ReadyState): IdleState => ({
     status: 'idle',
     exercise: state.exercise,
-    error: null,
+    error: undefined,
   }),
 
   /**
    * Transitions to the error state due to a failure in initialization or execution.
-   *
-   * @param error - The application-specific error encountered.
-   * @param exercise - Optional exercise context for the error.
-   * @returns A new {@link ErrorState}.
    */
-  error: (error: AppError, exercise: Exercise | null = null): ErrorState => ({
+  error: (error: AppError, exercise: Exercise | undefined = undefined): ErrorState => ({
     status: 'error',
     exercise,
     error,
@@ -244,24 +222,19 @@ export const transitions = {
 
   /**
    * Resets the state machine to its absolute initial state, clearing all context.
-   *
-   * @returns A new {@link IdleState} with no exercise selected.
    */
   reset: (): IdleState => ({
     status: 'idle',
-    exercise: null,
-    error: null
+    exercise: undefined,
+    error: undefined
   }),
 
   /**
    * Transitions to idle while selecting a specific exercise for future practice.
-   *
-   * @param exercise - The exercise to be selected.
-   * @returns A new {@link IdleState}.
    */
   selectExercise: (exercise: Exercise): IdleState => ({
     status: 'idle',
     exercise,
-    error: null
+    error: undefined
   })
 }
