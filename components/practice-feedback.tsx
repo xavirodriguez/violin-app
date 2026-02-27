@@ -8,7 +8,7 @@ import { Observation } from '@/lib/technique-types'
  *
  * @public
  */
-interface PracticeFeedbackProps {
+export interface PracticeFeedbackProps {
   /**
    * The scientific pitch name of the target note (e.g., "A4").
    */
@@ -16,15 +16,15 @@ interface PracticeFeedbackProps {
 
   /**
    * The scientific pitch name detected by the audio engine.
-   * `null` indicates no signal or signal below confidence threshold.
+   * `undefined` indicates no signal or signal below confidence threshold.
    */
-  detectedPitchName: string | null
+  detectedPitchName: string | undefined
 
   /**
    * Pitch deviation in cents from the target note's ideal frequency.
    * Positive values are sharp, negative values are flat.
    */
-  centsOff: number | null
+  centsOff: number | undefined
 
   /**
    * Current status of the practice state machine.
@@ -109,7 +109,7 @@ export function PracticeFeedback({
   liveObservations = [],
 }: PracticeFeedbackProps) {
   /** Derived boolean: True if the detected pitch is within the user's current tolerance. */
-  const isInTune = centsOff !== null && centsOff !== undefined && Math.abs(centsOff) < centsTolerance
+  const isInTune = centsOff !== undefined && Math.abs(centsOff) < centsTolerance
   /** Derived boolean: True if a valid audio signal is being processed. */
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
   /** Derived boolean: True if the detected note matches the target scientific pitch. */
@@ -171,7 +171,7 @@ export function PracticeFeedback({
       </div>
 
       {/* LEVEL 2: Precise Metrics - For students who want exact data */}
-      {isPlaying && centsOff !== null && centsOff !== undefined && (
+      {isPlaying && centsOff !== undefined && (
         <details className="text-center">
           <summary className="text-sm text-muted-foreground cursor-pointer">
             Show Technical Details

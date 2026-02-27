@@ -5,7 +5,7 @@
  * Refactored for branded types and strict validation.
  */
 
-import { NoteTechnique, Observation, MusicalNoteName } from './technique-types'
+import { NoteTechnique, Observation } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { FixedRingBuffer } from './domain/data-structures'
 import { AppError, ERROR_CODES } from './errors/app-error'
@@ -70,9 +70,7 @@ export class MusicalNote {
   }
 
   static fromFrequency(frequency: number): MusicalNote {
-    if (!Number.isFinite(frequency) || frequency <= 0) {
-      throw new Error(`Invalid frequency: ${frequency}`)
-    }
+    validateFrequency(frequency)
     const midiNumber = A4_MIDI + 12 * Math.log2(frequency / A4_FREQUENCY)
     const roundedMidi = Math.round(midiNumber)
     const centsDeviation = (midiNumber - roundedMidi) * 100
@@ -96,25 +94,10 @@ export class MusicalNote {
    * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
    * @returns A MusicalNote instance
    * @throws {@link AppError} with code `NOTE_PARSING_FAILED` if format is invalid
-   *
-   * @example
-   * ```ts
-   * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
-   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
-   * ```
    */
   static fromName(fullName: NoteName): MusicalNote {
-    const match = (fullName as string).match(/^([A-G])(b{1,2}|#{1,2})?([0-8])$/)
-    if (!match) {
-      throw new AppError({
-        message: `Invalid note name format: "${fullName}" (octave must be 0-8)`,
-        code: ERROR_CODES.NOTE_PARSING_FAILED,
-      })
-    }
-
-    const [, step, accidental = '', octaveStr] = match
-    const octave = parseInt(octaveStr, 10)
-
+    const components = parseNoteName(fullName)
+    const { step, accidental, octave } = components
     const stepValue = STEP_VALUES[step]
     const accidentalValue = ACCIDENTAL_MODIFIERS[accidental]
 
@@ -130,6 +113,35 @@ export class MusicalNote {
     const result = `${this.noteName}${this.octave}`
     assertValidNoteName(result)
     return result
+  }
+}
+
+function validateFrequency(frequency: number): void {
+  if (!Number.isFinite(frequency) || frequency <= 0) {
+    throw new Error(`Invalid frequency: ${frequency}`)
+  }
+}
+
+interface NoteComponents {
+  step: string
+  accidental: string
+  octave: number
+}
+
+function parseNoteName(fullName: NoteName): NoteComponents {
+  const match = (fullName as string).match(/^([A-G])(b{1,2}|#{1,2})?([0-8])$/)
+  if (!match) {
+    throw new AppError({
+      message: `Invalid note name format: "${fullName}" (octave must be 0-8)`,
+      code: ERROR_CODES.NOTE_PARSING_FAILED,
+    })
+  }
+
+  const [, step, accidental = '', octaveStr] = match
+  return {
+    step,
+    accidental,
+    octave: parseInt(octaveStr, 10),
   }
 }
 
@@ -188,37 +200,31 @@ export type PracticeEvent =
 /**
  * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
  *
- * @remarks
- * This function handles various `alter` formats, including numeric (`1`, `-1`) and
- * string-based (`"sharp"`, `"#"`), normalizing them into a format that `MusicalNote`
- * can parse (e.g., "C#4"). It will throw an error if the `alter` value is
- * unsupported, as this indicates a data validation issue upstream.
- *
  * @param pitch - The pitch object from a `TargetNote`.
  * @returns A standardized branded note name string like `"C#4"`.
  */
 export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
   const canonicalAlter = normalizeAccidental(pitch.alter)
-  let alterStr = ''
-  switch (canonicalAlter) {
-    case 1:
-      alterStr = '#'
-      break
-    case -1:
-      alterStr = 'b'
-      break
-    case 0:
-      alterStr = ''
-      break
-    default:
-      throw new AppError({
-        message: `Unsupported alter value: ${pitch.alter}`,
-        code: ERROR_CODES.DATA_VALIDATION_ERROR,
-      })
-  }
+  const alterStr = getAlterString(canonicalAlter, pitch.alter)
   const result = `${pitch.step}${alterStr}${pitch.octave}`
   assertValidNoteName(result)
   return result
+}
+
+function getAlterString(canonicalAlter: number, originalAlter: number | string): string {
+  switch (canonicalAlter) {
+    case 1:
+      return '#'
+    case -1:
+      return 'b'
+    case 0:
+      return ''
+    default:
+      throw new AppError({
+        message: `Unsupported alter value: ${originalAlter}`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
+  }
 }
 
 /**
@@ -279,18 +285,23 @@ export function isStillMatched(
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
-  const handlers: Record<string, (s: PracticeState, e: any) => PracticeState> = {
-    START: handleStart,
-    STOP: handleStopReset,
-    RESET: handleStopReset,
-    NOTE_DETECTED: (s, e) => handleNoteDetected(s, e.payload),
-    HOLDING_NOTE: (s, e) => handleHoldingNote(s, e.payload.duration),
-    NO_NOTE_DETECTED: handleNoNoteDetected,
-    NOTE_MATCHED: (s, e) => handleNoteMatched(s, e.payload),
+  switch (event.type) {
+    case 'START':
+      return handleStart(state)
+    case 'STOP':
+    case 'RESET':
+      return handleStopReset(state)
+    case 'NOTE_DETECTED':
+      return handleNoteDetected(state, event.payload)
+    case 'HOLDING_NOTE':
+      return handleHoldingNote(state, event.payload.duration)
+    case 'NO_NOTE_DETECTED':
+      return handleNoNoteDetected(state)
+    case 'NOTE_MATCHED':
+      return handleNoteMatched(state, event.payload)
+    default:
+      return state
   }
-
-  const handler = handlers[event.type]
-  return handler ? handler(state, event) : state
 }
 
 function handleStart(state: PracticeState): PracticeState {
@@ -320,14 +331,17 @@ function handleStopReset(state: PracticeState): PracticeState {
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
   buffer.push(...state.detectionHistory.slice().reverse(), payload)
-  const status =
-    state.status === 'validating' || state.status === 'correct' ? 'listening' : state.status
+  const status = getStatusAfterDetection(state.status)
   return {
     ...state,
     detectionHistory: buffer.toArray(),
     status,
     holdDuration: status === 'listening' ? 0 : state.holdDuration,
   }
+}
+
+function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
+  return currentStatus === 'validating' || currentStatus === 'correct' ? 'listening' : currentStatus
 }
 
 function handleHoldingNote(state: PracticeState, duration: number): PracticeState {

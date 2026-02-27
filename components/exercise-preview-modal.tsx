@@ -15,7 +15,7 @@ import { formatPitchName, MusicalNote } from '@/lib/practice-core'
 import { useState } from 'react'
 
 interface ExercisePreviewModalProps {
-  exercise: Exercise | null; isOpen: boolean; onOpenChange: (open: boolean) => void; onStart: () => void;
+  exercise: Exercise | undefined; isOpen: boolean; onOpenChange: (open: boolean) => void; onStart: () => void;
 }
 
 export function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }: ExercisePreviewModalProps) {
@@ -69,7 +69,7 @@ export function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }
     }
   }
 
-  if (!exercise) return null
+  if (!exercise) return <></>
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
@@ -104,7 +104,7 @@ export function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }
               <section className="space-y-4">
                 <h4 className="flex items-center gap-2 font-semibold text-lg">Finger Position Guide</h4>
                 <div className="bg-card rounded-xl p-4 border h-full flex flex-col justify-center">
-                  <ViolinFingerboard targetNote={null} detectedPitchName={null} centsDeviation={null} />
+                  <ViolinFingerboard targetNote={undefined} detectedPitchName={undefined} centsDeviation={undefined} />
                 </div>
               </section>
             </div>

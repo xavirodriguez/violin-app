@@ -31,8 +31,8 @@ describe('PracticeFeedback', () => {
     render(
       <PracticeFeedback
         targetNote="A4"
-        detectedPitchName={null}
-        centsOff={null}
+        detectedPitchName={undefined}
+        centsOff={undefined}
         status="listening"
       />
     )
