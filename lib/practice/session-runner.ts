@@ -43,7 +43,7 @@ export interface PracticeSessionRunner {
  * Minimal store interface for state management and UI synchronization.
  * @internal
  */
-interface RunnerStore {
+export interface RunnerStore {
   getState: () => { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
   setState: (
     partial:
@@ -64,7 +64,7 @@ interface RunnerStore {
  * Analytics handlers for recording performance metrics.
  * @internal
  */
-interface RunnerAnalytics {
+export interface RunnerAnalytics {
   endSession: () => void
   recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
   recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void

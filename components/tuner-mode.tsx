@@ -52,9 +52,9 @@ export function TunerMode() {
   const isError = state.kind === 'ERROR'
   const isActive = state.kind === 'READY' || state.kind === 'LISTENING' || state.kind === 'DETECTED'
 
-  const currentNote = state.kind === 'DETECTED' ? state.note : null
-  const centsDeviation = state.kind === 'DETECTED' ? state.cents : null
-  const errorMessage = state.kind === 'ERROR' ? state.error.message : null
+  const currentNote = state.kind === 'DETECTED' ? state.note : undefined
+  const centsDeviation = state.kind === 'DETECTED' ? state.cents : undefined
+  const errorMessage = state.kind === 'ERROR' ? state.error.message : undefined
 
   /** Reference to the current animation frame to ensure clean teardown. */
   const animationFrameRef = useRef<number>(undefined)

@@ -34,10 +34,10 @@ describe('NoteSegmenter', () => {
     const segmenter = new NoteSegmenter(options)
 
     // Silence
-    expect(segmenter.processFrame(createUnpitchedFrame(0, 0.005, 0.5))).toBeNull()
+    expect(segmenter.processFrame(createUnpitchedFrame(0, 0.005, 0.5))).toBeUndefined()
 
     // Signal starts
-    expect(segmenter.processFrame(createPitchedFrame(10, 0.03, 0.9, 'A4'))).toBeNull()
+    expect(segmenter.processFrame(createPitchedFrame(10, 0.03, 0.9, 'A4'))).toBeUndefined()
 
     // After 50ms debounce
     const onset = segmenter.processFrame(createPitchedFrame(60, 0.03, 0.9, 'A4'))
@@ -55,7 +55,7 @@ describe('NoteSegmenter', () => {
     segmenter.processFrame(createPitchedFrame(50, 0.03, 0.9, 'A4')) // ONSET
 
     // Signal drops
-    expect(segmenter.processFrame(createUnpitchedFrame(100, 0.005, 0.1))).toBeNull()
+    expect(segmenter.processFrame(createUnpitchedFrame(100, 0.005, 0.1))).toBeUndefined()
 
     // After 100ms debounce
     const offset = segmenter.processFrame(createUnpitchedFrame(200, 0.005, 0.1))
@@ -75,7 +75,7 @@ describe('NoteSegmenter', () => {
     segmenter.processFrame(createPitchedFrame(50, 0.03, 0.9, 'A4')) // ONSET
 
     // Change to B4 - should NOT emit yet
-    expect(segmenter.processFrame(createPitchedFrame(100, 0.03, 0.9, 'B4'))).toBeNull()
+    expect(segmenter.processFrame(createPitchedFrame(100, 0.03, 0.9, 'B4'))).toBeUndefined()
 
     // After 60ms (default debounce) - should emit NOTE_CHANGE
     const change = segmenter.processFrame(createPitchedFrame(160, 0.03, 0.9, 'B4'))
@@ -127,7 +127,7 @@ describe('NoteSegmenter', () => {
     segmenter.reset()
 
     // Should be in SILENCE state now
-    expect(segmenter.processFrame(createPitchedFrame(100, 0.03, 0.9, 'A4'))).toBeNull()
+    expect(segmenter.processFrame(createPitchedFrame(100, 0.03, 0.9, 'A4'))).toBeUndefined()
     const onset = segmenter.processFrame(createPitchedFrame(150, 0.03, 0.9, 'A4'))
     expect(onset?.type).toBe('ONSET')
     if (onset?.type === 'ONSET') {
@@ -142,13 +142,13 @@ describe('NoteSegmenter', () => {
     segmenter.processFrame(createPitchedFrame(50, 0.03, 0.9, 'A4')) // ONSET
 
     // Pitch dropout (confidence 0) but RMS high
-    expect(segmenter.processFrame(createUnpitchedFrame(60, 0.03, 0.0))).toBeNull()
-    expect(segmenter.processFrame(createUnpitchedFrame(100, 0.03, 0.0))).toBeNull() // 50ms since last signal
+    expect(segmenter.processFrame(createUnpitchedFrame(60, 0.03, 0.0))).toBeUndefined()
+    expect(segmenter.processFrame(createUnpitchedFrame(100, 0.03, 0.0))).toBeUndefined() // 50ms since last signal
 
     // After dropout tolerance + offset debounce
     // lastSignalTime was at 50ms.
     // At 110ms, now - lastSignalTime = 60ms > 50ms dropout tolerance. Offset timer starts.
-    expect(segmenter.processFrame(createUnpitchedFrame(110, 0.03, 0.0))).toBeNull()
+    expect(segmenter.processFrame(createUnpitchedFrame(110, 0.03, 0.0))).toBeUndefined()
 
     // 100ms offset debounce from 110ms -> 210ms
     const offset = segmenter.processFrame(createUnpitchedFrame(210, 0.03, 0.0))

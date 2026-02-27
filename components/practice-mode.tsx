@@ -260,11 +260,11 @@ function PracticeActiveView({
   /** Machine status. */
   status: string
   /** The note the user should be playing. */
-  targetNote: TargetNote | null
+  targetNote: TargetNote | undefined
   /** Formatted name of the target pitch. */
-  targetPitchName: string | null
+  targetPitchName: string | undefined
   /** Latest note detected by the audio pipeline. */
-  lastDetectedNote: DetectedNote | null | undefined
+  lastDetectedNote: DetectedNote | undefined
   /** Heuristic observations about current performance. */
   liveObservations?: Observation[]
   /** How long the current note has been held in tune. */
@@ -275,15 +275,15 @@ function PracticeActiveView({
   zenMode: boolean
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
-  if (!isActive || !targetNote || !targetPitchName) return null
+  if (!isActive || !targetNote || !targetPitchName) return <></>
 
   return (
     <>
       <Card className="p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch ?? null}
-          centsOff={lastDetectedNote?.cents ?? null}
+          detectedPitchName={lastDetectedNote?.pitch}
+          centsOff={lastDetectedNote?.cents}
           status={status}
           liveObservations={liveObservations}
           holdDuration={holdDuration}
@@ -295,8 +295,8 @@ function PracticeActiveView({
         <Card className="p-12">
           <ViolinFingerboard
             targetNote={targetPitchName}
-            detectedPitchName={lastDetectedNote?.pitch ?? null}
-            centsDeviation={lastDetectedNote?.cents ?? null}
+            detectedPitchName={lastDetectedNote?.pitch}
+            centsDeviation={lastDetectedNote?.cents}
             centsTolerance={DEFAULT_CENTS_TOLERANCE}
           />
         </Card>
@@ -322,16 +322,16 @@ function SheetMusicView({
   /** Whether OSMD has finished rendering. */
   isReady: boolean
   /** Rendering error, if any. */
-  error: string | null
+  error: string | undefined
   /** Reference to the container element for OSMD. */
   containerRef: React.RefObject<HTMLDivElement | null>
 }) {
-  if (!musicXML) return null
+  if (!musicXML) return <></>
 
   return (
     <Card className="p-6">
       <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
-        <SheetMusic containerRef={containerRef} isReady={isReady} error={error} />
+        <SheetMusic containerRef={containerRef} isReady={isReady} error={error ?? null} />
       </ErrorBoundary>
     </Card>
   )
@@ -369,7 +369,6 @@ export function PracticeMode() {
     practiceState,
     audioLoop,
     detector,
-    error,
     loadExercise,
     setAutoStart,
     start,
@@ -384,10 +383,10 @@ export function PracticeMode() {
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
 
-  const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
+  const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
   const [zenMode, setZenMode] = useState(false)
-  const [autoStartEnabled, setAutoStartEnabled] = useState(false)
+  const [autoStartEnabled] = useState(false)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -421,23 +420,15 @@ export function PracticeMode() {
     if (practiceState?.status !== 'listening') return
     if (!audioLoop || !detector) return
 
-    let isActive = true
     const abortController = new AbortController()
 
     const runPipeline = async () => {
       try {
-        // 1. Create raw pitch stream from audio adapters
-        const rawPitchStream = createRawPitchStream(
-          audioLoop,
-          detector,
-          abortController.signal
-        )
-
-        // 2. Create the domain-aware event pipeline
+        const rawPitchStream = createRawPitchStream(audioLoop, detector, abortController.signal)
         const eventPipeline = createPracticeEventPipeline(
           rawPitchStream,
           {
-            targetNote: practiceState?.exercise.notes[practiceState.currentIndex] ?? null,
+            targetNote: practiceState?.exercise.notes[practiceState.currentIndex] ?? undefined,
             currentIndex: practiceState?.currentIndex ?? 0,
             sessionStartTime: Date.now(),
           },
@@ -451,10 +442,7 @@ export function PracticeMode() {
           },
           abortController.signal
         )
-
-        // 3. Consumir eventos (actualiza el store automáticamente)
         await consumePipelineEvents(eventPipeline)
-
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return
         console.error('[PracticeMode] Pipeline error:', error)
@@ -462,11 +450,7 @@ export function PracticeMode() {
     }
 
     runPipeline()
-
-    return () => {
-      isActive = false
-      abortController.abort()
-    }
+    return () => abortController.abort()
   }, [
     practiceState?.status,
     practiceState?.currentIndex,
@@ -505,8 +489,8 @@ export function PracticeMode() {
   }, [status, start, stop])
 
   const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[0] : null
-  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : null
+  const lastDetectedNote = history.length > 0 ? history[0] : undefined
+  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : undefined
 
   const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 
@@ -554,11 +538,11 @@ export function PracticeMode() {
         <ExercisePreviewModal
           exercise={previewExercise}
           isOpen={!!previewExercise}
-          onOpenChange={(open) => !open && setPreviewExercise(null)}
+          onOpenChange={(open) => !open && setPreviewExercise(undefined)}
           onStart={() => {
             if (previewExercise) {
               loadExercise(previewExercise)
-              setPreviewExercise(null)
+              setPreviewExercise(undefined)
               start()
             }
           }}
@@ -590,7 +574,7 @@ export function PracticeMode() {
             <SheetMusicView
               musicXML={practiceState?.exercise.musicXML}
               isReady={osmdHook.isReady}
-              error={osmdHook.error}
+              error={osmdHook.error || undefined}
               containerRef={osmdHook.containerRef}
             />
             {practiceState && (
@@ -621,7 +605,7 @@ export function PracticeMode() {
         {status === 'completed' && (
           <PracticeCompletion
             onRestart={handleRestart}
-            sessionData={sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : null}
+            sessionData={sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined}
           />
         )}
 

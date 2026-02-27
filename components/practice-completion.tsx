@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Star, Share2, RotateCcw, Calendar, TrendingUp, Clock } from 'lucide-react'
+import { Trophy, Star, Share2, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PracticeSummaryChart } from './practice-summary-chart'
@@ -11,7 +11,7 @@ import { generateAchievementImage } from '@/lib/achievement-image-generator'
 import confetti from 'canvas-confetti'
 import { cn } from '@/lib/utils'
 
-interface PracticeCompletionProps { onRestart: () => void; sessionData: PracticeSession | null; }
+interface PracticeCompletionProps { onRestart: () => void; sessionData: PracticeSession | undefined; }
 
 export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletionProps) {
   const { getSessionHistory } = useAnalyticsStore()
@@ -46,7 +46,7 @@ export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletio
     } catch (err) { console.error(err) } finally { setIsSharing(false) }
   }
 
-  if (!sessionData) return null
+  if (!sessionData) return <></>
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-2xl mx-auto pb-12">

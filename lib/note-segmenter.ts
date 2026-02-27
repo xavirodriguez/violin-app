@@ -1,5 +1,6 @@
 import {
   TechniqueFrame,
+  PitchedFrame,
   MusicalNoteName,
   TimestampMs,
   NoteSegment,
@@ -71,83 +72,49 @@ export function validateOptions(options: SegmenterOptions): void {
 
 /**
  * Possible segmenter events emitted during note detection.
- *
- * @remarks
- * Event Sequence:
- * 1. ONSET: Sound begins → new note detected
- * 2. NOTE_CHANGE: Pitch changes mid-sound (unusual, may indicate sliding)
- * 3. OFFSET: Sound ends → note completed with full analysis
  */
 export type SegmenterEvent =
   | {
       type: 'ONSET'
-      /** Timestamp when note attack was detected (ms) */
       timestamp: TimestampMs
-      /** The detected note name (e.g., "A4") */
       noteName: MusicalNoteName
-      /**
-       * Frames captured during silence/transition before this note.
-       * Used for analyzing attack quality and string crossing.
-       */
       gapFrames: ReadonlyArray<TechniqueFrame>
     }
   | {
       type: 'OFFSET'
-      /** Timestamp when note release was detected (ms) */
       timestamp: TimestampMs
-      /**
-       * Complete segment data including all frames captured during this note's sustain phase.
-       * Used for intonation, vibrato, and stability analysis.
-       */
       segment: NoteSegment
     }
   | {
       type: 'NOTE_CHANGE'
-      /** Timestamp of pitch change (ms) */
       timestamp: TimestampMs
-      /** The new detected note name */
       noteName: MusicalNoteName
-      /**
-       * Complete segment data for the note that just ended.
-       * Frames may indicate intentional glissando or unintentional sliding.
-       */
       segment: NoteSegment
     }
 
 /**
  * Internal state of the segmenter.
  */
-type SegmenterState =
-  | { kind: 'SILENCE'; lastAboveThresholdTime: TimestampMs | null }
-  | {
-      kind: 'NOTE'
-      currentNoteName: MusicalNoteName
-      lastBelowThresholdTime: TimestampMs | null
-      lastSignalTime: TimestampMs
-      /** Tracking for NOTE_CHANGE */
-      pendingNoteName: MusicalNoteName | null
-      pendingSince: TimestampMs | null
-    }
+type SilenceState = { kind: 'SILENCE'; lastAboveThresholdTime: TimestampMs | undefined }
+type NoteState = {
+  kind: 'NOTE'
+  currentNoteName: MusicalNoteName
+  lastBelowThresholdTime: TimestampMs | undefined
+  lastSignalTime: TimestampMs
+  pendingNoteName: MusicalNoteName | undefined
+  pendingSince: TimestampMs | undefined
+}
+type SegmenterState = SilenceState | NoteState
 
 /**
  * A stateful class that segments an audio stream into musical notes.
- *
- * @remarks
- * This class implements a state machine (`SILENCE` or `NOTE`) with hysteresis and temporal debouncing
- * to robustly identify the start and end of musical notes from a real-time audio stream.
- * It aggregates frames for a completed note and provides them in the `OFFSET` event payload.
- *
- * The core logic is based on:
- * - RMS thresholds to distinguish signal from silence.
- * - Confidence scores from the pitch detector to filter noise.
- * - Debouncing timers to prevent spurious events from short fluctuations.
  */
 export class NoteSegmenter {
-  private options: SegmenterOptions
-  private state: SegmenterState = { kind: 'SILENCE', lastAboveThresholdTime: null }
+  private readonly options: SegmenterOptions
+  private state: SegmenterState = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
   private frames: TechniqueFrame[] = []
   private gapFrames: TechniqueFrame[] = []
-  private lastSignalTime: TimestampMs | null = null
+  private lastSignalTime: TimestampMs | undefined = undefined
   private segmentCount = 0
 
   constructor(options: Partial<SegmenterOptions> = {}) {
@@ -155,32 +122,20 @@ export class NoteSegmenter {
     validateOptions(this.options)
   }
 
-  /**
-   * Processes a single audio analysis frame.
-   *
-   * @param frame - Current pitch detection result
-   * @returns Event if state transition occurred, null otherwise
-   *
-   * @remarks
-   * **State Machine**:
-   * - SILENCE → ONSET (when RMS `>` minRms)
-   * - ONSET → OFFSET (when RMS `<` maxRmsSilence for offsetDebounceMs)
-   * - ONSET → NOTE_CHANGE (when detected note changes)
-   *
-   * Uses debouncing to prevent false triggers from noise.
-   */
-  processFrame(frame: TechniqueFrame): SegmenterEvent | null {
-    const isRmsSignal = frame.rms > this.options.minRms
-    const isPitchSignal = frame.kind === 'pitched' && frame.confidence > this.options.minConfidence
-    const isSignalPresent = isRmsSignal && isPitchSignal
+  processFrame(frame: TechniqueFrame): SegmenterEvent | undefined {
+    const isSignalPresent = this.isSignal(frame)
     const isSilence = frame.rms < this.options.maxRmsSilence
     const now = frame.timestamp
 
-    if (this.state.kind === 'SILENCE') {
-      return this.handleSilenceState(frame, isSignalPresent, isSilence, now)
-    } else {
-      return this.handleNoteState(frame, isSignalPresent, isSilence, now)
-    }
+    return this.state.kind === 'SILENCE'
+      ? this.handleSilenceState(frame, isSignalPresent, isSilence, now)
+      : this.handleNoteState(frame, isSignalPresent, isSilence, now)
+  }
+
+  private isSignal(frame: TechniqueFrame): boolean {
+    const isRmsSignal = frame.rms > this.options.minRms
+    const isPitchSignal = frame.kind === 'pitched' && frame.confidence > this.options.minConfidence
+    return isRmsSignal && isPitchSignal
   }
 
   private handleSilenceState(
@@ -188,38 +143,49 @@ export class NoteSegmenter {
     isSignalPresent: boolean,
     isSilence: boolean,
     now: TimestampMs,
-  ): SegmenterEvent | null {
+  ): SegmenterEvent | undefined {
     this.pushToBuffer(this.gapFrames, frame, this.options.maxGapFrames)
-
     if (isSignalPresent) {
-      this.lastSignalTime = now
-      const s = this.state as Extract<SegmenterState, { kind: 'SILENCE' }>
-
-      if (s.lastAboveThresholdTime === null) {
-        s.lastAboveThresholdTime = now
-      } else if (now - s.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
-        // ONSET detected
-        const noteName = (frame as any).noteName as MusicalNoteName // Guaranteed by isSignalPresent
-        this.state = {
-          kind: 'NOTE',
-          currentNoteName: noteName,
-          lastBelowThresholdTime: null,
-          lastSignalTime: now,
-          pendingNoteName: null,
-          pendingSince: null,
-        }
-        this.frames = [frame]
-        const gap = Object.freeze([...this.gapFrames])
-        this.gapFrames = []
-        return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
-      }
-    } else if (
-      isSilence ||
-      (this.lastSignalTime !== null && now - this.lastSignalTime > this.options.noisyGapResetMs)
-    ) {
-      ;(this.state as any).lastAboveThresholdTime = null
+      return this.processSilenceSignal(frame as PitchedFrame, now)
     }
-    return null
+    this.updateSilenceThreshold(isSilence, now)
+    return undefined
+  }
+
+  private processSilenceSignal(frame: PitchedFrame, now: TimestampMs): SegmenterEvent | undefined {
+    this.lastSignalTime = now
+    const silenceState = this.state as SilenceState
+    if (silenceState.lastAboveThresholdTime === undefined) {
+      silenceState.lastAboveThresholdTime = now
+      return undefined
+    }
+    if (now - silenceState.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
+      return this.triggerOnset(frame.noteName, now)
+    }
+    return undefined
+  }
+
+  private updateSilenceThreshold(isSilence: boolean, now: TimestampMs): void {
+    const isNoisyGap =
+      this.lastSignalTime !== undefined && now - this.lastSignalTime > this.options.noisyGapResetMs
+    if (isSilence || isNoisyGap) {
+      ;(this.state as SilenceState).lastAboveThresholdTime = undefined
+    }
+  }
+
+  private triggerOnset(noteName: MusicalNoteName, now: TimestampMs): SegmenterEvent {
+    this.state = {
+      kind: 'NOTE',
+      currentNoteName: noteName,
+      lastBelowThresholdTime: undefined,
+      lastSignalTime: now,
+      pendingNoteName: undefined,
+      pendingSince: undefined,
+    }
+    this.frames = [this.gapFrames[this.gapFrames.length - 1]!]
+    const gap = Object.freeze([...this.gapFrames])
+    this.gapFrames = []
+    return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
   }
 
   private handleNoteState(
@@ -227,76 +193,102 @@ export class NoteSegmenter {
     isSignalPresent: boolean,
     isSilence: boolean,
     now: TimestampMs,
-  ): SegmenterEvent | null {
+  ): SegmenterEvent | undefined {
     this.pushToBuffer(this.frames, frame, this.options.maxNoteFrames)
-    const s = this.state as Extract<SegmenterState, { kind: 'NOTE' }>
+    const noteState = this.state as NoteState
 
-    // Note Change Detection
-    const noteChangeEvent = this.checkNoteChange(frame, isSignalPresent, now, s)
+    const noteChangeEvent = this.checkNoteChange(frame, isSignalPresent, now, noteState)
     if (noteChangeEvent) return noteChangeEvent
 
-    // Offset Detection
-    // We allow the note to continue if RMS is still high even if confidence drops (pitchDropoutToleranceMs)
+    return this.processNoteOffset(isSignalPresent, isSilence, now, noteState)
+  }
+
+  private processNoteOffset(
+    isSignalPresent: boolean,
+    isSilence: boolean,
+    now: TimestampMs,
+    noteState: NoteState,
+  ): SegmenterEvent | undefined {
     const hasPitchDropout =
-      !isSignalPresent && now - s.lastSignalTime > this.options.pitchDropoutToleranceMs
-    const shouldStartOffsetTimer = isSilence || hasPitchDropout
+      !isSignalPresent && now - noteState.lastSignalTime > this.options.pitchDropoutToleranceMs
 
-    if (shouldStartOffsetTimer) {
-      if (s.lastBelowThresholdTime === null) {
-        s.lastBelowThresholdTime = now
-      } else if (now - s.lastBelowThresholdTime >= this.options.offsetDebounceMs) {
-        // OFFSET detected
-        const segment = this.createSegment(s.currentNoteName)
-        this.state = { kind: 'SILENCE', lastAboveThresholdTime: null }
-        this.frames = []
-        this.lastSignalTime = null
-        return { type: 'OFFSET', timestamp: now, segment }
-      }
-    } else {
-      s.lastBelowThresholdTime = null
-      if (isSignalPresent) {
-        s.lastSignalTime = now
-      }
+    if (isSilence || hasPitchDropout) {
+      return this.handleOffsetTimer(now, noteState)
     }
+    noteState.lastBelowThresholdTime = undefined
+    if (isSignalPresent) {
+      noteState.lastSignalTime = now
+    }
+    return undefined
+  }
 
-    return null
+  private handleOffsetTimer(now: TimestampMs, noteState: NoteState): SegmenterEvent | undefined {
+    if (noteState.lastBelowThresholdTime === undefined) {
+      noteState.lastBelowThresholdTime = now
+      return undefined
+    }
+    if (now - noteState.lastBelowThresholdTime >= this.options.offsetDebounceMs) {
+      return this.triggerOffset(noteState.currentNoteName, now)
+    }
+    return undefined
+  }
+
+  private triggerOffset(noteName: MusicalNoteName, now: TimestampMs): SegmenterEvent {
+    const segment = this.createSegment(noteName)
+    this.state = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
+    this.frames = []
+    this.lastSignalTime = undefined
+    return { type: 'OFFSET', timestamp: now, segment }
   }
 
   private checkNoteChange(
     frame: TechniqueFrame,
     isSignalPresent: boolean,
     now: TimestampMs,
-    s: Extract<SegmenterState, { kind: 'NOTE' }>,
-  ): SegmenterEvent | null {
-    if (isSignalPresent && frame.kind === 'pitched' && frame.noteName !== s.currentNoteName) {
-      if (!s.pendingNoteName) {
-        s.pendingNoteName = frame.noteName
-        s.pendingSince = now
-      } else if (
-        s.pendingNoteName === frame.noteName &&
-        now - (s.pendingSince ?? 0) >= this.options.noteChangeDebounceMs
-      ) {
-        // Confirmed: new note stable
-        const segment = this.createSegment(s.currentNoteName)
-        s.currentNoteName = frame.noteName
-        this.frames = [frame]
-        s.pendingNoteName = null
-        s.pendingSince = null
-        s.lastSignalTime = now
-        s.lastBelowThresholdTime = null
-
-        return {
-          type: 'NOTE_CHANGE',
-          timestamp: now,
-          noteName: frame.noteName,
-          segment,
-        }
-      }
-    } else {
-      s.pendingNoteName = null
-      s.pendingSince = null
+    noteState: NoteState,
+  ): SegmenterEvent | undefined {
+    const isDifferentNote =
+      isSignalPresent && frame.kind === 'pitched' && frame.noteName !== noteState.currentNoteName
+    if (!isDifferentNote) {
+      noteState.pendingNoteName = undefined
+      noteState.pendingSince = undefined
+      return undefined
     }
-    return null
+
+    return this.processPendingNoteChange(frame as PitchedFrame, now, noteState)
+  }
+
+  private processPendingNoteChange(
+    frame: PitchedFrame,
+    now: TimestampMs,
+    noteState: NoteState,
+  ): SegmenterEvent | undefined {
+    if (noteState.pendingNoteName !== frame.noteName) {
+      noteState.pendingNoteName = frame.noteName
+      noteState.pendingSince = now
+      return undefined
+    }
+
+    if (now - (noteState.pendingSince ?? 0) >= this.options.noteChangeDebounceMs) {
+      return this.triggerNoteChange(frame, now, noteState)
+    }
+    return undefined
+  }
+
+  private triggerNoteChange(
+    frame: PitchedFrame,
+    now: TimestampMs,
+    noteState: NoteState,
+  ): SegmenterEvent {
+    const segment = this.createSegment(noteState.currentNoteName)
+    noteState.currentNoteName = frame.noteName
+    this.frames = [frame]
+    noteState.pendingNoteName = undefined
+    noteState.pendingSince = undefined
+    noteState.lastSignalTime = now
+    noteState.lastBelowThresholdTime = undefined
+
+    return { type: 'NOTE_CHANGE', timestamp: now, noteName: frame.noteName, segment }
   }
 
   private createSegment(noteName: MusicalNoteName): NoteSegment {
@@ -306,7 +298,7 @@ export class NoteSegmenter {
 
     return {
       segmentId: `seg-${Date.now()}-${this.segmentCount++}`,
-      noteIndex: 0, // Should be populated by consumer if needed
+      noteIndex: 0,
       targetPitch: noteName,
       startTime,
       endTime,
@@ -322,18 +314,11 @@ export class NoteSegmenter {
     }
   }
 
-  /**
-   * Resets segmenter to initial state.
-   *
-   * @remarks
-   * Call between exercises or when audio context is recreated.
-   * Discards all buffered frames and resets internal timers.
-   */
   reset(): void {
-    this.state = { kind: 'SILENCE', lastAboveThresholdTime: null }
+    this.state = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
     this.frames = []
     this.gapFrames = []
-    this.lastSignalTime = null
+    this.lastSignalTime = undefined
     this.segmentCount = 0
   }
 }

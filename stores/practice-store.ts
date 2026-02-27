@@ -10,13 +10,10 @@
 
 import { create } from 'zustand'
 import {
-  formatPitchName,
-  reducePracticeEvent,
   type PracticeState,
   type PracticeEvent,
 } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
-import { calculateLiveObservations } from '@/lib/live-observations'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { PitchDetector } from '@/lib/pitch-detector'
@@ -24,16 +21,19 @@ import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from 
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
-import { PracticeSessionRunnerImpl, SessionRunnerDependencies } from '@/lib/practice/session-runner'
+import { PracticeSessionRunnerImpl, SessionRunnerDependencies, RunnerStore, RunnerAnalytics } from '@/lib/practice/session-runner'
 import { transitions, PracticeStoreState, ReadyState, ActiveState } from '@/lib/practice/practice-states'
+import {
+  getInitialPracticeState,
+  getUpdatedLiveObservations,
+  updatePracticeState
+} from './practice-store-helpers'
 
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
 
 /**
  * Main store for managing the practice mode lifecycle and real-time audio pipeline.
- *
- * @public
  */
 export interface PracticeStore {
   state: PracticeStoreState
@@ -57,37 +57,6 @@ export interface PracticeStore {
   stop: () => Promise<void>
   reset: () => Promise<void>
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
-}
-
-/**
- * Returns the initial domain state for a given exercise.
- */
-function getInitialState(exercise: Exercise): PracticeState {
-  return {
-    status: 'idle',
-    exercise,
-    currentIndex: 0,
-    detectionHistory: [],
-    perfectNoteStreak: 0,
-  }
-}
-
-/**
- * Calculates updated live observations based on the current practice state.
- */
-function getUpdatedLiveObservations(state: PracticeState): Observation[] {
-  const terminalStates = ['idle', 'correct', 'completed']
-  if (terminalStates.includes(state.status)) {
-    return state.lastObservations || []
-  }
-  return computeActiveObservations(state)
-}
-
-function computeActiveObservations(state: PracticeState): Observation[] {
-  const targetNote = state.exercise.notes[state.currentIndex]
-  if (!targetNote) return []
-  const targetPitchName = formatPitchName(targetNote.pitch)
-  return calculateLiveObservations(state.detectionHistory, targetPitchName)
 }
 
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>
@@ -140,7 +109,7 @@ function injectActiveStateUpdates(
  */
 function createRunnerDeps(
   get: () => PracticeStore,
-  safeSet: ReturnType<typeof createSafeSet>,
+  safeSet: (partial: SafePartial) => void,
   storeState: ReadyState
 ): SessionRunnerDependencies {
   return {
@@ -156,18 +125,20 @@ function createRunnerDeps(
   }
 }
 
-function buildRunnerStoreInterface(get: () => PracticeStore, safeSet: (partial: SafePartial) => void) {
+function buildRunnerStoreInterface(get: () => PracticeStore, safeSet: (partial: SafePartial) => void): RunnerStore {
   return {
     getState: () => ({
       practiceState: get().practiceState,
       liveObservations: get().liveObservations,
     }),
-    setState: safeSet,
-    stop: get().stop,
+    setState: (partial: SafePartial) => safeSet(partial),
+    stop: async () => {
+      await get().stop()
+    },
   }
 }
 
-function buildRunnerAnalyticsInterface() {
+function buildRunnerAnalyticsInterface(): RunnerAnalytics {
   return {
     recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => {
       useSessionStore.getState().recordAttempt(index, pitch, cents, inTune)
@@ -185,7 +156,7 @@ function buildRunnerAnalyticsInterface() {
 function syncWithTuner(token: string | number, detector: PitchDetectionPort | undefined) {
   const detectorInstance = (detector as PitchDetectorAdapter)?.detector || undefined
   useTunerStore.setState({
-    state: { kind: 'LISTENING', sessionToken: token },
+    state: { kind: 'LISTENING', sessionToken: String(token) },
     detector: detectorInstance,
   })
 }
@@ -256,11 +227,11 @@ function updateStateFromEvent(
 ) {
   set((currentState) => {
     if (currentState.sessionToken !== token || !currentState.practiceState) return currentState
-    const practiceState = reducePracticeEvent(currentState.practiceState, event)
+    const practiceState = updatePracticeState(currentState.practiceState, event)
     return {
       ...currentState,
       practiceState,
-      liveObservations: getUpdatedLiveObservations(practiceState),
+      liveObservations: practiceState ? getUpdatedLiveObservations(practiceState) : [],
     }
   })
 }
@@ -343,10 +314,11 @@ function getStartStateUpdates(
   abortController: AbortController,
   token: string
 ): Partial<PracticeStore> {
+  const practiceState = updatePracticeState(currentState.practiceState, { type: 'START' })
   return {
     ...currentState,
     state: transitions.start(storeState, runner, abortController),
-    practiceState: currentState.practiceState ? reducePracticeEvent(currentState.practiceState, { type: 'START' }) : undefined,
+    practiceState,
     sessionToken: token,
     isStarting: false,
     error: undefined,
@@ -367,7 +339,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     const token = crypto.randomUUID()
     const nextSessionId = get().sessionId + 1
     const abortController = new AbortController()
-    const deps = createRunnerDeps(get, createSafeSet(set, get, token), ready)
+    const safeSet = createSafeSet(set, get, token)
+    const deps = createRunnerDeps(get, safeSet, ready)
     const runner = new PracticeSessionRunnerImpl(deps)
 
     startAnalyticsSession(ready.exercise)
@@ -399,7 +372,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       await get().stop()
       set((currentState) => ({
         ...currentState,
-        practiceState: getInitialState(exercise),
+        practiceState: getInitialPracticeState(exercise),
         state: { status: 'idle', exercise, error: undefined },
         error: undefined,
         liveObservations: [],
