@@ -191,7 +191,7 @@ export type PracticeEvent =
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   // Fired by the pipeline only when a target note is held stable.
-  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean } }
+  | { type: 'NOTE_MATCHED'; payload: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean } }
   // Fired when the signal is lost.
   | { type: 'NO_NOTE_DETECTED' }
 
@@ -228,18 +228,25 @@ function getAlterString(canonicalAlter: number, originalAlter: number | string):
 }
 
 /**
+ * Options for the `isMatch` function.
+ */
+export interface MatchOptions {
+  target: TargetNote | undefined
+  detected: DetectedNote | undefined
+  tolerance?: number | MatchHysteresis
+  isCurrentlyMatched?: boolean
+}
+
+/**
  * Checks if a detected note matches a target note within a specified tolerance.
  * Short-circuits if target or detected note is undefined.
  */
-export function isMatch(
-  target: TargetNote | undefined,
-  detected: DetectedNote | undefined,
-  tolerance: number | MatchHysteresis = 25,
-  isCurrentlyMatched = false,
-): boolean {
+export function isMatch(options: MatchOptions): boolean {
+  const { target, detected, tolerance = 25, isCurrentlyMatched = false } = options
   if (!target || !detected) return false
 
-  const hysteresis = typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
+  const hysteresis =
+    typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
   const actualTolerance = isCurrentlyMatched ? hysteresis.exit : hysteresis.enter
 
   return checkPitchAndTune(target, detected, actualTolerance)
@@ -267,7 +274,7 @@ export function isNewMatch(
   detected: DetectedNote | undefined,
   tolerance: number | MatchHysteresis = 25,
 ): boolean {
-  return isMatch(target, detected, tolerance, false)
+  return isMatch({ target, detected, tolerance, isCurrentlyMatched: false })
 }
 
 /**
@@ -278,30 +285,37 @@ export function isStillMatched(
   detected: DetectedNote | undefined,
   tolerance: number | MatchHysteresis = 25,
 ): boolean {
-  return isMatch(target, detected, tolerance, true)
+  return isMatch({ target, detected, tolerance, isCurrentlyMatched: true })
+}
+
+type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
+
+/**
+ * Discriminated union of event types and their specific handlers.
+ */
+type EventHandlerMap = {
+  [K in PracticeEvent['type']]: (
+    state: PracticeState,
+    payload: Extract<PracticeEvent, { type: K }> extends { payload: infer P } ? P : never,
+  ) => PracticeState
+}
+
+const HANDLERS: EventHandlerMap = {
+  START: (state) => handleStart(state),
+  STOP: (state) => handleStopReset(state),
+  RESET: (state) => handleStopReset(state),
+  NOTE_DETECTED: (state, payload) => handleNoteDetected(state, payload),
+  HOLDING_NOTE: (state, payload) => handleHoldingNote(state, payload.duration),
+  NO_NOTE_DETECTED: (state) => handleNoNoteDetected(state),
+  NOTE_MATCHED: (state, payload) => handleNoteMatched(state, payload),
 }
 
 /**
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
-  switch (event.type) {
-    case 'START':
-      return handleStart(state)
-    case 'STOP':
-    case 'RESET':
-      return handleStopReset(state)
-    case 'NOTE_DETECTED':
-      return handleNoteDetected(state, event.payload)
-    case 'HOLDING_NOTE':
-      return handleHoldingNote(state, event.payload.duration)
-    case 'NO_NOTE_DETECTED':
-      return handleNoNoteDetected(state)
-    case 'NOTE_MATCHED':
-      return handleNoteMatched(state, event.payload)
-    default:
-      return state
-  }
+  const handler = HANDLERS[event.type] as (state: PracticeState, payload: any) => PracticeState
+  return handler(state, (event as any).payload)
 }
 
 function handleStart(state: PracticeState): PracticeState {
@@ -353,8 +367,6 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
   return { ...state, detectionHistory: [], status: 'listening', holdDuration: 0 }
 }
 
-type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
-
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
   if (state.status !== 'listening' && state.status !== 'validating') return state
 
@@ -368,7 +380,7 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
 
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {
   const lastDetection = state.detectionHistory[0]
-  const isPerfect = payload?.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
+  const isPerfect = payload.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
   return isPerfect ? state.perfectNoteStreak + 1 : 0
 }
 
@@ -381,7 +393,7 @@ function finalizePracticeSession(
     ...state,
     status: 'completed',
     holdDuration: 0,
-    lastObservations: payload?.observations ?? [],
+    lastObservations: payload.observations ?? [],
     perfectNoteStreak: streak,
   }
 }
@@ -397,7 +409,7 @@ function advanceToNextNote(
     status: 'correct',
     detectionHistory: [],
     holdDuration: 0,
-    lastObservations: payload?.observations ?? [],
+    lastObservations: payload.observations ?? [],
     perfectNoteStreak: streak,
   }
 }
