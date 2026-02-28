@@ -9,7 +9,6 @@ import { Exercise } from '../exercises/types'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 import { PracticeEvent } from '../practice-core'
-import { AudioLoopPort, PitchDetectionPort as AudioPitchPort } from '../ports/audio.port'
 
 /**
  * Configuration context for the {@link PracticeEngine}.
@@ -65,21 +64,25 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
  * Maps a low-level practice event to a high-level engine event.
  */
 function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | undefined {
-  const mappings: Record<string, () => PracticeEngineEvent> = {
-    NOTE_DETECTED: () => ({ type: 'NOTE_DETECTED', payload: (event as any).payload }),
-    HOLDING_NOTE: () => ({ type: 'HOLDING_NOTE', payload: (event as any).payload }),
-    NOTE_MATCHED: () => ({
-      type: 'NOTE_MATCHED',
-      payload: {
-        technique: (event as any).payload.technique,
-        observations: (event as any).payload.observations ?? [],
-        isPerfect: (event as any).payload.isPerfect ?? false,
-      },
-    }),
-    NO_NOTE_DETECTED: () => ({ type: 'NO_NOTE' }),
+  switch (event.type) {
+    case 'NOTE_DETECTED':
+      return { type: 'NOTE_DETECTED', payload: event.payload }
+    case 'HOLDING_NOTE':
+      return { type: 'HOLDING_NOTE', payload: event.payload }
+    case 'NOTE_MATCHED':
+      return {
+        type: 'NOTE_MATCHED',
+        payload: {
+          technique: event.payload.technique,
+          observations: event.payload.observations ?? [],
+          isPerfect: event.payload.isPerfect ?? false,
+        },
+      }
+    case 'NO_NOTE_DETECTED':
+      return { type: 'NO_NOTE' }
+    default:
+      return undefined
   }
-
-  return mappings[event.type]?.()
 }
 
 /**
@@ -104,7 +107,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
     }
   }
 
-  const engine = {
+  return {
     async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
       if (isRunning) return
       isRunning = true
@@ -117,7 +120,6 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
     stop() { isRunning = false },
     getState() { return state },
   }
-  return engine
 }
 
 /**
@@ -143,7 +145,6 @@ async function* runEngineLoop(
       signal,
     )
     yield* processPipeline(pipeline, state, noteIndex, updateState, signal)
-    if (state.currentNoteIndex >= state.scoreLength) break
   }
 }
 
@@ -162,16 +163,21 @@ async function* processPipeline(
     updateState(engineEvent)
     yield engineEvent
 
-    if (isTerminalEvent(engineEvent, state)) {
-      if (state.currentNoteIndex >= state.scoreLength) yield* finalizeSession(updateState)
-      return
-    }
-    if (engineEvent.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex) break
+    if (shouldTerminatePipeline(engineEvent, state, noteIndex)) break
+  }
+
+  if (state.currentNoteIndex >= state.scoreLength && !signal.aborted) {
+    yield* finalizeSession(updateState)
   }
 }
 
-function isTerminalEvent(event: PracticeEngineEvent, state: PracticeEngineState): boolean {
-  return event.type === 'NOTE_MATCHED' && state.currentNoteIndex >= state.scoreLength
+function shouldTerminatePipeline(
+  event: PracticeEngineEvent,
+  state: PracticeEngineState,
+  noteIndex: number,
+): boolean {
+  if (state.currentNoteIndex >= state.scoreLength) return true
+  return event.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex
 }
 
 async function* finalizeSession(

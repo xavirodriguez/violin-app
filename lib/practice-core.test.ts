@@ -86,7 +86,7 @@ describe('reducePracticeEvent', () => {
 
   it('should advance to the next note on NOTE_MATCHED when listening', () => {
     const initialState = getInitialState('listening', 0)
-    const event = { type: 'NOTE_MATCHED' as const }
+    const event = { type: 'NOTE_MATCHED' as const, payload: { technique: {} as any } }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.currentIndex).toBe(1)
     expect(newState.status).toBe('correct')
@@ -94,7 +94,7 @@ describe('reducePracticeEvent', () => {
 
   it('should not advance note on NOTE_MATCHED when not listening', () => {
     const initialState = getInitialState('idle', 0)
-    const event = { type: 'NOTE_MATCHED' as const }
+    const event = { type: 'NOTE_MATCHED' as const, payload: { technique: {} as any } }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.currentIndex).toBe(0)
   })
@@ -102,7 +102,7 @@ describe('reducePracticeEvent', () => {
   it('should transition to completed state on NOTE_MATCHED for the last note', () => {
     const lastNoteIndex = mockExercise.notes.length - 1
     const initialState = getInitialState('listening', lastNoteIndex)
-    const event = { type: 'NOTE_MATCHED' as const }
+    const event = { type: 'NOTE_MATCHED' as const, payload: { technique: {} as any } }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.status).toBe('completed')
     expect(newState.currentIndex).toBe(lastNoteIndex) // Index should not go out of bounds
@@ -121,7 +121,7 @@ describe('reducePracticeEvent', () => {
         },
       ],
     }
-    const event = { type: 'NOTE_MATCHED' as const }
+    const event = { type: 'NOTE_MATCHED' as const, payload: { technique: {} as any } }
     const newState = reducePracticeEvent(initialState, event)
     expect(newState.detectionHistory).toEqual([])
   })
@@ -265,7 +265,7 @@ describe('isMatch', () => {
 
   it('should return true for a correct match', () => {
     const detected = { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detected)).toBe(true)
+    expect(isMatch({ target, detected })).toBe(true)
   })
 
   it('should return true for an enharmonic match', () => {
@@ -274,7 +274,7 @@ describe('isMatch', () => {
       duration: 4,
     }
     const detected = { pitch: 'Db4', pitchHz: 277.18, cents: 0, timestamp: 0, confidence: 1 }
-    expect(isMatch(enharmonicTarget, detected)).toBe(true)
+    expect(isMatch({ target: enharmonicTarget, detected })).toBe(true)
   })
 
   it('should handle numeric alter values in the target', () => {
@@ -289,13 +289,13 @@ describe('isMatch', () => {
     const detectedSharp = { pitch: 'G#3', pitchHz: 207.65, cents: 0, timestamp: 0, confidence: 1 }
     const detectedFlat = { pitch: 'A#4', pitchHz: 466.16, cents: 0, timestamp: 0, confidence: 1 } // Enharmonic equivalent
 
-    expect(isMatch(sharpTarget, detectedSharp)).toBe(true)
-    expect(isMatch(flatTarget, detectedFlat)).toBe(true)
+    expect(isMatch({ target: sharpTarget, detected: detectedSharp })).toBe(true)
+    expect(isMatch({ target: flatTarget, detected: detectedFlat })).toBe(true)
   })
 
   it('should return false if cents are out of tolerance', () => {
     const detected = { pitch: 'A4', pitchHz: 440, cents: 30, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detected, 25)).toBe(false)
+    expect(isMatch({ target, detected, tolerance: 25 })).toBe(false)
   })
 
   it('should return true if cents are exactly at the tolerance boundary (exclusive)', () => {
@@ -313,15 +313,15 @@ describe('isMatch', () => {
       timestamp: 0,
       confidence: 1,
     }
-    expect(isMatch(target, detectedPositive, 25)).toBe(true)
-    expect(isMatch(target, detectedNegative, 25)).toBe(true)
+    expect(isMatch({ target, detected: detectedPositive, tolerance: 25 })).toBe(true)
+    expect(isMatch({ target, detected: detectedNegative, tolerance: 25 })).toBe(true)
   })
 
   it('should return false if cents are exactly at the tolerance boundary (inclusive)', () => {
     const detectedPositive = { pitch: 'A4', pitchHz: 440, cents: 25, timestamp: 0, confidence: 1 }
     const detectedNegative = { pitch: 'A4', pitchHz: 440, cents: -25, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detectedPositive, 25)).toBe(false)
-    expect(isMatch(target, detectedNegative, 25)).toBe(false)
+    expect(isMatch({ target, detected: detectedPositive, tolerance: 25 })).toBe(false)
+    expect(isMatch({ target, detected: detectedNegative, tolerance: 25 })).toBe(false)
   })
 
   it('should implement hysteresis correctly', () => {
@@ -335,14 +335,14 @@ describe('isMatch', () => {
     }
 
     // Case 1: Not previously matched, 25 cents is outside "enter" (20)
-    expect(isMatch(target, detectedAt25, hysteresis, false)).toBe(false)
+    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, isCurrentlyMatched: false })).toBe(false)
 
     // Case 2: Previously matched, 25 cents is inside "exit" (30)
-    expect(isMatch(target, detectedAt25, hysteresis, true)).toBe(true)
+    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, isCurrentlyMatched: true })).toBe(true)
 
     // Case 3: Transition out of match (35 cents is outside exit 30)
     const detectedAt35 = { pitch: 'A4', pitchHz: 440, cents: 35, timestamp: 0, confidence: 1 }
-    expect(isMatch(target, detectedAt35, hysteresis, true)).toBe(false)
+    expect(isMatch({ target, detected: detectedAt35, tolerance: hysteresis, isCurrentlyMatched: true })).toBe(false)
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {
@@ -351,6 +351,6 @@ describe('isMatch', () => {
       duration: 4,
     } as unknown as TargetNote
     const detected = { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: 0, confidence: 1 }
-    expect(() => isMatch(invalidTarget, detected)).toThrow(/Unsupported alter value: 7/)
+    expect(() => isMatch({ target: invalidTarget, detected })).toThrow(/Unsupported alter value: 7/)
   })
 })
