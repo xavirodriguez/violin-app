@@ -337,21 +337,24 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
   const commenceSession = async (ready: ReadyState) => {
     const token = crypto.randomUUID()
-    const nextSessionId = get().sessionId + 1
-    const abortController = new AbortController()
     const safeSet = createSafeSet(set, get, token)
     const deps = createRunnerDeps(get, safeSet, ready)
     const runner = new PracticeSessionRunnerImpl(deps)
+    const abortController = new AbortController()
 
+    initializeSessionState(ready, runner, abortController, token)
+    runner.run(abortController.signal).catch((err) => handleRunnerFailure(set, get, err, ready.exercise))
+  }
+
+  const initializeSessionState = (ready: ReadyState, runner: PracticeSessionRunnerImpl, abort: AbortController, token: string) => {
+    const nextSessionId = get().sessionId + 1
     startAnalyticsSession(ready.exercise)
     syncWithTuner(nextSessionId, ready.detector)
     set((currentState) => ({
-      ...getStartStateUpdates(currentState, ready, runner, abortController, token),
+      ...getStartStateUpdates(currentState, ready, runner, abort, token),
       sessionId: nextSessionId
     }))
     syncWithTuner(token, ready.detector)
-
-    runner.run(abortController.signal).catch((err) => handleRunnerFailure(set, get, err, ready.exercise))
   }
 
   return {
