@@ -10,7 +10,6 @@ import {
   type DetectedNote,
   isMatch,
   type TargetNote,
-  type NoteName,
 } from '@/lib/practice-core'
 import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
@@ -66,7 +65,7 @@ export interface NoteStreamOptions {
  * Captured once at pipeline creation to prevent state drift.
  */
 export interface PipelineContext {
-  readonly targetNote: TargetNote | null
+  readonly targetNote: TargetNote | undefined
   readonly currentIndex: number
   readonly sessionStartTime: number
 }
@@ -79,6 +78,40 @@ const defaultOptions: NoteStreamOptions = {
   bpm: 60,
 }
 
+interface StreamState {
+  queue: RawPitchEvent[]
+  resolver?: () => void
+}
+
+/**
+ * Pushes a new pitch detection frame into the event queue and wakes the consumer.
+ */
+function pushFrameToQueue(state: StreamState, frame: Float32Array, detector: PitchDetectionPort): void {
+  state.queue.push({
+    ...detector.detect(frame),
+    rms: detector.calculateRMS(frame),
+    timestamp: Date.now(),
+  })
+  if (state.resolver) {
+    state.resolver()
+    state.resolver = undefined
+  }
+}
+
+/**
+ * Waits for the next frame to be pushed into the queue.
+ */
+async function waitForFrame(state: StreamState, signal: AbortSignal): Promise<void> {
+  if (state.queue.length > 0 || signal.aborted) return
+  await new Promise<void>((resolve) => {
+    state.resolver = resolve
+    signal.addEventListener('abort', () => {
+      state.resolver = undefined
+      resolve()
+    }, { once: true })
+  })
+}
+
 /**
  * Creates an async iterable of raw pitch events using audio ports.
  */
@@ -87,50 +120,24 @@ export async function* createRawPitchStream(
   detector: PitchDetectionPort,
   signal: AbortSignal,
 ): AsyncGenerator<RawPitchEvent> {
-  const queue: RawPitchEvent[] = []
-  let resolver: (() => void) | null = null
-
-  const loopPromise = audioLoop.start((frame) => {
-    const { pitchHz, confidence } = detector.detect(frame)
-    queue.push({
-      pitchHz,
-      confidence,
-      rms: detector.calculateRMS(frame),
-      timestamp: Date.now(),
-    })
-    if (resolver) {
-      resolver()
-      resolver = null
-    }
-  }, signal)
-
+  const state: StreamState = { queue: [] }
+  const loopPromise = audioLoop.start((frame) => pushFrameToQueue(state, frame, detector), signal)
   try {
     while (!signal.aborted) {
-      while (queue.length > 0) {
-        yield queue.shift()!
-      }
-
-      if (signal.aborted) break
-
-      await new Promise<void>((resolve) => {
-        resolver = resolve
-        const abortHandler = () => {
-          resolve()
-          resolver = null
-        }
-        signal.addEventListener('abort', abortHandler, { once: true })
-      })
+      while (state.queue.length > 0) yield state.queue.shift()!
+      await waitForFrame(state, signal)
     }
   } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError') return
-    if (e) {
-      console.warn('[PIPELINE] Caught error in createRawPitchStream', e)
-    } else {
-      console.warn('[PIPELINE] Caught null error in createRawPitchStream')
-    }
+    handleStreamError(e)
   } finally {
-    await loopPromise.catch(() => {}) // Cleanup
+    await loopPromise.catch(() => {})
   }
+}
+
+function handleStreamError(error: unknown): void {
+  if (error instanceof Error && error.name === 'AbortError') return
+  const message = error ? String(error) : 'undefined error'
+  console.warn(`[PIPELINE] createRawPitchStream error: ${message}`)
 }
 
 /**
@@ -138,9 +145,9 @@ export async function* createRawPitchStream(
  */
 interface TechnicalAnalysisState {
   lastGapFrames: ReadonlyArray<TechniqueFrame>
-  firstNoteOnsetTime: number | null
-  prevSegment: NoteSegment | null
-  currentSegmentStart: number | null
+  firstNoteOnsetTime: number | undefined
+  prevSegment: NoteSegment | undefined
+  currentSegmentStart: number | undefined
 }
 
 async function* technicalAnalysisWindow(
@@ -149,24 +156,33 @@ async function* technicalAnalysisWindow(
   optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEvent> {
-  const initialOptions = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
-  const segmenter = new NoteSegmenter({
-    minRms: initialOptions.minRms,
-    minConfidence: initialOptions.minConfidence,
-  })
+  const initialOptions = resolveOptions(optionsOrGetter)
+  const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
-  const state: TechnicalAnalysisState = {
-    lastGapFrames: [],
-    firstNoteOnsetTime: null,
-    prevSegment: null,
-    currentSegmentStart: null,
-  }
+  const state = createInitialTechnicalState()
 
   for await (const raw of source) {
     if (signal.aborted) break
-    const options = typeof optionsOrGetter === 'function' ? optionsOrGetter() : optionsOrGetter
+    const options = resolveOptions(optionsOrGetter)
     yield* processRawPitchEvent(raw, state, segmenter, agent, context, options)
     if (signal.aborted) break
+  }
+}
+
+function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)): NoteStreamOptions {
+  return typeof options === 'function' ? options() : options
+}
+
+function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
+  return new NoteSegmenter({ minRms: options.minRms, minConfidence: options.minConfidence })
+}
+
+function createInitialTechnicalState(): TechnicalAnalysisState {
+  return {
+    lastGapFrames: [],
+    firstNoteOnsetTime: undefined,
+    prevSegment: undefined,
+    currentSegmentStart: undefined,
   }
 }
 
@@ -181,66 +197,54 @@ function* processRawPitchEvent(
   context: PipelineContext,
   options: NoteStreamOptions,
 ): Generator<PracticeEvent> {
-  if (!raw) return
-
-  const currentTarget = context.targetNote
-  if (!currentTarget) return
+  if (!raw || !context.targetNote) return
 
   const { noteName, cents } = parseMusicalNote(raw.pitchHz)
   yield* validateAndEmitDetections(raw, noteName, cents, options)
 
-  const frame: TechniqueFrame =
-    noteName && raw.confidence > 0.1
-      ? {
-          kind: 'pitched',
-          timestamp: raw.timestamp as TimestampMs,
-          pitchHz: raw.pitchHz as Hz,
-          cents: cents as Cents,
-          rms: raw.rms,
-          confidence: raw.confidence,
-          noteName: noteName as MusicalNoteName,
-        }
-      : {
-          kind: 'unpitched',
-          timestamp: raw.timestamp as TimestampMs,
-          rms: raw.rms,
-          confidence: raw.confidence,
-        }
-
+  const frame = convertToTechniqueFrame(raw, noteName, cents)
   const segmentEvent = segmenter.processFrame(frame)
 
   if (segmentEvent) {
-    if (segmentEvent.type === 'ONSET') {
-      state.lastGapFrames = segmentEvent.gapFrames
-      state.currentSegmentStart = segmentEvent.timestamp
-    } else if (segmentEvent.type === 'OFFSET') {
-      const completionEvent = handleSegmentCompletion(
-        state,
-        segmentEvent,
-        currentTarget,
-        options,
-        () => context.currentIndex,
-        agent,
-      )
-      if (completionEvent) yield completionEvent
-      state.currentSegmentStart = null
-    } else if (segmentEvent.type === 'NOTE_CHANGE') {
-      const completionEvent = handleSegmentCompletion(
-        state,
-        segmentEvent,
-        currentTarget,
-        options,
-        () => context.currentIndex,
-        agent,
-      )
-      if (completionEvent) yield completionEvent
-      state.currentSegmentStart = segmentEvent.timestamp
-    }
+    yield* handleSegmentEvents(state, segmentEvent, context, options, agent)
   }
 
-  if (state.currentSegmentStart !== null && frame.kind === 'pitched') {
-    const holdingEvent = checkHoldingStatus(state, currentTarget, frame, options)
+  if (state.currentSegmentStart !== undefined && frame.kind === 'pitched') {
+    const holdingEvent = checkHoldingStatus(state, context.targetNote, frame, options)
     if (holdingEvent) yield holdingEvent
+  }
+}
+
+function convertToTechniqueFrame(raw: RawPitchEvent, noteName: string, cents: number): TechniqueFrame {
+  const isPitched = noteName && raw.confidence > 0.1
+  if (!isPitched) {
+    return { kind: 'unpitched', timestamp: raw.timestamp as TimestampMs, rms: raw.rms, confidence: raw.confidence }
+  }
+  return {
+    kind: 'pitched',
+    timestamp: raw.timestamp as TimestampMs,
+    pitchHz: raw.pitchHz as Hz,
+    cents: cents as Cents,
+    rms: raw.rms,
+    confidence: raw.confidence,
+    noteName: noteName as MusicalNoteName,
+  }
+}
+
+function* handleSegmentEvents(
+  state: TechnicalAnalysisState,
+  event: SegmenterEvent,
+  context: PipelineContext,
+  options: NoteStreamOptions,
+  agent: TechniqueAnalysisAgent
+): Generator<PracticeEvent> {
+  if (event.type === 'ONSET') {
+    state.lastGapFrames = event.gapFrames
+    state.currentSegmentStart = event.timestamp
+  } else if (event.type === 'OFFSET' || event.type === 'NOTE_CHANGE') {
+    const completion = handleSegmentCompletion(state, event, context.targetNote!, options, () => context.currentIndex, agent)
+    if (completion) yield completion
+    state.currentSegmentStart = event.type === 'OFFSET' ? undefined : event.timestamp
   }
 }
 
@@ -274,12 +278,12 @@ function handleSegmentCompletion(
   options: NoteStreamOptions,
   getCurrentIndex: () => number,
   agent: TechniqueAnalysisAgent,
-): PracticeEvent | null {
+): PracticeEvent | undefined {
   const segment = event.segment
   const frames = segment.frames
   const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
-  if (pitchedFrames.length === 0) return null
+  if (pitchedFrames.length === 0) return undefined
 
   const lastDetected: DetectedNote = {
     pitch: segment.targetPitch,
@@ -290,7 +294,7 @@ function handleSegmentCompletion(
   }
 
   const match = isMatch(currentTarget, lastDetected, options.centsTolerance)
-  if (!match || segment.durationMs < options.requiredHoldTime) return null
+  if (!match || segment.durationMs < options.requiredHoldTime) return undefined
 
   const currentIndex = getCurrentIndex()
   const expectations = calculateRhythmExpectations(
@@ -309,7 +313,7 @@ function handleSegmentCompletion(
   const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
   const observations = agent.generateObservations(technique)
 
-  if (state.firstNoteOnsetTime === null) state.firstNoteOnsetTime = segment.startTime
+  if (state.firstNoteOnsetTime === undefined) state.firstNoteOnsetTime = segment.startTime
   state.prevSegment = finalSegment
   state.lastGapFrames = []
 
@@ -317,12 +321,12 @@ function handleSegmentCompletion(
 }
 
 function checkHoldingStatus(
-  state: { currentSegmentStart: number | null },
+  state: { currentSegmentStart: number | undefined },
   currentTarget: TargetNote,
   frame: PitchedFrame,
   options: NoteStreamOptions,
-): PracticeEvent | null {
-  if (state.currentSegmentStart !== null) {
+): PracticeEvent | undefined {
+  if (state.currentSegmentStart !== undefined) {
     const lastDetected: DetectedNote = {
       pitch: frame.noteName,
       pitchHz: frame.pitchHz,
@@ -338,16 +342,16 @@ function checkHoldingStatus(
       }
     }
   }
-  return null
+  return undefined
 }
 
 function parseMusicalNote(pitchHz: number) {
-  let noteClass: MusicalNoteClass | null = null
+  let noteClass: MusicalNoteClass | undefined = undefined
   try {
     if (pitchHz > 0) {
       noteClass = MusicalNoteClass.fromFrequency(pitchHz)
     }
-  } catch (e) {
+  } catch (_e) {
     // Ignore invalid frequencies
   }
 
@@ -402,7 +406,7 @@ function calculateRhythmExpectations(
  * const pipeline = createPracticeEventPipeline(
  *   rawStream,
  *   {
- *     targetNote: usePracticeStore.getState().practiceState?.exercise.notes[0] || null,
+ *     targetNote: usePracticeStore.getState().practiceState?.exercise.notes[0] || undefined,
  *     currentIndex: 0,
  *     sessionStartTime: Date.now(),
  *   },

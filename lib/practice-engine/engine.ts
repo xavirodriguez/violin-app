@@ -9,7 +9,6 @@ import { Exercise } from '../exercises/types'
 import { PracticeEngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 import { PracticeEvent } from '../practice-core'
-import { AudioLoopPort, PitchDetectionPort as AudioPitchPort } from '../ports/audio.port'
 
 /**
  * Configuration context for the {@link PracticeEngine}.
@@ -131,19 +130,14 @@ async function* runEngineLoop(
   getOptions: () => NoteStreamOptions,
   signal: AbortSignal,
 ): AsyncGenerator<PracticeEngineEvent> {
-  const rawPitchStream = createRawPitchStream(ctx.audio as any, ctx.pitch as any, signal)
-  const sessionStartTime = Date.now()
+  const stream = createRawPitchStream(ctx.audio as any, ctx.pitch as any, signal)
+  const startTime = Date.now()
 
   while (state.currentNoteIndex < state.scoreLength && !signal.aborted) {
     const noteIndex = state.currentNoteIndex
-    const pipeline = createPracticeEventPipeline(
-      rawPitchStream,
-      { targetNote: ctx.exercise.notes[noteIndex] ?? undefined, currentIndex: noteIndex, sessionStartTime },
-      getOptions,
-      signal,
-    )
+    const context = { targetNote: ctx.exercise.notes[noteIndex], currentIndex: noteIndex, sessionStartTime: startTime }
+    const pipeline = createPracticeEventPipeline(stream, context, getOptions, signal)
     yield* processPipeline(pipeline, state, noteIndex, updateState, signal)
-    if (state.currentNoteIndex >= state.scoreLength) break
   }
 }
 
@@ -157,17 +151,28 @@ async function* processPipeline(
   for await (const event of pipeline) {
     if (signal.aborted) break
     const engineEvent = mapPipelineEventToEngineEvent(event)
-    if (!engineEvent) continue
-
-    updateState(engineEvent)
-    yield engineEvent
-
-    if (isTerminalEvent(engineEvent, state)) {
-      if (state.currentNoteIndex >= state.scoreLength) yield* finalizeSession(updateState)
-      return
+    if (engineEvent) {
+      yield* handleEngineEvent(engineEvent, state, noteIndex, updateState)
+      if (shouldTerminatePipeline(engineEvent, state, noteIndex)) break
     }
-    if (engineEvent.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex) break
   }
+}
+
+async function* handleEngineEvent(
+  event: PracticeEngineEvent,
+  state: PracticeEngineState,
+  noteIndex: number,
+  updateState: (e: PracticeEngineEvent) => void
+): AsyncGenerator<PracticeEngineEvent> {
+  updateState(event)
+  yield event
+  if (isTerminalEvent(event, state)) {
+    yield* finalizeSession(updateState)
+  }
+}
+
+function shouldTerminatePipeline(event: PracticeEngineEvent, state: PracticeEngineState, noteIndex: number): boolean {
+  return isTerminalEvent(event, state) || (event.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex)
 }
 
 function isTerminalEvent(event: PracticeEngineEvent, state: PracticeEngineState): boolean {
