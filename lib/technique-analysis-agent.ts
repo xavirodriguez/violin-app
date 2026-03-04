@@ -42,7 +42,7 @@ export class TechniqueAnalysisAgent {
   analyzeSegment(
     segment: NoteSegment,
     gapFrames: ReadonlyArray<TechniqueFrame> = [],
-    prevSegment: NoteSegment | null = null,
+    prevSegment: NoteSegment | undefined = undefined,
   ): NoteTechnique {
     const frames = segment.frames
     const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
@@ -57,24 +57,31 @@ export class TechniqueAnalysisAgent {
     }
   }
 
+  /**
+   * Generates a set of user-facing observations from the technique metrics.
+   */
+  generateObservations(technique: NoteTechnique): Observation[] {
+    const observations: Observation[] = [
+      ...this.generateStabilityObservations(technique),
+      ...this.generateVibratoObservations(technique),
+      ...this.generateAttackObservations(technique),
+      ...this.generateTransitionObservations(technique),
+      ...this.generateResonanceObservations(technique),
+      ...this.generateRhythmObservations(technique),
+    ]
+
+    return observations
+      .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
+      .slice(0, 3)
+  }
+
   private calculateStability(frames: PitchedFrame[]): PitchStability {
-    if (frames.length === 0) {
-      return this.createEmptyStability()
-    }
+    if (frames.length === 0) return this.createEmptyStability()
 
-    const cents = frames.map((f) => f.cents)
-    const globalStd = this.calculateStdDev(cents) as Cents
-
-    const startTime = frames[0].timestamp
-    const settlingFrames = frames.filter(
-      (f) => f.timestamp - startTime > this.options.settlingTimeMs,
-    )
-    const settlingCents = settlingFrames.length > 0 ? settlingFrames.map((f) => f.cents) : cents
-    const settlingStd = this.calculateStdDev(settlingCents) as Cents
-
+    const globalStd = this.calculateStdDev(frames.map((f) => f.cents)) as Cents
+    const settlingStd = this.calculateSettlingStd(frames) as Cents
     const { slope: drift } = this.performLinearRegression(frames)
-    const inTuneRatio = (frames.filter((f) => Math.abs(f.cents) < this.options.inTuneThresholdCents)
-      .length / frames.length) as Ratio01
+    const inTuneRatio = this.calculateInTuneRatio(frames)
 
     return {
       settlingStdCents: settlingStd,
@@ -82,6 +89,22 @@ export class TechniqueAnalysisAgent {
       driftCentsPerSec: drift,
       inTuneRatio,
     }
+  }
+
+  private calculateSettlingStd(frames: PitchedFrame[]): number {
+    const startTime = frames[0].timestamp
+    const settlingFrames = frames.filter(
+      (f) => f.timestamp - startTime > this.options.settlingTimeMs,
+    )
+    const cents = settlingFrames.length > 0 ? settlingFrames.map((f) => f.cents) : frames.map((f) => f.cents)
+    return this.calculateStdDev(cents)
+  }
+
+  private calculateInTuneRatio(frames: PitchedFrame[]): Ratio01 {
+    const inTuneCount = frames.filter(
+      (f) => Math.abs(f.cents) < this.options.inTuneThresholdCents
+    ).length
+    return (inTuneCount / frames.length) as Ratio01
   }
 
   private createEmptyStability(): PitchStability {
@@ -94,26 +117,15 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateVibrato(frames: PitchedFrame[]): VibratoMetrics {
-    if (frames.length < 20) return { present: false }
-
-    const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
-    if (duration < 500) return { present: false }
-
-    const pitchStd = this.calculateStdDev(frames.map((f) => f.cents))
-    if (pitchStd > 40) return { present: false }
+    if (!this.isVibratoCandidate(frames)) return { present: false }
 
     const detrended = this.detrend(frames)
-    const std = this.calculateStdDev(detrended)
-    const widthCents = (std * 2.828) as Cents
-
+    const widthCents = (this.calculateStdDev(detrended) * 2.828) as Cents
     const { periodMs, correlation } = this.findPeriod(detrended, frames.map((f) => f.timestamp))
     const rateHz = (periodMs > 0 ? 1000 / periodMs : 0) as Hz
     const regularity = Math.max(0, correlation) as Ratio01
 
-    const isValid = rateHz >= this.options.vibratoMinRateHz &&
-      rateHz <= this.options.vibratoMaxRateHz &&
-      widthCents >= this.options.vibratoMinWidthCents &&
-      regularity >= this.options.vibratoMinRegularity
+    const isValid = this.isVibratoValid(rateHz, widthCents, regularity)
 
     return {
       present: isValid,
@@ -121,6 +133,21 @@ export class TechniqueAnalysisAgent {
       widthCents: isValid ? widthCents : undefined,
       regularity: isValid ? regularity : undefined,
     }
+  }
+
+  private isVibratoCandidate(frames: PitchedFrame[]): boolean {
+    if (frames.length < 20) return false
+    const duration = frames[frames.length - 1].timestamp - frames[0].timestamp
+    if (duration < 500) return false
+    const pitchStd = this.calculateStdDev(frames.map((f) => f.cents))
+    return pitchStd <= 40
+  }
+
+  private isVibratoValid(rateHz: Hz, widthCents: Cents, regularity: Ratio01): boolean {
+    return rateHz >= this.options.vibratoMinRateHz &&
+      rateHz <= this.options.vibratoMaxRateHz &&
+      widthCents >= this.options.vibratoMinWidthCents &&
+      regularity >= this.options.vibratoMinRegularity
   }
 
   private calculateAttackRelease(frames: ReadonlyArray<TechniqueFrame>): AttackReleaseMetrics {
@@ -144,17 +171,15 @@ export class TechniqueAnalysisAgent {
     pitchedFrames: PitchedFrame[]
   ): { attackTimeMs: TimestampMs; pitchScoopCents: Cents } {
     const startTime = frames[0].timestamp
-    const stableRms = this.calculateStableRms(frames)
-    const stableRmsThreshold = stableRms * 0.85
-
-    let attackTimeMs = 0 as TimestampMs
-    const stableFrame = frames.find(f => f.rms >= stableRmsThreshold)
-    if (stableFrame) {
-      attackTimeMs = (stableFrame.timestamp - startTime) as TimestampMs
-    }
-
+    const attackTimeMs = this.calculateAttackTime(frames, startTime)
     const pitchScoopCents = this.calculatePitchScoop(pitchedFrames, startTime)
     return { attackTimeMs, pitchScoopCents }
+  }
+
+  private calculateAttackTime(frames: ReadonlyArray<TechniqueFrame>, startTime: TimestampMs): TimestampMs {
+    const stableRmsThreshold = this.calculateStableRms(frames) * 0.85
+    const stableFrame = frames.find(f => f.rms >= stableRmsThreshold)
+    return stableFrame ? (stableFrame.timestamp - startTime) as TimestampMs : 0 as TimestampMs
   }
 
   private calculateStableRms(frames: ReadonlyArray<TechniqueFrame>): number {
@@ -191,31 +216,43 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateResonance(frames: PitchedFrame[]): ResonanceMetrics {
-    if (frames.length < 10) {
-      return { suspectedWolf: false, rmsBeatingScore: 0 as Ratio01, pitchChaosScore: 0, lowConfRatio: 0 as Ratio01 }
-    }
+    if (frames.length < 10) return this.createEmptyResonance()
 
-    const highRmsFrames = frames.filter((f) => f.rms > 0.02)
-    const lowConfRatio = (highRmsFrames.length > 0
-      ? highRmsFrames.filter((f) => f.confidence < 0.6).length / highRmsFrames.length
-      : 0) as Ratio01
-
-    const rmsValues = frames.map((f) => f.rms)
-    const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
-    const { correlation: rmsBeatingScore } = this.findPeriod(
-      rmsValues.map(v => v - meanRms),
-      frames.map(f => f.timestamp)
-    )
-
+    const lowConfRatio = this.calculateLowConfRatio(frames)
+    const rmsBeatingScore = this.calculateRmsBeatingScore(frames)
     const pitchChaosScore = this.calculateStdDev(this.detrend(frames))
     const suspectedWolf = this.detectWolfTone(lowConfRatio, rmsBeatingScore, pitchChaosScore)
 
     return {
       suspectedWolf,
-      rmsBeatingScore: Math.max(0, rmsBeatingScore) as Ratio01,
+      rmsBeatingScore,
       pitchChaosScore,
       lowConfRatio,
     }
+  }
+
+  private createEmptyResonance(): ResonanceMetrics {
+    return {
+      suspectedWolf: false,
+      rmsBeatingScore: 0 as Ratio01,
+      pitchChaosScore: 0,
+      lowConfRatio: 0 as Ratio01
+    }
+  }
+
+  private calculateLowConfRatio(frames: PitchedFrame[]): Ratio01 {
+    const highRmsFrames = frames.filter((f) => f.rms > 0.02)
+    if (highRmsFrames.length === 0) return 0 as Ratio01
+    const lowConfCount = highRmsFrames.filter((f) => f.confidence < 0.6).length
+    return (lowConfCount / highRmsFrames.length) as Ratio01
+  }
+
+  private calculateRmsBeatingScore(frames: PitchedFrame[]): Ratio01 {
+    const rmsValues = frames.map((f) => f.rms)
+    const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
+    const detrendedRms = rmsValues.map(v => v - meanRms)
+    const { correlation } = this.findPeriod(detrendedRms, frames.map(f => f.timestamp))
+    return Math.max(0, correlation) as Ratio01
   }
 
   private detectWolfTone(lowConfRatio: number, rmsBeatingScore: number, pitchChaosScore: number): boolean {
@@ -238,21 +275,36 @@ export class TechniqueAnalysisAgent {
   private calculateTransition(
     gapFrames: ReadonlyArray<TechniqueFrame>,
     currentFrames: ReadonlyArray<TechniqueFrame>,
-    _prevSegment: NoteSegment | null,
+    _prevSegment: NoteSegment | undefined,
   ): TransitionMetrics {
-    const transitionTimeMs = (gapFrames.length > 1
-      ? gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp
-      : 0) as TimestampMs
-
-    const pitchedGap = gapFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    const glissAmountCents = this.calculateGlissando(pitchedGap) as Cents
-
-    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
-    const landingErrorCents = this.calculateLandingError(pitchedCurrent, startTime) as Cents
-    const correctionCount = this.calculateCorrectionCount(pitchedCurrent, startTime)
+    const transitionTimeMs = this.calculateTransitionTime(gapFrames)
+    const glissAmountCents = this.calculateGlissAmount(gapFrames)
+    const landingErrorCents = this.calculateLandingErrorMetric(currentFrames)
+    const correctionCount = this.calculateCorrectionMetric(currentFrames)
 
     return { transitionTimeMs, glissAmountCents, landingErrorCents, correctionCount }
+  }
+
+  private calculateTransitionTime(gapFrames: ReadonlyArray<TechniqueFrame>): TimestampMs {
+    if (gapFrames.length < 2) return 0 as TimestampMs
+    return (gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp) as TimestampMs
+  }
+
+  private calculateGlissAmount(gapFrames: ReadonlyArray<TechniqueFrame>): Cents {
+    const pitchedGap = gapFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    return this.calculateGlissando(pitchedGap) as Cents
+  }
+
+  private calculateLandingErrorMetric(currentFrames: ReadonlyArray<TechniqueFrame>): Cents {
+    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
+    return this.calculateLandingError(pitchedCurrent, startTime) as Cents
+  }
+
+  private calculateCorrectionMetric(currentFrames: ReadonlyArray<TechniqueFrame>): number {
+    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
+    return this.calculateCorrectionCount(pitchedCurrent, startTime)
   }
 
   private calculateGlissando(gapFrames: PitchedFrame[]): number {
@@ -284,20 +336,6 @@ export class TechniqueAnalysisAgent {
     return count
   }
 
-  generateObservations(technique: NoteTechnique): Observation[] {
-    const observations: Observation[] = [
-      ...this.generateStabilityObservations(technique),
-      ...this.generateVibratoObservations(technique),
-      ...this.generateAttackObservations(technique),
-      ...this.generateTransitionObservations(technique),
-      ...this.generateResonanceObservations(technique),
-      ...this.generateRhythmObservations(technique),
-    ]
-
-    return observations
-      .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
-      .slice(0, 3)
-  }
 
   private generateStabilityObservations(technique: NoteTechnique): Observation[] {
     const drift = technique.pitchStability.driftCentsPerSec
@@ -453,26 +491,27 @@ export class TechniqueAnalysisAgent {
     if (n < 2) return { slope: 0, intercept: 0 }
     const startTime = frames[0].timestamp
 
-    let sumX = 0
-    let sumY = 0
-    let sumXY = 0
-    let sumXX = 0
+    const sums = this.calculateRegressionSums(frames, startTime)
+    const denominator = n * sums.sumXX - sums.sumX * sums.sumX
 
-    for (const f of frames) {
+    if (Math.abs(denominator) < 1e-10) return { slope: 0, intercept: sums.sumY / n }
+
+    const slope = (n * sums.sumXY - sums.sumX * sums.sumY) / denominator
+    const intercept = (sums.sumY - slope * sums.sumX) / n
+    return { slope, intercept }
+  }
+
+  private calculateRegressionSums(frames: PitchedFrame[], startTime: TimestampMs) {
+    return frames.reduce((acc, f) => {
       const x = (f.timestamp - startTime) / 1000
       const y = f.cents
-      sumX += x
-      sumY += y
-      sumXY += x * y
-      sumXX += x * x
-    }
-
-    const denominator = n * sumXX - sumX * sumX
-    if (Math.abs(denominator) < 1e-10) return { slope: 0, intercept: sumY / n }
-
-    const slope = (n * sumXY - sumX * sumY) / denominator
-    const intercept = (sumY - slope * sumX) / n
-    return { slope, intercept }
+      return {
+        sumX: acc.sumX + x,
+        sumY: acc.sumY + y,
+        sumXY: acc.sumXY + x * y,
+        sumXX: acc.sumXX + x * x,
+      }
+    }, { sumX: 0, sumY: 0, sumXY: 0, sumXX: 0 })
   }
 
   private detrend(frames: PitchedFrame[]): number[] {
@@ -488,24 +527,26 @@ export class TechniqueAnalysisAgent {
     values: number[],
     timestamps: number[],
   ): { periodMs: number; correlation: number } {
-    let bestCorrelation = -1
-    let bestPeriodMs = 0
-
     if (values.length < 4) return { periodMs: 0, correlation: 0 }
     const avgDt = (timestamps[timestamps.length - 1] - timestamps[0]) / (timestamps.length - 1)
     if (avgDt <= 0) return { periodMs: 0, correlation: 0 }
 
+    let best = { correlation: -1, periodMs: 0 }
     for (let periodMs = 100; periodMs <= 250; periodMs += 2) {
-      const lag = Math.round(periodMs / avgDt)
-      if (lag >= values.length * 0.8 || lag <= 1) continue
-
-      const corr = this.calculateAutocorrelation(values, lag)
-      if (corr > bestCorrelation) {
-        bestCorrelation = corr
-        bestPeriodMs = periodMs
+      const result = this.evaluatePeriod(values, periodMs, avgDt)
+      if (result.correlation > best.correlation) {
+        best = result
       }
     }
-    return { periodMs: bestPeriodMs, correlation: bestCorrelation }
+    return best
+  }
+
+  private evaluatePeriod(values: number[], periodMs: number, avgDt: number) {
+    const lag = Math.round(periodMs / avgDt)
+    if (lag >= values.length * 0.8 || lag <= 1) {
+      return { correlation: -1, periodMs }
+    }
+    return { correlation: this.calculateAutocorrelation(values, lag), periodMs }
   }
 
   private calculateAutocorrelation(values: number[], lag: number): number {

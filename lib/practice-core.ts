@@ -285,23 +285,18 @@ export function isStillMatched(
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
-  switch (event.type) {
-    case 'START':
-      return handleStart(state)
-    case 'STOP':
-    case 'RESET':
-      return handleStopReset(state)
-    case 'NOTE_DETECTED':
-      return handleNoteDetected(state, event.payload)
-    case 'HOLDING_NOTE':
-      return handleHoldingNote(state, event.payload.duration)
-    case 'NO_NOTE_DETECTED':
-      return handleNoNoteDetected(state)
-    case 'NOTE_MATCHED':
-      return handleNoteMatched(state, event.payload)
-    default:
-      return state
+  const handlers: Record<string, (s: PracticeState, e: any) => PracticeState> = {
+    START: handleStart,
+    STOP: handleStopReset,
+    RESET: handleStopReset,
+    NOTE_DETECTED: (s, e) => handleNoteDetected(s, e.payload),
+    HOLDING_NOTE: (s, e) => handleHoldingNote(s, e.payload.duration),
+    NO_NOTE_DETECTED: handleNoNoteDetected,
+    NOTE_MATCHED: (s, e) => handleNoteMatched(s, e.payload),
   }
+
+  const handler = handlers[event.type]
+  return handler ? handler(state, event) : state
 }
 
 function handleStart(state: PracticeState): PracticeState {
@@ -329,15 +324,19 @@ function handleStopReset(state: PracticeState): PracticeState {
 }
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
-  const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-  buffer.push(...state.detectionHistory.slice().reverse(), payload)
   const status = getStatusAfterDetection(state.status)
   return {
     ...state,
-    detectionHistory: buffer.toArray(),
+    detectionHistory: updateDetectionHistory(state.detectionHistory, payload),
     status,
     holdDuration: status === 'listening' ? 0 : state.holdDuration,
   }
+}
+
+function updateDetectionHistory(history: readonly DetectedNote[], payload: DetectedNote): readonly DetectedNote[] {
+  const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
+  buffer.push(...history.slice().reverse(), payload)
+  return buffer.toArray()
 }
 
 function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
@@ -356,7 +355,7 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
 
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
-  if (state.status !== 'listening' && state.status !== 'validating') return state
+  if (!canMatchNote(state.status)) return state
 
   const newStreak = calculateNewStreak(state, payload)
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
@@ -364,6 +363,10 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   return isLastNote
     ? finalizePracticeSession(state, payload, newStreak)
     : advanceToNextNote(state, payload, newStreak)
+}
+
+function canMatchNote(status: PracticeStatus): boolean {
+  return status === 'listening' || status === 'validating'
 }
 
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {

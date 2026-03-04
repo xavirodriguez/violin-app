@@ -83,26 +83,32 @@ export class PitchDetector {
    * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
    */
   detectPitch(buffer: Float32Array): PitchDetectionResult {
-    const SIZE = buffer.length
-    if (SIZE < 4) return { pitchHz: 0, confidence: 0 }
+    if (buffer.length < 4) return { pitchHz: 0, confidence: 0 }
 
-    const maxTau = Math.floor(this.sampleRate / this.MIN_FREQUENCY)
-    const searchSize = Math.min(maxTau, Math.floor(SIZE / 2))
-
+    const searchSize = this.calculateSearchSize(buffer.length)
     const yinBuffer = this.difference(buffer, searchSize)
     this.cumulativeMeanNormalizedDifference(yinBuffer)
-    const tauEstimate = this.absoluteThreshold(yinBuffer)
 
+    const tauEstimate = this.absoluteThreshold(yinBuffer)
     if (tauEstimate <= 0) return { pitchHz: 0, confidence: 0 }
 
-    const betterTau = this.parabolicInterpolation(yinBuffer, tauEstimate)
+    return this.refineAndValidatePitch(yinBuffer, tauEstimate)
+  }
+
+  private calculateSearchSize(bufferSize: number): number {
+    const maxTau = Math.floor(this.sampleRate / this.MIN_FREQUENCY)
+    return Math.min(maxTau, Math.floor(bufferSize / 2))
+  }
+
+  private refineAndValidatePitch(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
+    const betterTau = this.parabolicInterpolation(yinBuffer, tau)
     const pitchHz = this.sampleRate / betterTau
 
     if (pitchHz < this.MIN_FREQUENCY || pitchHz > this.MAX_FREQUENCY) {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    const confidence = Math.max(0, Math.min(1, 1 - yinBuffer[tauEstimate]))
+    const confidence = Math.max(0, Math.min(1, 1 - yinBuffer[tau]))
     return { pitchHz, confidence }
   }
 
@@ -136,21 +142,33 @@ export class PitchDetector {
 
   /** Step 3: Absolute threshold */
   private absoluteThreshold(yinBuffer: Float32Array): number {
-    const size = yinBuffer.length
-    for (let tau = 2; tau < size; tau++) {
+    const thresholdTau = this.findFirstBelowThreshold(yinBuffer)
+    if (thresholdTau !== -1) return thresholdTau
+
+    return this.findGlobalMinimum(yinBuffer)
+  }
+
+  private findFirstBelowThreshold(yinBuffer: Float32Array): number {
+    for (let tau = 2; tau < yinBuffer.length; tau++) {
       if (yinBuffer[tau] < this.YIN_THRESHOLD) {
-        let t = tau
-        while (t + 1 < size && yinBuffer[t + 1] < yinBuffer[t]) {
-          t++
-        }
-        return t
+        return this.localMinimum(yinBuffer, tau)
       }
     }
+    return -1
+  }
 
-    // Fallback: find global minimum
+  private localMinimum(yinBuffer: Float32Array, tau: number): number {
+    let t = tau
+    while (t + 1 < yinBuffer.length && yinBuffer[t + 1] < yinBuffer[t]) {
+      t++
+    }
+    return t
+  }
+
+  private findGlobalMinimum(yinBuffer: Float32Array): number {
     let minValue = 1
     let minTau = -1
-    for (let tau = 2; tau < size; tau++) {
+    for (let tau = 2; tau < yinBuffer.length; tau++) {
       if (yinBuffer[tau] < minValue) {
         minValue = yinBuffer[tau]
         minTau = tau
