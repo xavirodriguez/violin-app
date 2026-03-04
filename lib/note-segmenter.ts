@@ -127,9 +127,10 @@ export class NoteSegmenter {
     const isSilence = frame.rms < this.options.maxRmsSilence
     const now = frame.timestamp
 
-    return this.state.kind === 'SILENCE'
-      ? this.handleSilenceState(frame, isSignalPresent, isSilence, now)
-      : this.handleNoteState(frame, isSignalPresent, isSilence, now)
+    if (this.state.kind === 'SILENCE') {
+      return this.handleSilenceState(frame, isSignalPresent, isSilence, now)
+    }
+    return this.handleNoteState(frame, isSignalPresent, isSilence, now)
   }
 
   private isSignal(frame: TechniqueFrame): boolean {
@@ -148,7 +149,7 @@ export class NoteSegmenter {
     if (isSignalPresent) {
       return this.processSilenceSignal(frame as PitchedFrame, now)
     }
-    this.updateSilenceThreshold(isSilence, now)
+    this.resetSilenceOnThreshold(isSilence, now)
     return undefined
   }
 
@@ -165,7 +166,7 @@ export class NoteSegmenter {
     return undefined
   }
 
-  private updateSilenceThreshold(isSilence: boolean, now: TimestampMs): void {
+  private resetSilenceOnThreshold(isSilence: boolean, now: TimestampMs): void {
     const isNoisyGap =
       this.lastSignalTime !== undefined && now - this.lastSignalTime > this.options.noisyGapResetMs
     if (isSilence || isNoisyGap) {
@@ -197,29 +198,36 @@ export class NoteSegmenter {
     this.pushToBuffer(this.frames, frame, this.options.maxNoteFrames)
     const noteState = this.state as NoteState
 
-    const noteChangeEvent = this.checkNoteChange(frame, isSignalPresent, now, noteState)
-    if (noteChangeEvent) return noteChangeEvent
+    const changeEvent = this.detectNoteChange(frame, isSignalPresent, now, noteState)
+    if (changeEvent) return changeEvent
 
-    return this.processNoteOffset(isSignalPresent, isSilence, now, noteState)
+    return this.detectNoteOffset(isSignalPresent, isSilence, now, noteState)
   }
 
-  private processNoteOffset(
+  private detectNoteOffset(
     isSignalPresent: boolean,
     isSilence: boolean,
     now: TimestampMs,
     noteState: NoteState,
   ): SegmenterEvent | undefined {
-    const hasPitchDropout =
-      !isSignalPresent && now - noteState.lastSignalTime > this.options.pitchDropoutToleranceMs
-
-    if (isSilence || hasPitchDropout) {
+    if (this.shouldTriggerOffsetTimer(isSignalPresent, isSilence, now, noteState)) {
       return this.handleOffsetTimer(now, noteState)
     }
+    this.resetOffsetTimer(isSignalPresent, now, noteState)
+    return undefined
+  }
+
+  private shouldTriggerOffsetTimer(isSignalPresent: boolean, isSilence: boolean, now: TimestampMs, noteState: NoteState): boolean {
+    const hasPitchDropout =
+      !isSignalPresent && now - noteState.lastSignalTime > this.options.pitchDropoutToleranceMs
+    return isSilence || hasPitchDropout
+  }
+
+  private resetOffsetTimer(isSignalPresent: boolean, now: TimestampMs, noteState: NoteState): void {
     noteState.lastBelowThresholdTime = undefined
     if (isSignalPresent) {
       noteState.lastSignalTime = now
     }
-    return undefined
   }
 
   private handleOffsetTimer(now: TimestampMs, noteState: NoteState): SegmenterEvent | undefined {
@@ -241,21 +249,26 @@ export class NoteSegmenter {
     return { type: 'OFFSET', timestamp: now, segment }
   }
 
-  private checkNoteChange(
+  private detectNoteChange(
     frame: TechniqueFrame,
     isSignalPresent: boolean,
     now: TimestampMs,
     noteState: NoteState,
   ): SegmenterEvent | undefined {
-    const isDifferentNote =
-      isSignalPresent && frame.kind === 'pitched' && frame.noteName !== noteState.currentNoteName
-    if (!isDifferentNote) {
-      noteState.pendingNoteName = undefined
-      noteState.pendingSince = undefined
-      return undefined
+    if (this.isDifferentNoteDetected(frame, isSignalPresent, noteState)) {
+      return this.processPendingNoteChange(frame as PitchedFrame, now, noteState)
     }
+    this.resetPendingNoteChange(noteState)
+    return undefined
+  }
 
-    return this.processPendingNoteChange(frame as PitchedFrame, now, noteState)
+  private isDifferentNoteDetected(frame: TechniqueFrame, isSignal: boolean, noteState: NoteState): boolean {
+    return isSignal && frame.kind === 'pitched' && frame.noteName !== noteState.currentNoteName
+  }
+
+  private resetPendingNoteChange(noteState: NoteState): void {
+    noteState.pendingNoteName = undefined
+    noteState.pendingSince = undefined
   }
 
   private processPendingNoteChange(
