@@ -131,31 +131,38 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
   const reducer = ctx.reducer ?? engineReducer
   let state: EngineState = { ...INITIAL_ENGINE_STATE, scoreLength: ctx.exercise.notes.length }
 
-  const createOptions = (): NoteStreamOptions => {
-    const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(state.perfectNoteStreak)
-    return {
-      exercise: ctx.exercise,
-      bpm: 60,
-      centsTolerance,
-      requiredHoldTime,
-      minRms: 0.01,
-      minConfidence: 0.85,
-    }
-  }
+  const getOptions = () => getEngineOptions(ctx.exercise, state.perfectNoteStreak)
+  const updateState = (e: PracticeEngineEvent) => (state = reducer(state, e))
 
   return {
     async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
       if (isRunning) return
       isRunning = true
       try {
-        const runnerParams = { ctx, getState: () => state, updateState: (s: PracticeEngineEvent) => (state = reducer(state, s)), getOptions: createOptions, signal }
-        yield* runEngineLoop(runnerParams)
+        const params = { ctx, getState: () => state, updateState, getOptions, signal }
+        yield* runEngineLoop(params)
       } finally {
         isRunning = false
       }
     },
     stop() { isRunning = false },
     getState() { return state },
+  }
+}
+
+/**
+ * Builds the pipeline options for the engine iteration.
+ * @internal
+ */
+function getEngineOptions(exercise: Exercise, perfectNoteStreak: number): NoteStreamOptions {
+  const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(perfectNoteStreak)
+  return {
+    exercise,
+    bpm: 60,
+    centsTolerance,
+    requiredHoldTime,
+    minRms: 0.01,
+    minConfidence: 0.85,
   }
 }
 
@@ -168,7 +175,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
  */
 async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
   const { ctx, getState, signal, getOptions, updateState } = params
-  const stream = createRawPitchStream(ctx.audio, ctx.pitch, signal)
+  const stream = createRawPitchStream({ audioLoop: ctx.audio, detector: ctx.pitch, signal })
   const startTime = Date.now()
 
   while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {

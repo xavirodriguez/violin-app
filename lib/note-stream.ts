@@ -223,13 +223,29 @@ function* processRawPitchEvent(params: {
   yield* validateAndEmitDetections({ raw, noteName, cents, options })
 
   const frame = convertToTechniqueFrame({ raw, noteName, cents })
+  yield* processFrameAndSegments({ frame, state, segmenter, agent, context, options })
+}
+
+/**
+ * Orchestrates segment detection and holding status for a given frame.
+ * @internal
+ */
+function* processFrameAndSegments(params: {
+  frame: TechniqueFrame
+  state: TechnicalAnalysisState
+  segmenter: NoteSegmenter
+  agent: TechniqueAnalysisAgent
+  context: PipelineContext
+  options: NoteStreamOptions
+}): Generator<PracticeEvent> {
+  const { frame, state, segmenter, agent, context, options } = params
   const segmentEvent = segmenter.processFrame(frame)
 
-  if (segmentEvent) {
+  if (segmentEvent && context.targetNote) {
     yield* handleSegmentEvents({ state, event: segmentEvent, targetNote: context.targetNote, options, agent, currentIndex: context.currentIndex })
   }
 
-  if (state.currentSegmentStart !== undefined && frame.kind === 'pitched') {
+  if (state.currentSegmentStart !== undefined && frame.kind === 'pitched' && context.targetNote) {
     const holdingEvent = checkHoldingStatus({ state, currentTarget: context.targetNote, frame, options })
     if (holdingEvent) yield holdingEvent
   }
@@ -285,8 +301,7 @@ function* validateAndEmitDetections(params: {
   options: NoteStreamOptions
 }): Generator<PracticeEvent> {
   const { raw, noteName, cents, options } = params
-  const isHighQuality = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
-  if (isHighQuality && noteName && Math.abs(cents) <= 50) {
+  if (isDetectionHighQuality(raw, noteName, cents, options)) {
     yield {
       type: 'NOTE_DETECTED',
       payload: {
@@ -302,6 +317,16 @@ function* validateAndEmitDetections(params: {
   }
 }
 
+function isDetectionHighQuality(
+  raw: RawPitchEvent,
+  noteName: string,
+  cents: number,
+  options: NoteStreamOptions,
+): boolean {
+  const hasSignal = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
+  return !!(hasSignal && noteName && Math.abs(cents) <= 50)
+}
+
 function handleSegmentCompletion(params: CompletionParams): PracticeEvent | undefined {
   const { state, event, currentTarget, options, currentIndex, agent } = params
   const segment = event.segment
@@ -309,8 +334,21 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
 
   if (pitchedFrames.length === 0) return undefined
 
-  if (!isValidMatch(currentTarget, segment, pitchedFrames, options)) return undefined
+  if (!currentTarget || !isValidMatch(currentTarget, segment, pitchedFrames, options)) {
+    return undefined
+  }
 
+  return finalizeSegmentAnalysis({ segment, state, currentIndex, options, agent })
+}
+
+function finalizeSegmentAnalysis(params: {
+  segment: NoteSegment
+  state: TechnicalAnalysisState
+  currentIndex: number
+  options: NoteStreamOptions
+  agent: TechniqueAnalysisAgent
+}): PracticeEvent {
+  const { segment, state, currentIndex, options, agent } = params
   const finalSegment = createFinalSegment(segment, state, currentIndex, options)
   const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
   const observations = agent.generateObservations(technique)
