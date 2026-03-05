@@ -26,7 +26,7 @@ export function usePracticePipeline({
     const abortController = new AbortController()
     const runPipeline = async () => {
       try {
-        const rawPitchStream = createRawPitchStream(audioLoop, detector, abortController.signal)
+        const rawPitchStream = createRawPitchStream({ audioLoop, detector, signal: abortController.signal })
         const eventPipeline = createPracticeEventPipeline(
           rawPitchStream,
           {

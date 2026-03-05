@@ -399,56 +399,68 @@ export class TechniqueAnalysisAgent {
   }
 
   private generateAttackObservations(technique: NoteTechnique): Observation[] {
-    const obs: Observation[] = []
-    if (technique.attackRelease.attackTimeMs > 200) {
-      obs.push({
-        type: 'attack',
-        severity: 1,
-        confidence: 0.9 as Ratio01,
-        message: 'Slow note attack',
-        tip: 'Start the note with more clarity and deliberate bow contact.',
-        evidence: { attackTime: technique.attackRelease.attackTimeMs }
-      })
-    }
-    if (Math.abs(technique.attackRelease.pitchScoopCents) > 15) {
-      obs.push({
-        type: 'attack',
-        severity: 2,
-        confidence: 0.85 as Ratio01,
-        message: technique.attackRelease.pitchScoopCents < 0 ? 'Pitch scoops up' : 'Pitch drops down',
-        tip: 'Ensure your finger is accurately placed before starting the bow.',
-        evidence: { scoop: technique.attackRelease.pitchScoopCents }
-      })
-    }
-    return obs
+    return [
+      ...this.analyzeSlowAttack(technique.attackRelease.attackTimeMs),
+      ...this.analyzePitchScoop(technique.attackRelease.pitchScoopCents),
+    ]
+  }
+
+  private analyzeSlowAttack(attackTimeMs: TimestampMs): Observation[] {
+    if (attackTimeMs <= 200) return []
+    return [{
+      type: 'attack',
+      severity: 1,
+      confidence: 0.9 as Ratio01,
+      message: 'Slow note attack',
+      tip: 'Start the note with more clarity and deliberate bow contact.',
+      evidence: { attackTime: attackTimeMs }
+    }]
+  }
+
+  private analyzePitchScoop(pitchScoopCents: Cents): Observation[] {
+    if (Math.abs(pitchScoopCents) <= 15) return []
+    return [{
+      type: 'attack',
+      severity: 2,
+      confidence: 0.85 as Ratio01,
+      message: pitchScoopCents < 0 ? 'Pitch scoops up' : 'Pitch drops down',
+      tip: 'Ensure your finger is accurately placed before starting the bow.',
+      evidence: { scoop: pitchScoopCents }
+    }]
   }
 
   private generateTransitionObservations(technique: NoteTechnique): Observation[] {
-    const obs: Observation[] = []
-    if (technique.transition.glissAmountCents > 50 && technique.transition.transitionTimeMs > 120) {
-      obs.push({
-        type: 'transition',
-        severity: 2,
-        confidence: 0.8 as Ratio01,
-        message: 'Audible glissando',
-        tip: 'Move your hand more quickly between positions for a cleaner transition.',
-        evidence: {
-          gliss: technique.transition.glissAmountCents,
-          time: technique.transition.transitionTimeMs
-        }
-      })
-    }
-    if (technique.transition.landingErrorCents > 20) {
-      obs.push({
-        type: 'transition',
-        severity: 2,
-        confidence: 0.75 as Ratio01,
-        message: 'Landing error',
-        tip: 'Aim for the center of the new note immediately upon shifting.',
-        evidence: { error: technique.transition.landingErrorCents }
-      })
-    }
-    return obs
+    return [
+      ...this.analyzeAudibleGlissando(technique.transition),
+      ...this.analyzeLandingError(technique.transition.landingErrorCents),
+    ]
+  }
+
+  private analyzeAudibleGlissando(transition: TransitionMetrics): Observation[] {
+    if (transition.glissAmountCents <= 50 || transition.transitionTimeMs <= 120) return []
+    return [{
+      type: 'transition',
+      severity: 2,
+      confidence: 0.8 as Ratio01,
+      message: 'Audible glissando',
+      tip: 'Move your hand more quickly between positions for a cleaner transition.',
+      evidence: {
+        gliss: transition.glissAmountCents,
+        time: transition.transitionTimeMs
+      }
+    }]
+  }
+
+  private analyzeLandingError(landingErrorCents: Cents): Observation[] {
+    if (landingErrorCents <= 20) return []
+    return [{
+      type: 'transition',
+      severity: 2,
+      confidence: 0.75 as Ratio01,
+      message: 'Landing error',
+      tip: 'Aim for the center of the new note immediately upon shifting.',
+      evidence: { error: landingErrorCents }
+    }]
   }
 
   private generateResonanceObservations(technique: NoteTechnique): Observation[] {
