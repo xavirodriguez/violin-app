@@ -688,15 +688,15 @@ export declare const AchievementSchema: z.ZodObject<{
     icon: z.ZodString;
     unlockedAtMs: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    name: string;
     unlockedAtMs: number;
     id: string;
+    name: string;
     description: string;
     icon: string;
 }, {
-    name: string;
     unlockedAtMs: number;
     id: string;
+    name: string;
     description: string;
     icon: string;
 }>;
@@ -709,15 +709,15 @@ export declare const AchievementsStateSchema: z.ZodObject<{
         icon: z.ZodString;
         unlockedAtMs: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }, {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }>, "many">;
@@ -728,46 +728,46 @@ export declare const AchievementsStateSchema: z.ZodObject<{
         icon: z.ZodString;
         unlockedAtMs: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }, {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     schemaVersion: 1;
     unlocked: {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }[];
     pending: {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }[];
 }, {
     unlocked: {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }[];
     pending: {
-        name: string;
         unlockedAtMs: number;
         id: string;
+        name: string;
         description: string;
         icon: string;
     }[];

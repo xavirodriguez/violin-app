@@ -52,3 +52,8 @@ export declare const transitions: {
     reset: () => IdleState;
     selectExercise: (exercise: Exercise) => IdleState;
 };
+/**
+ * Common helpers
+ */
+export declare const getInitialState: (exercise: Exercise) => PracticeState;
+export declare const getUpdatedLiveObservations: (practiceState: PracticeState) => import("../technique-types").Observation[];

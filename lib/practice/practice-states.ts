@@ -1,4 +1,5 @@
-import { PracticeState } from '../practice-core'
+import { PracticeState, formatPitchName } from '../practice-core'
+import { calculateLiveObservations } from '../live-observations'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { Exercise } from '../exercises/types'
 import { AppError } from '../errors/app-error'
@@ -105,4 +106,25 @@ export const transitions = {
     exercise,
     error: null
   })
+}
+
+/**
+ * Common helpers
+ */
+export const getInitialState = (exercise: Exercise): PracticeState => ({
+  status: 'idle',
+  exercise,
+  currentIndex: 0,
+  detectionHistory: [],
+  perfectNoteStreak: 0
+})
+
+export const getUpdatedLiveObservations = (practiceState: PracticeState) => {
+  if (practiceState.status === 'completed' || practiceState.status === 'correct' || practiceState.status === 'idle') {
+    return []
+  }
+  const targetNote = practiceState.exercise.notes[practiceState.currentIndex]
+  if (!targetNote) return []
+  const targetPitchName = formatPitchName(targetNote.pitch)
+  return calculateLiveObservations([...practiceState.detectionHistory], targetPitchName)
 }

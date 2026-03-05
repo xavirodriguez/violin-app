@@ -8,6 +8,7 @@ const DURATION_BEATS: Record<NoteDuration, number> = {
   1: 4,
   2: 2,
   4: 1,
+  6: 1.5,
   8: 0.5,
   16: 0.25,
   32: 0.125,

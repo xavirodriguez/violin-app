@@ -5,7 +5,7 @@ import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
  */
 type StoreApi<T> = {
     getState: () => T;
-    setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: false) => void;
+    setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => void;
 };
 /**
  * Handles all state transitions and side effects for a given practice event.

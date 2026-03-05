@@ -98,23 +98,32 @@ export async function* createRawPitchStream(
   try {
     while (!signal.aborted) {
       if (queue.length === 0) {
-        const abortHandler = () => {
-          if (resolver) {
-            resolver()
-            resolver = null
+        await new Promise<void>((resolve) => {
+          resolver = resolve
+          const abortHandler = () => {
+            if (resolver) {
+              resolver()
+              resolver = null
+            }
           }
-        }
-        signal.addEventListener('abort', abortHandler, { once: true })
-      })
+          signal.addEventListener('abort', abortHandler, { once: true })
+        })
+      }
       if (signal.aborted) return
-    } catch (e) {
-      if (e instanceof Error && e.name === 'AbortError') return
-      // Handle potential null/undefined errors explicitly
-      if (!e) {
-        console.warn('[PIPELINE] Caught null error in createRawPitchStream')
-        return
+
+      while (queue.length > 0) {
+        const event = queue.shift()
+        if (event) yield event
       }
     }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return
+    // Handle potential null/undefined errors explicitly
+    if (!e) {
+      console.warn('[PIPELINE] Caught null error in createRawPitchStream')
+      return
+    }
+    console.error('[PIPELINE] createRawPitchStream error:', e)
   } finally {
     await loopPromise.catch(() => {}) // Cleanup
   }

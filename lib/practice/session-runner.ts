@@ -2,7 +2,6 @@ import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/p
 import { createPracticeEngine } from '../practice-engine/engine'
 import { engineReducer } from '../practice-engine/engine.reducer'
 import { handlePracticeEvent } from './practice-event-sink'
-import { calculateLiveObservations } from '@/lib/live-observations'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { featureFlags } from '@/lib/feature-flags'
 import type { Exercise } from '@/lib/exercises/types'
@@ -80,13 +79,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     this.controller = null
   }
 
-  const currentState = deps.store.getState().practiceState
-  if (!currentState) {
-    console.error('[STATE NULL] deps.store.getState().practiceState is null', {
-      type: event.type,
-      sessionId: deps.sessionId,
-    })
-    return state
+  private cleanup(): void {
+    this.controller = null
   }
 
   private async runInternal(signal: AbortSignal): Promise<void> {
@@ -152,31 +146,14 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       this.handleMatchedNoteSideEffects(event, currentState)
     }
 
+    // handlePracticeEvent will trigger the store's setState proxy,
+    // which now centralizes liveObservations calculation.
     handlePracticeEvent(
       event,
       this.deps.store as any,
       () => void this.deps.store.stop(),
       this.deps.analytics
     )
-
-    // Handle live observations
-    if (event.type === 'NOTE_DETECTED') {
-      const state = this.deps.store.getState()
-      const practiceState = state.practiceState
-      if (practiceState) {
-        const targetNote = practiceState.exercise.notes[practiceState.currentIndex]
-        if (targetNote) {
-          const targetPitchName = formatPitchName(targetNote.pitch)
-          const liveObs = calculateLiveObservations(
-            [...practiceState.detectionHistory],
-            targetPitchName
-          )
-          this.deps.store.setState({ liveObservations: liveObs })
-        }
-      }
-    } else if (event.type === 'NOTE_MATCHED') {
-      this.deps.store.setState({ liveObservations: [] })
-    }
   }
 
   private handleMatchedNoteSideEffects(

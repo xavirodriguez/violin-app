@@ -1,5 +1,6 @@
 /**
  * Clamps a number between min and max values.
+ * Refactored for range validation.
  *
  * @param value - The number to clamp
  * @param min - Minimum boundary

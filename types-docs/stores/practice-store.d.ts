@@ -6,11 +6,6 @@
  * 2. Audio resources (Web Audio, Pitch Detection).
  * 3. Asynchronous runner loop.
  * 4. Analytics and progress tracking.
- *
- * Refactored to handle:
- * - Concurrency: Guards against double start and stale updates using sessionId.
- * - Resource Lifecycle: Resource-first cleanup in stop() to prevent leaks.
- * - Reactivity: analyser and detector are stored in state for UI consistency.
  */
 import { AppError } from '@/lib/errors/app-error';
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port';
