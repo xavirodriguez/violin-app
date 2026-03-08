@@ -7,7 +7,7 @@ describe('useAnalyticsStore', () => {
     // Reset store state before each test if needed.
     // Zustand persist might keep state between tests if not handled.
     useAnalyticsStore.setState({
-      currentSession: null,
+      currentSession: undefined,
       sessions: [],
       progress: {
         userId: 'default',
@@ -33,7 +33,7 @@ describe('useAnalyticsStore', () => {
     startSession('ex1', 'Exercise 1', 'practice')
 
     const session = useAnalyticsStore.getState().currentSession
-    expect(session).not.toBeNull()
+    expect(session).toBeDefined()
     expect(session?.startTimeMs).toBe(now)
     expect(session?.endTimeMs).toBe(now)
     expect(session?.exerciseId).toBe('ex1')
@@ -73,7 +73,7 @@ describe('useAnalyticsStore', () => {
     endSession()
 
     const state = useAnalyticsStore.getState()
-    expect(state.currentSession).toBeNull()
+    expect(state.currentSession).toBeUndefined()
     expect(state.sessions).toHaveLength(1)
     expect(state.sessions[0].durationMs).toBe(5000)
     expect(state.sessions[0].endTimeMs).toBe(endTime)

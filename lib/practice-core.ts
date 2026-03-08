@@ -231,25 +231,31 @@ function getAlterString(canonicalAlter: number, originalAlter: number | string):
  * Checks if a detected note matches a target note within a specified tolerance.
  * Short-circuits if target or detected note is undefined.
  */
-export function isMatch(
-  target: TargetNote | undefined,
-  detected: DetectedNote | undefined,
-  tolerance: number | MatchHysteresis = 25,
-  isCurrentlyMatched = false,
-): boolean {
+export function isMatch(params: {
+  target: TargetNote | undefined
+  detected: DetectedNote | undefined
+  tolerance?: number | MatchHysteresis
+  isCurrentlyMatched?: boolean
+}): boolean {
+  const { target, detected, tolerance = 25, isCurrentlyMatched = false } = params
   if (!target || !detected) return false
 
   const hysteresis = typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
   const actualTolerance = isCurrentlyMatched ? hysteresis.exit : hysteresis.enter
 
-  return checkPitchAndTune(target, detected, actualTolerance)
+  return checkPitchAndTune({ target, detected, tolerance: actualTolerance })
 }
 
 /**
  * Validates both pitch name (enharmonic) and cent deviation.
  * @internal
  */
-function checkPitchAndTune(target: TargetNote, detected: DetectedNote, tolerance: number): boolean {
+function checkPitchAndTune(params: {
+  target: TargetNote
+  detected: DetectedNote
+  tolerance: number
+}): boolean {
+  const { target, detected, tolerance } = params
   const targetNote = MusicalNote.fromName(formatPitchName(target.pitch))
   assertValidNoteName(detected.pitch)
   const detectedNote = MusicalNote.fromName(detected.pitch)
@@ -267,7 +273,7 @@ export function isNewMatch(
   detected: DetectedNote | undefined,
   tolerance: number | MatchHysteresis = 25,
 ): boolean {
-  return isMatch(target, detected, tolerance, false)
+  return isMatch({ target, detected, tolerance, isCurrentlyMatched: false })
 }
 
 /**
@@ -278,7 +284,7 @@ export function isStillMatched(
   detected: DetectedNote | undefined,
   tolerance: number | MatchHysteresis = 25,
 ): boolean {
-  return isMatch(target, detected, tolerance, true)
+  return isMatch({ target, detected, tolerance, isCurrentlyMatched: true })
 }
 
 /**
@@ -361,8 +367,8 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
   return isLastNote
-    ? finalizePracticeSession(state, payload, newStreak)
-    : advanceToNextNote(state, payload, newStreak)
+    ? finalizePracticeSession({ state, payload, streak: newStreak })
+    : advanceToNextNote({ state, payload, streak: newStreak })
 }
 
 function canMatchNote(status: PracticeStatus): boolean {
@@ -375,11 +381,12 @@ function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): 
   return isPerfect ? state.perfectNoteStreak + 1 : 0
 }
 
-function finalizePracticeSession(
-  state: PracticeState,
-  payload: NoteMatchedPayload,
-  streak: number,
-): PracticeState {
+function finalizePracticeSession(params: {
+  state: PracticeState
+  payload: NoteMatchedPayload
+  streak: number
+}): PracticeState {
+  const { state, payload, streak } = params
   return {
     ...state,
     status: 'completed',
@@ -389,11 +396,12 @@ function finalizePracticeSession(
   }
 }
 
-function advanceToNextNote(
-  state: PracticeState,
-  payload: NoteMatchedPayload,
-  streak: number,
-): PracticeState {
+function advanceToNextNote(params: {
+  state: PracticeState
+  payload: NoteMatchedPayload
+  streak: number
+}): PracticeState {
+  const { state, payload, streak } = params
   return {
     ...state,
     currentIndex: state.currentIndex + 1,

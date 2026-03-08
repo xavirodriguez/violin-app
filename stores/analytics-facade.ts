@@ -96,7 +96,7 @@ export const useAnalyticsStore = Object.assign(
       /** Retrieves filtered session history. */
       getSessionHistory: history.getHistory,
       /** Gets stats for a specific exercise. */
-      getExerciseStats: (exerciseId: string) => progress.exerciseStats[exerciseId] || null,
+      getExerciseStats: (exerciseId: string) => progress.exerciseStats[exerciseId] || undefined,
       /** Returns summary stats for the current day. */
       getTodayStats: () => ({ duration: 0, accuracy: 0, sessionsCount: 0 }),
       /** Returns streak information. */

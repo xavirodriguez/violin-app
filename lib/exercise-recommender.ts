@@ -22,7 +22,7 @@ type UserProgress = AnalyticsStore['progress']
  * @param exercises - Array of all available exercises in the library.
  * @param userProgress - The user's historical progress, including attempt counts and best scores.
  * @param lastPlayedId - ID of the exercise practiced in the previous session for continuity.
- * @returns The recommended {@link Exercise}, or the first available one as a fallback. Returns `null` if the library is empty.
+ * @returns The recommended {@link Exercise}, or the first available one as a fallback. Returns `undefined` if the library is empty.
  *
  * @example
  * ```ts
@@ -42,7 +42,7 @@ export function getRecommendedExercise(
   exercises: Exercise[],
   userProgress: UserProgress,
   lastPlayedId?: string
-): Exercise | null {
+): Exercise | undefined {
   const { exerciseStats } = userProgress
   const now = Date.now()
   const DAY_MS = 86_400_000
@@ -111,7 +111,7 @@ export function getRecommendedExercise(
     return !stats || now - stats.lastPracticedMs > DAY_MS
   })
 
-  return notPlayedToday ?? exercises[0] ?? null
+  return notPlayedToday ?? exercises[0] ?? undefined
 }
 
 /**
