@@ -66,31 +66,54 @@ function validateMusicXML(xml: string): void {
  * Generates a complete MusicXML string from an ExerciseData object.
  */
 export const generateMusicXML = (exercise: ExerciseData): string => {
-  const { scoreMetadata, notes } = exercise
-  const { keySignature, timeSignature, clef } = scoreMetadata
-
-  const notesXML = notes.map(renderNote).join('')
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1">
+  ${renderPartList()}
+  ${renderViolinPart(exercise)}
+</score-partwise>`
+
+  validateMusicXML(xml)
+  return xml
+}
+
+function renderPartList(): string {
+  return `
   <part-list>
     <score-part id="P1">
       <part-name>Violin</part-name>
     </score-part>
-  </part-list>
+  </part-list>`
+}
+
+function renderViolinPart(exercise: ExerciseData): string {
+  return `
   <part id="P1">
+    ${renderMeasure(exercise)}
+  </part>`
+}
+
+function renderMeasure(exercise: ExerciseData): string {
+  const notesXML = exercise.notes.map(renderNote).join('')
+  return `
     <measure number="1">
+      ${renderAttributes(exercise.scoreMetadata)}
+      ${notesXML}
+    </measure>`
+}
+
+interface ScoreAttributes {
+  keySignature: number
+  timeSignature: { beats: number; beatType: number }
+  clef: string
+}
+
+function renderAttributes(metadata: ScoreAttributes): string {
+  const { keySignature, timeSignature, clef } = metadata
+  return `
       <attributes>
         <divisions>1</divisions>
         <key><fifths>${keySignature}</fifths></key>
         <time><beats>${timeSignature.beats}</beats><beat-type>${timeSignature.beatType}</beat-type></time>
         <clef><sign>${clef}</sign><line>2</line></clef>
-      </attributes>
-      ${notesXML}
-    </measure>
-  </part>
-</score-partwise>`
-
-  validateMusicXML(xml)
-  return xml
+      </attributes>`
 }
