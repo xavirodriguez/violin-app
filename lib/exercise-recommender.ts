@@ -4,6 +4,8 @@ import type { AnalyticsStore } from '@/stores/analytics-store'
 /** Shorthand for user progress from the Analytics store. */
 type UserProgress = AnalyticsStore['progress']
 
+const DAY_MS = 86_400_000
+
 /**
  * Pedagogical exercise recommender engine.
  *
@@ -43,75 +45,87 @@ export function getRecommendedExercise(
   userProgress: UserProgress,
   lastPlayedId?: string
 ): Exercise | undefined {
-  const { exerciseStats } = userProgress
-  const now = Date.now()
-  const DAY_MS = 86_400_000
+  if (exercises.length === 0) return undefined
 
-  // Rule 1: Persistence on failure
-  // If the user recently failed to reach a mastery threshold (80%),
-  // we encourage immediate re-attempt while the technical challenge
-  // is still fresh in their mind.
-  if (lastPlayedId) {
-    const lastStats = exerciseStats[lastPlayedId]
-    if (lastStats && now - lastStats.lastPracticedMs < DAY_MS && lastStats.bestAccuracy < 80) {
-      const exercise = exercises.find(ex => ex.id === lastPlayedId)
-      if (exercise) return exercise
-    }
-  }
+  return (
+    getPersistenceRecommendation({ exercises, userProgress, lastPlayedId }) ||
+    getReviewRecommendation({ exercises, userProgress }) ||
+    getProgressionDiscoveryRecommendation({ exercises, userProgress }) ||
+    getSpacedRepetitionRecommendation({ exercises, userProgress }) ||
+    exercises[0]
+  )
+}
 
-  // Rule 2: Review low accuracy (with possible difficulty step down)
-  // If historical accuracy is poor (< 70%), we suggest dropping down
-  // one difficulty level within the same category to reinforce
-  // prerequisite technical skills.
-  const lowAccuracyExerciseId = Object.keys(exerciseStats).find(id => {
-    const stats = exerciseStats[id]
+interface RecommendationParams {
+  exercises: Exercise[]
+  userProgress: UserProgress
+  lastPlayedId?: string
+}
+
+function getPersistenceRecommendation(params: RecommendationParams): Exercise | undefined {
+  const { exercises, userProgress, lastPlayedId } = params
+  if (!lastPlayedId) return undefined
+
+  const stats = userProgress.exerciseStats[lastPlayedId]
+  const isRecentFailure =
+    stats && Date.now() - stats.lastPracticedMs < DAY_MS && stats.bestAccuracy < 80
+
+  return isRecentFailure ? exercises.find((ex) => ex.id === lastPlayedId) : undefined
+}
+
+function getReviewRecommendation(params: RecommendationParams): Exercise | undefined {
+  const { exercises, userProgress } = params
+  const lowAccuracyId = Object.keys(userProgress.exerciseStats).find((id) => {
+    const stats = userProgress.exerciseStats[id]
     return stats.bestAccuracy < 70 && stats.timesCompleted > 0
   })
 
-  if (lowAccuracyExerciseId) {
-    const exercise = exercises.find(ex => ex.id === lowAccuracyExerciseId)
-    if (exercise) {
-      if (exercise.difficulty === 'Beginner') return exercise
-      const easier = exercises.find(ex =>
-        ex.category === exercise.category &&
-        isEasier(ex.difficulty, exercise.difficulty)
-      )
-      if (easier) return easier
-      return exercise
-    }
-  }
+  if (!lowAccuracyId) return undefined
+  const exercise = exercises.find((ex) => ex.id === lowAccuracyId)
+  if (!exercise || exercise.difficulty === 'Beginner') return exercise
 
-  // Rule 3 & 4: progression and discovery
+  return (
+    exercises.find(
+      (ex) => ex.category === exercise.category && isEasier(ex.difficulty, exercise.difficulty),
+    ) || exercise
+  )
+}
+
+function getProgressionDiscoveryRecommendation(params: RecommendationParams): Exercise | undefined {
+  const { exercises, userProgress } = params
+  const currentDifficulty = determineTargetDifficulty(exercises, userProgress)
+
+  return exercises.find(
+    (ex) =>
+      ex.difficulty === currentDifficulty && (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
+  )
+}
+
+function determineTargetDifficulty(exercises: Exercise[], userProgress: UserProgress): Difficulty {
   const difficulties: Difficulty[] = ['Beginner', 'Intermediate', 'Advanced']
-  let currentDifficulty: Difficulty = 'Beginner'
+  let target: Difficulty = 'Beginner'
 
   for (const diff of difficulties) {
-    const exercisesInDiff = exercises.filter(ex => ex.difficulty === diff)
-    const allCompleted = exercisesInDiff.every(ex => (exerciseStats[ex.id]?.timesCompleted ?? 0) > 0)
-    if (allCompleted) {
-      const nextIdx = difficulties.indexOf(diff) + 1
-      if (nextIdx < difficulties.length) currentDifficulty = difficulties[nextIdx]
-      else currentDifficulty = diff
-    } else {
-      currentDifficulty = diff
-      break
-    }
+    const exercisesInDiff = exercises.filter((ex) => ex.difficulty === diff)
+    const allCompleted =
+      exercisesInDiff.length > 0 &&
+      exercisesInDiff.every((ex) => (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) > 0)
+
+    if (!allCompleted) return diff
+    target = diff
   }
 
-  const unplayedInDifficulty = exercises.find(ex =>
-    ex.difficulty === currentDifficulty &&
-    (exerciseStats[ex.id]?.timesCompleted ?? 0) === 0
-  )
+  return target
+}
 
-  if (unplayedInDifficulty) return unplayedInDifficulty
+function getSpacedRepetitionRecommendation(params: RecommendationParams): Exercise | undefined {
+  const { exercises, userProgress } = params
+  const now = Date.now()
 
-  // Rule 5: spaced repetition (not played today)
-  const notPlayedToday = exercises.find(ex => {
-    const stats = exerciseStats[ex.id]
+  return exercises.find((ex) => {
+    const stats = userProgress.exerciseStats[ex.id]
     return !stats || now - stats.lastPracticedMs > DAY_MS
   })
-
-  return notPlayedToday ?? exercises[0] ?? undefined
 }
 
 /**

@@ -104,7 +104,7 @@ export class PitchDetector {
     const betterTau = this.parabolicInterpolation(yinBuffer, tau)
     const pitchHz = this.sampleRate / betterTau
 
-    if (pitchHz < this.MIN_FREQUENCY || pitchHz > this.MAX_FREQUENCY) {
+    if (!this.isFrequencyInRange(pitchHz)) {
       return { pitchHz: 0, confidence: 0 }
     }
 
@@ -112,22 +112,30 @@ export class PitchDetector {
     return { pitchHz, confidence }
   }
 
+  private isFrequencyInRange(pitchHz: number): boolean {
+    return pitchHz >= this.MIN_FREQUENCY && pitchHz <= this.MAX_FREQUENCY
+  }
+
   /** Step 1: Difference function */
   private difference(buffer: Float32Array, searchSize: number): Float32Array {
     const yinBuffer = new Float32Array(searchSize)
-    const SIZE = buffer.length
-    const halfSize = Math.floor(SIZE / 2)
-
     for (let tau = 1; tau < searchSize; tau++) {
-      let sum = 0
-      const maxI = Math.min(halfSize, SIZE - tau)
-      for (let i = 0; i < maxI; i++) {
-        const delta = buffer[i] - buffer[i + tau]
-        sum += delta * delta
-      }
-      yinBuffer[tau] = sum
+      yinBuffer[tau] = this.calculateSquaredDifferenceSum(buffer, tau)
     }
     return yinBuffer
+  }
+
+  private calculateSquaredDifferenceSum(buffer: Float32Array, tau: number): number {
+    let sum = 0
+    const SIZE = buffer.length
+    const halfSize = Math.floor(SIZE / 2)
+    const maxI = Math.min(halfSize, SIZE - tau)
+
+    for (let i = 0; i < maxI; i++) {
+      const delta = buffer[i] - buffer[i + tau]
+      sum += delta * delta
+    }
+    return sum
   }
 
   /** Step 2: Cumulative mean normalized difference function */
