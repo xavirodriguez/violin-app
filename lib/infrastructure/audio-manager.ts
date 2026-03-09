@@ -38,11 +38,11 @@ export interface AudioResources {
  * @public
  */
 export class AudioManager {
-  private context: AudioContext | null = null
-  private stream: MediaStream | null = null
-  private analyser: AnalyserNode | null = null
-  private source: MediaStreamAudioSourceNode | null = null
-  private gainNode: GainNode | null = null
+  private context: AudioContext | undefined = undefined
+  private stream: MediaStream | undefined = undefined
+  private analyser: AnalyserNode | undefined = undefined
+  private source: MediaStreamAudioSourceNode | undefined = undefined
+  private gainNode: GainNode | undefined = undefined
 
   /**
    * Initializes the audio pipeline.
@@ -104,22 +104,22 @@ export class AudioManager {
   async cleanup(): Promise<void> {
     if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop())
-      this.stream = null
+      this.stream = undefined
     }
 
     if (this.source) {
       this.source.disconnect()
-      this.source = null
+      this.source = undefined
     }
 
     if (this.gainNode) {
       this.gainNode.disconnect()
-      this.gainNode = null
+      this.gainNode = undefined
     }
 
     if (this.analyser) {
       this.analyser.disconnect()
-      this.analyser = null
+      this.analyser = undefined
     }
 
     if (this.context && this.context.state !== 'closed') {
@@ -128,31 +128,31 @@ export class AudioManager {
       } catch (_err) {
         // Ignore errors during close
       }
-      this.context = null
+      this.context = undefined
     }
   }
 
   /**
    * Retrieves the current Web Audio context.
-   * @returns The active `AudioContext` or `null` if not initialized.
+   * @returns The active `AudioContext` or `undefined` if not initialized.
    */
-  getContext(): AudioContext | null {
+  getContext(): AudioContext | undefined {
     return this.context
   }
 
   /**
    * Retrieves the raw microphone media stream.
-   * @returns The active `MediaStream` or `null` if not initialized.
+   * @returns The active `MediaStream` or `undefined` if not initialized.
    */
-  getStream(): MediaStream | null {
+  getStream(): MediaStream | undefined {
     return this.stream
   }
 
   /**
    * Retrieves the shared AnalyserNode for signal analysis.
-   * @returns The active `AnalyserNode` or `null` if not initialized.
+   * @returns The active `AnalyserNode` or `undefined` if not initialized.
    */
-  getAnalyser(): AnalyserNode | null {
+  getAnalyser(): AnalyserNode | undefined {
     return this.analyser
   }
 

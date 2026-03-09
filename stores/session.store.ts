@@ -68,8 +68,8 @@ export interface PracticeSession {
  * @internal
  */
 interface SessionState {
-  /** The current active session data, or null if no session is active. */
-  current: PracticeSession | null
+  /** The current active session data, or undefined if no session is active. */
+  current: PracticeSession | undefined
   /** Whether a session is currently being recorded. */
   isActive: boolean
   /** Current streak of notes played with high accuracy (`< 5` cents). */
@@ -100,9 +100,9 @@ interface SessionActions {
    * @remarks
    * This method calculates the final accuracy and duration before clearing the active session.
    *
-   * @returns The completed {@link PracticeSession} or null if no session was active.
+   * @returns The completed {@link PracticeSession} or undefined if no session was active.
    */
-  end: () => PracticeSession | null
+  end: () => PracticeSession | undefined
 
   /**
    * Records a single attempt (audio frame) at a specific note.
@@ -158,7 +158,7 @@ interface SessionActions {
  * @public
  */
 export const useSessionStore = create<SessionState & SessionActions>((set, get) => ({
-  current: null,
+  current: undefined,
   isActive: false,
   perfectNoteStreak: 0,
 
@@ -185,7 +185,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
 
   end: () => {
     const { current } = get()
-    if (!current) return null
+    if (!current) return undefined
 
     const nowMs = Date.now()
     const completed: PracticeSession = {
@@ -195,7 +195,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
       accuracy: current.notesAttempted > 0 ? (current.notesCompleted / current.notesAttempted) * 100 : 0
     }
 
-    set({ current: null, isActive: false })
+    set({ current: undefined, isActive: false })
     return completed
   },
 

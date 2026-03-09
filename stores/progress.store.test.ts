@@ -35,7 +35,7 @@ describe('ProgressStore persistence', () => {
     await useProgressStore.persist.rehydrate()
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[Persist] ❌ Validation failed for violin-progress'),
+      expect.stringContaining('[Storage] Failed to decompress/parse violin-progress'),
       expect.anything()
     )
 

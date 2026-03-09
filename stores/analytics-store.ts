@@ -147,7 +147,7 @@ export interface Achievement {
  */
 export interface AnalyticsStore {
   /** The session currently being recorded, if any. */
-  currentSession: PracticeSession | null
+  currentSession: PracticeSession | undefined
   /** History of the last 100 completed sessions. */
   sessions: PracticeSession[]
   /** Aggregated user progress, skill levels, and achievements. */
@@ -242,9 +242,9 @@ export interface AnalyticsStore {
    * Gets the persistent statistics for a specific exercise.
    *
    * @param exerciseId - The ID to look up.
-   * @returns The stats object or null if never practiced.
+   * @returns The stats object or undefined if never practiced.
    */
-  getExerciseStats: (exerciseId: string) => ExerciseStats | null
+  getExerciseStats: (exerciseId: string) => ExerciseStats | undefined
 
   /**
    * Calculates aggregated performance stats for the current calendar day.
@@ -307,7 +307,7 @@ function toMs(value: unknown): number {
 export const useAnalyticsStore = create<AnalyticsStore>()(
   persist<AnalyticsStore, [], [], Pick<AnalyticsStore, 'sessions' | 'progress'>>(
     (set, get) => ({
-      currentSession: null,
+      currentSession: undefined,
       sessions: [],
       currentPerfectStreak: 0,
       onAchievementUnlocked: undefined,
@@ -347,7 +347,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       endSession: () => {
         const { currentSession, sessions, progress } = get()
-        if (!currentSession) return
+        if (currentSession === undefined) return
 
         const endTimeMs = Date.now()
         const durationMs = endTimeMs - currentSession.startTimeMs
@@ -385,7 +385,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         newProgress.achievements = [...progress.achievements, ...newAchievements]
 
         set({
-          currentSession: null,
+          currentSession: undefined,
           sessions: newSessions.slice(0, 100),
           progress: newProgress,
         })
@@ -509,7 +509,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       },
 
       getExerciseStats: (exerciseId) => {
-        return get().progress.exerciseStats[exerciseId] || null
+        return get().progress.exerciseStats[exerciseId] || undefined
       },
 
       getTodayStats: () => {

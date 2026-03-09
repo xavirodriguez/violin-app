@@ -46,9 +46,9 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     // Initial state
     state: { kind: 'IDLE' },
     permissionState: 'PROMPT',
-    detector: null,
+    detector: undefined,
     devices: [],
-    deviceId: null,
+    deviceId: undefined,
     sensitivity: 50,
 
     /**
@@ -159,7 +159,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
       set({
         state: { kind: 'IDLE' },
-        detector: null,
+        detector: undefined,
       })
     },
 

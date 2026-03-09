@@ -270,7 +270,7 @@ export interface TunerStore {
   /**
    * The active pitch detection algorithm instance.
    */
-  detector: PitchDetector | null
+  detector: PitchDetector | undefined
 
   /**
    * List of audio input devices detected on the system.
@@ -278,9 +278,9 @@ export interface TunerStore {
   devices: MediaDeviceInfo[]
 
   /**
-   * ID of the device currently used for input. `null` uses the default system device.
+   * ID of the device currently used for input. `undefined` uses the default system device.
    */
-  deviceId: string | null
+  deviceId: string | undefined
 
   /**
    * Sensitivity of the input (0-100).
@@ -293,7 +293,7 @@ export interface TunerStore {
   /**
    * Web Audio AnalyserNode for real-time visualization (e.g., waveforms).
    */
-  analyser: AnalyserNode | null
+  analyser: AnalyserNode | undefined
 
   /**
    * Initializes the audio pipeline and requests hardware permissions.

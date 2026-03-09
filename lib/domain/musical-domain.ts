@@ -40,7 +40,7 @@ export type CanonicalAccidental = -1 | 0 | 1
  * - **Numeric**: -1 (flat), 0 (natural), 1 (sharp).
  * - **MusicXML Labels**: "flat", "natural", "sharp", "double-flat", "double-sharp".
  * - **Notation Symbols**: "b", "#", "##", "bb".
- * - **Nullability**: `null` or `undefined` are treated as `0` (natural).
+ * - **Nullability**: `undefined` are treated as `0` (natural).
  *
  * @param input - Accidental in any supported format.
  *
@@ -59,7 +59,7 @@ export type CanonicalAccidental = -1 | 0 | 1
  * @public
  */
 export function normalizeAccidental(
-  input: number | string | null | undefined,
+  input: number | string | undefined,
 ): CanonicalAccidental {
   const mapping: Record<string, CanonicalAccidental> = {
     '1': 1,
@@ -79,7 +79,7 @@ export function normalizeAccidental(
     '': 0,
   }
 
-  if (input === null || input === undefined) {
+  if (input === undefined) {
     return 0
   }
 

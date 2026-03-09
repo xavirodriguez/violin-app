@@ -301,7 +301,7 @@ function* validateAndEmitDetections(params: {
   options: NoteStreamOptions
 }): Generator<PracticeEvent> {
   const { raw, noteName, cents, options } = params
-  if (isDetectionHighQuality(raw, noteName, cents, options)) {
+  if (isDetectionHighQuality({ raw, noteName, cents, options })) {
     yield {
       type: 'NOTE_DETECTED',
       payload: {
@@ -317,12 +317,13 @@ function* validateAndEmitDetections(params: {
   }
 }
 
-function isDetectionHighQuality(
-  raw: RawPitchEvent,
-  noteName: string,
-  cents: number,
-  options: NoteStreamOptions,
-): boolean {
+function isDetectionHighQuality(params: {
+  raw: RawPitchEvent
+  noteName: string
+  cents: number
+  options: NoteStreamOptions
+}): boolean {
+  const { raw, noteName, cents, options } = params
   const hasSignal = raw.rms >= options.minRms && raw.confidence >= options.minConfidence
   return !!(hasSignal && noteName && Math.abs(cents) <= 50)
 }
@@ -334,7 +335,7 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
 
   if (pitchedFrames.length === 0) return undefined
 
-  if (!currentTarget || !isValidMatch(currentTarget, segment, pitchedFrames, options)) {
+  if (!currentTarget || !isValidMatch({ target: currentTarget, segment, pitchedFrames, options })) {
     return undefined
   }
 
@@ -349,7 +350,7 @@ function finalizeSegmentAnalysis(params: {
   agent: TechniqueAnalysisAgent
 }): PracticeEvent {
   const { segment, state, currentIndex, options, agent } = params
-  const finalSegment = createFinalSegment(segment, state, currentIndex, options)
+  const finalSegment = createFinalSegment({ segment, state, currentIndex, options })
   const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
   const observations = agent.generateObservations(technique)
 
@@ -358,12 +359,13 @@ function finalizeSegmentAnalysis(params: {
   return { type: 'NOTE_MATCHED', payload: { technique, observations } }
 }
 
-function isValidMatch(
-  target: TargetNote,
-  segment: NoteSegment,
-  pitchedFrames: PitchedFrame[],
+function isValidMatch(params: {
+  target: TargetNote
+  segment: NoteSegment
+  pitchedFrames: PitchedFrame[]
   options: NoteStreamOptions
-): boolean {
+}): boolean {
+  const { target, segment, pitchedFrames, options } = params
   const lastFrame = pitchedFrames[pitchedFrames.length - 1]
   const lastDetected: DetectedNote = {
     pitch: segment.targetPitch,
@@ -373,16 +375,17 @@ function isValidMatch(
     confidence: lastFrame.confidence,
   }
 
-  return isMatch(target, lastDetected, options.centsTolerance) &&
+  return isMatch({ target, detected: lastDetected, tolerance: options.centsTolerance }) &&
     segment.durationMs >= options.requiredHoldTime
 }
 
-function createFinalSegment(
-  segment: NoteSegment,
-  state: TechnicalAnalysisState,
-  currentIndex: number,
+function createFinalSegment(params: {
+  segment: NoteSegment
+  state: TechnicalAnalysisState
+  currentIndex: number
   options: NoteStreamOptions
-): NoteSegment {
+}): NoteSegment {
+  const { segment, state, currentIndex, options } = params
   const expectations = calculateRhythmExpectations({
     options,
     currentIndex,
@@ -420,7 +423,7 @@ function checkHoldingStatus(params: {
       timestamp: frame.timestamp,
       confidence: frame.confidence,
     }
-    if (isMatch(currentTarget, lastDetected, options.centsTolerance)) {
+    if (isMatch({ target: currentTarget, detected: lastDetected, tolerance: options.centsTolerance })) {
       return {
         type: 'HOLDING_NOTE',
         payload: { duration: frame.timestamp - state.currentSegmentStart },

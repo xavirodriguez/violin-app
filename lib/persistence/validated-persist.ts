@@ -11,7 +11,7 @@ const createCompressedStorage = (name: string) => {
   return createJSONStorage(() => ({
     getItem: (key) => {
       const val = localStorage.getItem(key)
-      if (!val) return null
+      if (!val) return undefined
       try {
         // 1. Base64 to Uint8Array
         const bin = Uint8Array.from(atob(val), (c) => c.charCodeAt(0))
@@ -21,7 +21,7 @@ const createCompressedStorage = (name: string) => {
         return superjson.parse(decompressed)
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
-        return null
+        return undefined
       }
     },
     setItem: (key, value) => {
@@ -72,6 +72,9 @@ export const validatedPersist = <T>(
       ...options,
       storage: options.storage || createCompressedStorage(options.name),
       merge: (persistedState, currentState) => {
+        if (persistedState === undefined || persistedState === null) {
+          return currentState
+        }
         try {
           // Validate the persisted state
           const validated = schema.parse(persistedState)
