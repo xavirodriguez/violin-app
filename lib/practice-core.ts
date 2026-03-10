@@ -268,22 +268,24 @@ function checkPitchAndTune(params: {
 /**
  * Entry point for entering the matched state.
  */
-export function isNewMatch(
-  target: TargetNote | undefined,
-  detected: DetectedNote | undefined,
-  tolerance: number | MatchHysteresis = 25,
-): boolean {
+export function isNewMatch(params: {
+  target: TargetNote | undefined
+  detected: DetectedNote | undefined
+  tolerance?: number | MatchHysteresis
+}): boolean {
+  const { target, detected, tolerance = 25 } = params
   return isMatch({ target, detected, tolerance, isCurrentlyMatched: false })
 }
 
 /**
  * Entry point for maintaining the matched state.
  */
-export function isStillMatched(
-  target: TargetNote | undefined,
-  detected: DetectedNote | undefined,
-  tolerance: number | MatchHysteresis = 25,
-): boolean {
+export function isStillMatched(params: {
+  target: TargetNote | undefined
+  detected: DetectedNote | undefined
+  tolerance?: number | MatchHysteresis
+}): boolean {
+  const { target, detected, tolerance = 25 } = params
   return isMatch({ target, detected, tolerance, isCurrentlyMatched: true })
 }
 

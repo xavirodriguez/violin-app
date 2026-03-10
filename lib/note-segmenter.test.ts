@@ -109,7 +109,7 @@ describe('NoteSegmenter', () => {
     for (let i = 0; i < 20; i++) {
       segmenter.processFrame(createPitchedFrame(200 + i * 10, 0.03, 0.9, 'A4'))
     }
-    const offset = segmenter.processFrame(createUnpitchedFrame(500, 0.005, 0.1)) // Starts offset timer
+    segmenter.processFrame(createUnpitchedFrame(500, 0.005, 0.1)) // Starts offset timer
     const finalOffset = segmenter.processFrame(createUnpitchedFrame(650, 0.005, 0.1))
 
     expect(finalOffset?.type).toBe('OFFSET')

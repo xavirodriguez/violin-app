@@ -210,7 +210,12 @@ function setupPipeline(
     currentIndex: noteIndex,
     sessionStartTime: startTime,
   }
-  return createPracticeEventPipeline(stream, context, getOptions, signal)
+  return createPracticeEventPipeline({
+    rawPitchStream: stream,
+    context,
+    options: getOptions,
+    signal,
+  })
 }
 
 /**
