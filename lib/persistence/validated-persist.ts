@@ -7,9 +7,9 @@ import pako from 'pako'
 /**
  * Custom storage that uses SuperJSON for serialization and Pako for compression.
  */
-const createCompressedStorage = (name: string) => {
+const createCompressedStorage = (_name: string) => {
   return createJSONStorage(() => ({
-    getItem: (key) => {
+    getItem: (key): any => {
       const val = localStorage.getItem(key)
       if (!val) return undefined
       try {
@@ -41,7 +41,7 @@ const createCompressedStorage = (name: string) => {
   }))
 }
 
-type JsonPrimitive = string | number | boolean | null
+type JsonPrimitive = string | number | boolean
 type JsonObject = { [key: string]: JsonValue }
 type JsonArray = JsonValue[]
 type JsonValue = JsonPrimitive | JsonObject | JsonArray

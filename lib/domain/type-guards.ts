@@ -16,8 +16,8 @@ import type { Note, Exercise, Pitch } from './musical-types'
  */
 export function isPitch(x: unknown): x is Pitch {
   return (
+    !!x &&
     typeof x === 'object' &&
-    x !== null &&
     'step' in x &&
     'octave' in x &&
     'alter' in x &&
@@ -35,8 +35,8 @@ export function isPitch(x: unknown): x is Pitch {
  */
 export function isNote(x: unknown): x is Note {
   return (
+    !!x &&
     typeof x === 'object' &&
-    x !== null &&
     'pitch' in x &&
     'duration' in x &&
     isPitch((x as Note).pitch) &&
@@ -52,8 +52,8 @@ export function isNote(x: unknown): x is Note {
  */
 export function isExercise(x: unknown): x is Exercise {
   return (
+    !!x &&
     typeof x === 'object' &&
-    x !== null &&
     'id' in x &&
     'name' in x &&
     'notes' in x &&

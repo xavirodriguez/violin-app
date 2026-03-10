@@ -47,7 +47,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 500 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     expect(metrics.pitchStability.globalStdCents).toBeCloseTo(0)
     expect(metrics.pitchStability.inTuneRatio).toBe(1)
   })
@@ -70,7 +70,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 1000 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
 
     expect(metrics.vibrato.present).toBe(true)
     expect(metrics.vibrato.rateHz).toBeCloseTo(rate, 0)
@@ -93,7 +93,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 1000 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     expect(metrics.vibrato.present).toBe(false)
   })
 
@@ -112,7 +112,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 500 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     expect(metrics.resonance.suspectedWolf).toBe(true)
   })
 
@@ -133,7 +133,7 @@ describe('TechniqueAnalysisAgent', () => {
       expectedDuration: 500 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     expect(metrics.rhythm.onsetErrorMs).toBe(50)
   })
 
@@ -153,7 +153,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 500 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
 
     expect(metrics.attackRelease.attackTimeMs).toBeGreaterThan(50)
     expect(metrics.attackRelease.attackTimeMs).toBeLessThan(150)
@@ -165,7 +165,7 @@ describe('TechniqueAnalysisAgent', () => {
       f.cents += Math.sin(i) * 20
     })
 
-    const metricsWithRelease = agent.analyzeSegment(segment)
+    const metricsWithRelease = agent.analyzeSegment({ segment })
     expect(metricsWithRelease.attackRelease.releaseStability).toBeGreaterThan(5)
   })
 
@@ -191,7 +191,7 @@ describe('TechniqueAnalysisAgent', () => {
       frames: currentFrames,
     }
 
-    const metrics = agent.analyzeSegment(segment, gapFrames)
+    const metrics = agent.analyzeSegment({ segment, gapFrames })
 
     expect(metrics.transition.transitionTimeMs).toBeGreaterThan(100)
     expect(metrics.transition.glissAmountCents).toBeGreaterThan(50)
@@ -214,7 +214,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 1000 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     expect(metrics.pitchStability.driftCentsPerSec).toBeCloseTo(20, 1)
 
     // Unstable attack (first 100ms) but stable thereafter
@@ -233,7 +233,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 500 as TimestampMs,
       frames: unstableFrames,
     }
-    const unstableMetrics = agent.analyzeSegment(unstableSegment)
+    const unstableMetrics = agent.analyzeSegment({ segment: unstableSegment })
     expect(unstableMetrics.pitchStability.globalStdCents).toBeGreaterThan(5)
     expect(unstableMetrics.pitchStability.settlingStdCents).toBeCloseTo(0)
   })
@@ -272,7 +272,7 @@ describe('TechniqueAnalysisAgent', () => {
       f.cents += Math.sin(i * 0.5) * 15 + Math.cos(i * 2) * 10
     })
 
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     const observations = agent.generateObservations(metrics)
 
     expect(observations.length).toBeGreaterThan(1)
@@ -298,7 +298,7 @@ describe('TechniqueAnalysisAgent', () => {
       endTime: 500 as TimestampMs,
       frames,
     }
-    const metrics = agent.analyzeSegment(segment)
+    const metrics = agent.analyzeSegment({ segment })
     const observations = agent.generateObservations(metrics)
     expect(observations.length).toBeLessThanOrEqual(3)
   })

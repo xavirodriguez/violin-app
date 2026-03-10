@@ -39,11 +39,12 @@ export class TechniqueAnalysisAgent {
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
    */
-  analyzeSegment(
-    segment: NoteSegment,
-    gapFrames: ReadonlyArray<TechniqueFrame> = [],
-    prevSegment: NoteSegment | undefined = undefined,
-  ): NoteTechnique {
+  analyzeSegment(params: {
+    segment: NoteSegment
+    gapFrames?: ReadonlyArray<TechniqueFrame>
+    prevSegment?: NoteSegment
+  }): NoteTechnique {
+    const { segment, gapFrames = [], prevSegment } = params
     const frames = segment.frames
     const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 

@@ -351,7 +351,11 @@ function finalizeSegmentAnalysis(params: {
 }): PracticeEvent {
   const { segment, state, currentIndex, options, agent } = params
   const finalSegment = createFinalSegment({ segment, state, currentIndex, options })
-  const technique = agent.analyzeSegment(finalSegment, [...state.lastGapFrames], state.prevSegment)
+  const technique = agent.analyzeSegment({
+    segment: finalSegment,
+    gapFrames: [...state.lastGapFrames],
+    prevSegment: state.prevSegment,
+  })
   const observations = agent.generateObservations(technique)
 
   updateStateAfterCompletion(state, finalSegment)
@@ -473,11 +477,7 @@ function calculateRhythmExpectations(params: {
 /**
  * Creates a practice event processing pipeline with immutable context.
  *
- * @param rawPitchStream - Raw pitch detection events
- * @param context - Immutable context snapshot. Pipeline processes events
- *   relative to THIS context. To change context, create a new pipeline.
- * @param options - Pipeline configuration
- * @param signal - AbortSignal to stop the pipeline
+ * @param params - Configuration parameters for the pipeline.
  * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  *
  * @remarks
@@ -504,12 +504,13 @@ function calculateRhythmExpectations(params: {
  * );
  * ```
  */
-export function createPracticeEventPipeline(
-  rawPitchStream: AsyncIterable<RawPitchEvent>,
-  context: PipelineContext,
-  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions),
-  signal: AbortSignal,
-): AsyncIterable<PracticeEvent> {
+export function createPracticeEventPipeline(params: {
+  rawPitchStream: AsyncIterable<RawPitchEvent>
+  context: PipelineContext
+  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions)
+  signal: AbortSignal
+}): AsyncIterable<PracticeEvent> {
+  const { rawPitchStream, context, options, signal } = params
   let optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
   if (typeof options === 'function') {
     optionsOrGetter = options
