@@ -54,7 +54,7 @@ export class TechniqueAnalysisAgent {
       attackRelease: this.calculateAttackRelease(frames),
       resonance: this.calculateResonance(pitchedFrames),
       rhythm: this.calculateRhythm(segment),
-      transition: this.calculateTransition(gapFrames, frames, prevSegment),
+      transition: this.calculateTransition({ gapFrames, currentFrames: frames, prevSegment }),
     }
   }
 
@@ -62,7 +62,12 @@ export class TechniqueAnalysisAgent {
    * Generates a set of user-facing observations from the technique metrics.
    */
   generateObservations(technique: NoteTechnique): Observation[] {
-    const observations: Observation[] = [
+    const all = this.collectObservations(technique)
+    return this.prioritizeObservations(all)
+  }
+
+  private collectObservations(technique: NoteTechnique): Observation[] {
+    return [
       ...this.generateStabilityObservations(technique),
       ...this.generateVibratoObservations(technique),
       ...this.generateAttackObservations(technique),
@@ -70,7 +75,9 @@ export class TechniqueAnalysisAgent {
       ...this.generateResonanceObservations(technique),
       ...this.generateRhythmObservations(technique),
     ]
+  }
 
+  private prioritizeObservations(observations: Observation[]): Observation[] {
     return observations
       .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
       .slice(0, 3)
@@ -222,7 +229,7 @@ export class TechniqueAnalysisAgent {
     const lowConfRatio = this.calculateLowConfRatio(frames)
     const rmsBeatingScore = this.calculateRmsBeatingScore(frames)
     const pitchChaosScore = this.calculateStdDev(this.detrend(frames))
-    const suspectedWolf = this.detectWolfTone(lowConfRatio, rmsBeatingScore, pitchChaosScore)
+    const suspectedWolf = this.detectWolfTone({ lowConfRatio, rmsBeatingScore, pitchChaosScore })
 
     return {
       suspectedWolf,
@@ -256,7 +263,12 @@ export class TechniqueAnalysisAgent {
     return Math.max(0, correlation) as Ratio01
   }
 
-  private detectWolfTone(lowConfRatio: number, rmsBeatingScore: number, pitchChaosScore: number): boolean {
+  private detectWolfTone(params: {
+    lowConfRatio: number
+    rmsBeatingScore: number
+    pitchChaosScore: number
+  }): boolean {
+    const { lowConfRatio, rmsBeatingScore, pitchChaosScore } = params
     return (lowConfRatio > 0.3 && rmsBeatingScore > 0.4) ||
       (rmsBeatingScore > 0.6 && pitchChaosScore > 20)
   }
@@ -273,11 +285,12 @@ export class TechniqueAnalysisAgent {
     return { onsetErrorMs, durationErrorMs }
   }
 
-  private calculateTransition(
-    gapFrames: ReadonlyArray<TechniqueFrame>,
-    currentFrames: ReadonlyArray<TechniqueFrame>,
-    _prevSegment: NoteSegment | undefined,
-  ): TransitionMetrics {
+  private calculateTransition(params: {
+    gapFrames: ReadonlyArray<TechniqueFrame>
+    currentFrames: ReadonlyArray<TechniqueFrame>
+    prevSegment: NoteSegment | undefined
+  }): TransitionMetrics {
+    const { gapFrames, currentFrames } = params
     const transitionTimeMs = this.calculateTransitionTime(gapFrames)
     const glissAmountCents = this.calculateGlissAmount(gapFrames)
     const landingErrorCents = this.calculateLandingErrorMetric(currentFrames)
@@ -546,7 +559,7 @@ export class TechniqueAnalysisAgent {
 
     let best = { correlation: -1, periodMs: 0 }
     for (let periodMs = 100; periodMs <= 250; periodMs += 2) {
-      const result = this.evaluatePeriod(values, periodMs, avgDt)
+      const result = this.evaluatePeriod({ values, periodMs, avgDt })
       if (result.correlation > best.correlation) {
         best = result
       }
@@ -554,7 +567,8 @@ export class TechniqueAnalysisAgent {
     return best
   }
 
-  private evaluatePeriod(values: number[], periodMs: number, avgDt: number) {
+  private evaluatePeriod(params: { values: number[]; periodMs: number; avgDt: number }) {
+    const { values, periodMs, avgDt } = params
     const lag = Math.round(periodMs / avgDt)
     if (lag >= values.length * 0.8 || lag <= 1) {
       return { correlation: -1, periodMs }
