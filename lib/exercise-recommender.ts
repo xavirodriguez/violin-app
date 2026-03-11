@@ -40,18 +40,19 @@ const DAY_MS = 86_400_000
  *
  * @public
  */
-export function getRecommendedExercise(
-  exercises: Exercise[],
-  userProgress: UserProgress,
+export function getRecommendedExercise(params: {
+  exercises: Exercise[]
+  userProgress: UserProgress
   lastPlayedId?: string
-): Exercise | undefined {
+}): Exercise | undefined {
+  const { exercises } = params
   if (exercises.length === 0) return undefined
 
   return (
-    getPersistenceRecommendation({ exercises, userProgress, lastPlayedId }) ||
-    getReviewRecommendation({ exercises, userProgress }) ||
-    getProgressionDiscoveryRecommendation({ exercises, userProgress }) ||
-    getSpacedRepetitionRecommendation({ exercises, userProgress }) ||
+    getPersistenceRecommendation(params) ||
+    getReviewRecommendation(params) ||
+    getProgressionDiscoveryRecommendation(params) ||
+    getSpacedRepetitionRecommendation(params) ||
     exercises[0]
   )
 }

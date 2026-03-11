@@ -72,7 +72,7 @@ export const validatedPersist = <T>(
       ...options,
       storage: options.storage || createCompressedStorage(options.name),
       merge: (persistedState, currentState) => {
-        if (persistedState === undefined || persistedState === null) {
+        if (persistedState == undefined) {
           return currentState
         }
         try {

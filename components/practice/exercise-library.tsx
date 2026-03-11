@@ -24,7 +24,11 @@ export function ExerciseLibrary({
   const { progress, sessions } = useAnalyticsStore()
 
   const recommended = useMemo(() => {
-    return getRecommendedExercise(allExercises, progress, sessions[0]?.exerciseId)
+    return getRecommendedExercise({
+      exercises: allExercises,
+      userProgress: progress,
+      lastPlayedId: sessions[0]?.exerciseId,
+    })
   }, [progress, sessions])
 
   const filtered = useMemo(() => {

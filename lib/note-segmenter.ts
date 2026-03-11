@@ -50,21 +50,38 @@ const defaultOptions: SegmenterOptions = {
  * @throws Error if options are invalid or inconsistent.
  */
 export function validateOptions(options: SegmenterOptions): void {
+  validateRmsOptions(options)
+  validateConfidence(options.minConfidence)
+  validateDurations(options)
+  validateBuffers(options)
+}
+
+function validateRmsOptions(options: SegmenterOptions): void {
   if (options.minRms <= options.maxRmsSilence) {
     throw new Error('minRms must be greater than maxRmsSilence')
   }
-  if (options.minConfidence < 0 || options.minConfidence > 1) {
+}
+
+function validateConfidence(minConfidence: number): void {
+  if (minConfidence < 0 || minConfidence > 1) {
     throw new Error('minConfidence must be between 0 and 1')
   }
-  if (
-    options.onsetDebounceMs < 0 ||
-    options.offsetDebounceMs < 0 ||
-    options.noteChangeDebounceMs < 0 ||
-    options.pitchDropoutToleranceMs < 0 ||
-    options.noisyGapResetMs < 0
-  ) {
+}
+
+function validateDurations(options: SegmenterOptions): void {
+  const durations = [
+    options.onsetDebounceMs,
+    options.offsetDebounceMs,
+    options.noteChangeDebounceMs,
+    options.pitchDropoutToleranceMs,
+    options.noisyGapResetMs,
+  ]
+  if (durations.some((d) => d < 0)) {
     throw new Error('All duration options must be non-negative')
   }
+}
+
+function validateBuffers(options: SegmenterOptions): void {
   if (options.maxGapFrames <= 0 || options.maxNoteFrames <= 0) {
     throw new Error('Buffer limits must be positive')
   }
@@ -146,7 +163,7 @@ export class NoteSegmenter {
     now: TimestampMs
   }): SegmenterEvent | undefined {
     const { frame, isSignalPresent, isSilence, now } = params
-    this.pushToBuffer(this.gapFrames, frame, this.options.maxGapFrames)
+    this.pushToBuffer({ buffer: this.gapFrames, frame, limit: this.options.maxGapFrames })
     if (isSignalPresent) {
       return this.processSilenceSignal({ frame: frame as PitchedFrame, now })
     }
@@ -202,7 +219,7 @@ export class NoteSegmenter {
     now: TimestampMs
   }): SegmenterEvent | undefined {
     const { frame, isSignalPresent, isSilence, now } = params
-    this.pushToBuffer(this.frames, frame, this.options.maxNoteFrames)
+    this.pushToBuffer({ buffer: this.frames, frame, limit: this.options.maxNoteFrames })
     const noteState = this.state as NoteState
 
     const changeEvent = this.detectNoteChange({ frame, isSignalPresent, now, noteState })
@@ -352,7 +369,12 @@ export class NoteSegmenter {
     }
   }
 
-  private pushToBuffer(buffer: TechniqueFrame[], frame: TechniqueFrame, limit: number): void {
+  private pushToBuffer(params: {
+    buffer: TechniqueFrame[]
+    frame: TechniqueFrame
+    limit: number
+  }): void {
+    const { buffer, frame, limit } = params
     buffer.push(frame)
     if (buffer.length > limit) {
       buffer.shift()

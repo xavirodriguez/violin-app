@@ -24,11 +24,11 @@ const emptyProgress: UserProgress = {
 
 describe('getRecommendedExercise', () => {
   it('returns undefined if no exercises available', () => {
-    expect(getRecommendedExercise([], emptyProgress)).toBeUndefined()
+    expect(getRecommendedExercise({ exercises: [], userProgress: emptyProgress })).toBeUndefined()
   })
 
   it('suggests the first beginner exercise for a new user', () => {
-    const rec = getRecommendedExercise(mockExercises, emptyProgress)
+    const rec = getRecommendedExercise({ exercises: mockExercises, userProgress: emptyProgress })
     expect(rec?.id).toBe('1')
   })
 
@@ -39,7 +39,11 @@ describe('getRecommendedExercise', () => {
         '1': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 75, timesCompleted: 1, totalTimeMs: 1000 },
       },
     }
-    const rec = getRecommendedExercise(mockExercises, progress, '1')
+    const rec = getRecommendedExercise({
+      exercises: mockExercises,
+      userProgress: progress,
+      lastPlayedId: '1',
+    })
     expect(rec?.id).toBe('1')
   })
 
@@ -48,7 +52,7 @@ describe('getRecommendedExercise', () => {
     // Actually, in our mock, we need a beginner scale to regression to.
     const exercisesWithRegression: Exercise[] = [
       ...mockExercises,
-      { id: '0', name: 'Beginner Scale', difficulty: 'Beginner', category: 'scales', notes: [] }
+      { id: '0', name: 'Beginner Scale', difficulty: 'Beginner', category: 'scales', notes: [] },
     ]
     const progress: UserProgress = {
       ...emptyProgress,
@@ -56,7 +60,7 @@ describe('getRecommendedExercise', () => {
         '3': { lastPracticedMs: Date.now() - 100000, bestAccuracy: 65, timesCompleted: 1, totalTimeMs: 1000 },
       },
     }
-    const rec = getRecommendedExercise(exercisesWithRegression, progress)
+    const rec = getRecommendedExercise({ exercises: exercisesWithRegression, userProgress: progress })
     expect(rec?.id).toBe('0') // Regression to beginner scale
   })
 
@@ -64,10 +68,15 @@ describe('getRecommendedExercise', () => {
     const progress: UserProgress = {
       ...emptyProgress,
       exerciseStats: {
-        '1': { lastPracticedMs: Date.now() - 2 * 86400000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
+        '1': {
+          lastPracticedMs: Date.now() - 2 * 86400000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
       },
     }
-    const rec = getRecommendedExercise(mockExercises, progress)
+    const rec = getRecommendedExercise({ exercises: mockExercises, userProgress: progress })
     expect(rec?.id).toBe('2') // Next unplayed beginner
   })
 
@@ -75,11 +84,21 @@ describe('getRecommendedExercise', () => {
     const progress: UserProgress = {
       ...emptyProgress,
       exerciseStats: {
-        '1': { lastPracticedMs: Date.now() - 2 * 86400000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
-        '2': { lastPracticedMs: Date.now() - 2 * 86400000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
+        '1': {
+          lastPracticedMs: Date.now() - 2 * 86400000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
+        '2': {
+          lastPracticedMs: Date.now() - 2 * 86400000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
       },
     }
-    const rec = getRecommendedExercise(mockExercises, progress)
+    const rec = getRecommendedExercise({ exercises: mockExercises, userProgress: progress })
     expect(rec?.id).toBe('3') // First Intermediate
   })
 
@@ -88,13 +107,18 @@ describe('getRecommendedExercise', () => {
       ...emptyProgress,
       exerciseStats: {
         '1': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
-        '2': { lastPracticedMs: Date.now() - 3 * 86400000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
+        '2': {
+          lastPracticedMs: Date.now() - 3 * 86400000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
         '3': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
         '4': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
         '5': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
       },
     }
-    const rec = getRecommendedExercise(mockExercises, progress)
+    const rec = getRecommendedExercise({ exercises: mockExercises, userProgress: progress })
     expect(rec?.id).toBe('2') // Not played today (Rule 5)
   })
 })
