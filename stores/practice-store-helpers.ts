@@ -15,6 +15,9 @@ import { calculateLiveObservations } from '@/lib/live-observations'
 import { Observation } from '@/lib/technique-types'
 import type { Exercise } from '@/lib/exercises/types'
 import { FixedRingBuffer } from '@/lib/domain/data-structures'
+import { ReadyState, transitions } from '@/lib/practice/practice-states'
+import { PracticeStore } from './practice-store'
+import { toAppError } from '@/lib/errors/app-error'
 
 /**
  * Returns the initial domain state for a given exercise.
@@ -68,4 +71,44 @@ export function updateDetectionHistory(
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
   buffer.push(...history.slice().reverse(), payload)
   return buffer.toArray()
+}
+
+/**
+ * Ensures the store is in a ready state by initializing audio if needed.
+ */
+export async function ensureReadyState(params: {
+  getState: () => PracticeStore
+  initializeAudio: () => Promise<void>
+}): Promise<ReadyState | undefined> {
+  const { getState, initializeAudio } = params
+  let storeState = getState().state
+  if (storeState.status === 'idle' && storeState.exercise) {
+    await initializeAudio()
+    storeState = getState().state
+  }
+  return storeState.status === 'ready' ? storeState : undefined
+}
+
+/**
+ * Parameters for handling terminal failures in the session runner.
+ */
+export interface RunnerFailureParams {
+  set: (fn: (currentState: PracticeStore) => Partial<PracticeStore>) => void
+  get: () => PracticeStore
+  err: unknown
+  exercise: Exercise | undefined
+}
+
+/**
+ * Handles terminal failures in the session runner.
+ */
+export function handleRunnerFailure(params: RunnerFailureParams) {
+  const { set, get, err, exercise } = params
+  const isAbort = err && typeof err === 'object' && 'name' in err && (err as Error).name === 'AbortError'
+  if (!isAbort) {
+    console.error('[PracticeStore] Session runner failed:', err)
+    const error = toAppError(err)
+    set((currentState) => ({ ...currentState, error, state: transitions.error(error, exercise) }))
+    void get().stop()
+  }
 }
