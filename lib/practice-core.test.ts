@@ -335,14 +335,14 @@ describe('isMatch', () => {
     }
 
     // Case 1: Not previously matched, 25 cents is outside "enter" (20)
-    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, isCurrentlyMatched: false })).toBe(false)
+    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, matchStatus: 'initial' })).toBe(false)
 
     // Case 2: Previously matched, 25 cents is inside "exit" (30)
-    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, isCurrentlyMatched: true })).toBe(true)
+    expect(isMatch({ target, detected: detectedAt25, tolerance: hysteresis, matchStatus: 'maintaining' })).toBe(true)
 
     // Case 3: Transition out of match (35 cents is outside exit 30)
     const detectedAt35 = { pitch: 'A4', pitchHz: 440, cents: 35, timestamp: 0, confidence: 1 }
-    expect(isMatch({ target, detected: detectedAt35, tolerance: hysteresis, isCurrentlyMatched: true })).toBe(false)
+    expect(isMatch({ target, detected: detectedAt35, tolerance: hysteresis, matchStatus: 'maintaining' })).toBe(false)
   })
 
   it('should rethrow parsing errors for invalid target notes', () => {

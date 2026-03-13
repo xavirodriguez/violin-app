@@ -261,11 +261,12 @@ function shouldInitialize(state: PracticeStoreState, isInitializing: boolean): b
 /**
  * Returns the state updates for a successful audio initialization.
  */
-function getSuccessInitUpdates(
-  currentState: PracticeStore,
-  resources: { analyser: AnalyserNode },
-  adapters: { detector: PitchDetectionPort; audioLoop: AudioLoopPort },
-): Partial<PracticeStore> {
+function getSuccessInitUpdates(params: {
+  currentState: PracticeStore
+  resources: { analyser: AnalyserNode }
+  adapters: { detector: PitchDetectionPort; audioLoop: AudioLoopPort }
+}): Partial<PracticeStore> {
+  const { currentState, resources, adapters } = params
   return {
     ...currentState,
     ...adapters,
@@ -405,7 +406,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       try {
         const resources = await audioManager.initialize(useTunerStore.getState().deviceId || undefined)
         const adapters = createAudioAdapters(resources)
-        set((currentState) => getSuccessInitUpdates(currentState, resources, adapters))
+        set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
       } catch (err) {
         set((currentState) => getFailureInitUpdates(currentState, err))
       }

@@ -195,12 +195,12 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private propagateToEventSink(event: PracticeEvent): void {
-    handlePracticeEvent(
+    handlePracticeEvent({
       event,
-      this.environment.store,
-      () => void this.environment.store.stop(),
-      this.environment.analytics,
-    )
+      store: this.environment.store,
+      onCompleted: () => void this.environment.store.stop(),
+      analytics: this.environment.analytics,
+    })
   }
 
   private logTelemetry(payload: { pitch: string; cents: number; confidence: number; timestamp: number }): void {
@@ -219,11 +219,12 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     if (!note || index === this.sessionStats.lastProcessedIndex) return
 
     const duration = Date.now() - this.sessionStats.noteStartTime
-    this.emitAnalytics(index, note, duration, event.payload?.technique)
+    this.emitAnalytics({ index, note, duration, technique: event.payload?.technique })
     this.updateRunnerStats(index)
   }
 
-  private emitAnalytics(index: number, note: any, duration: number, technique: any): void {
+  private emitAnalytics(params: { index: number; note: any; duration: number; technique: any }): void {
+    const { index, note, duration, technique } = params
     const pitch = formatPitchName(note.pitch)
     this.environment.analytics.recordNoteAttempt(index, pitch, 0, true)
     this.environment.analytics.recordNoteCompletion(index, duration, technique)

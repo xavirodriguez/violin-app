@@ -14,7 +14,7 @@ export type PracticeReducer = (state: EngineState, event: PracticeEngineEvent) =
  */
 const HANDLERS: Record<
   PracticeEngineEvent['type'],
-  (state: EngineState, event: any) => EngineState
+  (state: EngineState, event: PracticeEngineEvent) => EngineState
 > = {
   NOTE_DETECTED: (state) => ({ ...state, status: 'active' }),
   HOLDING_NOTE: (state) => ({ ...state, status: 'active' }),
