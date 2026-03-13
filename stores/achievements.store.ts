@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
-import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { AchievementsStateSchema } from '@/lib/schemas/persistence.schema'
 
