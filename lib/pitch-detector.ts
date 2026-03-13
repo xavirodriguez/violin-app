@@ -95,9 +95,127 @@ export class PitchDetector {
     return this.refineAndValidatePitch(yinBuffer, tauEstimate)
   }
 
+  /**
+   * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
+   *
+   * @param buffer - The audio data to analyze.
+   * @returns The RMS value, a non-negative number.
+   */
+  calculateRMS(buffer: Float32Array): number {
+    if (buffer.length === 0) {
+      return 0
+    }
+
+    let sum = 0
+    for (let i = 0; i < buffer.length; i++) {
+      sum += buffer[i] * buffer[i]
+    }
+
+    return Math.sqrt(sum / buffer.length)
+  }
+
+  /**
+   * Utility method to detect if there's enough signal to attempt pitch detection.
+   *
+   * @remarks
+   * This is used as a performance optimization to avoid running the expensive YIN algorithm
+   * on buffers that are essentially silent.
+   *
+   * @param buffer - The audio data to check.
+   * @param threshold - The RMS threshold above which a signal is considered present.
+   * @returns `true` if the buffer's RMS exceeds the threshold, `false` otherwise.
+   * @defaultValue `threshold` is `this.DEFAULT_RMS_THRESHOLD`.
+   */
+  hasSignal(buffer: Float32Array, threshold = this.DEFAULT_RMS_THRESHOLD): boolean {
+    const rms = this.calculateRMS(buffer)
+    const isPresent = rms > threshold
+    const hasEnoughSamples = buffer.length > 0
+    const isValidSignal = isPresent && hasEnoughSamples
+
+    return isValidSignal
+  }
+
+  /**
+   * A wrapper around `detectPitch` that first validates if the signal is strong enough.
+   *
+   * @remarks
+   * This is the recommended method for real-time pitch detection, as it prevents
+   * unnecessary computation on silent audio frames.
+   *
+   * @param buffer - The audio data to analyze.
+   * @param rmsThreshold - The RMS threshold to use for the signal check.
+   * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
+   * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
+   */
+  detectPitchWithValidation(
+    buffer: Float32Array,
+    rmsThreshold = this.DEFAULT_RMS_THRESHOLD,
+  ): PitchDetectionResult {
+    if (!this.hasSignal(buffer, rmsThreshold)) {
+      return { pitchHz: 0, confidence: 0 }
+    }
+
+    return this.detectPitch(buffer)
+  }
+
+  /**
+   * Gets the sample rate the detector was configured with.
+   * Refactored for range validation.
+   * @returns The sample rate in Hz.
+   */
+  getSampleRate(): number {
+    const rate = this.sampleRate
+    const isValid = rate > 0
+    if (!isValid) {
+      throw new Error('Sample rate is not initialized correctly')
+    }
+
+    return rate
+  }
+
+  /**
+   * Gets the effective frequency range the detector is configured to find.
+   * @returns An object containing the min and max frequencies in Hz.
+   */
+  getFrequencyRange(): { min: number; max: number } {
+    const range = {
+      min: this.MIN_FREQUENCY,
+      max: this.MAX_FREQUENCY,
+    }
+    const isValid = range.min < range.max
+    if (!isValid) throw new Error('Invalid frequency range')
+
+    return range
+  }
+
+  /**
+   * Updates the maximum frequency threshold for pitch detection.
+   *
+   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
+   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
+   *
+   * @example
+   * detector.setMaxFrequency(2637);  // ✅ E7 for violin
+   * detector.setMaxFrequency(-100);  // ❌ Throws AppError
+   * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
+   */
+  setMaxFrequency(maxHz: number): void {
+    if (maxHz <= this.MIN_FREQUENCY || maxHz > 20000) {
+      throw new AppError({
+        message: `Invalid max frequency: ${maxHz}. Must be > ${this.MIN_FREQUENCY} and <= 20000`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
+    }
+    this.MAX_FREQUENCY = maxHz
+  }
+
   private calculateSearchSize(bufferSize: number): number {
-    const maxTau = Math.floor(this.sampleRate / this.MIN_FREQUENCY)
-    return Math.min(maxTau, Math.floor(bufferSize / 2))
+    const minPeriodSamples = this.sampleRate / this.MIN_FREQUENCY
+    const maxTau = Math.floor(minPeriodSamples)
+    const halfBufferSize = Math.floor(bufferSize / 2)
+    const searchSize = Math.min(maxTau, halfBufferSize)
+
+    return searchSize
   }
 
   private refineAndValidatePitch(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
@@ -113,7 +231,12 @@ export class PitchDetector {
   }
 
   private isFrequencyInRange(pitchHz: number): boolean {
-    return pitchHz >= this.MIN_FREQUENCY && pitchHz <= this.MAX_FREQUENCY
+    const isAboveMin = pitchHz >= this.MIN_FREQUENCY
+    const isBelowMax = pitchHz <= this.MAX_FREQUENCY
+    const isInRange = isAboveMin && isBelowMax
+    const isFinite = Number.isFinite(pitchHz)
+
+    return isInRange && isFinite
   }
 
   /** Step 1: Difference function */
@@ -199,105 +322,6 @@ export class PitchDetector {
     }
     return tau
   }
-
-  /**
-   * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
-   *
-   * @param buffer - The audio data to analyze.
-   * @returns The RMS value, a non-negative number.
-   */
-  calculateRMS(buffer: Float32Array): number {
-    if (buffer.length === 0) {
-      return 0
-    }
-
-    let sum = 0
-    for (let i = 0; i < buffer.length; i++) {
-      sum += buffer[i] * buffer[i]
-    }
-
-    return Math.sqrt(sum / buffer.length)
-  }
-
-  /**
-   * Utility method to detect if there's enough signal to attempt pitch detection.
-   *
-   * @remarks
-   * This is used as a performance optimization to avoid running the expensive YIN algorithm
-   * on buffers that are essentially silent.
-   *
-   * @param buffer - The audio data to check.
-   * @param threshold - The RMS threshold above which a signal is considered present.
-   * @returns `true` if the buffer's RMS exceeds the threshold, `false` otherwise.
-   * @defaultValue `threshold` is `this.DEFAULT_RMS_THRESHOLD`.
-   */
-  hasSignal(buffer: Float32Array, threshold = this.DEFAULT_RMS_THRESHOLD): boolean {
-    return this.calculateRMS(buffer) > threshold
-  }
-
-  /**
-   * A wrapper around `detectPitch` that first validates if the signal is strong enough.
-   *
-   * @remarks
-   * This is the recommended method for real-time pitch detection, as it prevents
-   * unnecessary computation on silent audio frames.
-   *
-   * @param buffer - The audio data to analyze.
-   * @param rmsThreshold - The RMS threshold to use for the signal check.
-   * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
-   * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
-   */
-  detectPitchWithValidation(
-    buffer: Float32Array,
-    rmsThreshold = this.DEFAULT_RMS_THRESHOLD,
-  ): PitchDetectionResult {
-    if (!this.hasSignal(buffer, rmsThreshold)) {
-      return { pitchHz: 0, confidence: 0 }
-    }
-
-    return this.detectPitch(buffer)
-  }
-
-  /**
-   * Gets the sample rate the detector was configured with.
-   * Refactored for range validation.
-   * @returns The sample rate in Hz.
-   */
-  getSampleRate(): number {
-    return this.sampleRate
-  }
-
-  /**
-   * Gets the effective frequency range the detector is configured to find.
-   * @returns An object containing the min and max frequencies in Hz.
-   */
-  getFrequencyRange(): { min: number; max: number } {
-    return {
-      min: this.MIN_FREQUENCY,
-      max: this.MAX_FREQUENCY,
-    }
-  }
-
-  /**
-   * Updates the maximum frequency threshold for pitch detection.
-   *
-   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
-   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
-   *
-   * @example
-   * detector.setMaxFrequency(2637);  // ✅ E7 for violin
-   * detector.setMaxFrequency(-100);  // ❌ Throws AppError
-   * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
-   */
-  setMaxFrequency(maxHz: number): void {
-    if (maxHz <= this.MIN_FREQUENCY || maxHz > 20000) {
-      throw new AppError({
-        message: `Invalid max frequency: ${maxHz}. Must be > ${this.MIN_FREQUENCY} and <= 20000`,
-        code: ERROR_CODES.DATA_VALIDATION_ERROR,
-      })
-    }
-    this.MAX_FREQUENCY = maxHz
-  }
 }
 
 /**
@@ -311,5 +335,13 @@ export class PitchDetector {
  * @returns A new, correctly configured `PitchDetector` instance.
  */
 export function createPitchDetectorFromContext(audioContext: AudioContext): PitchDetector {
-  return new PitchDetector(audioContext.sampleRate)
+  const sampleRate = audioContext.sampleRate
+  const detector = new PitchDetector(sampleRate)
+  const isContextValid = !!audioContext && sampleRate > 0
+
+  if (!isContextValid) {
+    throw new Error('Invalid audio context')
+  }
+
+  return detector
 }

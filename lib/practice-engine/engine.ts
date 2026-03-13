@@ -87,39 +87,6 @@ interface EventHandlerParams {
 }
 
 /**
- * Calculates adaptive difficulty parameters based on performance history.
- *
- * @param perfectNoteStreak - Current streak of perfect notes.
- * @returns Object containing intonation tolerance and required hold duration.
- * @internal
- */
-function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
-  const centsTolerance = Math.max(10, 25 - Math.floor(perfectNoteStreak / 3) * 5)
-  const requiredHoldTime = Math.min(800, 500 + Math.floor(perfectNoteStreak / 5) * 100)
-  return { centsTolerance, requiredHoldTime }
-}
-
-/**
- * Maps a low-level practice event to a high-level engine event.
- * @internal
- */
-function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | undefined {
-  if (event.type === 'NOTE_DETECTED') return { type: 'NOTE_DETECTED', payload: event.payload }
-  if (event.type === 'HOLDING_NOTE') return { type: 'HOLDING_NOTE', payload: event.payload }
-  if (event.type === 'NOTE_MATCHED' && event.payload) {
-    return {
-      type: 'NOTE_MATCHED',
-      payload: {
-        technique: event.payload.technique,
-        observations: event.payload.observations ?? [],
-        isPerfect: event.payload.isPerfect ?? false,
-      },
-    }
-  }
-  return event.type === 'NO_NOTE_DETECTED' ? { type: 'NO_NOTE' } : undefined
-}
-
-/**
  * Factory function to create a new {@link PracticeEngine} instance.
  *
  * @param ctx - The execution context.
@@ -139,8 +106,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
       if (isRunning) return
       isRunning = true
       try {
-        const params = { ctx, getState: () => state, updateState, getOptions, signal }
-        yield* runEngineLoop(params)
+        yield* runEngineLoop({ ctx, getState: () => state, updateState, getOptions, signal })
       } finally {
         isRunning = false
       }
@@ -167,6 +133,19 @@ function getEngineOptions(exercise: Exercise, perfectNoteStreak: number): NoteSt
 }
 
 /**
+ * Calculates adaptive difficulty parameters based on performance history.
+ *
+ * @param perfectNoteStreak - Current streak of perfect notes.
+ * @returns Object containing intonation tolerance and required hold duration.
+ * @internal
+ */
+function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
+  const centsTolerance = Math.max(10, 25 - Math.floor(perfectNoteStreak / 3) * 5)
+  const requiredHoldTime = Math.min(800, 500 + Math.floor(perfectNoteStreak / 5) * 100)
+  return { centsTolerance, requiredHoldTime }
+}
+
+/**
  * Orchestrates the main asynchronous loop for note progression.
  *
  * @param params - Execution dependencies.
@@ -180,7 +159,7 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
 
   while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
     const noteIndex = getState().currentNoteIndex
-    const pipeline = setupPipeline(ctx.exercise, noteIndex, startTime, stream, getOptions, signal)
+    const pipeline = setupPipeline({ exercise: ctx.exercise, noteIndex, startTime, stream, getOptions, signal })
     yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
   }
 }
@@ -188,34 +167,25 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
 /**
  * Sets up a new practice event pipeline for the current target note.
  *
- * @param exercise - The active exercise.
- * @param noteIndex - Index of the current target note.
- * @param startTime - Reference timestamp for rhythm analysis.
- * @param stream - Source of raw pitch events.
- * @param getOptions - Provider for dynamic pipeline options.
- * @param signal - Termination token.
+ * @param params - Pipeline configuration.
  * @returns An async iterable of low-level practice events.
  * @internal
  */
-function setupPipeline(
-  exercise: Exercise,
-  noteIndex: number,
-  startTime: number,
-  stream: AsyncIterable<any>,
-  getOptions: () => NoteStreamOptions,
-  signal: AbortSignal,
-) {
+function setupPipeline(params: {
+  exercise: Exercise
+  noteIndex: number
+  startTime: number
+  stream: AsyncIterable<RawPitchEvent>
+  getOptions: () => NoteStreamOptions
+  signal: AbortSignal
+}) {
+  const { exercise, noteIndex, startTime, stream, getOptions, signal } = params
   const context = {
     targetNote: exercise.notes[noteIndex] as TargetNote,
     currentIndex: noteIndex,
     sessionStartTime: startTime,
   }
-  return createPracticeEventPipeline({
-    rawPitchStream: stream,
-    context,
-    options: getOptions,
-    signal,
-  })
+  return createPracticeEventPipeline({ rawPitchStream: stream, context, options: getOptions, signal })
 }
 
 /**
@@ -232,7 +202,8 @@ async function* processPipeline(params: PipelineParams): AsyncGenerator<Practice
     const engineEvent = mapPipelineEventToEngineEvent(event)
     if (engineEvent) {
       yield* handleEngineEvent({ event: engineEvent, getState, noteIndex, updateState })
-      if (shouldTerminatePipeline(engineEvent, getState(), noteIndex)) break
+      const shouldBreak = shouldTerminatePipeline({ event: engineEvent, state: getState(), noteIndex })
+      if (shouldBreak) break
     }
   }
 }
@@ -254,16 +225,42 @@ async function* handleEngineEvent(params: EventHandlerParams): AsyncGenerator<Pr
 }
 
 /**
+ * Maps a low-level practice event to a high-level engine event.
+ * @internal
+ */
+function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEvent | undefined {
+  if (event.type === 'NOTE_DETECTED') return { type: 'NOTE_DETECTED', payload: event.payload }
+  if (event.type === 'HOLDING_NOTE') return { type: 'HOLDING_NOTE', payload: event.payload }
+  if (event.type === 'NOTE_MATCHED' && event.payload) {
+    return {
+      type: 'NOTE_MATCHED',
+      payload: {
+        technique: event.payload.technique,
+        observations: event.payload.observations ?? [],
+        isPerfect: event.payload.isPerfect ?? false,
+      },
+    }
+  }
+  return event.type === 'NO_NOTE_DETECTED' ? { type: 'NO_NOTE' } : undefined
+}
+
+/**
  * Determines if the current pipeline iteration should terminate.
  *
- * @param event - The current engine event.
- * @param state - Current engine state.
- * @param noteIndex - The note index associated with the pipeline.
+ * @param params - Check parameters.
  * @returns True if the loop should break.
  * @internal
  */
-function shouldTerminatePipeline(event: PracticeEngineEvent, state: EngineState, noteIndex: number): boolean {
-  return isTerminalEvent(event, state) || (event.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex)
+function shouldTerminatePipeline(params: {
+  event: PracticeEngineEvent
+  state: EngineState
+  noteIndex: number
+}): boolean {
+  const { event, state, noteIndex } = params
+  const isComplete = isTerminalEvent(event, state)
+  const isNewNote = event.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex
+
+  return isComplete || isNewNote
 }
 
 /**
@@ -275,7 +272,9 @@ function shouldTerminatePipeline(event: PracticeEngineEvent, state: EngineState,
  * @internal
  */
 function isTerminalEvent(event: PracticeEngineEvent, state: EngineState): boolean {
-  return event.type === 'NOTE_MATCHED' && state.currentNoteIndex >= state.scoreLength
+  const isMatch = event.type === 'NOTE_MATCHED'
+  const isLast = state.currentNoteIndex >= state.scoreLength
+  return isMatch && isLast
 }
 
 /**

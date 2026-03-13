@@ -35,40 +35,45 @@ type StoreApi<T> = {
 }
 
 /**
+ * Parameters for the practice event handler.
+ * @public
+ */
+export interface HandlePracticeEventParams<T> {
+  /** The practice event to process. */
+  event: PracticeEvent
+  /** The Zustand store API instance where the state resides. */
+  store: StoreApi<T>
+  /** Callback triggered when the state transitions to 'completed'. */
+  onCompleted: () => void
+  /** Optional handlers for telemetry and session data recording. */
+  analytics?: { endSession: () => void }
+}
+
+/**
  * Handles state transitions and side effects for practice events emitted by the audio pipeline.
  *
  * @remarks
  * This function acts as the "event sink" that bridges the gap between the asynchronous,
  * high-frequency audio pipeline and the reactive Zustand stores.
  *
- * **Core Responsibilities**:
- * 1. **Atomic State Transitions**: Updates `practiceState` using the `reducePracticeEvent` reducer within a `store.setState` call.
- * 2. **Side Effect Orchestration**: Detects transitions (e.g., to 'completed') and triggers external callbacks like analytics finalization.
- * 3. **Defensive Programming**: Validates incoming events and current state to prevent runtime crashes during audio processing.
- *
- * **Concurrency**: This function is designed to be called frequently (up to 60 times per second).
- * It relies on functional state updates to ensure consistency even if events arrive in rapid succession.
- *
- * @param event - The practice event (e.g., NOTE_DETECTED, NOTE_MATCHED) to process.
- * @param store - The Zustand store API instance where the state resides.
- * @param onCompleted - Callback triggered when the state transitions from any state to 'completed'.
- * @param analytics - Optional handlers for telemetry and session data recording.
+ * @param params - Configuration parameters for the handler.
  *
  * @example
  * ```ts
- * handlePracticeEvent(event, usePracticeStore, () => showConfetti(), {
- *   endSession: () => analytics.track('session_end')
+ * handlePracticeEvent({
+ *   event,
+ *   store: usePracticeStore,
+ *   onCompleted: () => showConfetti(),
+ *   analytics: { endSession: () => analytics.track('session_end') }
  * });
  * ```
  *
  * @public
  */
 export const handlePracticeEvent = <T extends { practiceState: PracticeState | undefined }>(
-  event: PracticeEvent,
-  store: StoreApi<T>,
-  onCompleted: () => void,
-  analytics?: { endSession: () => void },
+  params: HandlePracticeEventParams<T>,
 ) => {
+  const { event, store, onCompleted, analytics } = params
   if (!event?.type) return
 
   const practiceState = store.getState().practiceState

@@ -133,7 +133,7 @@ export class TechniqueAnalysisAgent {
     const rateHz = (periodMs > 0 ? 1000 / periodMs : 0) as Hz
     const regularity = Math.max(0, correlation) as Ratio01
 
-    const isValid = this.isVibratoValid(rateHz, widthCents, regularity)
+    const isValid = this.isVibratoValid({ rateHz, widthCents, regularity })
 
     return {
       present: isValid,
@@ -151,11 +151,13 @@ export class TechniqueAnalysisAgent {
     return pitchStd <= 40
   }
 
-  private isVibratoValid(rateHz: Hz, widthCents: Cents, regularity: Ratio01): boolean {
-    return rateHz >= this.options.vibratoMinRateHz &&
-      rateHz <= this.options.vibratoMaxRateHz &&
-      widthCents >= this.options.vibratoMinWidthCents &&
-      regularity >= this.options.vibratoMinRegularity
+  private isVibratoValid(params: { rateHz: Hz; widthCents: Cents; regularity: Ratio01 }): boolean {
+    const { rateHz, widthCents, regularity } = params
+    const isRateValid = rateHz >= this.options.vibratoMinRateHz && rateHz <= this.options.vibratoMaxRateHz
+    const isWidthValid = widthCents >= this.options.vibratoMinWidthCents
+    const isRegValid = regularity >= this.options.vibratoMinRegularity
+
+    return isRateValid && isWidthValid && isRegValid
   }
 
   private calculateAttackRelease(frames: ReadonlyArray<TechniqueFrame>): AttackReleaseMetrics {
