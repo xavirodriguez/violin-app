@@ -39,7 +39,7 @@ function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercis
 
 async function startPipeline(
   deps: PipelineDependencies,
-  consume: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
+  consume: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>,
 ) {
   const { state, audioLoop, detector, signal } = deps
   const rawPitchStream = createRawPitchStream({ audioLoop, detector, signal })
@@ -72,7 +72,7 @@ export function usePracticePipeline({
     const abortController = new AbortController()
     startPipeline(
       { state: practiceState, audioLoop, detector, signal: abortController.signal },
-      consumePipelineEvents
+      consumePipelineEvents,
     ).catch((error) => {
       if (error instanceof Error && error.name === 'AbortError') return
       console.error('[PracticeMode] Pipeline error:', error)
@@ -85,6 +85,6 @@ export function usePracticePipeline({
     audioLoop,
     detector,
     consumePipelineEvents,
-    practiceState?.exercise
+    practiceState?.exercise,
   ])
 }

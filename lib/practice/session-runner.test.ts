@@ -14,20 +14,18 @@ describe('PracticeSessionRunner', () => {
           onFrame(new Float32Array([0.1]))
         }, 10)
       })
-    })
+    }),
   }
 
   const mockDetector: PitchDetectionPort = {
     detect: vi.fn(() => ({ pitchHz: 440, confidence: 0.9 })),
-    calculateRMS: vi.fn(() => 0.1)
+    calculateRMS: vi.fn(() => 0.1),
   }
 
   const mockExercise = {
     id: 'test',
     name: 'Test',
-    notes: [
-      { pitch: { step: 'A', octave: 4, alter: 0 }, duration: '4' }
-    ]
+    notes: [{ pitch: { step: 'A', octave: 4, alter: 0 }, duration: '4' }],
   }
 
   const mockStore = {
@@ -36,16 +34,16 @@ describe('PracticeSessionRunner', () => {
         status: 'listening',
         exercise: mockExercise,
         currentIndex: 0,
-        detectionHistory: []
-      }
+        detectionHistory: [],
+      },
     })),
     setState: vi.fn(),
-    stop: vi.fn()
+    stop: vi.fn(),
   }
 
   const mockAnalytics = {
     recordNoteAttempt: vi.fn(),
-    recordNoteCompletion: vi.fn()
+    recordNoteCompletion: vi.fn(),
   }
 
   const deps: SessionRunnerDependencies = {
@@ -54,7 +52,7 @@ describe('PracticeSessionRunner', () => {
     exercise: mockExercise as any,
     sessionStartTime: Date.now(),
     store: mockStore,
-    analytics: mockAnalytics
+    analytics: mockAnalytics,
   }
 
   it('cancela la sesión al llamar a cancel()', async () => {
@@ -64,7 +62,7 @@ describe('PracticeSessionRunner', () => {
     const runPromise = runner.run(signal)
 
     // Esperar un poco y cancelar
-    await new Promise(r => setTimeout(r, 50))
+    await new Promise((r) => setTimeout(r, 50))
     runner.cancel()
 
     const result = await runPromise
@@ -82,7 +80,7 @@ describe('PracticeSessionRunner', () => {
     const run1 = runner1.run(signal1.signal)
     const run2 = runner2.run(signal2.signal)
 
-    await new Promise(r => setTimeout(r, 50))
+    await new Promise((r) => setTimeout(r, 50))
 
     signal1.abort()
     const res1 = await run1

@@ -116,7 +116,9 @@ export function TunerMode() {
         {/* Title and description */}
         <div className="text-center">
           <h2 className="text-foreground mb-2 text-3xl font-bold">Violin Tuner</h2>
-          <p className="text-muted-foreground">Play a note on your violin to see its pitch accuracy</p>
+          <p className="text-muted-foreground">
+            Play a note on your violin to see its pitch accuracy
+          </p>
         </div>
 
         {/* Central Tuner Card */}

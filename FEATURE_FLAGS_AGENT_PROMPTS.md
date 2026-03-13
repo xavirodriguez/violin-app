@@ -7,6 +7,7 @@ Aquí encontrarás prompts listos para usar con Claude u otro agente IA generati
 ## 1️⃣ Detección Inicial de Features
 
 ### Prompt Base
+
 ```
 Actúa como experto en feature flags y arquitectura TypeScript.
 
@@ -28,6 +29,7 @@ Sé exhaustivo, no omitas features pequeños.
 ```
 
 ### Variante: Análisis de Carpeta Específica
+
 ```
 Analiza únicamente la carpeta src/components/ en busca de:
 - Componentes condicionados
@@ -39,6 +41,7 @@ Proporciona un reporte JSON con ubicaciones exactas.
 ```
 
 ### Variante: Migración de Sistema Existente
+
 ```
 Tengo un sistema de feature flags existente que usa [SISTEMA_ACTUAL].
 Necesito migrar a un nuevo sistema basado en variables de entorno.
@@ -57,6 +60,7 @@ Analiza:
 ## 2️⃣ Análisis Específico de Riesgos
 
 ### Prompt: Features Críticas
+
 ```
 Enfócate SOLO en features que:
 - Afectan múltiples usuarios
@@ -72,6 +76,7 @@ Para cada uno detectado, identifica:
 ```
 
 ### Prompt: Dependencias Entre Features
+
 ```
 Analiza las relaciones entre features en mi proyecto:
 1. ¿Cuáles features requieren otras features?
@@ -83,6 +88,7 @@ Proporciona un diagrama de dependencias y matriz de conflictos.
 ```
 
 ### Prompt: Features Abandonados
+
 ```
 Encuentra features que:
 - Están deshabilitadas en .env
@@ -102,6 +108,7 @@ Para cada uno, sugiere si debería:
 ## 3️⃣ Generación de Documentación
 
 ### Prompt: Feature Catalog
+
 ```
 Basándote en los features detectados, crea un catálogo completo con:
 
@@ -118,6 +125,7 @@ Formato: Markdown con tabla de contenidos y ejemplos de código.
 ```
 
 ### Prompt: Guía de Migración
+
 ```
 Crea una guía paso-a-paso para migrar del sistema actual al nuevo:
 
@@ -133,6 +141,7 @@ Incluye ejemplos de código antes/después.
 ```
 
 ### Prompt: Training Material
+
 ```
 Crea material de capacitación para el equipo sobre feature flags:
 
@@ -152,6 +161,7 @@ Formato: Tutorial interactivo con ejemplos.
 ## 4️⃣ Testing y Validación
 
 ### Prompt: Test Suite Generator
+
 ```
 Crea una suite de tests para validar el sistema de feature flags:
 
@@ -167,6 +177,7 @@ Include: setup, fixtures, assertions.
 ```
 
 ### Prompt: Validation Checklist
+
 ```
 Crea un checklist exhaustivo para validar que:
 
@@ -182,6 +193,7 @@ Include: comandos de verificación automática.
 ```
 
 ### Prompt: Performance Analysis
+
 ```
 Analiza el impacto en performance de cada feature:
 
@@ -204,6 +216,7 @@ Proporciona recomendaciones.
 ## 5️⃣ Planificación de Rollout
 
 ### Prompt: Gradual Rollout Plan
+
 ```
 Crea un plan de rollout gradual para estos features:
 [LISTA_DE_FEATURES]
@@ -223,6 +236,7 @@ Considera:
 ```
 
 ### Prompt: A/B Testing Setup
+
 ```
 Diseña un A/B test para validar estos features:
 [FEATURES_A_TESTEAR]
@@ -240,6 +254,7 @@ Incluye: tracking code, analytics setup.
 ```
 
 ### Prompt: Feature Toggle Strategy
+
 ```
 Desarrolla una estrategia de feature toggles para este roadmap:
 [ROADMAP_FEATURES]
@@ -259,6 +274,7 @@ Proporciona timeline recomendado.
 ## 6️⃣ Resolución de Problemas
 
 ### Prompt: Debugging Feature Issues
+
 ```
 Un feature que debería estar habilitado no funciona.
 
@@ -278,6 +294,7 @@ Diagnóstica:
 ```
 
 ### Prompt: Performance Degradation
+
 ```
 Después de habilitar [FEATURE], el sitio se ralentizó.
 
@@ -300,6 +317,7 @@ Analiza:
 ## 7️⃣ Mantenimiento y Cleanup
 
 ### Prompt: Feature Deprecation Plan
+
 ```
 Estos features son antiguos y deberían retirarse:
 [LISTA_FEATURES_ANTIGUOS]
@@ -316,6 +334,7 @@ Include: deprecation warnings en código.
 ```
 
 ### Prompt: Code Cleanup After Feature
+
 ```
 El feature [NOMBRE] ya es estable y universalmente usado.
 
@@ -330,6 +349,7 @@ Proporciona commits necesarios.
 ```
 
 ### Prompt: Technical Debt Assessment
+
 ```
 Evalúa la deuda técnica del sistema de feature flags:
 
@@ -353,6 +373,7 @@ Proporciona roadmap de remediar.
 ## 8️⃣ Casos de Uso Avanzados
 
 ### Prompt: Multi-Tenant Feature Management
+
 ```
 Implementa feature flags para un sistema multi-tenant donde:
 - Cada tenant tiene features diferentes
@@ -370,6 +391,7 @@ Include: TypeScript types y ejemplos.
 ```
 
 ### Prompt: Server-Side Feature Evaluation
+
 ```
 Necesito evaluar features en servidor (no en cliente):
 
@@ -390,6 +412,7 @@ Include: Express/Next.js examples.
 ```
 
 ### Prompt: Feature Analytics Dashboard
+
 ```
 Crea un dashboard para monitorear features in producción:
 
@@ -414,6 +437,7 @@ Include:
 ## 9️⃣ Integración Continua
 
 ### Prompt: CI/CD Validation
+
 ```
 Integra validación de feature flags en CI/CD:
 
@@ -434,6 +458,7 @@ Tecnología: [TU_CICD]
 ```
 
 ### Prompt: Deployment Checklist
+
 ```
 Crea checklist automatizado para deployment:
 
@@ -463,6 +488,7 @@ Format: Script ejecutable o GitHub Actions.
 ## 🔟 Queries Adicionales
 
 ### Prompt: Documentation Generation
+
 ```
 Genera documentación automática de features:
 
@@ -479,6 +505,7 @@ Format: Markdown + HTML
 ```
 
 ### Prompt: Migration from System X
+
 ```
 Mi proyecto actualmente usa [SISTEMA_ACTUAL] para feature toggles.
 
@@ -530,22 +557,27 @@ Evita: [LO_QUE_NO_QUIERES]
 ## 💡 Tips para Mejores Resultados
 
 ### 1. Sé Específico
+
 ❌ "Analiza mi proyecto"
 ✅ "Analiza src/components/ y detecta features marcadas con // EXPERIMENTAL"
 
 ### 2. Proporciona Contexto
+
 ❌ "¿Cuál es el mejor sistema de flags?"
 ✅ "Tengo una app React con 50K usuarios, 15 features, necesito rollout gradual..."
 
 ### 3. Define Formato de Salida
+
 ❌ "Genera un reporte"
 ✅ "Genera un reporte JSON con estructura: {id, name, type, locations[]}"
 
 ### 4. Usa Ejemplos
+
 ❌ "Refactoriza mi código"
 ✅ "Refactoriza mi código para usar este patrón: [EJEMPLO]"
 
 ### 5. Sé Iterativo
+
 ```
 1. Primer prompt: Análisis inicial
 2. Segundo prompt: Profundizar en riesgos

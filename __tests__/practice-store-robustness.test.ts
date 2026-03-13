@@ -6,16 +6,16 @@ import crypto from 'crypto'
 
 // Polyfill crypto for node environment
 if (!globalThis.crypto) {
-  (globalThis as any).crypto = crypto
+  ;(globalThis as any).crypto = crypto
 }
 if (!globalThis.crypto.randomUUID) {
-  (globalThis.crypto as any).randomUUID = () => crypto.randomBytes(16).toString('hex')
+  ;(globalThis.crypto as any).randomUUID = () => crypto.randomBytes(16).toString('hex')
 }
 
 // Mock dependencies
 vi.mock('@/lib/practice/session-runner', () => {
   return {
-    PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+    PracticeSessionRunnerImpl: vi.fn().mockImplementation(function () {
       return {
         run: vi.fn().mockResolvedValue({ completed: true }),
         cancel: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
 }))
 
 vi.mock('@/lib/pitch-detector', () => ({
-  PitchDetector: vi.fn().mockImplementation(function() {
+  PitchDetector: vi.fn().mockImplementation(function () {
     return {
       detectPitch: vi.fn(() => ({ pitchHz: 440, confidence: 0.9 })),
       calculateRMS: vi.fn(() => 0.1),
@@ -46,7 +46,7 @@ vi.mock('@/stores/tuner-store', () => ({
   useTunerStore: {
     getState: () => ({ deviceId: 'test-device', updatePitch: vi.fn() }),
     setState: vi.fn(),
-  }
+  },
 }))
 
 vi.mock('@/stores/analytics-store', () => ({
@@ -56,8 +56,8 @@ vi.mock('@/stores/analytics-store', () => ({
       endSession: vi.fn(),
       recordNoteAttempt: vi.fn(),
       recordNoteCompletion: vi.fn(),
-    })
-  }
+    }),
+  },
 }))
 
 const mockExercise: any = {
@@ -78,11 +78,18 @@ describe('PracticeStore Robustness', () => {
 
     // Mock initializeAudio to be slow
     vi.mocked(audioManager.initialize).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        context: { sampleRate: 44100 },
-        analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
-        stream: { getTracks: () => [] }
-      } as any), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                context: { sampleRate: 44100 },
+                analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
+                stream: { getTracks: () => [] },
+              } as any),
+            100,
+          ),
+        ),
     )
 
     const p1 = store.start()
@@ -101,7 +108,7 @@ describe('PracticeStore Robustness', () => {
     vi.mocked(audioManager.initialize).mockResolvedValue({
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
-      stream: { getTracks: () => [] }
+      stream: { getTracks: () => [] },
     } as any)
 
     await usePracticeStore.getState().start()
@@ -128,7 +135,7 @@ describe('PracticeStore Robustness', () => {
     vi.mocked(audioManager.initialize).mockResolvedValueOnce({
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
-      stream: { getTracks: () => [] }
+      stream: { getTracks: () => [] },
     } as any)
 
     await usePracticeStore.getState().initializeAudio()
@@ -142,7 +149,7 @@ describe('PracticeStore Robustness', () => {
     vi.mocked(audioManager.initialize).mockResolvedValue({
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
-      stream: { getTracks: () => [] }
+      stream: { getTracks: () => [] },
     } as any)
 
     await usePracticeStore.getState().start()
@@ -160,7 +167,10 @@ describe('PracticeStore Robustness', () => {
     expect(secondToken).not.toEqual(firstToken)
 
     // Attempt to update using the old safeSet
-    const oldPracticeState = { ...usePracticeStore.getState().practiceState, holdDuration: 999 } as any
+    const oldPracticeState = {
+      ...usePracticeStore.getState().practiceState,
+      holdDuration: 999,
+    } as any
     safeSet({ practiceState: oldPracticeState })
 
     // Should NOT have updated because sessionToken in store is now different

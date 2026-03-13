@@ -28,10 +28,7 @@ type StoreApi<T> = {
    * @param partial - The new state values or a function that receives the current state and returns updates.
    * @param replace - If true, replaces the entire state instead of merging. Defaults to false.
    */
-  setState: (
-    partial: T | Partial<T> | ((state: T) => T | Partial<T>),
-    replace?: boolean,
-  ) => void
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean) => void
 }
 
 /**
@@ -96,7 +93,10 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | u
   }
 }
 
-function executeCompletionSideEffects(onCompleted: () => void, analytics?: { endSession: () => void }) {
+function executeCompletionSideEffects(
+  onCompleted: () => void,
+  analytics?: { endSession: () => void },
+) {
   try {
     analytics?.endSession()
     onCompleted()

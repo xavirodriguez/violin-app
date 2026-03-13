@@ -7,7 +7,7 @@ export function useWindowSize() {
     function handleResize() {
       setSize({
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
       })
     }
 

@@ -25,9 +25,7 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    *
    * @param analyser - The Web Audio AnalyserNode to pull data from.
    */
-  constructor(
-    private analyser: AnalyserNode
-  ) {
+  constructor(private analyser: AnalyserNode) {
     this.buffer = new Float32Array(analyser.fftSize)
   }
 
@@ -123,10 +121,7 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
    * }
    * ```
    */
-  async start(
-    onFrame: (frame: Float32Array) => void,
-    signal: AbortSignal
-  ): Promise<void> {
+  async start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void> {
     return new Promise((resolve) => {
       const loop = () => {
         if (signal.aborted) {

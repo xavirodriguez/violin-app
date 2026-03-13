@@ -6,7 +6,7 @@ import type { Achievement } from '@/stores/analytics-store'
  */
 export function checkAchievements(
   stats: AchievementCheckStats,
-  unlockedAchievementIds: string[]
+  unlockedAchievementIds: string[],
 ): Achievement[] {
   const newlyUnlocked: Achievement[] = []
 
@@ -21,7 +21,7 @@ export function checkAchievements(
         name: def.name,
         description: def.description,
         icon: def.icon,
-        unlockedAtMs: Date.now()
+        unlockedAtMs: Date.now(),
       })
     }
   }
@@ -33,7 +33,7 @@ export function checkAchievements(
  * Obtiene la definición completa de un logro por ID
  */
 export function getAchievementDefinition(id: string) {
-  return ACHIEVEMENT_DEFINITIONS.find(def => def.id === id)
+  return ACHIEVEMENT_DEFINITIONS.find((def) => def.id === id)
 }
 
 /**

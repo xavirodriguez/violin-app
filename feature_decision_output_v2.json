@@ -14,19 +14,10 @@
           "Refactor engine for multi-metric support",
           "Add unit tests for adaptive logic"
         ],
-        "short_term": [
-          "UI indicators for adaptive state",
-          "Beta rollout to internal testers"
-        ],
-        "medium_term": [
-          "General availability",
-          "Integration with achievement system"
-        ]
+        "short_term": ["UI indicators for adaptive state", "Beta rollout to internal testers"],
+        "medium_term": ["General availability", "Integration with achievement system"]
       },
-      "success_criteria": [
-        "NPS improvement > 1.0",
-        "Retention rate +5%"
-      ],
+      "success_criteria": ["NPS improvement > 1.0", "Retention rate +5%"],
       "approval_status": "APPROVED",
       "estimated_roi": "High (User Retention)"
     }

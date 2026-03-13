@@ -22,7 +22,7 @@ describe('Achievement System', () => {
           overallSkill: 0,
           achievements: [],
           exerciseStats: {},
-        }
+        },
       })
     })
   })
@@ -37,7 +37,7 @@ describe('Achievement System', () => {
     })
 
     const achievements = result.current.progress.achievements
-    expect(achievements.some(a => a.id === 'first-perfect-note')).toBe(true)
+    expect(achievements.some((a) => a.id === 'first-perfect-note')).toBe(true)
   })
 
   it('should unlock hot-streak-5 achievement', () => {
@@ -54,7 +54,7 @@ describe('Achievement System', () => {
     })
 
     const achievements = result.current.progress.achievements
-    expect(achievements.some(a => a.id === 'hot-streak-5')).toBe(true)
+    expect(achievements.some((a) => a.id === 'hot-streak-5')).toBe(true)
   })
 
   it('should NOT unlock hot-streak-5 if streak is broken', () => {
@@ -81,6 +81,6 @@ describe('Achievement System', () => {
     })
 
     const achievements = result.current.progress.achievements
-    expect(achievements.some(a => a.id === 'hot-streak-5')).toBe(false)
+    expect(achievements.some((a) => a.id === 'hot-streak-5')).toBe(false)
   })
 })

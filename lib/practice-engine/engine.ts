@@ -111,8 +111,12 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
         isRunning = false
       }
     },
-    stop() { isRunning = false },
-    getState() { return state },
+    stop() {
+      isRunning = false
+    },
+    getState() {
+      return state
+    },
   }
 }
 
@@ -159,7 +163,14 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
 
   while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
     const noteIndex = getState().currentNoteIndex
-    const pipeline = setupPipeline({ exercise: ctx.exercise, noteIndex, startTime, stream, getOptions, signal })
+    const pipeline = setupPipeline({
+      exercise: ctx.exercise,
+      noteIndex,
+      startTime,
+      stream,
+      getOptions,
+      signal,
+    })
     yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
   }
 }
@@ -185,7 +196,12 @@ function setupPipeline(params: {
     currentIndex: noteIndex,
     sessionStartTime: startTime,
   }
-  return createPracticeEventPipeline({ rawPitchStream: stream, context, options: getOptions, signal })
+  return createPracticeEventPipeline({
+    rawPitchStream: stream,
+    context,
+    options: getOptions,
+    signal,
+  })
 }
 
 /**
@@ -202,7 +218,11 @@ async function* processPipeline(params: PipelineParams): AsyncGenerator<Practice
     const engineEvent = mapPipelineEventToEngineEvent(event)
     if (engineEvent) {
       yield* handleEngineEvent({ event: engineEvent, getState, noteIndex, updateState })
-      const shouldBreak = shouldTerminatePipeline({ event: engineEvent, state: getState(), noteIndex })
+      const shouldBreak = shouldTerminatePipeline({
+        event: engineEvent,
+        state: getState(),
+        noteIndex,
+      })
       if (shouldBreak) break
     }
   }
@@ -284,7 +304,9 @@ function isTerminalEvent(event: PracticeEngineEvent, state: EngineState): boolea
  * @returns Async generator yielding the final session completion event.
  * @internal
  */
-async function* finalizeSession(updateState: (e: PracticeEngineEvent) => void): AsyncGenerator<PracticeEngineEvent> {
+async function* finalizeSession(
+  updateState: (e: PracticeEngineEvent) => void,
+): AsyncGenerator<PracticeEngineEvent> {
   const complete: PracticeEngineEvent = { type: 'SESSION_COMPLETED' }
   updateState(complete)
   yield complete

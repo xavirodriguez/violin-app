@@ -14,7 +14,11 @@ import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { PitchDetector } from '@/lib/pitch-detector'
-import { WebAudioFrameAdapter, WebAudioLoopAdapter, PitchDetectorAdapter } from '@/lib/adapters/web-audio.adapter'
+import {
+  WebAudioFrameAdapter,
+  WebAudioLoopAdapter,
+  PitchDetectorAdapter,
+} from '@/lib/adapters/web-audio.adapter'
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
@@ -24,7 +28,12 @@ import {
   RunnerStore,
   RunnerAnalytics,
 } from '@/lib/practice/session-runner'
-import { transitions, PracticeStoreState, ReadyState, ActiveState } from '@/lib/practice/practice-states'
+import {
+  transitions,
+  PracticeStoreState,
+  ReadyState,
+  ActiveState,
+} from '@/lib/practice/practice-states'
 import {
   getInitialPracticeState,
   getUpdatedLiveObservations,
@@ -90,7 +99,9 @@ function resolveSafeUpdate(params: ResolveUpdateParams): Partial<PracticeStore> 
   const { currentState, partial } = params
   const next = typeof partial === 'function' ? partial(currentState) : partial
   const practiceState = next.practiceState || currentState.practiceState
-  const liveObservations = practiceState ? getUpdatedLiveObservations(practiceState) : currentState.liveObservations
+  const liveObservations = practiceState
+    ? getUpdatedLiveObservations(practiceState)
+    : currentState.liveObservations
 
   const updates: Partial<PracticeStore> = {
     ...next,
@@ -138,7 +149,10 @@ function createRunnerDeps(params: {
   }
 }
 
-function buildRunnerStoreInterface(get: () => PracticeStore, safeSet: (partial: SafePartial) => void): RunnerStore {
+function buildRunnerStoreInterface(
+  get: () => PracticeStore,
+  safeSet: (partial: SafePartial) => void,
+): RunnerStore {
   return {
     getState: () => ({
       practiceState: get().practiceState,
@@ -206,10 +220,15 @@ function cancelActiveRunner(state: PracticeStoreState) {
  * Returns the state updates required to return the store to an idle/ready state.
  */
 function getStopStateUpdates(currentState: PracticeStore): Partial<PracticeStore> {
-  const isCancellable = currentState.state.status === 'active' || currentState.state.status === 'ready'
+  const isCancellable =
+    currentState.state.status === 'active' || currentState.state.status === 'ready'
   return {
-    state: isCancellable ? transitions.stop(currentState.state as ActiveState | ReadyState) : currentState.state,
-    practiceState: currentState.practiceState ? { ...currentState.practiceState, status: 'idle' } : undefined,
+    state: isCancellable
+      ? transitions.stop(currentState.state as ActiveState | ReadyState)
+      : currentState.state,
+    practiceState: currentState.practiceState
+      ? { ...currentState.practiceState, status: 'idle' }
+      : undefined,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -223,7 +242,10 @@ function getStopStateUpdates(currentState: PracticeStore): Partial<PracticeStore
 /**
  * Creates the audio adapters required for the practice pipeline.
  */
-function createAudioAdapters(resources: { context: { sampleRate: number }; analyser: AnalyserNode }) {
+function createAudioAdapters(resources: {
+  context: { sampleRate: number }
+  analyser: AnalyserNode
+}) {
   const detector = new PitchDetectorAdapter(new PitchDetector(resources.context.sampleRate))
   const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
   const audioLoop = new WebAudioLoopAdapter(frameAdapter)
@@ -332,7 +354,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     const abort = new AbortController()
 
     initializeSessionState({ ready, runner, abort, token })
-    runner.run(abort.signal).catch((err) => handleRunnerFailure({ set, get, err, exercise: ready.exercise }))
+    runner
+      .run(abort.signal)
+      .catch((err) => handleRunnerFailure({ set, get, err, exercise: ready.exercise }))
   }
 
   const initializeSessionState = (params: {
@@ -378,7 +402,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }))
     },
 
-    setAutoStart: (enabled) => set((currentState) => ({ ...currentState, autoStartEnabled: enabled })),
+    setAutoStart: (enabled) =>
+      set((currentState) => ({ ...currentState, autoStartEnabled: enabled })),
 
     setNoteIndex: (index) => {
       const practiceState = get().practiceState
@@ -404,7 +429,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         state: transitions.initialize(currentState.state.exercise),
       }))
       try {
-        const resources = await audioManager.initialize(useTunerStore.getState().deviceId || undefined)
+        const resources = await audioManager.initialize(
+          useTunerStore.getState().deviceId || undefined,
+        )
         const adapters = createAudioAdapters(resources)
         set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
       } catch (err) {
@@ -415,7 +442,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     start: async () => {
       set({ isStarting: true, error: undefined })
       try {
-        const ready = await ensureReadyState({ getState: get, initializeAudio: get().initializeAudio })
+        const ready = await ensureReadyState({
+          getState: get,
+          initializeAudio: get().initializeAudio,
+        })
         if (ready) {
           await commenceSession(ready)
         } else {

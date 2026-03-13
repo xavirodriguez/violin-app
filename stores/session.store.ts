@@ -177,9 +177,9 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
         notesAttempted: 0,
         notesCompleted: 0,
         accuracy: 0,
-        averageCents: 0
+        averageCents: 0,
       },
-      isActive: true
+      isActive: true,
     })
   },
 
@@ -192,7 +192,8 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
       ...current,
       endTimeMs: nowMs,
       durationMs: nowMs - current.startTimeMs,
-      accuracy: current.notesAttempted > 0 ? (current.notesCompleted / current.notesAttempted) * 100 : 0
+      accuracy:
+        current.notesAttempted > 0 ? (current.notesCompleted / current.notesAttempted) * 100 : 0,
     }
 
     set({ current: undefined, isActive: false })
@@ -203,7 +204,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     const { current } = get()
     if (!current) return
 
-    const existingIndex = current.noteResults.findIndex(r => r.noteIndex === noteIndex)
+    const existingIndex = current.noteResults.findIndex((r) => r.noteIndex === noteIndex)
     const nextNoteResults = [...current.noteResults]
 
     if (existingIndex >= 0) {
@@ -213,7 +214,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
         ...existing,
         attempts: nextAttempts,
         averageCents: (existing.averageCents * existing.attempts + cents) / nextAttempts,
-        wasInTune: inTune || existing.wasInTune
+        wasInTune: inTune || existing.wasInTune,
       }
     } else {
       nextNoteResults.push({
@@ -221,12 +222,12 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
         targetPitch: pitch,
         attempts: 1,
         averageCents: cents,
-        wasInTune: inTune
+        wasInTune: inTune,
       })
     }
 
     const notesAttempted = current.notesAttempted + 1
-    const inTuneCount = nextNoteResults.filter(r => r.wasInTune).length
+    const inTuneCount = nextNoteResults.filter((r) => r.wasInTune).length
     const accuracy = (inTuneCount / nextNoteResults.length) * 100
 
     set({
@@ -234,8 +235,8 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
         ...current,
         notesAttempted,
         noteResults: nextNoteResults,
-        accuracy
-      }
+        accuracy,
+      },
     })
   },
 
@@ -243,12 +244,12 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     const { current, perfectNoteStreak } = get()
     if (!current) return
 
-    const noteResult = current.noteResults.find(r => r.noteIndex === noteIndex)
+    const noteResult = current.noteResults.find((r) => r.noteIndex === noteIndex)
     const wasPerfect = noteResult && Math.abs(noteResult.averageCents) < 5
     const nextStreak = wasPerfect ? perfectNoteStreak + 1 : 0
 
-    const nextNoteResults = current.noteResults.map(r =>
-      r.noteIndex === noteIndex ? { ...r, timeToCompleteMs: timeMs, technique } : r
+    const nextNoteResults = current.noteResults.map((r) =>
+      r.noteIndex === noteIndex ? { ...r, timeToCompleteMs: timeMs, technique } : r,
     )
 
     set({
@@ -256,8 +257,8 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
       current: {
         ...current,
         notesCompleted: current.notesCompleted + 1,
-        noteResults: nextNoteResults
-      }
+        noteResults: nextNoteResults,
+      },
     })
-  }
+  },
 }))

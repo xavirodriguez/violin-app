@@ -32,9 +32,7 @@
         "Successful cleanup of technical debt related to feature flags",
         "Declaration files synchronized with implementation"
       ],
-      "what_could_improve": [
-        "Automated sync of .d.ts files would prevent manual cleanup needs"
-      ],
+      "what_could_improve": ["Automated sync of .d.ts files would prevent manual cleanup needs"],
       "unexpected_opportunities": [
         "Adding STABLE type allows better lifecycle tracking for future features"
       ],
@@ -46,7 +44,9 @@
     "next_opportunities": {
       "immediate_expansion": "Extend adaptive logic to rhythm and bowing technique",
       "version_2_ideas": ["Machine learning based adaptive thresholds"],
-      "complementary_features": ["FEATURE_UI_INTONATION_HEATMAPS could use the promoted telemetry data"]
+      "complementary_features": [
+        "FEATURE_UI_INTONATION_HEATMAPS could use the promoted telemetry data"
+      ]
     },
 
     "impact_assessment": {

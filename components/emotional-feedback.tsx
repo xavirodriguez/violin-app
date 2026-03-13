@@ -20,7 +20,7 @@ export function EmotionalFeedback({
   centsOff,
   isInTune,
   noteMatches,
-  status
+  status,
 }: EmotionalFeedbackProps) {
   const { feedbackLevel, enableCelebrations } = usePreferencesStore()
   const config = FEEDBACK_CONFIGS[feedbackLevel]
@@ -45,7 +45,7 @@ function getEmotionalState(
   centsOff: number | null,
   isInTune: boolean,
   noteMatches: boolean,
-  status: string
+  status: string,
 ): EmotionalState {
   if (status === 'correct') return 'perfect'
   if (status === 'listening' && centsOff === null) return 'listening'
@@ -57,7 +57,7 @@ function getEmotionalState(
 
 function EmojiBasedFeedback({
   state,
-  showCelebration
+  showCelebration,
 }: {
   state: EmotionalState
   showCelebration: boolean
@@ -68,7 +68,7 @@ function EmojiBasedFeedback({
     close: { emoji: '😐', message: 'Close...', color: 'text-yellow-500' },
     offTrack: { emoji: '😕', message: 'Adjust a bit', color: 'text-orange-500' },
     wrongNote: { emoji: '🤔', message: 'Wrong note', color: 'text-red-500' },
-    listening: { emoji: '👂', message: 'Listening...', color: 'text-muted-foreground' }
+    listening: { emoji: '👂', message: 'Listening...', color: 'text-muted-foreground' },
   }
 
   const feedback = EMOJI_MAP[state]
@@ -84,34 +84,30 @@ function EmojiBasedFeedback({
         className="text-center"
       >
         <motion.div
-          animate={state === 'perfect' && showCelebration ? {
-            rotate: [0, -10, 10, -10, 10, 0],
-            scale: [1, 1.2, 1, 1.2, 1]
-          } : {}}
+          animate={
+            state === 'perfect' && showCelebration
+              ? {
+                  rotate: [0, -10, 10, -10, 10, 0],
+                  scale: [1, 1.2, 1, 1.2, 1],
+                }
+              : {}
+          }
           transition={{ duration: 0.6 }}
-          className="text-7xl mb-2"
+          className="mb-2 text-7xl"
         >
           {feedback.emoji}
         </motion.div>
-        <p className={`text-xl font-semibold ${feedback.color}`}>
-          {feedback.message}
-        </p>
+        <p className={`text-xl font-semibold ${feedback.color}`}>{feedback.message}</p>
       </motion.div>
     </AnimatePresence>
   )
 }
 
-function TechnicalFeedback({
-  centsOff,
-  isInTune
-}: {
-  centsOff: number | null
-  isInTune: boolean
-}) {
+function TechnicalFeedback({ centsOff, isInTune }: { centsOff: number | null; isInTune: boolean }) {
   if (centsOff === null) {
     return (
-      <div className="text-center text-muted-foreground">
-        <Target className="h-12 w-12 mx-auto mb-2" />
+      <div className="text-muted-foreground text-center">
+        <Target className="mx-auto mb-2 h-12 w-12" />
         <p>Esperando detección...</p>
       </div>
     )
@@ -119,17 +115,16 @@ function TechnicalFeedback({
 
   return (
     <div className="text-center">
-      <div className={`text-5xl font-bold ${
-        isInTune ? 'text-green-500' :
-        Math.abs(centsOff) < 15 ? 'text-yellow-500' :
-        'text-red-500'
-      }`}>
-        {centsOff > 0 ? '+' : ''}{centsOff.toFixed(1)}¢
+      <div
+        className={`text-5xl font-bold ${
+          isInTune ? 'text-green-500' : Math.abs(centsOff) < 15 ? 'text-yellow-500' : 'text-red-500'
+        }`}
+      >
+        {centsOff > 0 ? '+' : ''}
+        {centsOff.toFixed(1)}¢
       </div>
-      <p className="text-sm text-muted-foreground mt-2">
-        {isInTune ? 'In Tune' :
-         centsOff > 0 ? 'Too Sharp' :
-         'Too Flat'}
+      <p className="text-muted-foreground mt-2 text-sm">
+        {isInTune ? 'In Tune' : centsOff > 0 ? 'Too Sharp' : 'Too Flat'}
       </p>
     </div>
   )
@@ -138,18 +133,22 @@ function TechnicalFeedback({
 function HybridFeedback({
   state,
   centsOff,
-  isInTune
+  isInTune,
 }: {
   state: EmotionalState
   centsOff: number | null
   isInTune: boolean
 }) {
   const getIcon = () => {
-    switch(state) {
-      case 'perfect': return <PartyPopper className="h-12 w-12 text-green-500" />
-      case 'great': return <Smile className="h-12 w-12 text-green-400" />
-      case 'close': return <Meh className="h-12 w-12 text-yellow-500" />
-      default: return <Frown className="h-12 w-12 text-red-500" />
+    switch (state) {
+      case 'perfect':
+        return <PartyPopper className="h-12 w-12 text-green-500" />
+      case 'great':
+        return <Smile className="h-12 w-12 text-green-400" />
+      case 'close':
+        return <Meh className="h-12 w-12 text-yellow-500" />
+      default:
+        return <Frown className="h-12 w-12 text-red-500" />
     }
   }
 
@@ -157,14 +156,13 @@ function HybridFeedback({
     <motion.div
       initial={{ y: 10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="text-center space-y-3"
+      className="space-y-3 text-center"
     >
-      <div className="flex justify-center">
-        {getIcon()}
-      </div>
+      <div className="flex justify-center">{getIcon()}</div>
       {centsOff !== null && (
         <p className="text-2xl font-semibold">
-          {centsOff > 0 ? '+' : ''}{centsOff.toFixed(1)}¢
+          {centsOff > 0 ? '+' : ''}
+          {centsOff.toFixed(1)}¢
         </p>
       )}
     </motion.div>

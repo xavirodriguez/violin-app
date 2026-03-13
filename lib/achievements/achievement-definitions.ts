@@ -49,8 +49,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentSession.correctNotes >= 1,
     reward: {
       message: 'Great start! Perfect notes are always special.',
-      confetti: true
-    }
+      confetti: true,
+    },
   },
 
   {
@@ -63,8 +63,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentSession.perfectNoteStreak >= 5,
     reward: {
       message: "You're on fire! Keep it up.",
-      confetti: false
-    }
+      confetti: false,
+    },
   },
 
   {
@@ -77,8 +77,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentSession.perfectNoteStreak >= 10,
     reward: {
       message: 'Incredible precision! Your ear is very tuned.',
-      confetti: true
-    }
+      confetti: true,
+    },
   },
 
   {
@@ -92,8 +92,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     reward: {
       message: 'Amazing! Few achieve this level of consistency.',
       confetti: true,
-      sound: 'epic-win'
-    }
+      sound: 'epic-win',
+    },
   },
 
   // === PRACTICE CONSISTENCY ===
@@ -107,8 +107,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentStreak >= 3,
     reward: {
       message: 'Consistency is key. Keep practicing!',
-      confetti: false
-    }
+      confetti: false,
+    },
   },
 
   {
@@ -121,8 +121,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentStreak >= 7,
     reward: {
       message: 'A full week! Your discipline is admirable.',
-      confetti: true
-    }
+      confetti: true,
+    },
   },
 
   {
@@ -136,8 +136,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     reward: {
       message: 'LEGENDARY! A month of daily practice is extraordinary.',
       confetti: true,
-      sound: 'legendary-win'
-    }
+      sound: 'legendary-win',
+    },
   },
 
   // === SESSION MILESTONES ===
@@ -151,8 +151,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.currentSession.durationMs >= 30 * 60 * 1000,
     reward: {
       message: '30 minutes of focused practice! Your endurance is improving.',
-      confetti: true
-    }
+      confetti: true,
+    },
   },
 
   {
@@ -164,10 +164,10 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     rarity: 'epic',
     condition: (stats) => stats.currentSession.accuracy >= 100,
     reward: {
-      message: 'PERFECT! You didn\'t miss a single note.',
+      message: "PERFECT! You didn't miss a single note.",
       confetti: true,
-      sound: 'perfect-score'
-    }
+      sound: 'perfect-score',
+    },
   },
 
   {
@@ -180,8 +180,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.totalSessions >= 100,
     reward: {
       message: '100 sessions! Your dedication is inspiring.',
-      confetti: true
-    }
+      confetti: true,
+    },
   },
 
   // === EXPLORATION ===
@@ -195,8 +195,8 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.exercisesCompleted.length >= 5,
     reward: {
       message: 'Variety is the spice of practice. Keep exploring!',
-      confetti: false
-    }
+      confetti: false,
+    },
   },
 
   {
@@ -210,7 +210,7 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     reward: {
       message: 'You have mastered all exercises! You are a true master.',
       confetti: true,
-      sound: 'legendary-win'
-    }
-  }
+      sound: 'legendary-win',
+    },
+  },
 ]

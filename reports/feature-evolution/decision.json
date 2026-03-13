@@ -26,7 +26,10 @@
       "decision_rationale": "Critical performance bottleneck identified. Initiating implementation phase starting with worker skeleton.",
       "growth_timeline": {
         "immediate": ["Create public/workers/audio-processor.worker.ts"],
-        "short_term": ["Refactor lib/pitch-detector.ts for worker compatibility", "Implement message bridge"]
+        "short_term": [
+          "Refactor lib/pitch-detector.ts for worker compatibility",
+          "Implement message bridge"
+        ]
       },
       "success_criteria": ["Worker stub active", "No regressions in main thread audio processing"],
       "resource_allocation": { "engineering": 20, "product": 1, "qe": 5 },

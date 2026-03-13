@@ -28,7 +28,10 @@
       "growth_blockers": [
         {
           "blocker": "Lack of SharedArrayBuffer support in some browsers",
-          "resolution_steps": ["Check for cross-origin isolation requirements", "Implement fallback"]
+          "resolution_steps": [
+            "Check for cross-origin isolation requirements",
+            "Implement fallback"
+          ]
         }
       ],
       "growth_enablers": [
@@ -58,7 +61,5 @@
       "growth_enablers": []
     }
   ],
-  "critical_path_features": [
-    "FEATURE_AUDIO_WEB_WORKER"
-  ]
+  "critical_path_features": ["FEATURE_AUDIO_WEB_WORKER"]
 }

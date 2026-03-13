@@ -54,7 +54,10 @@ export interface RunnerStore {
           liveObservations?: Observation[]
         }) =>
           | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
-          | Partial<{ practiceState: PracticeState | undefined; liveObservations?: Observation[] }>),
+          | Partial<{
+              practiceState: PracticeState | undefined
+              liveObservations?: Observation[]
+            }>),
     replace?: boolean,
   ) => void
   stop: () => Promise<void>
@@ -127,7 +130,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private handleRunError(error: unknown): SessionResult {
-    const isAbort = error instanceof Error && (error.name === 'AbortError' || error.message === 'Aborted')
+    const isAbort =
+      error instanceof Error && (error.name === 'AbortError' || error.message === 'Aborted')
     if (isAbort) return { completed: false, reason: 'cancelled' }
 
     console.error('[Runner] Session execution failed:', error)
@@ -203,7 +207,12 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     })
   }
 
-  private logTelemetry(payload: { pitch: string; cents: number; confidence: number; timestamp: number }): void {
+  private logTelemetry(payload: {
+    pitch: string
+    cents: number
+    confidence: number
+    timestamp: number
+  }): void {
     console.log('[TELEMETRY] Pitch Accuracy:', {
       pitch: payload.pitch,
       cents: payload.cents,
@@ -212,7 +221,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     })
   }
 
-  private recordNoteMilestone(event: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>, state: PracticeState): void {
+  private recordNoteMilestone(
+    event: Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>,
+    state: PracticeState,
+  ): void {
     const index = state.currentIndex
     const note = state.exercise.notes[index]
 
@@ -223,7 +235,12 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     this.updateRunnerStats(index)
   }
 
-  private emitAnalytics(params: { index: number; note: any; duration: number; technique: any }): void {
+  private emitAnalytics(params: {
+    index: number
+    note: any
+    duration: number
+    technique: any
+  }): void {
     const { index, note, duration, technique } = params
     const pitch = formatPitchName(note.pitch)
     this.environment.analytics.recordNoteAttempt(index, pitch, 0, true)

@@ -9,7 +9,7 @@ import {
   reducePracticeEvent,
   type PracticeState,
   type PracticeEvent,
-  DetectedNote
+  DetectedNote,
 } from '@/lib/practice-core'
 import { calculateLiveObservations } from '@/lib/live-observations'
 import { Observation } from '@/lib/technique-types'
@@ -55,7 +55,7 @@ function computeActiveObservations(state: PracticeState): Observation[] {
  */
 export function updatePracticeState(
   currentState: PracticeState | undefined,
-  event: PracticeEvent
+  event: PracticeEvent,
 ): PracticeState | undefined {
   if (!currentState) return undefined
   return reducePracticeEvent(currentState, event)
@@ -66,7 +66,7 @@ export function updatePracticeState(
  */
 export function updateDetectionHistory(
   history: readonly DetectedNote[],
-  payload: DetectedNote
+  payload: DetectedNote,
 ): readonly DetectedNote[] {
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
   buffer.push(...history.slice().reverse(), payload)
@@ -104,7 +104,8 @@ export interface RunnerFailureParams {
  */
 export function handleRunnerFailure(params: RunnerFailureParams) {
   const { set, get, err, exercise } = params
-  const isAbort = err && typeof err === 'object' && 'name' in err && (err as Error).name === 'AbortError'
+  const isAbort =
+    err && typeof err === 'object' && 'name' in err && (err as Error).name === 'AbortError'
   if (!isAbort) {
     console.error('[PracticeStore] Session runner failed:', err)
     const error = toAppError(err)

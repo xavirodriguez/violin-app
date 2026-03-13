@@ -19,7 +19,7 @@ describe('Practice state transitions', () => {
     const ready = transitions.ready({
       audioLoop: mockAudioLoop,
       detector: mockDetector,
-      exercise: mockExercise
+      exercise: mockExercise,
     })
     expect(ready.status).toBe('ready')
 

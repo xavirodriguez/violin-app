@@ -11,7 +11,7 @@ class AnalyticsTracker {
     this.events.push({
       name,
       properties,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
 
     // In production: send to analytics service (Amplitude, Mixpanel, etc.)

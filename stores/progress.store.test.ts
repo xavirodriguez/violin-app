@@ -5,15 +5,15 @@ describe('ProgressStore persistence', () => {
   beforeEach(() => {
     localStorage.clear()
     useProgressStore.setState({
-        totalPracticeSessions: 0,
-        totalPracticeTime: 0,
-        exercisesCompleted: [],
-        currentStreak: 0,
-        longestStreak: 0,
-        intonationSkill: 0,
-        rhythmSkill: 0,
-        overallSkill: 0,
-        exerciseStats: {}
+      totalPracticeSessions: 0,
+      totalPracticeTime: 0,
+      exercisesCompleted: [],
+      currentStreak: 0,
+      longestStreak: 0,
+      intonationSkill: 0,
+      rhythmSkill: 0,
+      overallSkill: 0,
+      exerciseStats: {},
     })
   })
 
@@ -22,9 +22,9 @@ describe('ProgressStore persistence', () => {
     const invalidState = {
       state: {
         totalPracticeSessions: 'INVALID_TYPE',
-        totalPracticeTime: 100
+        totalPracticeTime: 100,
       },
-      version: 1
+      version: 1,
     }
     localStorage.setItem('violin-progress', JSON.stringify(invalidState))
 
@@ -36,7 +36,7 @@ describe('ProgressStore persistence', () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('[Storage] Failed to decompress/parse violin-progress'),
-      expect.anything()
+      expect.anything(),
     )
 
     consoleSpy.mockRestore()
@@ -45,7 +45,7 @@ describe('ProgressStore persistence', () => {
   it('migrates from version 0 to 1', () => {
     const legacyState = {
       totalPracticeSessions: 5,
-      totalPracticeTime: 3600000
+      totalPracticeTime: 3600000,
       // missing intonationSkill, etc.
     }
 
@@ -58,7 +58,7 @@ describe('ProgressStore persistence', () => {
       totalPracticeSessions: 5,
       totalPracticeTime: 3600000,
       intonationSkill: 0,
-      rhythmSkill: 0
+      rhythmSkill: 0,
     })
   })
 })

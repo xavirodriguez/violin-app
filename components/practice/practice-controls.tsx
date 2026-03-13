@@ -27,7 +27,9 @@ export function PracticeControls({
           onStop={onStop}
           onRestart={onRestart}
         />
-        {hasExercise && <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />}
+        {hasExercise && (
+          <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+        )}
       </div>
     </Card>
   )
@@ -35,10 +37,18 @@ export function PracticeControls({
 
 function SessionActions({ status, disabled, onStart, onStop, onRestart }: any) {
   if (status === 'listening') {
-    return <Button onClick={onStop} size="lg" variant="destructive" className="gap-2"><Square className="h-4 w-4" /> Stop</Button>
+    return (
+      <Button onClick={onStop} size="lg" variant="destructive" className="gap-2">
+        <Square className="h-4 w-4" /> Stop
+      </Button>
+    )
   }
   if (status === 'completed') {
-    return <Button onClick={onRestart} size="lg" className="gap-2"><RotateCcw className="h-4 w-4" /> Practice Again</Button>
+    return (
+      <Button onClick={onRestart} size="lg" className="gap-2">
+        <RotateCcw className="h-4 w-4" /> Practice Again
+      </Button>
+    )
   }
   return (
     <Button onClick={onStart} size="lg" className="gap-2" disabled={disabled}>
@@ -50,9 +60,14 @@ function SessionActions({ status, disabled, onStart, onStop, onRestart }: any) {
 function ProgressBar({ index, total, progress }: any) {
   return (
     <div className="flex items-center gap-4">
-      <div className="text-muted-foreground text-sm">Note {Math.min(index + 1, total)} of {total}</div>
+      <div className="text-muted-foreground text-sm">
+        Note {Math.min(index + 1, total)} of {total}
+      </div>
       <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
-        <div className="bg-primary h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+        <div
+          className="bg-primary h-full transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
       </div>
     </div>
   )

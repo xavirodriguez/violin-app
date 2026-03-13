@@ -17,7 +17,10 @@
       "success_criteria": ["Code compiles", "Unit tests pass", "Telemetry remains active"],
       "resource_allocation": { "engineering": 2, "product": 0, "qe": 1 },
       "risks_and_mitigations": [
-        { "risk": "Loss of ability to disable telemetry", "mitigation": "Ensure it's lightweight and doesn't impact performance" }
+        {
+          "risk": "Loss of ability to disable telemetry",
+          "mitigation": "Ensure it's lightweight and doesn't impact performance"
+        }
       ],
       "approval_status": "APPROVED",
       "estimated_roi": "Reduced technical debt and guaranteed data quality"
@@ -34,7 +37,10 @@
       "success_criteria": ["Positive user feedback", "No increase in session drop-off"],
       "resource_allocation": { "engineering": 1, "product": 1, "qe": 1 },
       "risks_and_mitigations": [
-        { "risk": "Difficulty might be too aggressive for some", "mitigation": "Allow users to override in settings later" }
+        {
+          "risk": "Difficulty might be too aggressive for some",
+          "mitigation": "Allow users to override in settings later"
+        }
       ],
       "approval_status": "APPROVED",
       "estimated_roi": "Improved learning outcomes and retention"

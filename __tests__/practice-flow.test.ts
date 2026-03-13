@@ -30,10 +30,10 @@ vi.mock('@/lib/pitch-detector', () => {
 vi.mock('@/lib/practice/session-runner', () => {
   const mockRunner = {
     run: vi.fn().mockImplementation(() => new Promise(() => {})),
-    cancel: vi.fn()
+    cancel: vi.fn(),
   }
   return {
-    PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+    PracticeSessionRunnerImpl: vi.fn().mockImplementation(function () {
       return mockRunner
     }),
     runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
@@ -69,7 +69,7 @@ describe('Practice Mode Integration Flow', () => {
     const mockAnalyser = {
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
-      context: mockContext
+      context: mockContext,
     }
     ;(audioManager.initialize as Mock).mockResolvedValue({
       context: mockContext,

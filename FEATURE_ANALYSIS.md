@@ -4,10 +4,10 @@ This document provides a detailed analysis of the feature flags in the Violin Me
 
 ## 🎯 Critical Features
 
-| Feature ID | Impact | Risk Level | Reason |
-| :--- | :--- | :--- | :--- |
-| `FEATURE_AUDIO_WEB_WORKER` | High | High | Major architectural change in the audio pipeline. Potential for race conditions and synchronization issues. |
-| `FEATURE_SOCIAL_PRACTICE_ROOMS` | High | High | Introduces network state and real-time synchronization requirements. |
+| Feature ID                      | Impact | Risk Level | Reason                                                                                                      |
+| :------------------------------ | :----- | :--------- | :---------------------------------------------------------------------------------------------------------- |
+| `FEATURE_AUDIO_WEB_WORKER`      | High   | High       | Major architectural change in the audio pipeline. Potential for race conditions and synchronization issues. |
+| `FEATURE_SOCIAL_PRACTICE_ROOMS` | High   | High       | Introduces network state and real-time synchronization requirements.                                        |
 
 ## 🔗 Feature Dependencies
 
@@ -27,19 +27,19 @@ Some features require others to be enabled or have infrastructure dependencies:
 
 ## 🧹 Cleanup and Promotion History
 
-| Feature ID | Current Status | Action Taken |
-| :--- | :--- | :--- |
-| `FEATURE_UI_VIOLIN_FINGERBOARD` | Stable / Universal | **PROMOTED**: Flag removed, component is now permanent. |
-| `FEATURE_TECHNICAL_FEEDBACK` | Stable | **PROMOTED**: Flag removed, feedback system is now permanent. |
-| `FEATURE_ANALYTICS_DASHBOARD` | Stable | **PROMOTED**: Flag removed, analytics is now a core view. |
-| `FEATURE_PRACTICE_ASSISTANT` | Stable | **PROMOTED**: Flag removed, cmdk assistant is now permanent. |
-| `FEATURE_PRACTICE_ZEN_MODE` | Stable | **PROMOTED**: Flag removed, Zen Mode is now a core UI capability. |
-| `FEATURE_PRACTICE_AUTO_START` | Stable | **PROMOTED**: Flag removed, Auto-start is now a core capability. |
-| `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` | Stable | **PROMOTED**: Flag removed, recommendation system is now permanent. |
-| `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM` | Stable | **PROMOTED**: Flag removed, achievement system is now permanent. |
-| `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | Stable | **PROMOTED**: Flag removed, adaptive logic is now core. |
-| `FEATURE_UI_INTONATION_HEATMAPS` | Stable | **PROMOTED**: Feature promoted to stable and enabled by default in Cycle #5. |
-| `FEATURE_UI_NEW_THEME` | Abandoned | Removed from active tracking. |
+| Feature ID                              | Current Status     | Action Taken                                                                 |
+| :-------------------------------------- | :----------------- | :--------------------------------------------------------------------------- |
+| `FEATURE_UI_VIOLIN_FINGERBOARD`         | Stable / Universal | **PROMOTED**: Flag removed, component is now permanent.                      |
+| `FEATURE_TECHNICAL_FEEDBACK`            | Stable             | **PROMOTED**: Flag removed, feedback system is now permanent.                |
+| `FEATURE_ANALYTICS_DASHBOARD`           | Stable             | **PROMOTED**: Flag removed, analytics is now a core view.                    |
+| `FEATURE_PRACTICE_ASSISTANT`            | Stable             | **PROMOTED**: Flag removed, cmdk assistant is now permanent.                 |
+| `FEATURE_PRACTICE_ZEN_MODE`             | Stable             | **PROMOTED**: Flag removed, Zen Mode is now a core UI capability.            |
+| `FEATURE_PRACTICE_AUTO_START`           | Stable             | **PROMOTED**: Flag removed, Auto-start is now a core capability.             |
+| `FEATURE_PRACTICE_EXERCISE_RECOMMENDER` | Stable             | **PROMOTED**: Flag removed, recommendation system is now permanent.          |
+| `FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM`   | Stable             | **PROMOTED**: Flag removed, achievement system is now permanent.             |
+| `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY`  | Stable             | **PROMOTED**: Flag removed, adaptive logic is now core.                      |
+| `FEATURE_UI_INTONATION_HEATMAPS`        | Stable             | **PROMOTED**: Feature promoted to stable and enabled by default in Cycle #5. |
+| `FEATURE_UI_NEW_THEME`                  | Abandoned          | Removed from active tracking.                                                |
 
 ## 🚀 Architectural Recommendations
 

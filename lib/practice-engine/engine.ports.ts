@@ -1,5 +1,8 @@
 import { EngineState } from './engine.state'
-import { AudioLoopPort as GlobalAudioLoopPort, PitchDetectionPort as GlobalPitchDetectionPort } from '../ports/audio.port'
+import {
+  AudioLoopPort as GlobalAudioLoopPort,
+  PitchDetectionPort as GlobalPitchDetectionPort,
+} from '../ports/audio.port'
 
 /**
  * Port for retrieving raw audio frames from an input source.

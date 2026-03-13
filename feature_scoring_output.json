@@ -4,14 +4,27 @@
     {
       "feature_id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
       "scoring": {
-        "maturity": { "score": 9, "rationale": "STABLE status, algorithm fully implemented and tested." },
-        "business_value": { "score": 8, "rationale": "High value for user retention and personalized learning." },
-        "adoption_readiness": { "score": 9, "rationale": "UI integrated and working for all users." },
+        "maturity": {
+          "score": 9,
+          "rationale": "STABLE status, algorithm fully implemented and tested."
+        },
+        "business_value": {
+          "score": 8,
+          "rationale": "High value for user retention and personalized learning."
+        },
+        "adoption_readiness": {
+          "score": 9,
+          "rationale": "UI integrated and working for all users."
+        },
         "technical_debt": { "score": 2, "rationale": "Low debt, clean integration." },
         "growth_potential": { "score": 7, "rationale": "Can be expanded with AI models." },
         "risk_profile": { "score": 2, "rationale": "Low risk, failover to full list is safe." }
       },
-      "composite_score": { "growth_readiness": 9.2, "weighted_score": 8.8, "recommendation": "FAST_TRACK" }
+      "composite_score": {
+        "growth_readiness": 9.2,
+        "weighted_score": 8.8,
+        "recommendation": "FAST_TRACK"
+      }
     },
     {
       "feature_id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
@@ -23,19 +36,30 @@
         "growth_potential": { "score": 8, "rationale": "New achievements can be added easily." },
         "risk_profile": { "score": 2, "rationale": "Non-critical path." }
       },
-      "composite_score": { "growth_readiness": 9.0, "weighted_score": 8.5, "recommendation": "FAST_TRACK" }
+      "composite_score": {
+        "growth_readiness": 9.0,
+        "weighted_score": 8.5,
+        "recommendation": "FAST_TRACK"
+      }
     },
     {
       "feature_id": "FEATURE_PRACTICE_ZEN_MODE",
       "scoring": {
         "maturity": { "score": 10, "rationale": "UI logic is simple and stable." },
         "business_value": { "score": 7, "rationale": "Improves focus during practice." },
-        "adoption_readiness": { "score": 10, "rationale": "Already being used via keyboard shortcuts." },
+        "adoption_readiness": {
+          "score": 10,
+          "rationale": "Already being used via keyboard shortcuts."
+        },
         "technical_debt": { "score": 1, "rationale": "None." },
         "growth_potential": { "score": 5, "rationale": "Limited scope." },
         "risk_profile": { "score": 1, "rationale": "UI only change." }
       },
-      "composite_score": { "growth_readiness": 9.8, "weighted_score": 9.2, "recommendation": "FAST_TRACK" }
+      "composite_score": {
+        "growth_readiness": 9.8,
+        "weighted_score": 9.2,
+        "recommendation": "FAST_TRACK"
+      }
     },
     {
       "feature_id": "FEATURE_PRACTICE_AUTO_START",
@@ -47,7 +71,11 @@
         "growth_potential": { "score": 4, "rationale": "Feature is complete." },
         "risk_profile": { "score": 2, "rationale": "Minor risk of unintended audio activation." }
       },
-      "composite_score": { "growth_readiness": 9.5, "weighted_score": 9.0, "recommendation": "FAST_TRACK" }
+      "composite_score": {
+        "growth_readiness": 9.5,
+        "weighted_score": 9.0,
+        "recommendation": "FAST_TRACK"
+      }
     }
   ]
 }

@@ -31,7 +31,5 @@
       ]
     }
   ],
-  "critical_path_features": [
-    "FEATURE_TELEMETRY_ACCURACY"
-  ]
+  "critical_path_features": ["FEATURE_TELEMETRY_ACCURACY"]
 }

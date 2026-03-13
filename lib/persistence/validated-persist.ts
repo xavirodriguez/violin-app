@@ -62,7 +62,7 @@ type Serializable<T> = T extends JsonValue ? T : never
 export const validatedPersist = <T>(
   schema: z.ZodType<T>,
   config: StateCreator<T, any, any>,
-  options: PersistOptions<T, any>
+  options: PersistOptions<T, any>,
 ): StateCreator<T, any, any> => {
   return persist(
     (set, get, api) => {
@@ -92,6 +92,6 @@ export const validatedPersist = <T>(
           return currentState
         }
       },
-    }
+    },
   ) as any
 }

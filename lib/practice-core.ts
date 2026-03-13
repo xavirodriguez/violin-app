@@ -176,12 +176,7 @@ export interface DetectedNote {
 }
 
 /** The status of the practice session. */
-export type PracticeStatus =
-  | 'idle'
-  | 'listening'
-  | 'validating'
-  | 'correct'
-  | 'completed'
+export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed'
 
 /** The complete, self-contained state of the practice session. */
 export interface PracticeState {
@@ -202,7 +197,10 @@ export type PracticeEvent =
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   // Fired by the pipeline only when a target note is held stable.
-  | { type: 'NOTE_MATCHED'; payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean } }
+  | {
+      type: 'NOTE_MATCHED'
+      payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
+    }
   // Fired when the signal is lost.
   | { type: 'NO_NOTE_DETECTED' }
 
@@ -251,7 +249,8 @@ export function isMatch(params: {
   const { target, detected, tolerance = 25, matchStatus = 'initial' } = params
   if (!target || !detected) return false
 
-  const hysteresis = typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
+  const hysteresis =
+    typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
   const actualTolerance = matchStatus === 'maintaining' ? hysteresis.exit : hysteresis.enter
 
   return checkPitchAndTune({ target, detected, tolerance: actualTolerance })
@@ -358,7 +357,10 @@ function handleNoteDetected(state: PracticeState, payload: DetectedNote): Practi
   }
 }
 
-function updateDetectionHistory(history: readonly DetectedNote[], payload: DetectedNote): readonly DetectedNote[] {
+function updateDetectionHistory(
+  history: readonly DetectedNote[],
+  payload: DetectedNote,
+): readonly DetectedNote[] {
   const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
   buffer.push(...history.slice().reverse(), payload)
   return buffer.toArray()

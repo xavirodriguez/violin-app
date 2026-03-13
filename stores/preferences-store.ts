@@ -86,7 +86,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   showTechnicalDetails: false,
   enableCelebrations: true,
   enableHaptics: true,
-  soundFeedbackEnabled: false
+  soundFeedbackEnabled: false,
 }
 
 /**
@@ -126,19 +126,23 @@ export const usePreferencesStore = create<PreferencesStore>()(
         set({ feedbackLevel: level })
         analytics.track('feedback_level_changed', { level })
       },
-      toggleTechnicalDetails: () => set((state) => ({
-        showTechnicalDetails: !state.showTechnicalDetails
-      })),
-      toggleCelebrations: () => set((state) => ({
-        enableCelebrations: !state.enableCelebrations
-      })),
-      toggleHaptics: () => set((state) => ({
-        enableHaptics: !state.enableHaptics
-      })),
-      toggleSoundFeedback: () => set((state) => ({
-        soundFeedbackEnabled: !state.soundFeedbackEnabled
-      })),
-      resetToDefaults: () => set(DEFAULT_PREFERENCES)
+      toggleTechnicalDetails: () =>
+        set((state) => ({
+          showTechnicalDetails: !state.showTechnicalDetails,
+        })),
+      toggleCelebrations: () =>
+        set((state) => ({
+          enableCelebrations: !state.enableCelebrations,
+        })),
+      toggleHaptics: () =>
+        set((state) => ({
+          enableHaptics: !state.enableHaptics,
+        })),
+      toggleSoundFeedback: () =>
+        set((state) => ({
+          soundFeedbackEnabled: !state.soundFeedbackEnabled,
+        })),
+      resetToDefaults: () => set(DEFAULT_PREFERENCES),
     }),
     {
       name: 'violin-mentor-preferences',
@@ -146,9 +150,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
       migrate: createMigrator({
         1: (state: any) => ({
           ...state,
-          schemaVersion: 1
-        })
-      })
-    }
-  )
+          schemaVersion: 1,
+        }),
+      }),
+    },
+  ),
 )

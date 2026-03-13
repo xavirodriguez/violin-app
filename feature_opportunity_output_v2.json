@@ -17,19 +17,14 @@
           "name": "Intonation Stability",
           "duration_weeks": 2,
           "rollout_percentage": 0.2,
-          "success_metrics": [
-            "False positive rate < 5%",
-            "User retention +10%"
-          ],
+          "success_metrics": ["False positive rate < 5%", "User retention +10%"],
           "go_no_go_criteria": "Stability metrics met."
         },
         "phase_2": {
           "name": "Rhythmic Precision",
           "duration_weeks": 3,
           "rollout_percentage": 0.5,
-          "success_metrics": [
-            "Average session duration +5m"
-          ],
+          "success_metrics": ["Average session duration +5m"],
           "go_no_go_criteria": "Performance remains stable."
         }
       },

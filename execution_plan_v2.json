@@ -34,13 +34,8 @@
           "phase_name": "Internal Dogfooding",
           "duration_days": 7,
           "target_users": "Agent Simulation",
-          "user_segments": [
-            "internal"
-          ],
-          "goals": [
-            "Verify stability",
-            "No regressions in pitch detection."
-          ],
+          "user_segments": ["internal"],
+          "goals": ["Verify stability", "No regressions in pitch detection."],
           "key_metrics": {
             "crash_rate": {
               "target_max": 0.0,

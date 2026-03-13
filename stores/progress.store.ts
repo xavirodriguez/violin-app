@@ -173,7 +173,7 @@ const DEFAULT_PROGRESS: ProgressState = {
   exerciseStats: {},
   eventBuffer: [],
   snapshots: [],
-  eventCounter: 0
+  eventCounter: 0,
 }
 
 /**
@@ -207,15 +207,16 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
         const { exerciseStats, eventBuffer, eventCounter } = get()
 
         // 1. Create ProgressEvent
-        const avgRhythmError = session.noteResults.reduce((acc, nr) => {
-          return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
-        }, 0) / (session.noteResults.length || 1)
+        const avgRhythmError =
+          session.noteResults.reduce((acc, nr) => {
+            return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
+          }, 0) / (session.noteResults.length || 1)
 
         const newEvent: ProgressEvent = {
           ts: session.endTimeMs,
           exerciseId: session.exerciseId,
           accuracy: session.accuracy,
-          rhythmErrorMs: avgRhythmError
+          rhythmErrorMs: avgRhythmError,
         }
 
         // 2. Manage Buffer (Circular N=1000)
@@ -231,16 +232,16 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
             aggregates: {
               intonation: get().intonationSkill,
               rhythm: get().rhythmSkill,
-              overall: get().overallSkill
+              overall: get().overallSkill,
             },
-            lastSessionId: session.id
+            lastSessionId: session.id,
           }
           newSnapshots = [snapshot, ...newSnapshots].slice(0, 10) // Keep last 10 snapshots
         }
 
         // 4. Pruning Logic (Time-based > 90 days)
         const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
-        const prunedBuffer = newBuffer.filter(e => e.ts > ninetyDaysAgo)
+        const prunedBuffer = newBuffer.filter((e) => e.ts > ninetyDaysAgo)
 
         const existingStats = exerciseStats[session.exerciseId]
         const nextExerciseStats: ExerciseStats = {
@@ -248,12 +249,13 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
           timesCompleted: (existingStats?.timesCompleted || 0) + 1,
           bestAccuracy: Math.max(existingStats?.bestAccuracy || 0, session.accuracy),
           averageAccuracy: existingStats
-            ? (existingStats.averageAccuracy * existingStats.timesCompleted + session.accuracy) / (existingStats.timesCompleted + 1)
+            ? (existingStats.averageAccuracy * existingStats.timesCompleted + session.accuracy) /
+              (existingStats.timesCompleted + 1)
             : session.accuracy,
           fastestCompletionMs: existingStats
             ? Math.min(existingStats.fastestCompletionMs, session.durationMs)
             : session.durationMs,
-          lastPracticedMs: session.endTimeMs
+          lastPracticedMs: session.endTimeMs,
         }
 
         set((state: ProgressState) => ({
@@ -264,11 +266,11 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
             : [...state.exercisesCompleted, session.exerciseId],
           exerciseStats: {
             ...state.exerciseStats,
-            [session.exerciseId]: nextExerciseStats
+            [session.exerciseId]: nextExerciseStats,
           },
           eventBuffer: prunedBuffer,
           snapshots: newSnapshots,
-          eventCounter: newEventCounter
+          eventCounter: newEventCounter,
         }))
       },
 
@@ -279,9 +281,9 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
         set({
           intonationSkill,
           rhythmSkill,
-          overallSkill: Math.round((intonationSkill + rhythmSkill) / 2)
+          overallSkill: Math.round((intonationSkill + rhythmSkill) / 2),
         })
-      }
+      },
     }),
     {
       name: 'violin-progress',
@@ -293,11 +295,11 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
           rhythmSkill: state.rhythmSkill || 0,
           overallSkill: state.overallSkill || 0,
           exerciseStats: state.exerciseStats || {},
-          schemaVersion: 1
-        })
-      })
-    }
-  )
+          schemaVersion: 1,
+        }),
+      }),
+    },
+  ),
 )
 
 /**

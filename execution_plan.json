@@ -11,13 +11,19 @@
           {
             "task_id": "PROM001",
             "description": "Remove FEATURE_ANALYTICS_DASHBOARD flag and logic",
-            "acceptance_criteria": ["Dashboard always available in Tabs", "No useFeatureFlag call for analytics"],
+            "acceptance_criteria": [
+              "Dashboard always available in Tabs",
+              "No useFeatureFlag call for analytics"
+            ],
             "priority": "critical"
           },
           {
             "task_id": "PROM002",
             "description": "Remove FEATURE_PRACTICE_ASSISTANT flag and logic",
-            "acceptance_criteria": ["Assistant always active", "No useFeatureFlag call for assistant"],
+            "acceptance_criteria": [
+              "Assistant always active",
+              "No useFeatureFlag call for assistant"
+            ],
             "priority": "critical"
           }
         ]

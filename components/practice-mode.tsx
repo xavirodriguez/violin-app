@@ -57,7 +57,8 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
-  const { status, currentNoteIndex, targetNote, totalNotes, progress } = derivePracticeState(practiceState)
+  const { status, currentNoteIndex, targetNote, totalNotes, progress } =
+    derivePracticeState(practiceState)
 
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
@@ -86,7 +87,9 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
-        {state.status === 'initializing' && <Card className="p-12 text-center">Initializing Audio...</Card>}
+        {state.status === 'initializing' && (
+          <Card className="p-12 text-center">Initializing Audio...</Card>
+        )}
 
         {!zenMode && (state.status !== 'idle' || state.exercise) && (
           <PracticeControls
@@ -153,7 +156,11 @@ export function PracticeMode() {
         {status === 'completed' && (
           <PracticeCompletion
             onRestart={handleRestart}
-            sessionData={sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined}
+            sessionData={
+              sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id
+                ? sessions[0]
+                : undefined
+            }
           />
         )}
 
@@ -176,13 +183,16 @@ export function PracticeMode() {
 /**
  * Derives calculated UI state from the raw practice domain state.
  */
-function derivePracticeState(practiceState: import('@/lib/practice-core').PracticeState | undefined) {
+function derivePracticeState(
+  practiceState: import('@/lib/practice-core').PracticeState | undefined,
+) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
   const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? undefined
   const totalNotes = practiceState?.exercise.notes.length ?? 0
   const isCompleted = status === 'completed'
-  const progress = totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+  const progress =
+    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
 
   return { status, currentNoteIndex, targetNote, totalNotes, progress }
 }
@@ -198,7 +208,8 @@ function SheetMusicContainer(params: {
   osmdHook: ReturnType<typeof useOSMDSafe>
   currentNoteIndex: number
 }) {
-  const { status, sheetMusicView, setSheetMusicView, practiceState, osmdHook, currentNoteIndex } = params
+  const { status, sheetMusicView, setSheetMusicView, practiceState, osmdHook, currentNoteIndex } =
+    params
   return (
     <div className="relative">
       {status !== 'idle' && (
@@ -207,15 +218,24 @@ function SheetMusicContainer(params: {
             variant="secondary"
             size="sm"
             onClick={() => setSheetMusicView(sheetMusicView === 'focused' ? 'full' : 'focused')}
-            className="bg-background/80 backdrop-blur-sm shadow-sm"
+            className="bg-background/80 shadow-sm backdrop-blur-sm"
           >
-            {sheetMusicView === 'focused' ? <Maximize2 className="h-4 w-4 mr-2" /> : <Minimize2 className="h-4 w-4 mr-2" />}
+            {sheetMusicView === 'focused' ? (
+              <Maximize2 className="mr-2 h-4 w-4" />
+            ) : (
+              <Minimize2 className="mr-2 h-4 w-4" />
+            )}
             {sheetMusicView === 'focused' ? 'Full View' : 'Focused View'}
           </Button>
         </div>
       )}
 
-      <div className={cn('transition-all duration-500 overflow-hidden', sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]')}>
+      <div
+        className={cn(
+          'overflow-hidden transition-all duration-500',
+          sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]',
+        )}
+      >
         <SheetMusicView
           musicXML={practiceState?.exercise.musicXML}
           isReady={osmdHook.isReady}
@@ -224,10 +244,13 @@ function SheetMusicContainer(params: {
         />
         {practiceState && (
           <SheetMusicAnnotations
-            annotations={practiceState.exercise.notes.reduce((acc, note, idx) => {
-              if (note.annotations) acc[idx] = note.annotations
-              return acc
-            }, {} as Record<number, any>)}
+            annotations={practiceState.exercise.notes.reduce(
+              (acc, note, idx) => {
+                if (note.annotations) acc[idx] = note.annotations
+                return acc
+              },
+              {} as Record<number, any>,
+            )}
             currentNoteIndex={currentNoteIndex}
             osmd={osmdHook.osmd}
             containerRef={osmdHook.containerRef}

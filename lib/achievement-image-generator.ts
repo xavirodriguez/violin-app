@@ -5,7 +5,7 @@ import type { PracticeSession } from '@/stores/analytics-store'
  */
 export async function generateAchievementImage(
   sessionData: PracticeSession,
-  stars: number
+  stars: number,
 ): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = 1200

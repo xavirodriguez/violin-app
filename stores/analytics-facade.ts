@@ -29,7 +29,7 @@ export const useAnalyticsStore = Object.assign(
       /** Aggregated user progress. */
       progress: {
         ...progress,
-        achievements: achievements.unlocked
+        achievements: achievements.unlocked,
       },
       /** Current streak of perfect notes. */
       currentPerfectStreak: session.perfectNoteStreak,
@@ -100,7 +100,7 @@ export const useAnalyticsStore = Object.assign(
       /** Returns summary stats for the current day. */
       getTodayStats: () => ({ duration: 0, accuracy: 0, sessionsCount: 0 }),
       /** Returns streak information. */
-      getStreakInfo: () => ({ current: progress.currentStreak, longest: progress.longestStreak })
+      getStreakInfo: () => ({ current: progress.currentStreak, longest: progress.longestStreak }),
     }
   },
   {
@@ -116,7 +116,7 @@ export const useAnalyticsStore = Object.assign(
         sessions: history.sessions,
         progress: {
           ...progress,
-          achievements: achievements.unlocked
+          achievements: achievements.unlocked,
         },
         currentPerfectStreak: session.perfectNoteStreak,
         startSession: session.start,
@@ -132,17 +132,19 @@ export const useAnalyticsStore = Object.assign(
           return completed
         },
         checkAndUnlockAchievements: () => {
-           return []
-        }
+          return []
+        },
       }
     },
     /** Imperative state update (for compatibility). */
-    setState: (partial: Partial<{
-      progress: any;
-      sessions: any[];
-      currentSession: any;
-      currentPerfectStreak: number;
-    }>) => {
+    setState: (
+      partial: Partial<{
+        progress: any
+        sessions: any[]
+        currentSession: any
+        currentPerfectStreak: number
+      }>,
+    ) => {
       if (partial.progress) {
         useProgressStore.setState(partial.progress)
         if (partial.progress.achievements) {
@@ -150,8 +152,10 @@ export const useAnalyticsStore = Object.assign(
         }
       }
       if (partial.sessions) useSessionHistoryStore.setState({ sessions: partial.sessions })
-      if (partial.currentSession !== undefined) useSessionStore.setState({ current: partial.currentSession })
-      if (partial.currentPerfectStreak !== undefined) useSessionStore.setState({ perfectNoteStreak: partial.currentPerfectStreak })
+      if (partial.currentSession !== undefined)
+        useSessionStore.setState({ current: partial.currentSession })
+      if (partial.currentPerfectStreak !== undefined)
+        useSessionStore.setState({ perfectNoteStreak: partial.currentPerfectStreak })
     },
     /** Persistence options for the facade (migrated from legacy). */
     persist: {
@@ -196,17 +200,17 @@ export const useAnalyticsStore = Object.assign(
             }
             const progress = persistedData.progress as Record<string, any> | undefined
             if (progress?.exerciseStats) {
-              Object.values(
-                progress.exerciseStats as Record<string, Record<string, any>>,
-              ).forEach((stats) => {
-                if (
-                  stats.fastestCompletion !== undefined &&
-                  stats.fastestCompletionMs === undefined
-                ) {
-                  stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
-                  delete stats.fastestCompletion
-                }
-              })
+              Object.values(progress.exerciseStats as Record<string, Record<string, any>>).forEach(
+                (stats) => {
+                  if (
+                    stats.fastestCompletion !== undefined &&
+                    stats.fastestCompletionMs === undefined
+                  ) {
+                    stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
+                    delete stats.fastestCompletion
+                  }
+                },
+              )
             }
           }
 
@@ -259,8 +263,8 @@ export const useAnalyticsStore = Object.assign(
               exerciseStats: migratedExerciseStats,
             },
           }
-        }
-      })
-    }
-  }
+        },
+      }),
+    },
+  },
 )

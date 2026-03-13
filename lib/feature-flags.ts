@@ -60,9 +60,9 @@ export const FEATURE_FLAGS_METADATA = {
     affectedFiles: [
       'lib/pitch-detector.ts',
       'lib/note-stream.ts',
-      'public/workers/audio-processor.worker.ts'
+      'public/workers/audio-processor.worker.ts',
     ],
-    rollbackStrategy: 'Fallback to main-thread audio processing.'
+    rollbackStrategy: 'Fallback to main-thread audio processing.',
   },
   FEATURE_UI_INTONATION_HEATMAPS: {
     name: 'FEATURE_UI_INTONATION_HEATMAPS',
@@ -72,7 +72,7 @@ export const FEATURE_FLAGS_METADATA = {
     defaultValue: true,
     riskLevel: 'LOW',
     affectedFiles: ['components/analytics-dashboard.tsx'],
-    rollbackStrategy: 'Disable the heatmap visualization.'
+    rollbackStrategy: 'Disable the heatmap visualization.',
   },
   FEATURE_SOCIAL_PRACTICE_ROOMS: {
     name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
@@ -82,7 +82,7 @@ export const FEATURE_FLAGS_METADATA = {
     defaultValue: false,
     riskLevel: 'HIGH',
     affectedFiles: [],
-    rollbackStrategy: 'Disable real-time synchronization features.'
+    rollbackStrategy: 'Disable real-time synchronization features.',
   },
 } as const satisfies Record<string, FeatureFlagMetadata>
 
@@ -114,11 +114,19 @@ class FeatureFlagsManager {
   private getClientValue(flagName: string): string | undefined {
     switch (flagName) {
       case 'FEATURE_AUDIO_WEB_WORKER':
-        return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
+        return (
+          process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
+        )
       case 'FEATURE_UI_INTONATION_HEATMAPS':
-        return process.env.FEATURE_UI_INTONATION_HEATMAPS ?? process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
+        return (
+          process.env.FEATURE_UI_INTONATION_HEATMAPS ??
+          process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
+        )
       case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
-        return process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ?? process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
+        return (
+          process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
+          process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
+        )
       default:
         return undefined
     }
@@ -164,9 +172,7 @@ class FeatureFlagsManager {
     if (!metadata) {
       return defaultValue
     }
-    return defaultValue !== undefined
-      ? defaultValue
-      : (metadata.defaultValue as unknown as T)
+    return defaultValue !== undefined ? defaultValue : (metadata.defaultValue as unknown as T)
   }
 
   getAll(): Record<string, boolean> {

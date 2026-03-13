@@ -1,6 +1,7 @@
 # Type Safety Refactoring Report
 
 ## Errors Fixed
+
 - [x] ERROR-001: Exercise type duplication
   - Verified `LegacyExercise` is correctly named and deprecated in `lib/music-data.ts`.
   - Confirmed no other exports of `Exercise` exist in the legacy module.
@@ -34,17 +35,22 @@
   - Added comprehensive state machine documentation to `NoteSegmenter` and its events.
 
 ## Metrics
+
 - Total files modified: 9
 - TypeScript errors before: 0 (Baseline was clean but loose)
 - TypeScript errors after: 0 (Strict mode verified)
 - New validation logic: Applied to pitch detection, range utilities, and note parsing.
 
 ## Migration Guide
+
 ### Note Names
+
 Use the `NoteName` branded type for any Scientific Pitch Notation strings. You can cast using `as NoteName` if the string is guaranteed to be valid, or use `assertValidNoteName(s)` to ensure safety.
 
 ### Practice Pipeline
+
 The `createPracticeEventPipeline` no longer accepts a getter for context. You must pass a static snapshot. If the context changes (e.g., the current note index), you should stop the current pipeline and create a new one with the updated snapshot.
 
 ### Legacy Exercises
+
 `Exercise` from `lib/music-data` is deprecated. Use `Exercise` from `@/lib/exercises/types`. Use `adaptLegacyExercise` to convert old data structures to the new format.

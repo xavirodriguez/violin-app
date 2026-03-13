@@ -117,38 +117,41 @@ export function PracticeFeedback({
 
   return (
     <div className="space-y-8">
-
       {/* LEVEL 1: Main Status - Dominant feedback for quick recognition */}
-      <div className="flex items-center justify-center min-h-[200px]">
+      <div className="flex min-h-[200px] items-center justify-center">
         {status === 'listening' && !isPlaying && (
           <div className="text-center">
-            <div className="text-6xl mb-4">🎻</div>
-            <div className="text-2xl text-muted-foreground font-medium">
-              Play {targetNote}
-            </div>
+            <div className="mb-4 text-6xl">🎻</div>
+            <div className="text-muted-foreground text-2xl font-medium">Play {targetNote}</div>
           </div>
         )}
 
         {isPlaying && isCorrectNote && isInTune && (
           <div className="text-center">
-            <CheckCircle2 className="w-32 h-32 text-green-500 mx-auto mb-4" />
+            <CheckCircle2 className="mx-auto mb-4 h-32 w-32 text-green-500" />
             <div className="text-4xl font-bold text-green-500">Perfect!</div>
           </div>
         )}
 
         {isPlaying && isCorrectNote && !isInTune && (
           <div className="text-center">
-            <div className="text-8xl font-bold mb-4" style={{
-              color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444'
-            }}>
+            <div
+              className="mb-4 text-8xl font-bold"
+              style={{
+                color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444',
+              }}
+            >
               {centsOff! > 0 ? '↑' : '↓'}
             </div>
-            <div className="text-3xl font-semibold" style={{
-              color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444'
-            }}>
+            <div
+              className="text-3xl font-semibold"
+              style={{
+                color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444',
+              }}
+            >
               {Math.abs(centsOff!) < 15 ? 'Almost!' : 'Adjust'}
             </div>
-            <div className="text-xl text-muted-foreground mt-2">
+            <div className="text-muted-foreground mt-2 text-xl">
               {centsOff! > 0 ? 'Move finger down' : 'Move finger up'}
             </div>
           </div>
@@ -156,14 +159,12 @@ export function PracticeFeedback({
 
         {isPlaying && !isCorrectNote && (
           <div className="text-center">
-            <AlertTriangle className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
-            <div className="text-3xl font-bold text-yellow-500 mb-2">
-              Wrong Note
-            </div>
-            <div className="text-xl text-muted-foreground">
+            <AlertTriangle className="mx-auto mb-4 h-24 w-24 text-yellow-500" />
+            <div className="mb-2 text-3xl font-bold text-yellow-500">Wrong Note</div>
+            <div className="text-muted-foreground text-xl">
               Playing: <span className="font-mono">{detectedPitchName}</span>
             </div>
-            <div className="text-xl text-muted-foreground">
+            <div className="text-muted-foreground text-xl">
               Need: <span className="font-mono">{targetNote}</span>
             </div>
           </div>
@@ -173,7 +174,7 @@ export function PracticeFeedback({
       {/* LEVEL 2: Precise Metrics - For students who want exact data */}
       {isPlaying && centsOff !== undefined && (
         <details className="text-center">
-          <summary className="text-sm text-muted-foreground cursor-pointer">
+          <summary className="text-muted-foreground cursor-pointer text-sm">
             Show Technical Details
           </summary>
           <div className="mt-4 space-y-2 text-sm">
@@ -181,7 +182,8 @@ export function PracticeFeedback({
               <div>
                 <div className="text-muted-foreground">Deviation</div>
                 <div className="font-mono text-lg">
-                  {centsOff > 0 ? '+' : ''}{centsOff.toFixed(1)}¢
+                  {centsOff > 0 ? '+' : ''}
+                  {centsOff.toFixed(1)}¢
                 </div>
               </div>
               <div>
@@ -196,7 +198,7 @@ export function PracticeFeedback({
       {/* LEVEL 3: Live Observations - Actionable pedagogical tips */}
       {liveObservations.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
             <Info className="h-4 w-4" />
             <span>Live Feedback</span>
           </div>
@@ -205,10 +207,10 @@ export function PracticeFeedback({
               key={idx}
               className={`rounded-lg border p-3 ${
                 obs.severity === 3
-                  ? 'bg-red-500/10 border-red-500/20'
+                  ? 'border-red-500/20 bg-red-500/10'
                   : obs.severity === 2
-                    ? 'bg-yellow-500/10 border-yellow-500/20'
-                    : 'bg-blue-500/10 border-blue-500/20'
+                    ? 'border-yellow-500/20 bg-yellow-500/10'
+                    : 'border-blue-500/20 bg-blue-500/10'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -219,7 +221,7 @@ export function PracticeFeedback({
                 />
                 <div className="flex-1">
                   <div className="text-sm font-bold">{obs.message}</div>
-                  <div className="text-xs text-muted-foreground">{obs.tip}</div>
+                  <div className="text-muted-foreground text-xs">{obs.tip}</div>
                 </div>
               </div>
             </div>

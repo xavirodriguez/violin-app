@@ -109,8 +109,5 @@
       "impact_if_successful": "Major performance boost and technical debt reduction."
     }
   ],
-  "next_30_days_focus": [
-    "FEATURE_UI_INTONATION_HEATMAPS",
-    "FEATURE_AUDIO_WEB_WORKER"
-  ]
+  "next_30_days_focus": ["FEATURE_UI_INTONATION_HEATMAPS", "FEATURE_AUDIO_WEB_WORKER"]
 }

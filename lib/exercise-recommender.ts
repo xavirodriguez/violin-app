@@ -98,7 +98,8 @@ function getProgressionDiscoveryRecommendation(params: RecommendationParams): Ex
 
   return exercises.find(
     (ex) =>
-      ex.difficulty === currentDifficulty && (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
+      ex.difficulty === currentDifficulty &&
+      (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
   )
 }
 

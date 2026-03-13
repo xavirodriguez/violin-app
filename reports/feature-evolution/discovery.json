@@ -59,7 +59,7 @@
   ],
   "relationships": {
     "dependency_graph": {
-        "FEATURE_UI_INTONATION_HEATMAPS": ["FEATURE_ANALYTICS_DASHBOARD"]
+      "FEATURE_UI_INTONATION_HEATMAPS": ["FEATURE_ANALYTICS_DASHBOARD"]
     },
     "conflicts": [],
     "orphaned": ["FEATURE_AUDIO_WEB_WORKER", "FEATURE_SOCIAL_PRACTICE_ROOMS"]

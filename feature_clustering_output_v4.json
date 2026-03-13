@@ -26,7 +26,10 @@
   "optimization_opportunities": [
     {
       "opportunity": "Merge adaptive difficulty with intonation heatmaps for 'Smart Practice' mode",
-      "features_involved": ["FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY", "FEATURE_UI_INTONATION_HEATMAPS"],
+      "features_involved": [
+        "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY",
+        "FEATURE_UI_INTONATION_HEATMAPS"
+      ],
       "synergy_benefit": "Students get visual proof of why difficulty is changing.",
       "implementation_complexity": "medium"
     }

@@ -147,7 +147,7 @@ export function SheetMusicAnnotations({
   }, [osmd, currentNoteIndex, containerRef])
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {Object.entries(annotations).map(([indexStr, annotation]) => {
         const index = parseInt(indexStr)
         const pos = coords[index]
@@ -159,16 +159,18 @@ export function SheetMusicAnnotations({
             className="absolute transition-all duration-300"
             style={{ left: pos.x, top: pos.y - 40 }}
           >
-            <div className="flex flex-col items-center gap-1 bg-background/80 backdrop-blur-sm p-1 rounded border border-primary/20 shadow-sm scale-90">
+            <div className="bg-background/80 border-primary/20 flex scale-90 flex-col items-center gap-1 rounded border p-1 shadow-sm backdrop-blur-sm">
               {annotation.fingerNumber !== undefined && (
-                <span className="font-bold text-primary text-xs bg-primary/10 w-5 h-5 flex items-center justify-center rounded-full">
+                <span className="text-primary bg-primary/10 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold">
                   {annotation.fingerNumber}
                 </span>
               )}
               {annotation.bowDirection === 'up' && <ArrowUp className="h-4 w-4 text-blue-500" />}
-              {annotation.bowDirection === 'down' && <ArrowDown className="h-4 w-4 text-blue-500" />}
+              {annotation.bowDirection === 'down' && (
+                <ArrowDown className="h-4 w-4 text-blue-500" />
+              )}
               {annotation.warningFlag && (
-                <AlertCircle className="h-4 w-4 text-destructive animate-pulse" />
+                <AlertCircle className="text-destructive h-4 w-4 animate-pulse" />
               )}
             </div>
           </div>

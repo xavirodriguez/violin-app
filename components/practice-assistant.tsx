@@ -39,7 +39,7 @@ export function PracticeAssistant() {
   return (
     <div
       className={`fixed inset-0 z-50 flex items-start justify-center pt-[10vh] transition-opacity duration-200 ${
-        open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
       }`}
     >
       {/* Backdrop */}
@@ -60,7 +60,7 @@ export function PracticeAssistant() {
           />
           <button
             onClick={() => setOpen(false)}
-            className="ml-2 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-zinc-100 data-[state=open]:text-zinc-500 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 dark:data-[state=open]:bg-zinc-800 dark:data-[state=open]:text-zinc-400"
+            className="ml-2 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-zinc-100 data-[state=open]:text-zinc-500 dark:ring-offset-zinc-950 dark:focus:ring-zinc-300 dark:data-[state=open]:bg-zinc-800 dark:data-[state=open]:text-zinc-400"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
@@ -70,7 +70,10 @@ export function PracticeAssistant() {
         <Command.List className="max-h-[300px] overflow-y-auto p-2">
           <Command.Empty className="py-6 text-center text-sm">No exercises found.</Command.Empty>
 
-          <Command.Group heading="All Exercises" className="px-2 py-3 text-xs font-medium text-zinc-500">
+          <Command.Group
+            heading="All Exercises"
+            className="px-2 py-3 text-xs font-medium text-zinc-500"
+          >
             {allExercises.map((exercise) => (
               <Command.Item
                 key={exercise.id}
@@ -78,7 +81,7 @@ export function PracticeAssistant() {
                   loadExercise(exercise)
                   setOpen(false)
                 }}
-                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-zinc-100 aria-selected:text-zinc-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:aria-selected:bg-zinc-800 dark:aria-selected:text-zinc-50"
+                className="relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none aria-selected:bg-zinc-100 aria-selected:text-zinc-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:aria-selected:bg-zinc-800 dark:aria-selected:text-zinc-50"
               >
                 <Music className="mr-2 h-4 w-4" />
                 <span>{exercise.name}</span>
@@ -87,17 +90,20 @@ export function PracticeAssistant() {
             ))}
           </Command.Group>
 
-          <Command.Group heading="Quick Actions" className="px-2 py-3 text-xs font-medium text-zinc-500">
-             <Command.Item
-                onSelect={() => {
-                  // In a real app, this could open the tuner or settings
-                  setOpen(false)
-                }}
-                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-zinc-100 aria-selected:text-zinc-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:aria-selected:bg-zinc-800 dark:aria-selected:text-zinc-50"
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                <span>Daily Practice Goal</span>
-              </Command.Item>
+          <Command.Group
+            heading="Quick Actions"
+            className="px-2 py-3 text-xs font-medium text-zinc-500"
+          >
+            <Command.Item
+              onSelect={() => {
+                // In a real app, this could open the tuner or settings
+                setOpen(false)
+              }}
+              className="relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none aria-selected:bg-zinc-100 aria-selected:text-zinc-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:aria-selected:bg-zinc-800 dark:aria-selected:text-zinc-50"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              <span>Daily Practice Goal</span>
+            </Command.Item>
           </Command.Group>
         </Command.List>
 

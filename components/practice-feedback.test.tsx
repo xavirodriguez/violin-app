@@ -12,14 +12,14 @@ describe('PracticeFeedback', () => {
         connect: vi.fn(),
         start: vi.fn(),
         stop: vi.fn(),
-        frequency: { value: 0 }
+        frequency: { value: 0 },
       })
       createGain = vi.fn().mockReturnValue({
         connect: vi.fn(),
         gain: {
           setValueAtTime: vi.fn(),
-          exponentialRampToValueAtTime: vi.fn()
-        }
+          exponentialRampToValueAtTime: vi.fn(),
+        },
       })
       destination = {}
       currentTime = 0
@@ -34,7 +34,7 @@ describe('PracticeFeedback', () => {
         detectedPitchName={undefined}
         centsOff={undefined}
         status="listening"
-      />
+      />,
     )
     expect(screen.getByText('Play A4')).toBeDefined()
   })
@@ -47,19 +47,14 @@ describe('PracticeFeedback', () => {
         centsOff={5}
         status="correct"
         centsTolerance={10}
-      />
+      />,
     )
     expect(screen.getByText('Perfect!')).toBeDefined()
   })
 
   it('renders "Almost!" when slightly out of tune', () => {
     render(
-      <PracticeFeedback
-        targetNote="A4"
-        detectedPitchName="A4"
-        centsOff={12}
-        status="listening"
-      />
+      <PracticeFeedback targetNote="A4" detectedPitchName="A4" centsOff={12} status="listening" />,
     )
     expect(screen.getByText('Almost!')).toBeDefined()
   })
@@ -72,19 +67,14 @@ describe('PracticeFeedback', () => {
         centsOff={20}
         status="listening"
         centsTolerance={10}
-      />
+      />,
     )
     expect(screen.getByText('Adjust')).toBeDefined()
   })
 
   it('renders "Wrong Note" when playing different note', () => {
     render(
-      <PracticeFeedback
-        targetNote="A4"
-        detectedPitchName="G4"
-        centsOff={0}
-        status="listening"
-      />
+      <PracticeFeedback targetNote="A4" detectedPitchName="G4" centsOff={0} status="listening" />,
     )
     expect(screen.getByText('Wrong Note')).toBeDefined()
   })
@@ -106,7 +96,7 @@ describe('PracticeFeedback', () => {
         centsOff={12}
         status="listening"
         liveObservations={liveObservations}
-      />
+      />,
     )
     expect(screen.getByText('Live Feedback')).toBeDefined()
     expect(screen.getByText('Consistently sharp')).toBeDefined()

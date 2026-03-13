@@ -117,11 +117,7 @@
       "name": "Ui New Theme",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_FLAGS.md",
-        "./FEATURE_ANALYSIS.md",
-        "./README.md"
-      ],
+      "locations": ["./FEATURE_FLAGS.md", "./FEATURE_ANALYSIS.md", "./README.md"],
       "enabled": "implicit"
     },
     {
@@ -129,10 +125,7 @@
       "name": "Analytics Dashboard",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_ANALYSIS.md",
-        "./FEATURE_CATALOG.md"
-      ],
+      "locations": ["./FEATURE_ANALYSIS.md", "./FEATURE_CATALOG.md"],
       "enabled": "implicit"
     },
     {
@@ -140,10 +133,7 @@
       "name": "Ui Violin Fingerboard",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_ANALYSIS.md",
-        "./FEATURE_CATALOG.md"
-      ],
+      "locations": ["./FEATURE_ANALYSIS.md", "./FEATURE_CATALOG.md"],
       "enabled": "implicit"
     },
     {
@@ -151,10 +141,7 @@
       "name": "Technical Feedback",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_ANALYSIS.md",
-        "./FEATURE_CATALOG.md"
-      ],
+      "locations": ["./FEATURE_ANALYSIS.md", "./FEATURE_CATALOG.md"],
       "enabled": "implicit"
     },
     {
@@ -162,10 +149,7 @@
       "name": "Practice Assistant",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_ANALYSIS.md",
-        "./FEATURE_CATALOG.md"
-      ],
+      "locations": ["./FEATURE_ANALYSIS.md", "./FEATURE_CATALOG.md"],
       "enabled": "implicit"
     },
     {
@@ -225,9 +209,7 @@
       "name": "Ui Dark Mode",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_FLAGS_CHECKLIST.md"
-      ],
+      "locations": ["./FEATURE_FLAGS_CHECKLIST.md"],
       "enabled": "implicit"
     },
     {
@@ -235,10 +217,7 @@
       "name": "Catalog",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_FLAGS_CHECKLIST.md",
-        "./README.md"
-      ],
+      "locations": ["./FEATURE_FLAGS_CHECKLIST.md", "./README.md"],
       "enabled": "implicit"
     },
     {
@@ -246,9 +225,7 @@
       "name": "Xxx",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./FEATURE_FLAGS_CHECKLIST.md"
-      ],
+      "locations": ["./FEATURE_FLAGS_CHECKLIST.md"],
       "enabled": "implicit"
     },
     {
@@ -256,9 +233,7 @@
       "name": "Flags",
       "type": "UNKNOWN",
       "current_state": "phantom",
-      "locations": [
-        "./README.md"
-      ],
+      "locations": ["./README.md"],
       "enabled": "implicit"
     }
   ],

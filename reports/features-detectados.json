@@ -16,7 +16,12 @@
       "descripcion": "Mueve las tareas pesadas de DSP a un hilo secundario.",
       "estado": "DEFINIDO",
       "riesgo": "ALTO",
-      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/pitch-detector.ts", "lib/note-stream.ts"]
+      "ubicaciones": [
+        "lib/feature-flags.ts",
+        "FEATURE_CATALOG.md",
+        "lib/pitch-detector.ts",
+        "lib/note-stream.ts"
+      ]
     },
     {
       "id": "FEATURE_UI_INTONATION_HEATMAPS",
@@ -25,7 +30,11 @@
       "descripcion": "Visualiza patrones de precisión de tono.",
       "estado": "DEFINIDO",
       "riesgo": "BAJO",
-      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "components/analytics-dashboard.tsx"]
+      "ubicaciones": [
+        "lib/feature-flags.ts",
+        "FEATURE_CATALOG.md",
+        "components/analytics-dashboard.tsx"
+      ]
     },
     {
       "id": "FEATURE_PRACTICE_ZEN_MODE",
@@ -43,7 +52,12 @@
       "descripcion": "Inicia automáticamente la detección de audio.",
       "estado": "ACTIVO",
       "riesgo": "BAJO",
-      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "stores/practice-store.ts", "components/practice-mode.tsx"]
+      "ubicaciones": [
+        "lib/feature-flags.ts",
+        "FEATURE_CATALOG.md",
+        "stores/practice-store.ts",
+        "components/practice-mode.tsx"
+      ]
     },
     {
       "id": "FEATURE_PRACTICE_EXERCISE_RECOMMENDER",
@@ -52,7 +66,12 @@
       "descripcion": "Sugiere el próximo ejercicio.",
       "estado": "ACTIVO",
       "riesgo": "MEDIO",
-      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/exercise-recommender.ts", "components/practice-mode.tsx"]
+      "ubicaciones": [
+        "lib/feature-flags.ts",
+        "FEATURE_CATALOG.md",
+        "lib/exercise-recommender.ts",
+        "components/practice-mode.tsx"
+      ]
     },
     {
       "id": "FEATURE_PRACTICE_ACHIEVEMENT_SYSTEM",
@@ -61,7 +80,12 @@
       "descripcion": "Recompensas por hitos técnicos.",
       "estado": "ACTIVO",
       "riesgo": "MEDIO",
-      "ubicaciones": ["lib/feature-flags.ts", "FEATURE_CATALOG.md", "lib/achievements/", "stores/analytics-store.ts"]
+      "ubicaciones": [
+        "lib/feature-flags.ts",
+        "FEATURE_CATALOG.md",
+        "lib/achievements/",
+        "stores/analytics-store.ts"
+      ]
     }
   ],
   "features_promocionados": [

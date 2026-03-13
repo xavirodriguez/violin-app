@@ -29,9 +29,7 @@
         {
           "blocker": "Lack of persistent user performance history across sessions.",
           "blocking_feature": "None (Infrastructure needed)",
-          "resolution_steps": [
-            "Integrate with a database/backend for long-term storage."
-          ]
+          "resolution_steps": ["Integrate with a database/backend for long-term storage."]
         }
       ],
       "growth_enablers": [
@@ -59,7 +57,5 @@
       ]
     }
   ],
-  "critical_path_features": [
-    "FEATURE_TELEMETRY_ACCURACY"
-  ]
+  "critical_path_features": ["FEATURE_TELEMETRY_ACCURACY"]
 }

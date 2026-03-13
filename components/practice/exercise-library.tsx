@@ -49,14 +49,20 @@ export function ExerciseLibrary({
   )
 }
 
-function LibraryHeader({ activeTab, onTabChange }: { activeTab: string; onTabChange: (v: string) => void }) {
+function LibraryHeader({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string
+  onTabChange: (v: string) => void
+}) {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <h3 className="text-xl font-bold flex items-center gap-2">
+    <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+      <h3 className="flex items-center gap-2 text-xl font-bold">
         <List className="h-5 w-5" /> Exercise Library
       </h3>
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full md:w-auto">
-        <TabsList className="grid grid-cols-4 w-full md:w-auto">
+        <TabsList className="grid w-full grid-cols-4 md:w-auto">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="beginner">Beginner</TabsTrigger>
           <TabsTrigger value="intermediate">Int.</TabsTrigger>
@@ -69,10 +75,12 @@ function LibraryHeader({ activeTab, onTabChange }: { activeTab: string; onTabCha
 
 function ExerciseGrid({ exercises, selectedId, recommendedId, onSelect, stats }: any) {
   if (exercises.length === 0) {
-    return <div className="text-center py-12 border-2 border-dashed rounded-xl">No exercises found.</div>
+    return (
+      <div className="rounded-xl border-2 border-dashed py-12 text-center">No exercises found.</div>
+    )
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {exercises.map((ex: any) => (
         <ExerciseCard
           key={ex.id}
@@ -80,10 +88,14 @@ function ExerciseGrid({ exercises, selectedId, recommendedId, onSelect, stats }:
           isRecommended={recommendedId === ex.id}
           isSelected={selectedId === ex.id}
           onClick={() => onSelect(ex)}
-          lastAttempt={stats[ex.id] ? {
-            accuracy: stats[ex.id].bestAccuracy,
-            timestamp: stats[ex.id].lastPracticedMs
-          } : undefined}
+          lastAttempt={
+            stats[ex.id]
+              ? {
+                  accuracy: stats[ex.id].bestAccuracy,
+                  timestamp: stats[ex.id].lastPracticedMs,
+                }
+              : undefined
+          }
         />
       ))}
     </div>
@@ -95,7 +107,8 @@ function filterExercises(exercises: Exercise[], tab: string, stats: any) {
     if (tab === 'all') return true
     if (tab === 'beginner') return ex.difficulty === 'Beginner'
     if (tab === 'intermediate') return ex.difficulty === 'Intermediate'
-    if (tab === 'inProgress') return stats[ex.id]?.timesCompleted > 0 && stats[ex.id]?.bestAccuracy < 100
+    if (tab === 'inProgress')
+      return stats[ex.id]?.timesCompleted > 0 && stats[ex.id]?.bestAccuracy < 100
     return true
   })
 }

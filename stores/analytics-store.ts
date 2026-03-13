@@ -497,7 +497,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
             state.onAchievementUnlocked?.(achievement)
             analytics.track('achievement_unlocked', {
               achievementId: achievement.id,
-              achievementName: achievement.name
+              achievementName: achievement.name,
             })
           })
         }
@@ -645,12 +645,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
  * Calculates a normalized skill level for intonation based on recent sessions.
  *
  * @remarks
-   * **Algorithm**:
-   * - Takes the last 10 sessions (windowed analysis).
-   * - Calculates a base `avgAccuracy` across the window.
-   * - Applies a `trend` factor: the difference between the most recent 5 sessions
-   *   and the 5 before them.
-   * - Result is clamped between 0 and 100.
+ * **Algorithm**:
+ * - Takes the last 10 sessions (windowed analysis).
+ * - Calculates a base `avgAccuracy` across the window.
+ * - Applies a `trend` factor: the difference between the most recent 5 sessions
+ *   and the 5 before them.
+ * - Result is clamped between 0 and 100.
  *
  * @param sessions - History of completed sessions.
  * @returns Normalized skill score (0-100).
@@ -800,11 +800,11 @@ function updateNoteResults(
  * Calculates a normalized skill level for rhythm based on recent sessions.
  *
  * @remarks
-   * **Algorithm**:
-   * - Aggregates all note results from the last 10 sessions.
-   * - Calculates Mean Absolute Error (MAE) of rhythmic onsets.
-   * - Calculates the percentage of notes played within a "Professional" window (`<= 40ms`).
-   * - Combined score: `(maeScore + percentInWindow) / 2`.
+ * **Algorithm**:
+ * - Aggregates all note results from the last 10 sessions.
+ * - Calculates Mean Absolute Error (MAE) of rhythmic onsets.
+ * - Calculates the percentage of notes played within a "Professional" window (`<= 40ms`).
+ * - Combined score: `(maeScore + percentInWindow) / 2`.
  *
  * @param sessions - Recent session history.
  * @returns Normalized rhythm score (0-100).

@@ -6,12 +6,12 @@ import { audioManager } from '../lib/infrastructure/audio-manager'
 // Mock dependencies
 vi.mock('@/lib/practice/session-runner', () => ({
   runPracticeSession: vi.fn().mockImplementation(() => new Promise(() => {})),
-  PracticeSessionRunnerImpl: vi.fn().mockImplementation(function() {
+  PracticeSessionRunnerImpl: vi.fn().mockImplementation(function () {
     return {
       run: vi.fn().mockImplementation(() => new Promise(() => {})),
-      cancel: vi.fn()
+      cancel: vi.fn(),
     }
-  })
+  }),
 }))
 
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -24,13 +24,13 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
 }))
 
 vi.mock('@/lib/pitch-detector', () => ({
-  PitchDetector: vi.fn().mockImplementation(function(this: any) {
+  PitchDetector: vi.fn().mockImplementation(function (this: any) {
     this.setMaxFrequency = vi.fn()
     this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
     this.calculateRMS = vi.fn(() => 0)
     return this
   }),
-  cleanup: vi.fn()
+  cleanup: vi.fn(),
 }))
 
 // Mock de ejercicio
@@ -75,12 +75,12 @@ describe('Practice Store Integration', () => {
     const mockAnalyser = {
       fftSize: 2048,
       getFloatTimeDomainData: vi.fn(),
-      context: mockContext
+      context: mockContext,
     }
     vi.mocked(audioManager.initialize).mockResolvedValue({
       context: mockContext as any,
       analyser: mockAnalyser as any,
-      stream: {} as any
+      stream: {} as any,
     })
 
     await store.start()
@@ -104,9 +104,9 @@ describe('Practice Store Integration', () => {
       timestamp: Date.now(),
     }
 
-    const mockPipeline = async function* () {
+    const mockPipeline = (async function* () {
       yield { type: 'NOTE_DETECTED' as const, payload: mockDetection }
-    }()
+    })()
 
     await store.consumePipelineEvents(mockPipeline)
 
@@ -120,7 +120,7 @@ describe('Practice Store Integration', () => {
     await store.loadExercise(mockExercise)
     await store.start()
 
-    const mockPipeline = async function* () {
+    const mockPipeline = (async function* () {
       for (let i = 0; i < 10; i++) {
         yield {
           type: 'NOTE_DETECTED' as const,
@@ -129,11 +129,11 @@ describe('Practice Store Integration', () => {
             pitchHz: 440,
             cents: 20, // Consistentemente sharp (>15)
             confidence: 0.9,
-            timestamp: Date.now() + i * 50
-          }
+            timestamp: Date.now() + i * 50,
+          },
         }
       }
-    }()
+    })()
 
     await store.consumePipelineEvents(mockPipeline)
 
@@ -149,7 +149,7 @@ describe('Practice Store Integration', () => {
     await store.start()
 
     // 1. First some detections to generate observations
-    const detections = async function* () {
+    const detections = (async function* () {
       for (let i = 0; i < 10; i++) {
         yield {
           type: 'NOTE_DETECTED' as const,
@@ -158,18 +158,18 @@ describe('Practice Store Integration', () => {
             pitchHz: 440,
             cents: 20,
             confidence: 0.9,
-            timestamp: Date.now() + i * 50
-          }
+            timestamp: Date.now() + i * 50,
+          },
         }
       }
-    }()
+    })()
     await store.consumePipelineEvents(detections)
     expect(usePracticeStore.getState().liveObservations.length).toBeGreaterThan(0)
 
     // 2. Then a NOTE_MATCHED event
-    const matched = async function* () {
+    const matched = (async function* () {
       yield { type: 'NOTE_MATCHED' as const }
-    }()
+    })()
     await store.consumePipelineEvents(matched)
 
     expect(usePracticeStore.getState().liveObservations).toEqual([])

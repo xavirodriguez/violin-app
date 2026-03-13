@@ -34,49 +34,63 @@ export function ExerciseCard({
     const initOSMD = async () => {
       if (!containerRef.current) return
       const osmd = new OpenSheetMusicDisplay(containerRef.current, {
-        autoResize: false, backend: 'svg', drawTitle: false, drawSubtitle: false,
-        drawComposer: false, drawLyricist: false, drawPartNames: false,
-        drawMeasureNumbers: false, drawFingerings: false,
+        autoResize: false,
+        backend: 'svg',
+        drawTitle: false,
+        drawSubtitle: false,
+        drawComposer: false,
+        drawLyricist: false,
+        drawPartNames: false,
+        drawMeasureNumbers: false,
+        drawFingerings: false,
       })
       try {
         await osmd.load(exercise.musicXML)
         if (!isMounted) return
         osmd.render()
         if (isMounted) setIsLoaded(true)
-      } catch (e) { console.error('Error rendering OSMD preview', e) }
+      } catch (e) {
+        console.error('Error rendering OSMD preview', e)
+      }
     }
     initOSMD()
-    return () => { isMounted = false }
+    return () => {
+      isMounted = false
+    }
   }, [exercise.musicXML])
 
   return (
     <Card
       className={cn(
-        'group relative flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer',
+        'group relative flex cursor-pointer flex-col overflow-hidden transition-all hover:shadow-lg',
         isSelected ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-border',
-        isRecommended && !isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/20' : ''
+        isRecommended && !isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/20' : '',
       )}
       onClick={onClick}
     >
       {isRecommended && (
         <div className="absolute top-2 right-2 z-10">
-          <Badge variant="default" className="bg-yellow-500 text-white border-none shadow-sm">
+          <Badge variant="default" className="border-none bg-yellow-500 text-white shadow-sm">
             Recommended
           </Badge>
         </div>
       )}
-      <div className="relative h-32 w-full bg-white overflow-hidden border-b">
+      <div className="relative h-32 w-full overflow-hidden border-b bg-white">
         {!isLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/10">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="bg-muted/10 absolute inset-0 flex items-center justify-center">
+            <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
           </div>
         )}
-        <div ref={containerRef} className="w-full transform scale-75 origin-top-left p-2" style={{ width: '133.33%' }} />
+        <div
+          ref={containerRef}
+          className="w-full origin-top-left scale-75 transform p-2"
+          style={{ width: '133.33%' }}
+        />
       </div>
-      <div className="p-4 space-y-3">
+      <div className="space-y-3 p-4">
         <div>
-          <h3 className="font-bold text-lg leading-tight line-clamp-1">{exercise.name}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{exercise.description}</p>
+          <h3 className="line-clamp-1 text-lg leading-tight font-bold">{exercise.name}</h3>
+          <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{exercise.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="gap-1">
@@ -93,16 +107,20 @@ export function ExerciseCard({
           </Badge>
         </div>
         {lastAttempt && (
-          <div className="pt-2 border-t mt-auto">
-            <div className="flex items-center justify-between text-xs mb-1">
+          <div className="mt-auto border-t pt-2">
+            <div className="mb-1 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Best Accuracy</span>
               <span className="font-bold">{lastAttempt.accuracy.toFixed(0)}%</span>
             </div>
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
               <div
                 className={cn(
-                  "h-full transition-all",
-                  lastAttempt.accuracy > 90 ? "bg-green-500" : lastAttempt.accuracy > 70 ? "bg-yellow-500" : "bg-red-500"
+                  'h-full transition-all',
+                  lastAttempt.accuracy > 90
+                    ? 'bg-green-500'
+                    : lastAttempt.accuracy > 70
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500',
                 )}
                 style={{ width: `${lastAttempt.accuracy}%` }}
               />

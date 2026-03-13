@@ -108,8 +108,5 @@
       "impact_if_successful": "Enhanced learning experience for all users"
     }
   ],
-  "next_30_days_focus": [
-    "FEATURE_TELEMETRY_ACCURACY",
-    "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"
-  ]
+  "next_30_days_focus": ["FEATURE_TELEMETRY_ACCURACY", "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY"]
 }

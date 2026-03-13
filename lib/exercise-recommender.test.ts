@@ -36,7 +36,12 @@ describe('getRecommendedExercise', () => {
     const progress: UserProgress = {
       ...emptyProgress,
       exerciseStats: {
-        '1': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 75, timesCompleted: 1, totalTimeMs: 1000 },
+        '1': {
+          lastPracticedMs: Date.now() - 1000,
+          bestAccuracy: 75,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
       },
     }
     const rec = getRecommendedExercise({
@@ -57,10 +62,18 @@ describe('getRecommendedExercise', () => {
     const progress: UserProgress = {
       ...emptyProgress,
       exerciseStats: {
-        '3': { lastPracticedMs: Date.now() - 100000, bestAccuracy: 65, timesCompleted: 1, totalTimeMs: 1000 },
+        '3': {
+          lastPracticedMs: Date.now() - 100000,
+          bestAccuracy: 65,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
       },
     }
-    const rec = getRecommendedExercise({ exercises: exercisesWithRegression, userProgress: progress })
+    const rec = getRecommendedExercise({
+      exercises: exercisesWithRegression,
+      userProgress: progress,
+    })
     expect(rec?.id).toBe('0') // Regression to beginner scale
   })
 
@@ -106,16 +119,36 @@ describe('getRecommendedExercise', () => {
     const progress: UserProgress = {
       ...emptyProgress,
       exerciseStats: {
-        '1': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
+        '1': {
+          lastPracticedMs: Date.now() - 1000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
         '2': {
           lastPracticedMs: Date.now() - 3 * 86400000,
           bestAccuracy: 95,
           timesCompleted: 1,
           totalTimeMs: 1000,
         },
-        '3': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
-        '4': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
-        '5': { lastPracticedMs: Date.now() - 1000, bestAccuracy: 95, timesCompleted: 1, totalTimeMs: 1000 },
+        '3': {
+          lastPracticedMs: Date.now() - 1000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
+        '4': {
+          lastPracticedMs: Date.now() - 1000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
+        '5': {
+          lastPracticedMs: Date.now() - 1000,
+          bestAccuracy: 95,
+          timesCompleted: 1,
+          totalTimeMs: 1000,
+        },
       },
     }
     const rec = getRecommendedExercise({ exercises: mockExercises, userProgress: progress })

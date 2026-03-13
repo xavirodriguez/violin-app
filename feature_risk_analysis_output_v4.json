@@ -48,7 +48,11 @@
         }
       ],
       "growth_enablers": [
-        { "enabler": "Promoting to permanent reduces code complexity.", "effort": "low", "impact": "Better DX" }
+        {
+          "enabler": "Promoting to permanent reduces code complexity.",
+          "effort": "low",
+          "impact": "Better DX"
+        }
       ]
     }
   ],

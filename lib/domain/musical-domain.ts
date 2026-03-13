@@ -58,9 +58,7 @@ export type CanonicalAccidental = -1 | 0 | 1
  *
  * @public
  */
-export function normalizeAccidental(
-  input: number | string | undefined,
-): CanonicalAccidental {
+export function normalizeAccidental(input: number | string | undefined): CanonicalAccidental {
   const mapping: Record<string, CanonicalAccidental> = {
     '1': 1,
     sharp: 1,

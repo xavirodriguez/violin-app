@@ -44,58 +44,58 @@ export const songsExercises: ExerciseData[] = [
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 8 },
-  
+
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
-  
+
       { pitch: parsePitch('A3'), duration: 4 },
       { pitch: parsePitch('A3'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 8 },
-  
+
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('A3'), duration: 8 },
-  
+
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('A3'), duration: 8 },
-  
+
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 8 },
-  
+
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
       { pitch: parsePitch('B3'), duration: 4 },
-  
+
       { pitch: parsePitch('A3'), duration: 4 },
       { pitch: parsePitch('A3'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 8 },
     ],
   },
-  
+
   {
     id: 'bile-em-cabbage-down-first-phrase',
     name: 'Bile Em Cabbage Down (First Phrase)',
@@ -103,7 +103,10 @@ export const songsExercises: ExerciseData[] = [
     category: 'Songs',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_G_MAJOR,
-    technicalGoals: [], estimatedDuration: "1 min", technicalTechnique: "General", notes: [
+    technicalGoals: [],
+    estimatedDuration: '1 min',
+    technicalTechnique: 'General',
+    notes: [
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 4 },
@@ -125,36 +128,36 @@ export const songsExercises: ExerciseData[] = [
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('C5'), duration: 4 },
       { pitch: parsePitch('D5'), duration: 4 },
-  
+
       { pitch: parsePitch('D5'), duration: 4 },
       { pitch: parsePitch('C5'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
-  
+
       { pitch: parsePitch('G4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
-  
+
       { pitch: parsePitch('B4'), duration: 6 },
       { pitch: parsePitch('A4'), duration: 2 },
       { pitch: parsePitch('A4'), duration: 8 },
-  
+
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('C5'), duration: 4 },
       { pitch: parsePitch('D5'), duration: 4 },
-  
+
       { pitch: parsePitch('D5'), duration: 4 },
       { pitch: parsePitch('C5'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
-  
+
       { pitch: parsePitch('G4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
-  
+
       { pitch: parsePitch('A4'), duration: 6 },
       { pitch: parsePitch('G4'), duration: 2 },
       { pitch: parsePitch('G4'), duration: 8 },
@@ -175,34 +178,34 @@ export const songsExercises: ExerciseData[] = [
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 8 },
-  
+
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 8 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 8 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
-  
+
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
-  
+
       { pitch: parsePitch('C4'), duration: 16 },
     ],
   },
@@ -221,43 +224,41 @@ export const songsExercises: ExerciseData[] = [
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('F4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 8 },
-  
+
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('F4'), duration: 4 },
       { pitch: parsePitch('G4'), duration: 8 },
-  
+
       { pitch: parsePitch('G4'), duration: 2 },
       { pitch: parsePitch('A4'), duration: 2 },
       { pitch: parsePitch('G4'), duration: 2 },
       { pitch: parsePitch('F4'), duration: 2 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('G4'), duration: 2 },
       { pitch: parsePitch('A4'), duration: 2 },
       { pitch: parsePitch('G4'), duration: 2 },
       { pitch: parsePitch('F4'), duration: 2 },
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 4 },
-  
+
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 8 },
-  
+
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('C4'), duration: 8 },
     ],
   },
-    
-  
 ]

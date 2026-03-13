@@ -47,19 +47,19 @@ export const useSessionHistoryStore = create<SessionHistoryState & SessionHistor
       sessions: [],
 
       addSession: (session) => {
-        set(state => ({
-          sessions: [session, ...state.sessions].slice(0, 100)
+        set((state) => ({
+          sessions: [session, ...state.sessions].slice(0, 100),
         }))
       },
 
       getHistory: (days = 7) => {
         const { sessions } = get()
-        const cutoffMs = Date.now() - (days * 24 * 60 * 60 * 1000)
-        return sessions.filter(s => s.endTimeMs >= cutoffMs)
-      }
+        const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000
+        return sessions.filter((s) => s.endTimeMs >= cutoffMs)
+      },
     }),
     {
-      name: 'violin-session-history'
-    }
-  )
+      name: 'violin-session-history',
+    },
+  ),
 )

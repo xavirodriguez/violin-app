@@ -13,7 +13,12 @@ describe('NoteSegmenter', () => {
     maxNoteFrames: 10,
   }
 
-  const createPitchedFrame = (ts: number, rms: number, conf: number, name: string): TechniqueFrame => ({
+  const createPitchedFrame = (
+    ts: number,
+    rms: number,
+    conf: number,
+    name: string,
+  ): TechniqueFrame => ({
     kind: 'pitched',
     timestamp: ts as TimestampMs,
     rms,

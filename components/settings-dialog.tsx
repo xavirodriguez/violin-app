@@ -57,7 +57,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
     setFeedbackLevel,
     toggleTechnicalDetails,
     toggleCelebrations,
-    toggleSoundFeedback
+    toggleSoundFeedback,
   } = usePreferencesStore()
 
   useEffect(() => {
@@ -79,7 +79,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
         <div className="grid gap-6 py-4">
           {/* Audio Settings */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold border-b pb-2">Audio Input</h3>
+            <h3 className="border-b pb-2 text-sm font-semibold">Audio Input</h3>
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="mic-select" className="text-right">
@@ -116,29 +116,20 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
 
           {/* Feedback Preferences */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold border-b pb-2">Feedback Preferences</h3>
+            <h3 className="border-b pb-2 text-sm font-semibold">Feedback Preferences</h3>
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="feedback-level" className="text-right">
                 Level
               </Label>
-              <Select
-                value={feedbackLevel}
-                onValueChange={(v) => setFeedbackLevel(v as any)}
-              >
+              <Select value={feedbackLevel} onValueChange={(v) => setFeedbackLevel(v as any)}>
                 <SelectTrigger id="feedback-level" className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">
-                    🌱 Beginner (simple visual)
-                  </SelectItem>
-                  <SelectItem value="intermediate">
-                    🎯 Intermediate (hybrid)
-                  </SelectItem>
-                  <SelectItem value="advanced">
-                    🏆 Advanced (technical)
-                  </SelectItem>
+                  <SelectItem value="beginner">🌱 Beginner (simple visual)</SelectItem>
+                  <SelectItem value="intermediate">🎯 Intermediate (hybrid)</SelectItem>
+                  <SelectItem value="advanced">🏆 Advanced (technical)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -226,7 +226,7 @@ export const transitions = {
   reset: (): IdleState => ({
     status: 'idle',
     exercise: undefined,
-    error: undefined
+    error: undefined,
   }),
 
   /**
@@ -235,6 +235,6 @@ export const transitions = {
   selectExercise: (exercise: Exercise): IdleState => ({
     status: 'idle',
     exercise,
-    error: undefined
-  })
+    error: undefined,
+  }),
 }

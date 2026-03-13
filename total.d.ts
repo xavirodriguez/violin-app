@@ -1,43 +1,42 @@
-
 // ===== types-docs/.next/dev/types/validator.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/.next/types/validator.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/achievement-system.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/full-flow-verification.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/initialization-flow.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/practice-flow.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/practice-integration.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/type-safety/branded-types.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/type-safety/exercise-compatibility.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/__tests__/type-safety/range-validation.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/app/error.d.ts =====
 
@@ -48,16 +47,19 @@ export {};
 _fallback UI. It also logs the error for observability.
  * See: https://nextjs.org/docs/app/building-your-application/routing/error-handling
  */
-export default function Error({ error, reset, }: {
-    error: Error & {
-        digest?: string;
-    };
-    reset: () => void;
-}): import("react/jsx-runtime").JSX.Element;
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & {
+    digest?: string
+  }
+  reset: () => void
+}): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/app/global-error.d.ts =====
 
-import './globals.css';
+import './globals.css'
 /**
  * Implements the Next.js global error boundary for the entire application.
  * @remarks This component catches errors that occur in the root layout and
@@ -65,27 +67,32 @@ import './globals.css';
  * It MUST define its own `<html>` and `<body>` tags.
  * See: https://nextjs.org/docs/app/building-your-application/routing/error-handling#handling-errors-in-root-layouts
  */
-export default function GlobalError({ error, reset, }: {
-    error: Error & {
-        digest?: string;
-    };
-    reset: () => void;
-}): import("react/jsx-runtime").JSX.Element;
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & {
+    digest?: string
+  }
+  reset: () => void
+}): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/app/layout.d.ts =====
 
-import type React from 'react';
-import type { Metadata } from 'next';
-import './globals.css';
-export declare const metadata: Metadata;
+import type React from 'react'
+import type { Metadata } from 'next'
+import './globals.css'
+export declare const metadata: Metadata
 /**
  * The root layout for the application.
  * @remarks This component wraps all pages and sets up the base `<html>` and `<body>`
  * elements, including fonts and Vercel analytics.
  */
-export default function RootLayout({ children, }: Readonly<{
-    children: React.ReactNode;
-}>): import("react/jsx-runtime").JSX.Element;
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/app/page.d.ts =====
 
@@ -95,29 +102,35 @@ export default function RootLayout({ children, }: Readonly<{
  * changes based on the selected mode (`Tuner`, `Practice`, or `Dashboard`).
  * It also manages the visibility of the settings dialog.
  */
-export default function Home(): import("react/jsx-runtime").JSX.Element;
+export default function Home(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/app/test-pages/sheet-music/page.d.ts =====
 
-export default function SheetMusicTestPage(): import("react/jsx-runtime").JSX.Element;
+export default function SheetMusicTestPage(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/achievement-toast.d.ts =====
 
-import type { Achievement } from '@/stores/analytics-store';
+import type { Achievement } from '@/stores/analytics-store'
 interface AchievementToastProps {
-    achievement: Achievement;
-    onDismiss: () => void;
-    autoHideDuration?: number;
+  achievement: Achievement
+  onDismiss: () => void
+  autoHideDuration?: number
 }
 /**
  * Notificación animada que celebra logros desbloqueados
  */
-export declare function AchievementToast({ achievement, onDismiss, autoHideDuration }: AchievementToastProps): import("react/jsx-runtime").JSX.Element;
+export declare function AchievementToast({
+  achievement,
+  onDismiss,
+  autoHideDuration,
+}: AchievementToastProps): import('react/jsx-runtime').JSX.Element
 /**
  * Manager component para manejar cola de notificaciones de logros
  */
-export declare function AchievementNotificationManager(): import("react/jsx-runtime").JSX.Element | null;
-export {};
+export declare function AchievementNotificationManager():
+  | import('react/jsx-runtime').JSX.Element
+  | null
+export {}
 
 // ===== types-docs/components/analytics-dashboard.d.ts =====
 
@@ -135,22 +148,27 @@ export {};
  * - Subscribes to `useAnalyticsStore` for the user's progress data.
  * - Uses internal utility functions to format data for the `recharts` components.
  */
-export declare function AnalyticsDashboard(): import("react/jsx-runtime").JSX.Element;
+export declare function AnalyticsDashboard(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/emotional-feedback.d.ts =====
 
 interface EmotionalFeedbackProps {
-    centsOff: number | null;
-    isInTune: boolean;
-    noteMatches: boolean;
-    status: string;
+  centsOff: number | null
+  isInTune: boolean
+  noteMatches: boolean
+  status: string
 }
 /**
  * Componente que proporciona feedback emocional visual
  * adaptado al nivel de experiencia del usuario
  */
-export declare function EmotionalFeedback({ centsOff, isInTune, noteMatches, status }: EmotionalFeedbackProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function EmotionalFeedback({
+  centsOff,
+  isInTune,
+  noteMatches,
+  status,
+}: EmotionalFeedbackProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/error-boundary.d.ts =====
 
@@ -158,26 +176,26 @@ export {};
  * ErrorBoundary
  * A classic React error boundary for catching client-side rendering errors.
  */
-import React from 'react';
+import React from 'react'
 /**
  * Props for the ErrorBoundary component.
  */
 interface Props {
-    /** The children components to be wrapped and monitored for errors. */
-    children: React.ReactNode;
-    /** An optional fallback UI to display when an error occurs. */
-    fallback?: React.ReactNode;
-    /** An optional callback triggered when an error is caught. */
-    onError?: (error: Error) => void;
+  /** The children components to be wrapped and monitored for errors. */
+  children: React.ReactNode
+  /** An optional fallback UI to display when an error occurs. */
+  fallback?: React.ReactNode
+  /** An optional callback triggered when an error is caught. */
+  onError?: (error: Error) => void
 }
 /**
  * Internal state for the ErrorBoundary.
  */
 interface State {
-    /** Whether an error has been caught in the current boundary. */
-    hasError: boolean;
-    /** The error object that was caught, if any. */
-    error: Error | null;
+  /** Whether an error has been caught in the current boundary. */
+  hasError: boolean
+  /** The error object that was caught, if any. */
+  error: Error | null
 }
 /**
  * A class-based component that catches JavaScript errors anywhere in its child component tree.
@@ -192,54 +210,86 @@ interface State {
  * or server-side rendering.
  */
 export declare class ErrorBoundary extends React.Component<Props, State> {
-    constructor(props: Props);
-    /** Updates state so the next render will show the fallback UI. */
-    static getDerivedStateFromError(error: Error): State;
-    /**
-     * Called after an error has been thrown by a descendant component.
-     * Logs the error and its component stack trace.
-     */
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void;
-    render(): string | number | bigint | boolean | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | import("react/jsx-runtime").JSX.Element | null | undefined;
+  constructor(props: Props)
+  /** Updates state so the next render will show the fallback UI. */
+  static getDerivedStateFromError(error: Error): State
+  /**
+   * Called after an error has been thrown by a descendant component.
+   * Logs the error and its component stack trace.
+   */
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void
+  render():
+    | string
+    | number
+    | bigint
+    | boolean
+    | Iterable<React.ReactNode>
+    | Promise<
+        | string
+        | number
+        | bigint
+        | boolean
+        | React.ReactPortal
+        | React.ReactElement<unknown, string | React.JSXElementConstructor<any>>
+        | Iterable<React.ReactNode>
+        | null
+        | undefined
+      >
+    | import('react/jsx-runtime').JSX.Element
+    | null
+    | undefined
 }
-export {};
+export {}
 
 // ===== types-docs/components/exercise-card.d.ts =====
 
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/musical-types'
 interface ExerciseCardProps {
-    exercise: Exercise;
-    isRecommended?: boolean;
-    lastAttempt?: {
-        accuracy: number;
-        timestamp: number;
-    };
-    onClick: () => void;
-    isSelected: boolean;
+  exercise: Exercise
+  isRecommended?: boolean
+  lastAttempt?: {
+    accuracy: number
+    timestamp: number
+  }
+  onClick: () => void
+  isSelected: boolean
 }
 /**
  * Visual card representing a violin exercise with OSMD preview.
  */
-export declare function ExerciseCard({ exercise, isRecommended, lastAttempt, onClick, isSelected, }: ExerciseCardProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function ExerciseCard({
+  exercise,
+  isRecommended,
+  lastAttempt,
+  onClick,
+  isSelected,
+}: ExerciseCardProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/exercise-preview-modal.d.ts =====
 
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/musical-types'
 interface ExercisePreviewModalProps {
-    exercise: Exercise | null;
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
-    onStart: () => void;
+  exercise: Exercise | null
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onStart: () => void
 }
-export declare function ExercisePreviewModal({ exercise, isOpen, onOpenChange, onStart }: ExercisePreviewModalProps): import("react/jsx-runtime").JSX.Element | null;
-export {};
+export declare function ExercisePreviewModal({
+  exercise,
+  isOpen,
+  onOpenChange,
+  onStart,
+}: ExercisePreviewModalProps): import('react/jsx-runtime').JSX.Element | null
+export {}
 
 // ===== types-docs/components/onboarding/onboarding-flow.d.ts =====
 
-export declare function OnboardingFlow({ onComplete }: {
-    onComplete: () => void;
-}): import("react/jsx-runtime").JSX.Element;
+export declare function OnboardingFlow({
+  onComplete,
+}: {
+  onComplete: () => void
+}): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/practice-assistant.d.ts =====
 
@@ -255,38 +305,48 @@ export declare function OnboardingFlow({ onComplete }: {
  * This component remains hidden until the user triggers it via `Meta+K` or `Ctrl+K`.
  * It provides a searchable interface for all available exercises.
  */
-export declare function PracticeAssistant(): import("react/jsx-runtime").JSX.Element;
+export declare function PracticeAssistant(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/practice-completion.d.ts =====
 
-import { type PracticeSession } from '@/stores/analytics-store';
+import { type PracticeSession } from '@/stores/analytics-store'
 interface PracticeCompletionProps {
-    onRestart: () => void;
-    sessionData: PracticeSession | null;
+  onRestart: () => void
+  sessionData: PracticeSession | null
 }
-export declare function PracticeCompletion({ onRestart, sessionData }: PracticeCompletionProps): import("react/jsx-runtime").JSX.Element | null;
-export {};
+export declare function PracticeCompletion({
+  onRestart,
+  sessionData,
+}: PracticeCompletionProps): import('react/jsx-runtime').JSX.Element | null
+export {}
 
 // ===== types-docs/components/practice-feedback.d.ts =====
 
-import { Observation } from '@/lib/technique-types';
+import { Observation } from '@/lib/technique-types'
 interface PracticeFeedbackProps {
-    targetNote: string;
-    detectedPitchName?: string;
-    centsOff?: number | null;
-    status: string;
-    centsTolerance?: number;
-    liveObservations?: Observation[];
-    holdDuration?: number;
-    requiredHoldTime?: number;
-    perfectNoteStreak?: number;
+  targetNote: string
+  detectedPitchName?: string
+  centsOff?: number | null
+  status: string
+  centsTolerance?: number
+  liveObservations?: Observation[]
+  holdDuration?: number
+  requiredHoldTime?: number
+  perfectNoteStreak?: number
 }
-export declare function PracticeFeedback({ targetNote, detectedPitchName, centsOff, status, centsTolerance, liveObservations, }: PracticeFeedbackProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function PracticeFeedback({
+  targetNote,
+  detectedPitchName,
+  centsOff,
+  status,
+  centsTolerance,
+  liveObservations,
+}: PracticeFeedbackProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/practice-feedback.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/components/practice-mode.d.ts =====
 
@@ -299,38 +359,48 @@ export {};
 /**
  * Renders the practice interface and manages its complex lifecycle.
  */
-export declare function PracticeMode(): import("react/jsx-runtime").JSX.Element;
+export declare function PracticeMode(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/practice-quick-actions.d.ts =====
 
 interface PracticeQuickActionsProps {
-    status: string;
-    onRepeatNote: () => void;
-    onRepeatMeasure: () => void;
-    onContinue: () => void;
-    onTogglePause: () => void;
-    onToggleZen: () => void;
-    isZen: boolean;
+  status: string
+  onRepeatNote: () => void
+  onRepeatMeasure: () => void
+  onContinue: () => void
+  onTogglePause: () => void
+  onToggleZen: () => void
+  isZen: boolean
 }
-export declare function PracticeQuickActions({ status, onRepeatNote, onRepeatMeasure, onContinue, onTogglePause, onToggleZen, isZen }: PracticeQuickActionsProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function PracticeQuickActions({
+  status,
+  onRepeatNote,
+  onRepeatMeasure,
+  onContinue,
+  onTogglePause,
+  onToggleZen,
+  isZen,
+}: PracticeQuickActionsProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/practice-summary-chart.d.ts =====
 
 interface NoteAttempt {
-    noteIndex: number;
-    targetPitch: string;
-    accuracy: number;
-    cents: number;
+  noteIndex: number
+  targetPitch: string
+  accuracy: number
+  cents: number
 }
 interface PracticeSummaryChartProps {
-    noteAttempts: NoteAttempt[];
+  noteAttempts: NoteAttempt[]
 }
 /**
  * Visual summary of exercise performance with accuracy heatmap.
  */
-export declare function PracticeSummaryChart({ noteAttempts }: PracticeSummaryChartProps): import("react/jsx-runtime").JSX.Element | null;
-export {};
+export declare function PracticeSummaryChart({
+  noteAttempts,
+}: PracticeSummaryChartProps): import('react/jsx-runtime').JSX.Element | null
+export {}
 
 // ===== types-docs/components/settings-dialog.d.ts =====
 
@@ -338,15 +408,15 @@ export {};
  * SettingsDialog
  * A dialog component for managing application-wide settings like audio input and sensitivity.
  */
-import { FC } from 'react';
+import { FC } from 'react'
 /**
  * Props for the SettingsDialog component.
  */
 interface SettingsDialogProps {
-    /** Controls whether the dialog is visible. */
-    isOpen: boolean;
-    /** Callback function to close the dialog. */
-    onClose: () => void;
+  /** Controls whether the dialog is visible. */
+  isOpen: boolean
+  /** Callback function to close the dialog. */
+  onClose: () => void
 }
 /**
  * Renders a settings modal that allows users to configure their audio environment.
@@ -354,26 +424,31 @@ interface SettingsDialogProps {
  * @param props - Component properties.
  * @returns A JSX element containing the dialog with device and sensitivity controls.
  */
-declare const SettingsDialog: FC<SettingsDialogProps>;
-export default SettingsDialog;
+declare const SettingsDialog: FC<SettingsDialogProps>
+export default SettingsDialog
 
 // ===== types-docs/components/sheet-music-annotations.d.ts =====
 
-import React from 'react';
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+import React from 'react'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 export interface Annotation {
-    fingerNumber?: 0 | 1 | 2 | 3 | 4;
-    bowDirection?: 'up' | 'down';
-    warningFlag?: boolean;
+  fingerNumber?: 0 | 1 | 2 | 3 | 4
+  bowDirection?: 'up' | 'down'
+  warningFlag?: boolean
 }
 interface SheetMusicAnnotationsProps {
-    annotations: Record<number, Annotation>;
-    currentNoteIndex: number;
-    osmd: OpenSheetMusicDisplay | null;
-    containerRef: React.RefObject<HTMLDivElement | null>;
+  annotations: Record<number, Annotation>
+  currentNoteIndex: number
+  osmd: OpenSheetMusicDisplay | null
+  containerRef: React.RefObject<HTMLDivElement | null>
 }
-export declare function SheetMusicAnnotations({ annotations, currentNoteIndex, osmd, containerRef }: SheetMusicAnnotationsProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function SheetMusicAnnotations({
+  annotations,
+  currentNoteIndex,
+  osmd,
+  containerRef,
+}: SheetMusicAnnotationsProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/sheet-music-display.d.ts =====
 
@@ -381,15 +456,15 @@ export {};
  * SheetMusicDisplay
  * A high-level component for displaying sheet music with configurable options.
  */
-import { IOSMDOptions } from 'opensheetmusicdisplay';
+import { IOSMDOptions } from 'opensheetmusicdisplay'
 /**
  * Props for the SheetMusicDisplay component.
  */
 interface SheetMusicDisplayProps {
-    /** The MusicXML string to be rendered. */
-    musicXML: string;
-    /** Initial configuration options for OSMD. */
-    initialOptions?: IOSMDOptions;
+  /** The MusicXML string to be rendered. */
+  musicXML: string
+  /** Initial configuration options for OSMD. */
+  initialOptions?: IOSMDOptions
 }
 /**
  * Renders a sheet music display with a toggle for dark mode.
@@ -401,8 +476,11 @@ interface SheetMusicDisplayProps {
  * This component demonstrates how to use the `useOSMDSafe` hook and
  * provides a simple UI to interact with OSMD options.
  */
-export declare function SheetMusicDisplay({ musicXML, initialOptions }: SheetMusicDisplayProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function SheetMusicDisplay({
+  musicXML,
+  initialOptions,
+}: SheetMusicDisplayProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/sheet-music.d.ts =====
 
@@ -410,20 +488,20 @@ export {};
  * SheetMusic
  * A presentation component for rendering the OSMD sheet music container.
  */
-import React from 'react';
+import React from 'react'
 /**
  * Props for the SheetMusic component.
  */
 interface SheetMusicProps {
-    /**
-     * A ref to the div element where OSMD will render the score.
-     * This should be the `containerRef` returned by `useOSMDSafe`.
-     */
-    containerRef: React.RefObject<HTMLDivElement | null>;
-    /** Indicates if the sheet music has finished rendering. */
-    isReady: boolean;
-    /** Error message to display if rendering fails. */
-    error: string | null;
+  /**
+   * A ref to the div element where OSMD will render the score.
+   * This should be the `containerRef` returned by `useOSMDSafe`.
+   */
+  containerRef: React.RefObject<HTMLDivElement | null>
+  /** Indicates if the sheet music has finished rendering. */
+  isReady: boolean
+  /** Error message to display if rendering fails. */
+  error: string | null
 }
 /**
  * Renders the visual container and loading/error states for sheet music.
@@ -436,12 +514,16 @@ interface SheetMusicProps {
  * representation. It uses absolute positioning for the loading spinner to
  * prevent layout shifts when the score is ready.
  */
-export declare function SheetMusic({ containerRef, isReady, error }: SheetMusicProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function SheetMusic({
+  containerRef,
+  isReady,
+  error,
+}: SheetMusicProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/theme-provider.d.ts =====
 
-import { type ThemeProviderProps } from 'next-themes';
+import { type ThemeProviderProps } from 'next-themes'
 /**
  * A wrapper around `next-themes`'s `ThemeProvider` to integrate with the Next.js App Router.
  *
@@ -453,7 +535,10 @@ import { type ThemeProviderProps } from 'next-themes';
  * @param props - The properties for the theme provider, including children.
  * @returns A JSX element that provides theme context to its children.
  */
-export declare function ThemeProvider({ children, ...props }: ThemeProviderProps): import("react/jsx-runtime").JSX.Element;
+export declare function ThemeProvider({
+  children,
+  ...props
+}: ThemeProviderProps): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/tuner-display.d.ts =====
 
@@ -465,12 +550,12 @@ export declare function ThemeProvider({ children, ...props }: ThemeProviderProps
  * Props for the TunerDisplay component.
  */
 interface TunerDisplayProps {
-    /** The musical name of the detected note (e.g., "A4"). */
-    note: string | null;
-    /** The deviation from the ideal frequency in cents. */
-    cents: number | null;
-    /** The confidence level of the pitch detection (0-1). */
-    confidence: number;
+  /** The musical name of the detected note (e.g., "A4"). */
+  note: string | null
+  /** The deviation from the ideal frequency in cents. */
+  cents: number | null
+  /** The confidence level of the pitch detection (0-1). */
+  confidence: number
 }
 /**
  * Renders the tuner's main visual feedback.
@@ -484,8 +569,12 @@ interface TunerDisplayProps {
  * - Color-coded zones (green for in-tune, yellow for close, red for far).
  * - Accessibility: Includes a screen-reader-only live region for pitch updates.
  */
-export declare function TunerDisplay({ note, cents, confidence }: TunerDisplayProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function TunerDisplay({
+  note,
+  cents,
+  confidence,
+}: TunerDisplayProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/tuner-mode.d.ts =====
 
@@ -497,264 +586,449 @@ export {};
 /**
  * Main component for the Tuner mode.
  */
-export declare function TunerMode(): import("react/jsx-runtime").JSX.Element;
+export declare function TunerMode(): import('react/jsx-runtime').JSX.Element
 
 // ===== types-docs/components/ui/badge.d.ts =====
 
-import * as React from "react";
-import { type VariantProps } from "class-variance-authority";
-declare const badgeVariants: (props?: ({
-    variant?: "default" | "destructive" | "outline" | "secondary" | null | undefined;
-} & import("class-variance-authority/types").ClassProp) | undefined) => string;
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
-}
-declare function Badge({ className, variant, ...props }: BadgeProps): import("react/jsx-runtime").JSX.Element;
-export { Badge, badgeVariants };
+import * as React from 'react'
+import { type VariantProps } from 'class-variance-authority'
+declare const badgeVariants: (
+  props?:
+    | ({
+        variant?: 'default' | 'destructive' | 'outline' | 'secondary' | null | undefined
+      } & import('class-variance-authority/types').ClassProp)
+    | undefined,
+) => string
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+declare function Badge({
+  className,
+  variant,
+  ...props
+}: BadgeProps): import('react/jsx-runtime').JSX.Element
+export { Badge, badgeVariants }
 
 // ===== types-docs/components/ui/button.d.ts =====
 
-import * as React from 'react';
-import { type VariantProps } from 'class-variance-authority';
-declare const buttonVariants: (props?: ({
-    variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
-    size?: "default" | "icon" | "sm" | "lg" | "icon-sm" | "icon-lg" | null | undefined;
-} & import("class-variance-authority/types").ClassProp) | undefined) => string;
+import * as React from 'react'
+import { type VariantProps } from 'class-variance-authority'
+declare const buttonVariants: (
+  props?:
+    | ({
+        variant?:
+          | 'default'
+          | 'link'
+          | 'destructive'
+          | 'outline'
+          | 'secondary'
+          | 'ghost'
+          | null
+          | undefined
+        size?: 'default' | 'icon' | 'sm' | 'lg' | 'icon-sm' | 'icon-lg' | null | undefined
+      } & import('class-variance-authority/types').ClassProp)
+    | undefined,
+) => string
 /**
  * Un componente de botón personalizable con variantes de estilo y tamaño.
  * @remarks Se basa en `class-variance-authority` para gestionar las variantes
  * y `Radix UI Slot` para permitir la composición con otros componentes.
  */
-declare function Button({ className, variant, size, asChild, ...props }: React.ComponentProps<'button'> & VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-}): import("react/jsx-runtime").JSX.Element;
-export { Button, buttonVariants };
+declare function Button({
+  className,
+  variant,
+  size,
+  asChild,
+  ...props
+}: React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }): import('react/jsx-runtime').JSX.Element
+export { Button, buttonVariants }
 
 // ===== types-docs/components/ui/card.d.ts =====
 
-import * as React from 'react';
+import * as React from 'react'
 /**
  * Un contenedor de contenido flexible para agrupar información relacionada.
  */
-declare function Card({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function Card({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * La sección de cabecera de un `Card`, ideal para `CardTitle` y `CardDescription`.
  */
-declare function CardHeader({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function CardHeader({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * El título de un `Card`, para ser usado dentro de `CardHeader`.
  */
-declare function CardTitle({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function CardTitle({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * La descripción de un `Card`, para ser usada dentro de `CardHeader`.
  */
-declare function CardDescription({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function CardDescription({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * Un contenedor para acciones (ej. un botón) dentro de `CardHeader`.
  */
-declare function CardAction({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function CardAction({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * La sección principal de contenido de un `Card`.
  */
-declare function CardContent({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function CardContent({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * La sección de pie de página de un `Card`.
  */
-declare function CardFooter({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
-export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent };
+declare function CardFooter({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent }
 
 // ===== types-docs/components/ui/dialog.d.ts =====
 
-import * as React from 'react';
-import * as DialogPrimitive from '@radix-ui/react-dialog';
+import * as React from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 /**
  * El contenedor raíz para un cuadro de diálogo, basado en `Radix UI Dialog`.
  */
-declare function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>): import("react/jsx-runtime").JSX.Element;
+declare function Dialog({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>): import('react/jsx-runtime').JSX.Element
 /**
  * El botón o elemento que abre el cuadro de diálogo.
  */
-declare function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>): import("react/jsx-runtime").JSX.Element;
+declare function DialogTrigger({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Trigger>): import('react/jsx-runtime').JSX.Element
 /**
  * Renderiza el contenido del diálogo en un portal, fuera de la jerarquía DOM principal.
  */
-declare function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>): import("react/jsx-runtime").JSX.Element;
+declare function DialogPortal({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>): import('react/jsx-runtime').JSX.Element
 /**
  * Un botón o elemento que cierra el cuadro de diálogo.
  */
-declare function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>): import("react/jsx-runtime").JSX.Element;
+declare function DialogClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>): import('react/jsx-runtime').JSX.Element
 /**
  * El fondo semitransparente que se muestra detrás del cuadro de diálogo.
  */
-declare function DialogOverlay({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>): import("react/jsx-runtime").JSX.Element;
+declare function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>): import('react/jsx-runtime').JSX.Element
 /**
  * El contenedor principal del contenido del cuadro de diálogo.
  */
-declare function DialogContent({ className, children, showCloseButton, ...props }: React.ComponentProps<typeof DialogPrimitive.Content> & {
-    /** Muestra u oculta el botón de cierre por defecto. */
-    showCloseButton?: boolean;
-}): import("react/jsx-runtime").JSX.Element;
+declare function DialogContent({
+  className,
+  children,
+  showCloseButton,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  /** Muestra u oculta el botón de cierre por defecto. */
+  showCloseButton?: boolean
+}): import('react/jsx-runtime').JSX.Element
 /**
  * La cabecera del cuadro de diálogo, ideal para `DialogTitle` y `DialogDescription`.
  */
-declare function DialogHeader({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function DialogHeader({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * El pie de página del cuadro de diálogo, útil para botones de acción.
  */
-declare function DialogFooter({ className, ...props }: React.ComponentProps<'div'>): import("react/jsx-runtime").JSX.Element;
+declare function DialogFooter({
+  className,
+  ...props
+}: React.ComponentProps<'div'>): import('react/jsx-runtime').JSX.Element
 /**
  * El título del cuadro de diálogo, para ser usado dentro de `DialogHeader`.
  */
-declare function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>): import("react/jsx-runtime").JSX.Element;
+declare function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>): import('react/jsx-runtime').JSX.Element
 /**
  * La descripción del cuadro de diálogo, para ser usada dentro de `DialogHeader`.
  */
-declare function DialogDescription({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Description>): import("react/jsx-runtime").JSX.Element;
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger, };
+declare function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<
+  typeof DialogPrimitive.Description
+>): import('react/jsx-runtime').JSX.Element
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+}
 
 // ===== types-docs/components/ui/label.d.ts =====
 
-import * as React from 'react';
-import * as LabelPrimitive from '@radix-ui/react-label';
+import * as React from 'react'
+import * as LabelPrimitive from '@radix-ui/react-label'
 /**
  * Muestra una etiqueta accesible para elementos de formulario.
  * @remarks Se basa en `Radix UI Label` para proporcionar una mejor accesibilidad y
  * se integra con los estilos del sistema de diseño.
  */
-declare function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>): import("react/jsx-runtime").JSX.Element;
-export { Label };
+declare function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>): import('react/jsx-runtime').JSX.Element
+export { Label }
 
 // ===== types-docs/components/ui/pitch-accuracy-meter.d.ts =====
 
 interface PitchAccuracyMeterProps {
-    centsOff: number | null;
-    isInTune: boolean;
-    showNumericValue?: boolean;
+  centsOff: number | null
+  isInTune: boolean
+  showNumericValue?: boolean
 }
-export declare function PitchAccuracyMeter({ centsOff, isInTune, showNumericValue, }: PitchAccuracyMeterProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function PitchAccuracyMeter({
+  centsOff,
+  isInTune,
+  showNumericValue,
+}: PitchAccuracyMeterProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/components/ui/progress.d.ts =====
 
-import * as React from 'react';
-import * as ProgressPrimitive from '@radix-ui/react-progress';
-declare const Progress: React.ForwardRefExoticComponent<Omit<ProgressPrimitive.ProgressProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
-export { Progress };
+import * as React from 'react'
+import * as ProgressPrimitive from '@radix-ui/react-progress'
+declare const Progress: React.ForwardRefExoticComponent<
+  Omit<ProgressPrimitive.ProgressProps & React.RefAttributes<HTMLDivElement>, 'ref'> &
+    React.RefAttributes<HTMLDivElement>
+>
+export { Progress }
 
 // ===== types-docs/components/ui/scroll-area.d.ts =====
 
-import * as React from 'react';
-import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
-declare const ScrollArea: React.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
-declare const ScrollBar: React.ForwardRefExoticComponent<Omit<ScrollAreaPrimitive.ScrollAreaScrollbarProps & React.RefAttributes<HTMLDivElement>, "ref"> & React.RefAttributes<HTMLDivElement>>;
-export { ScrollArea, ScrollBar };
+import * as React from 'react'
+import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
+declare const ScrollArea: React.ForwardRefExoticComponent<
+  Omit<ScrollAreaPrimitive.ScrollAreaProps & React.RefAttributes<HTMLDivElement>, 'ref'> &
+    React.RefAttributes<HTMLDivElement>
+>
+declare const ScrollBar: React.ForwardRefExoticComponent<
+  Omit<ScrollAreaPrimitive.ScrollAreaScrollbarProps & React.RefAttributes<HTMLDivElement>, 'ref'> &
+    React.RefAttributes<HTMLDivElement>
+>
+export { ScrollArea, ScrollBar }
 
 // ===== types-docs/components/ui/select.d.ts =====
 
-import * as React from 'react';
-import * as SelectPrimitive from '@radix-ui/react-select';
+import * as React from 'react'
+import * as SelectPrimitive from '@radix-ui/react-select'
 /**
  * El contenedor raíz para un menú de selección, basado en `Radix UI Select`.
  */
-declare function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>): import("react/jsx-runtime").JSX.Element;
+declare function Select({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root>): import('react/jsx-runtime').JSX.Element
 /**
  * Agrupa opciones dentro de un `Select`.
  */
-declare function SelectGroup({ ...props }: React.ComponentProps<typeof SelectPrimitive.Group>): import("react/jsx-runtime").JSX.Element;
+declare function SelectGroup({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Group>): import('react/jsx-runtime').JSX.Element
 /**
  * Muestra el valor seleccionado de un `Select` cuando está cerrado.
  */
-declare function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>): import("react/jsx-runtime").JSX.Element;
+declare function SelectValue({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Value>): import('react/jsx-runtime').JSX.Element
 /**
  * El botón que abre y cierra el menú de selección.
  */
-declare function SelectTrigger({ className, size, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-    size?: 'sm' | 'default';
-}): import("react/jsx-runtime").JSX.Element;
+declare function SelectTrigger({
+  className,
+  size,
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: 'sm' | 'default'
+}): import('react/jsx-runtime').JSX.Element
 /**
  * El contenedor de las opciones del menú de selección.
  */
-declare function SelectContent({ className, children, position, align, ...props }: React.ComponentProps<typeof SelectPrimitive.Content>): import("react/jsx-runtime").JSX.Element;
+declare function SelectContent({
+  className,
+  children,
+  position,
+  align,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Content>): import('react/jsx-runtime').JSX.Element
 /**
  * Una etiqueta para un grupo de opciones de `Select`.
  */
-declare function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>): import("react/jsx-runtime").JSX.Element;
+declare function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Label>): import('react/jsx-runtime').JSX.Element
 /**
  * Una opción individual dentro de un `Select`.
  */
-declare function SelectItem({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Item>): import("react/jsx-runtime").JSX.Element;
+declare function SelectItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Item>): import('react/jsx-runtime').JSX.Element
 /**
  * Un separador visual para agrupar opciones en un `Select`.
  */
-declare function SelectSeparator({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Separator>): import("react/jsx-runtime").JSX.Element;
+declare function SelectSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Separator>): import('react/jsx-runtime').JSX.Element
 /**
  * Un botón para desplazarse hacia arriba en la lista de opciones.
  */
-declare function SelectScrollUpButton({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>): import("react/jsx-runtime").JSX.Element;
+declare function SelectScrollUpButton({
+  className,
+  ...props
+}: React.ComponentProps<
+  typeof SelectPrimitive.ScrollUpButton
+>): import('react/jsx-runtime').JSX.Element
 /**
  * Un botón para desplazarse hacia abajo en la lista de opciones.
  */
-declare function SelectScrollDownButton({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>): import("react/jsx-runtime").JSX.Element;
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue, };
+declare function SelectScrollDownButton({
+  className,
+  ...props
+}: React.ComponentProps<
+  typeof SelectPrimitive.ScrollDownButton
+>): import('react/jsx-runtime').JSX.Element
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+}
 
 // ===== types-docs/components/ui/slider.d.ts =====
 
-import * as React from 'react';
-import * as SliderPrimitive from '@radix-ui/react-slider';
+import * as React from 'react'
+import * as SliderPrimitive from '@radix-ui/react-slider'
 /**
  * Un control deslizante que permite al usuario seleccionar un valor de un rango.
  * @remarks Se basa en `Radix UI Slider` para una mayor accesibilidad y se integra
  * con el sistema de diseño para una apariencia consistente.
  */
-declare function Slider({ className, defaultValue, value, min, max, ...props }: React.ComponentProps<typeof SliderPrimitive.Root>): import("react/jsx-runtime").JSX.Element;
-export { Slider };
+declare function Slider({
+  className,
+  defaultValue,
+  value,
+  min,
+  max,
+  ...props
+}: React.ComponentProps<typeof SliderPrimitive.Root>): import('react/jsx-runtime').JSX.Element
+export { Slider }
 
 // ===== types-docs/components/ui/switch.d.ts =====
 
-import * as React from 'react';
-import * as SwitchPrimitives from '@radix-ui/react-switch';
-declare const Switch: React.ForwardRefExoticComponent<Omit<SwitchPrimitives.SwitchProps & React.RefAttributes<HTMLButtonElement>, "ref"> & React.RefAttributes<HTMLButtonElement>>;
-export { Switch };
+import * as React from 'react'
+import * as SwitchPrimitives from '@radix-ui/react-switch'
+declare const Switch: React.ForwardRefExoticComponent<
+  Omit<SwitchPrimitives.SwitchProps & React.RefAttributes<HTMLButtonElement>, 'ref'> &
+    React.RefAttributes<HTMLButtonElement>
+>
+export { Switch }
 
 // ===== types-docs/components/ui/tabs.d.ts =====
 
-import * as React from 'react';
-import * as TabsPrimitive from '@radix-ui/react-tabs';
+import * as React from 'react'
+import * as TabsPrimitive from '@radix-ui/react-tabs'
 /**
  * El contenedor raíz para un conjunto de pestañas, basado en `Radix UI Tabs`.
  */
-declare function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>): import("react/jsx-runtime").JSX.Element;
+declare function Tabs({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Root>): import('react/jsx-runtime').JSX.Element
 /**
  * La lista que contiene los disparadores de las pestañas (`TabsTrigger`).
  */
-declare function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>): import("react/jsx-runtime").JSX.Element;
+declare function TabsList({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.List>): import('react/jsx-runtime').JSX.Element
 /**
  * El botón que activa una pestaña para mostrar su contenido.
  */
-declare function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>): import("react/jsx-runtime").JSX.Element;
+declare function TabsTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>): import('react/jsx-runtime').JSX.Element
 /**
  * El contenedor para el contenido de una pestaña.
  */
-declare function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>): import("react/jsx-runtime").JSX.Element;
-export { Tabs, TabsList, TabsTrigger, TabsContent };
+declare function TabsContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof TabsPrimitive.Content>): import('react/jsx-runtime').JSX.Element
+export { Tabs, TabsList, TabsTrigger, TabsContent }
 
 // ===== types-docs/components/ui/tooltip.d.ts =====
 
-import * as React from 'react';
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import * as React from 'react'
+import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 /**
  * El proveedor que engloba la aplicación o una parte de ella para habilitar los tooltips.
  */
-declare function TooltipProvider({ delayDuration, ...props }: React.ComponentProps<typeof TooltipPrimitive.Provider>): import("react/jsx-runtime").JSX.Element;
-declare const Tooltip: React.FC<TooltipPrimitive.TooltipProps>;
+declare function TooltipProvider({
+  delayDuration,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>): import('react/jsx-runtime').JSX.Element
+declare const Tooltip: React.FC<TooltipPrimitive.TooltipProps>
 /**
  * El elemento que activa el tooltip al pasar el ratón sobre él.
  */
-declare function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>): import("react/jsx-runtime").JSX.Element;
+declare function TooltipTrigger({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>): import('react/jsx-runtime').JSX.Element
 /**
  * El contenido del tooltip que se muestra al activarse.
  */
-declare function TooltipContent({ className, sideOffset, children, ...props }: React.ComponentProps<typeof TooltipPrimitive.Content>): import("react/jsx-runtime").JSX.Element;
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+declare function TooltipContent({
+  className,
+  sideOffset,
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>): import('react/jsx-runtime').JSX.Element
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
 
 // ===== types-docs/components/ui/violin-fingerboard.d.ts =====
 
@@ -767,16 +1041,16 @@ export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
  * Props for the ViolinFingerboard component.
  */
 interface ViolinFingerboardProps {
-    /** The note the student should be playing (e.g., "A4"). */
-    targetNote: string | null;
-    /** The note currently detected by the pitch tracker. */
-    detectedPitchName: string | null;
-    /** The deviation in cents from the ideal frequency. Used for visual offset. */
-    centsDeviation: number | null;
-    /** The tolerance in cents within which a note is considered "In Tune". @defaultValue 25 */
-    centsTolerance?: number;
-    /** Explicit override for the in-tune state. */
-    isInTune?: boolean;
+  /** The note the student should be playing (e.g., "A4"). */
+  targetNote: string | null
+  /** The note currently detected by the pitch tracker. */
+  detectedPitchName: string | null
+  /** The deviation in cents from the ideal frequency. Used for visual offset. */
+  centsDeviation: number | null
+  /** The tolerance in cents within which a note is considered "In Tune". @defaultValue 25 */
+  centsTolerance?: number
+  /** Explicit override for the in-tune state. */
+  isInTune?: boolean
 }
 /**
  * Renders a visual representation of a violin fingerboard on a `<canvas>`.
@@ -796,16 +1070,22 @@ interface ViolinFingerboardProps {
  * - Shows a green (in-tune) or red (out-of-tune) circle for the `detectedPitchName`.
  * - The horizontal position of the detected note is shifted based on `centsDeviation`.
  */
-export declare function ViolinFingerboard({ targetNote, detectedPitchName, centsDeviation, centsTolerance, isInTune, }: ViolinFingerboardProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function ViolinFingerboard({
+  targetNote,
+  detectedPitchName,
+  centsDeviation,
+  centsTolerance,
+  isInTune,
+}: ViolinFingerboardProps): import('react/jsx-runtime').JSX.Element
+export {}
 
 // ===== types-docs/e2e/settings.spec.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/e2e/sheet-music-display.spec.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/hooks/use-osmd-safe.d.ts =====
 
@@ -813,7 +1093,7 @@ export {};
  * useOSMDSafe
  * A custom React hook for safely initializing and managing OpenSheetMusicDisplay (OSMD) instances.
  */
-import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
+import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
  *
@@ -854,55 +1134,69 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
  * }
  * ```
  */
-export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
-    isReady: boolean;
-    error: string | null;
-    containerRef: import('react').RefObject<HTMLDivElement | null>;
-    /** Safe to call anytime - no-op when !isReady */
-    resetCursor: () => void;
-    /** Safe to call anytime - no-op when !isReady */
-    advanceCursor: () => void;
-    /** Highlights the note at the given index */
-    highlightCurrentNote: (noteIndex: number) => void;
-    /** Reference to the OSMD instance for advanced interactions */
-    osmd: OpenSheetMusicDisplay | null;
-};
+export declare function useOSMDSafe(
+  musicXML: string,
+  options?: IOSMDOptions,
+): {
+  isReady: boolean
+  error: string | null
+  containerRef: import('react').RefObject<HTMLDivElement | null>
+  /** Safe to call anytime - no-op when !isReady */
+  resetCursor: () => void
+  /** Safe to call anytime - no-op when !isReady */
+  advanceCursor: () => void
+  /** Highlights the note at the given index */
+  highlightCurrentNote: (noteIndex: number) => void
+  /** Reference to the OSMD instance for advanced interactions */
+  osmd: OpenSheetMusicDisplay | null
+}
 
 // ===== types-docs/hooks/use-osmd-safe.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/hooks/use-window-size.d.ts =====
 
 export declare function useWindowSize(): {
-    width: number;
-    height: number;
-};
+  width: number
+  height: number
+}
 
 // ===== types-docs/lib/achievement-image-generator.d.ts =====
 
-import type { PracticeSession } from '@/stores/analytics-store';
+import type { PracticeSession } from '@/stores/analytics-store'
 /**
  * Generates a shareable image for exercise completion.
  */
-export declare function generateAchievementImage(sessionData: PracticeSession, stars: number): Promise<Blob>;
+export declare function generateAchievementImage(
+  sessionData: PracticeSession,
+  stars: number,
+): Promise<Blob>
 
 // ===== types-docs/lib/achievements/achievement-checker.d.ts =====
 
-import { AchievementCheckStats } from './achievement-definitions';
-import type { Achievement } from '@/stores/analytics-store';
+import { AchievementCheckStats } from './achievement-definitions'
+import type { Achievement } from '@/stores/analytics-store'
 /**
  * Verifica qué logros se han desbloqueado con las estadísticas actuales
  */
-export declare function checkAchievements(stats: AchievementCheckStats, unlockedAchievementIds: string[]): Achievement[];
+export declare function checkAchievements(
+  stats: AchievementCheckStats,
+  unlockedAchievementIds: string[],
+): Achievement[]
 /**
  * Obtiene la definición completa de un logro por ID
  */
-export declare function getAchievementDefinition(id: string): import("./achievement-definitions").AchievementDefinition | undefined;
+export declare function getAchievementDefinition(
+  id: string,
+): import('./achievement-definitions').AchievementDefinition | undefined
 /**
  * Obtiene todos los logros disponibles agrupados por categoría
  */
-export declare function getAllAchievementsByCategory(): Record<string, import("./achievement-definitions").AchievementDefinition[]>;
+export declare function getAllAchievementsByCategory(): Record<
+  string,
+  import('./achievement-definitions').AchievementDefinition[]
+>
 
 // ===== types-docs/lib/achievements/achievement-definitions.d.ts =====
 
@@ -910,750 +1204,908 @@ export declare function getAllAchievementsByCategory(): Record<string, import(".
  * Sistema de logros basado en milestones de práctica
  */
 export interface AchievementDefinition {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    category: 'practice' | 'accuracy' | 'streak' | 'mastery' | 'exploration';
-    rarity: 'common' | 'rare' | 'epic' | 'legendary';
-    condition: (stats: AchievementCheckStats) => boolean;
-    reward?: {
-        message: string;
-        confetti?: boolean;
-        sound?: string;
-    };
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'practice' | 'accuracy' | 'streak' | 'mastery' | 'exploration'
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  condition: (stats: AchievementCheckStats) => boolean
+  reward?: {
+    message: string
+    confetti?: boolean
+    sound?: string
+  }
 }
 export interface AchievementCheckStats {
-    currentSession: {
-        correctNotes: number;
-        perfectNoteStreak: number;
-        accuracy: number;
-        durationMs: number;
-        exerciseId: string;
-    };
-    totalSessions: number;
-    totalPracticeDays: number;
-    currentStreak: number;
-    longestStreak: number;
-    exercisesCompleted: string[];
-    totalPracticeTimeMs: number;
-    averageAccuracy: number;
+  currentSession: {
+    correctNotes: number
+    perfectNoteStreak: number
+    accuracy: number
+    durationMs: number
+    exerciseId: string
+  }
+  totalSessions: number
+  totalPracticeDays: number
+  currentStreak: number
+  longestStreak: number
+  exercisesCompleted: string[]
+  totalPracticeTimeMs: number
+  averageAccuracy: number
 }
-export declare const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[];
+export declare const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[]
 
 // ===== types-docs/lib/adapters/web-audio.adapter.d.ts =====
 
-import { AudioFramePort, AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
-import { PitchDetector, PitchDetectionResult } from '../pitch-detector';
+import { AudioFramePort, AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
+import { PitchDetector, PitchDetectionResult } from '../pitch-detector'
 export declare class WebAudioFrameAdapter implements AudioFramePort {
-    private analyser;
-    private buffer;
-    constructor(analyser: AnalyserNode);
-    getFrame(): Float32Array;
-    get sampleRate(): number;
+  private analyser
+  private buffer
+  constructor(analyser: AnalyserNode)
+  getFrame(): Float32Array
+  get sampleRate(): number
 }
 export declare class WebAudioLoopAdapter implements AudioLoopPort {
-    private framePort;
-    constructor(framePort: AudioFramePort);
-    start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>;
+  private framePort
+  constructor(framePort: AudioFramePort)
+  start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>
 }
 export declare class PitchDetectorAdapter implements PitchDetectionPort {
-    readonly detector: PitchDetector;
-    constructor(detector: PitchDetector);
-    detect(frame: Float32Array): PitchDetectionResult;
-    calculateRMS(frame: Float32Array): number;
+  readonly detector: PitchDetector
+  constructor(detector: PitchDetector)
+  detect(frame: Float32Array): PitchDetectionResult
+  calculateRMS(frame: Float32Array): number
 }
 
 // ===== types-docs/lib/analytics-tracker.d.ts =====
 
 interface AnalyticsEvent {
-    name: string;
-    properties?: Record<string, any>;
-    timestamp: number;
+  name: string
+  properties?: Record<string, any>
+  timestamp: number
 }
 declare class AnalyticsTracker {
-    private events;
-    track(name: string, properties?: Record<string, any>): void;
-    getEvents(): AnalyticsEvent[];
+  private events
+  track(name: string, properties?: Record<string, any>): void
+  getEvents(): AnalyticsEvent[]
 }
-export declare const analytics: AnalyticsTracker;
-export {};
+export declare const analytics: AnalyticsTracker
+export {}
 
 // ===== types-docs/lib/contracts/registry.d.ts =====
 
-import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
-export declare const registry: OpenAPIRegistry;
+import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
+export declare const registry: OpenAPIRegistry
 
 // ===== types-docs/lib/contracts/v1/achievements.contract.d.ts =====
 
-import { z } from 'zod';
-export declare const AchievementsContractV1: z.ZodObject<{
-    schemaVersion: z.ZodLiteral<1>;
-    state: z.ZodObject<{
-        schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
-        unlocked: z.ZodArray<z.ZodObject<{
-            id: z.ZodString;
-            name: z.ZodString;
-            description: z.ZodString;
-            icon: z.ZodString;
-            unlockedAtMs: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }, {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }>, "many">;
-        pending: z.ZodArray<z.ZodObject<{
-            id: z.ZodString;
-            name: z.ZodString;
-            description: z.ZodString;
-            icon: z.ZodString;
-            unlockedAtMs: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }, {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }>, "many">;
-    }, "strip", z.ZodTypeAny, {
-        schemaVersion: 1;
+import { z } from 'zod'
+export declare const AchievementsContractV1: z.ZodObject<
+  {
+    schemaVersion: z.ZodLiteral<1>
+    state: z.ZodObject<
+      {
+        schemaVersion: z.ZodDefault<z.ZodLiteral<1>>
+        unlocked: z.ZodArray<
+          z.ZodObject<
+            {
+              id: z.ZodString
+              name: z.ZodString
+              description: z.ZodString
+              icon: z.ZodString
+              unlockedAtMs: z.ZodNumber
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              name: string
+              unlockedAtMs: number
+              id: string
+              description: string
+              icon: string
+            },
+            {
+              name: string
+              unlockedAtMs: number
+              id: string
+              description: string
+              icon: string
+            }
+          >,
+          'many'
+        >
+        pending: z.ZodArray<
+          z.ZodObject<
+            {
+              id: z.ZodString
+              name: z.ZodString
+              description: z.ZodString
+              icon: z.ZodString
+              unlockedAtMs: z.ZodNumber
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              name: string
+              unlockedAtMs: number
+              id: string
+              description: string
+              icon: string
+            },
+            {
+              name: string
+              unlockedAtMs: number
+              id: string
+              description: string
+              icon: string
+            }
+          >,
+          'many'
+        >
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        schemaVersion: 1
         unlocked: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }[]
         pending: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-    }, {
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }[]
+      },
+      {
         unlocked: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }[]
         pending: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-        schemaVersion?: 1 | undefined;
-    }>;
-}, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }[]
+        schemaVersion?: 1 | undefined
+      }
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    schemaVersion: 1
     state: {
-        schemaVersion: 1;
-        unlocked: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-        pending: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-    };
-}, {
-    schemaVersion: 1;
+      schemaVersion: 1
+      unlocked: {
+        name: string
+        unlockedAtMs: number
+        id: string
+        description: string
+        icon: string
+      }[]
+      pending: {
+        name: string
+        unlockedAtMs: number
+        id: string
+        description: string
+        icon: string
+      }[]
+    }
+  },
+  {
+    schemaVersion: 1
     state: {
-        unlocked: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-        pending: {
-            name: string;
-            unlockedAtMs: number;
-            id: string;
-            description: string;
-            icon: string;
-        }[];
-        schemaVersion?: 1 | undefined;
-    };
-}>;
+      unlocked: {
+        name: string
+        unlockedAtMs: number
+        id: string
+        description: string
+        icon: string
+      }[]
+      pending: {
+        name: string
+        unlockedAtMs: number
+        id: string
+        description: string
+        icon: string
+      }[]
+      schemaVersion?: 1 | undefined
+    }
+  }
+>
 
 // ===== types-docs/lib/contracts/v1/practice.contract.d.ts =====
 
-import { z } from 'zod';
-export declare const PracticeContractV1: z.ZodObject<{
-    schemaVersion: z.ZodLiteral<1>;
-    session: z.ZodObject<{
-        id: z.ZodString;
-        startTimeMs: z.ZodNumber;
-        endTimeMs: z.ZodNumber;
-        durationMs: z.ZodNumber;
-        exerciseId: z.ZodString;
-        exerciseName: z.ZodString;
-        mode: z.ZodEnum<["tuner", "practice"]>;
-        noteResults: z.ZodArray<z.ZodObject<{
-            noteIndex: z.ZodNumber;
-            targetPitch: z.ZodString;
-            attempts: z.ZodNumber;
-            timeToCompleteMs: z.ZodOptional<z.ZodNumber>;
-            averageCents: z.ZodNumber;
-            wasInTune: z.ZodBoolean;
-            technique: z.ZodOptional<z.ZodObject<{
-                vibrato: z.ZodObject<{
-                    present: z.ZodBoolean;
-                    rateHz: z.ZodNumber;
-                    widthCents: z.ZodNumber;
-                    regularity: z.ZodNumber;
-                }, "strip", z.ZodTypeAny, {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                }, {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                }>;
-                pitchStability: z.ZodObject<{
-                    settlingStdCents: z.ZodNumber;
-                    globalStdCents: z.ZodNumber;
-                    driftCentsPerSec: z.ZodNumber;
-                    inTuneRatio: z.ZodNumber;
-                }, "strip", z.ZodTypeAny, {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                }, {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                }>;
-                rhythm: z.ZodObject<{
-                    onsetErrorMs: z.ZodOptional<z.ZodNumber>;
-                    durationErrorMs: z.ZodOptional<z.ZodNumber>;
-                }, "strip", z.ZodTypeAny, {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                }, {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                }>;
-            }, "strip", z.ZodTypeAny, {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            }, {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            }>>;
-        }, "strip", z.ZodTypeAny, {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }, {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }>, "many">;
-        notesAttempted: z.ZodNumber;
-        notesCompleted: z.ZodNumber;
-        accuracy: z.ZodNumber;
-        averageCents: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
+import { z } from 'zod'
+export declare const PracticeContractV1: z.ZodObject<
+  {
+    schemaVersion: z.ZodLiteral<1>
+    session: z.ZodObject<
+      {
+        id: z.ZodString
+        startTimeMs: z.ZodNumber
+        endTimeMs: z.ZodNumber
+        durationMs: z.ZodNumber
+        exerciseId: z.ZodString
+        exerciseName: z.ZodString
+        mode: z.ZodEnum<['tuner', 'practice']>
+        noteResults: z.ZodArray<
+          z.ZodObject<
+            {
+              noteIndex: z.ZodNumber
+              targetPitch: z.ZodString
+              attempts: z.ZodNumber
+              timeToCompleteMs: z.ZodOptional<z.ZodNumber>
+              averageCents: z.ZodNumber
+              wasInTune: z.ZodBoolean
+              technique: z.ZodOptional<
+                z.ZodObject<
+                  {
+                    vibrato: z.ZodObject<
+                      {
+                        present: z.ZodBoolean
+                        rateHz: z.ZodNumber
+                        widthCents: z.ZodNumber
+                        regularity: z.ZodNumber
+                      },
+                      'strip',
+                      z.ZodTypeAny,
+                      {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      },
+                      {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      }
+                    >
+                    pitchStability: z.ZodObject<
+                      {
+                        settlingStdCents: z.ZodNumber
+                        globalStdCents: z.ZodNumber
+                        driftCentsPerSec: z.ZodNumber
+                        inTuneRatio: z.ZodNumber
+                      },
+                      'strip',
+                      z.ZodTypeAny,
+                      {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      },
+                      {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      }
+                    >
+                    rhythm: z.ZodObject<
+                      {
+                        onsetErrorMs: z.ZodOptional<z.ZodNumber>
+                        durationErrorMs: z.ZodOptional<z.ZodNumber>
+                      },
+                      'strip',
+                      z.ZodTypeAny,
+                      {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      },
+                      {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      }
+                    >
+                  },
+                  'strip',
+                  z.ZodTypeAny,
+                  {
+                    vibrato: {
+                      present: boolean
+                      rateHz: number
+                      widthCents: number
+                      regularity: number
+                    }
+                    rhythm: {
+                      onsetErrorMs?: number | undefined
+                      durationErrorMs?: number | undefined
+                    }
+                    pitchStability: {
+                      settlingStdCents: number
+                      globalStdCents: number
+                      driftCentsPerSec: number
+                      inTuneRatio: number
+                    }
+                  },
+                  {
+                    vibrato: {
+                      present: boolean
+                      rateHz: number
+                      widthCents: number
+                      regularity: number
+                    }
+                    rhythm: {
+                      onsetErrorMs?: number | undefined
+                      durationErrorMs?: number | undefined
+                    }
+                    pitchStability: {
+                      settlingStdCents: number
+                      globalStdCents: number
+                      driftCentsPerSec: number
+                      inTuneRatio: number
+                    }
+                  }
+                >
+              >
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              averageCents: number
+              noteIndex: number
+              targetPitch: string
+              attempts: number
+              wasInTune: boolean
+              timeToCompleteMs?: number | undefined
+              technique?:
+                | {
+                    vibrato: {
+                      present: boolean
+                      rateHz: number
+                      widthCents: number
+                      regularity: number
+                    }
+                    rhythm: {
+                      onsetErrorMs?: number | undefined
+                      durationErrorMs?: number | undefined
+                    }
+                    pitchStability: {
+                      settlingStdCents: number
+                      globalStdCents: number
+                      driftCentsPerSec: number
+                      inTuneRatio: number
+                    }
+                  }
+                | undefined
+            },
+            {
+              averageCents: number
+              noteIndex: number
+              targetPitch: string
+              attempts: number
+              wasInTune: boolean
+              timeToCompleteMs?: number | undefined
+              technique?:
+                | {
+                    vibrato: {
+                      present: boolean
+                      rateHz: number
+                      widthCents: number
+                      regularity: number
+                    }
+                    rhythm: {
+                      onsetErrorMs?: number | undefined
+                      durationErrorMs?: number | undefined
+                    }
+                    pitchStability: {
+                      settlingStdCents: number
+                      globalStdCents: number
+                      driftCentsPerSec: number
+                      inTuneRatio: number
+                    }
+                  }
+                | undefined
+            }
+          >,
+          'many'
+        >
+        notesAttempted: z.ZodNumber
+        notesCompleted: z.ZodNumber
+        accuracy: z.ZodNumber
+        averageCents: z.ZodNumber
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        accuracy: number
+        startTimeMs: number
+        endTimeMs: number
+        id: string
+        durationMs: number
         noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
+          averageCents: number
+          noteIndex: number
+          targetPitch: string
+          attempts: number
+          wasInTune: boolean
+          timeToCompleteMs?: number | undefined
+          technique?:
+            | {
                 vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
                 rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
                 pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }, {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              }
+            | undefined
+        }[]
+        exerciseId: string
+        exerciseName: string
+        mode: 'practice' | 'tuner'
+        averageCents: number
+        notesAttempted: number
+        notesCompleted: number
+      },
+      {
+        accuracy: number
+        startTimeMs: number
+        endTimeMs: number
+        id: string
+        durationMs: number
         noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
+          averageCents: number
+          noteIndex: number
+          targetPitch: string
+          attempts: number
+          wasInTune: boolean
+          timeToCompleteMs?: number | undefined
+          technique?:
+            | {
                 vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
                 rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
                 pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }>;
-}, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              }
+            | undefined
+        }[]
+        exerciseId: string
+        exerciseName: string
+        mode: 'practice' | 'tuner'
+        averageCents: number
+        notesAttempted: number
+        notesCompleted: number
+      }
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    schemaVersion: 1
     session: {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    };
-}, {
-    schemaVersion: 1;
+      accuracy: number
+      startTimeMs: number
+      endTimeMs: number
+      id: string
+      durationMs: number
+      noteResults: {
+        averageCents: number
+        noteIndex: number
+        targetPitch: string
+        attempts: number
+        wasInTune: boolean
+        timeToCompleteMs?: number | undefined
+        technique?:
+          | {
+              vibrato: {
+                present: boolean
+                rateHz: number
+                widthCents: number
+                regularity: number
+              }
+              rhythm: {
+                onsetErrorMs?: number | undefined
+                durationErrorMs?: number | undefined
+              }
+              pitchStability: {
+                settlingStdCents: number
+                globalStdCents: number
+                driftCentsPerSec: number
+                inTuneRatio: number
+              }
+            }
+          | undefined
+      }[]
+      exerciseId: string
+      exerciseName: string
+      mode: 'practice' | 'tuner'
+      averageCents: number
+      notesAttempted: number
+      notesCompleted: number
+    }
+  },
+  {
+    schemaVersion: 1
     session: {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    };
-}>;
+      accuracy: number
+      startTimeMs: number
+      endTimeMs: number
+      id: string
+      durationMs: number
+      noteResults: {
+        averageCents: number
+        noteIndex: number
+        targetPitch: string
+        attempts: number
+        wasInTune: boolean
+        timeToCompleteMs?: number | undefined
+        technique?:
+          | {
+              vibrato: {
+                present: boolean
+                rateHz: number
+                widthCents: number
+                regularity: number
+              }
+              rhythm: {
+                onsetErrorMs?: number | undefined
+                durationErrorMs?: number | undefined
+              }
+              pitchStability: {
+                settlingStdCents: number
+                globalStdCents: number
+                driftCentsPerSec: number
+                inTuneRatio: number
+              }
+            }
+          | undefined
+      }[]
+      exerciseId: string
+      exerciseName: string
+      mode: 'practice' | 'tuner'
+      averageCents: number
+      notesAttempted: number
+      notesCompleted: number
+    }
+  }
+>
 
 // ===== types-docs/lib/contracts/v1/progress.contract.d.ts =====
 
-import { z } from 'zod';
-export declare const ProgressContractV1: z.ZodObject<{
-    schemaVersion: z.ZodLiteral<1>;
-    state: z.ZodObject<{
-        schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
-        totalPracticeSessions: z.ZodNumber;
-        totalPracticeTime: z.ZodNumber;
-        exercisesCompleted: z.ZodArray<z.ZodString, "many">;
-        currentStreak: z.ZodNumber;
-        longestStreak: z.ZodNumber;
-        intonationSkill: z.ZodNumber;
-        rhythmSkill: z.ZodNumber;
-        overallSkill: z.ZodNumber;
-        exerciseStats: z.ZodRecord<z.ZodString, z.ZodObject<{
-            exerciseId: z.ZodString;
-            timesCompleted: z.ZodNumber;
-            bestAccuracy: z.ZodNumber;
-            averageAccuracy: z.ZodNumber;
-            fastestCompletionMs: z.ZodNumber;
-            lastPracticedMs: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }>>;
-        eventBuffer: z.ZodDefault<z.ZodArray<z.ZodObject<{
-            ts: z.ZodNumber;
-            exerciseId: z.ZodString;
-            accuracy: z.ZodNumber;
-            rhythmErrorMs: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }, {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }>, "many">>;
-        snapshots: z.ZodDefault<z.ZodArray<z.ZodObject<{
-            userId: z.ZodString;
-            window: z.ZodEnum<["7d", "30d", "all"]>;
-            aggregates: z.ZodObject<{
-                intonation: z.ZodNumber;
-                rhythm: z.ZodNumber;
-                overall: z.ZodNumber;
-            }, "strip", z.ZodTypeAny, {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            }, {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            }>;
-            lastSessionId: z.ZodString;
-        }, "strip", z.ZodTypeAny, {
-            userId: string;
-            window: "7d" | "30d" | "all";
-            aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }, {
-            userId: string;
-            window: "7d" | "30d" | "all";
-            aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }>, "many">>;
-        eventCounter: z.ZodDefault<z.ZodNumber>;
-    }, "strip", z.ZodTypeAny, {
-        exerciseStats: Record<string, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }>;
-        currentStreak: number;
-        longestStreak: number;
-        schemaVersion: 1;
-        totalPracticeSessions: number;
-        totalPracticeTime: number;
-        exercisesCompleted: string[];
-        intonationSkill: number;
-        rhythmSkill: number;
-        overallSkill: number;
+import { z } from 'zod'
+export declare const ProgressContractV1: z.ZodObject<
+  {
+    schemaVersion: z.ZodLiteral<1>
+    state: z.ZodObject<
+      {
+        schemaVersion: z.ZodDefault<z.ZodLiteral<1>>
+        totalPracticeSessions: z.ZodNumber
+        totalPracticeTime: z.ZodNumber
+        exercisesCompleted: z.ZodArray<z.ZodString, 'many'>
+        currentStreak: z.ZodNumber
+        longestStreak: z.ZodNumber
+        intonationSkill: z.ZodNumber
+        rhythmSkill: z.ZodNumber
+        overallSkill: z.ZodNumber
+        exerciseStats: z.ZodRecord<
+          z.ZodString,
+          z.ZodObject<
+            {
+              exerciseId: z.ZodString
+              timesCompleted: z.ZodNumber
+              bestAccuracy: z.ZodNumber
+              averageAccuracy: z.ZodNumber
+              fastestCompletionMs: z.ZodNumber
+              lastPracticedMs: z.ZodNumber
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              lastPracticedMs: number
+              exerciseId: string
+              fastestCompletionMs: number
+              timesCompleted: number
+              bestAccuracy: number
+              averageAccuracy: number
+            },
+            {
+              lastPracticedMs: number
+              exerciseId: string
+              fastestCompletionMs: number
+              timesCompleted: number
+              bestAccuracy: number
+              averageAccuracy: number
+            }
+          >
+        >
+        eventBuffer: z.ZodDefault<
+          z.ZodArray<
+            z.ZodObject<
+              {
+                ts: z.ZodNumber
+                exerciseId: z.ZodString
+                accuracy: z.ZodNumber
+                rhythmErrorMs: z.ZodNumber
+              },
+              'strip',
+              z.ZodTypeAny,
+              {
+                accuracy: number
+                exerciseId: string
+                ts: number
+                rhythmErrorMs: number
+              },
+              {
+                accuracy: number
+                exerciseId: string
+                ts: number
+                rhythmErrorMs: number
+              }
+            >,
+            'many'
+          >
+        >
+        snapshots: z.ZodDefault<
+          z.ZodArray<
+            z.ZodObject<
+              {
+                userId: z.ZodString
+                window: z.ZodEnum<['7d', '30d', 'all']>
+                aggregates: z.ZodObject<
+                  {
+                    intonation: z.ZodNumber
+                    rhythm: z.ZodNumber
+                    overall: z.ZodNumber
+                  },
+                  'strip',
+                  z.ZodTypeAny,
+                  {
+                    intonation: number
+                    rhythm: number
+                    overall: number
+                  },
+                  {
+                    intonation: number
+                    rhythm: number
+                    overall: number
+                  }
+                >
+                lastSessionId: z.ZodString
+              },
+              'strip',
+              z.ZodTypeAny,
+              {
+                userId: string
+                window: '7d' | '30d' | 'all'
+                aggregates: {
+                  intonation: number
+                  rhythm: number
+                  overall: number
+                }
+                lastSessionId: string
+              },
+              {
+                userId: string
+                window: '7d' | '30d' | 'all'
+                aggregates: {
+                  intonation: number
+                  rhythm: number
+                  overall: number
+                }
+                lastSessionId: string
+              }
+            >,
+            'many'
+          >
+        >
+        eventCounter: z.ZodDefault<z.ZodNumber>
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        exerciseStats: Record<
+          string,
+          {
+            lastPracticedMs: number
+            exerciseId: string
+            fastestCompletionMs: number
+            timesCompleted: number
+            bestAccuracy: number
+            averageAccuracy: number
+          }
+        >
+        currentStreak: number
+        longestStreak: number
+        schemaVersion: 1
+        totalPracticeSessions: number
+        totalPracticeTime: number
+        exercisesCompleted: string[]
+        intonationSkill: number
+        rhythmSkill: number
+        overallSkill: number
         eventBuffer: {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }[];
+          accuracy: number
+          exerciseId: string
+          ts: number
+          rhythmErrorMs: number
+        }[]
         snapshots: {
-            userId: string;
-            window: "7d" | "30d" | "all";
-            aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }[];
-        eventCounter: number;
-    }, {
-        exerciseStats: Record<string, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }>;
-        currentStreak: number;
-        longestStreak: number;
-        totalPracticeSessions: number;
-        totalPracticeTime: number;
-        exercisesCompleted: string[];
-        intonationSkill: number;
-        rhythmSkill: number;
-        overallSkill: number;
-        schemaVersion?: 1 | undefined;
-        eventBuffer?: {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }[] | undefined;
-        snapshots?: {
-            userId: string;
-            window: "7d" | "30d" | "all";
-            aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }[] | undefined;
-        eventCounter?: number | undefined;
-    }>;
-}, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
+          userId: string
+          window: '7d' | '30d' | 'all'
+          aggregates: {
+            intonation: number
+            rhythm: number
+            overall: number
+          }
+          lastSessionId: string
+        }[]
+        eventCounter: number
+      },
+      {
+        exerciseStats: Record<
+          string,
+          {
+            lastPracticedMs: number
+            exerciseId: string
+            fastestCompletionMs: number
+            timesCompleted: number
+            bestAccuracy: number
+            averageAccuracy: number
+          }
+        >
+        currentStreak: number
+        longestStreak: number
+        totalPracticeSessions: number
+        totalPracticeTime: number
+        exercisesCompleted: string[]
+        intonationSkill: number
+        rhythmSkill: number
+        overallSkill: number
+        schemaVersion?: 1 | undefined
+        eventBuffer?:
+          | {
+              accuracy: number
+              exerciseId: string
+              ts: number
+              rhythmErrorMs: number
+            }[]
+          | undefined
+        snapshots?:
+          | {
+              userId: string
+              window: '7d' | '30d' | 'all'
+              aggregates: {
+                intonation: number
+                rhythm: number
+                overall: number
+              }
+              lastSessionId: string
+            }[]
+          | undefined
+        eventCounter?: number | undefined
+      }
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    schemaVersion: 1
     state: {
-        exerciseStats: Record<string, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }>;
-        currentStreak: number;
-        longestStreak: number;
-        schemaVersion: 1;
-        totalPracticeSessions: number;
-        totalPracticeTime: number;
-        exercisesCompleted: string[];
-        intonationSkill: number;
-        rhythmSkill: number;
-        overallSkill: number;
-        eventBuffer: {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }[];
-        snapshots: {
-            userId: string;
-            window: "7d" | "30d" | "all";
-            aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }[];
-        eventCounter: number;
-    };
-}, {
-    schemaVersion: 1;
+      exerciseStats: Record<
+        string,
+        {
+          lastPracticedMs: number
+          exerciseId: string
+          fastestCompletionMs: number
+          timesCompleted: number
+          bestAccuracy: number
+          averageAccuracy: number
+        }
+      >
+      currentStreak: number
+      longestStreak: number
+      schemaVersion: 1
+      totalPracticeSessions: number
+      totalPracticeTime: number
+      exercisesCompleted: string[]
+      intonationSkill: number
+      rhythmSkill: number
+      overallSkill: number
+      eventBuffer: {
+        accuracy: number
+        exerciseId: string
+        ts: number
+        rhythmErrorMs: number
+      }[]
+      snapshots: {
+        userId: string
+        window: '7d' | '30d' | 'all'
+        aggregates: {
+          intonation: number
+          rhythm: number
+          overall: number
+        }
+        lastSessionId: string
+      }[]
+      eventCounter: number
+    }
+  },
+  {
+    schemaVersion: 1
     state: {
-        exerciseStats: Record<string, {
-            lastPracticedMs: number;
-            exerciseId: string;
-            fastestCompletionMs: number;
-            timesCompleted: number;
-            bestAccuracy: number;
-            averageAccuracy: number;
-        }>;
-        currentStreak: number;
-        longestStreak: number;
-        totalPracticeSessions: number;
-        totalPracticeTime: number;
-        exercisesCompleted: string[];
-        intonationSkill: number;
-        rhythmSkill: number;
-        overallSkill: number;
-        schemaVersion?: 1 | undefined;
-        eventBuffer?: {
-            accuracy: number;
-            exerciseId: string;
-            ts: number;
-            rhythmErrorMs: number;
-        }[] | undefined;
-        snapshots?: {
-            userId: string;
-            window: "7d" | "30d" | "all";
+      exerciseStats: Record<
+        string,
+        {
+          lastPracticedMs: number
+          exerciseId: string
+          fastestCompletionMs: number
+          timesCompleted: number
+          bestAccuracy: number
+          averageAccuracy: number
+        }
+      >
+      currentStreak: number
+      longestStreak: number
+      totalPracticeSessions: number
+      totalPracticeTime: number
+      exercisesCompleted: string[]
+      intonationSkill: number
+      rhythmSkill: number
+      overallSkill: number
+      schemaVersion?: 1 | undefined
+      eventBuffer?:
+        | {
+            accuracy: number
+            exerciseId: string
+            ts: number
+            rhythmErrorMs: number
+          }[]
+        | undefined
+      snapshots?:
+        | {
+            userId: string
+            window: '7d' | '30d' | 'all'
             aggregates: {
-                intonation: number;
-                rhythm: number;
-                overall: number;
-            };
-            lastSessionId: string;
-        }[] | undefined;
-        eventCounter?: number | undefined;
-    };
-}>;
+              intonation: number
+              rhythm: number
+              overall: number
+            }
+            lastSessionId: string
+          }[]
+        | undefined
+      eventCounter?: number | undefined
+    }
+  }
+>
 
 // ===== types-docs/lib/domain/data-structures.d.ts =====
 
@@ -1671,37 +2123,37 @@ export declare const ProgressContractV1: z.ZodObject<{
  * N - The maximum size of the buffer.
  */
 export declare class FixedRingBuffer<T, N extends number> {
-    readonly maxSize: N;
-    private items;
-    /**
-     * @param maxSize - The maximum number of elements the buffer can hold.
-     */
-    constructor(maxSize: N);
-    /**
-     * Adds one or more items to the front of the buffer, displacing the oldest.
-     *
-     * @param items - The items to add.
-     */
-    push(...items: T[]): void;
-    /**
-     * Returns a read-only snapshot of the current buffer contents.
-     *
-     * @returns A readonly array of items. Mutations will not affect the buffer.
-     */
-    toArray(): readonly T[];
-    /**
-     * Clears all items from the buffer.
-     */
-    clear(): void;
-    /**
-     * Returns the number of items currently in the buffer.
-     */
-    get length(): number;
+  readonly maxSize: N
+  private items
+  /**
+   * @param maxSize - The maximum number of elements the buffer can hold.
+   */
+  constructor(maxSize: N)
+  /**
+   * Adds one or more items to the front of the buffer, displacing the oldest.
+   *
+   * @param items - The items to add.
+   */
+  push(...items: T[]): void
+  /**
+   * Returns a read-only snapshot of the current buffer contents.
+   *
+   * @returns A readonly array of items. Mutations will not affect the buffer.
+   */
+  toArray(): readonly T[]
+  /**
+   * Clears all items from the buffer.
+   */
+  clear(): void
+  /**
+   * Returns the number of items currently in the buffer.
+   */
+  get length(): number
 }
 
 // ===== types-docs/lib/domain/data-structures.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/domain/musical-domain.d.ts =====
 
@@ -1717,7 +2169,7 @@ export {};
  *  0: Natural
  *  1: Sharp (#)
  */
-export type CanonicalAccidental = -1 | 0 | 1;
+export type CanonicalAccidental = -1 | 0 | 1
 /**
  * Normalizes various accidental representations to canonical format.
  *
@@ -1735,108 +2187,110 @@ export type CanonicalAccidental = -1 | 0 | 1;
  * normalizeAccidental("flat");   // -1
  * normalizeAccidental("X");      // ❌ Throws Error
  */
-export declare function normalizeAccidental(input: number | string | null | undefined): CanonicalAccidental;
+export declare function normalizeAccidental(
+  input: number | string | null | undefined,
+): CanonicalAccidental
 
 // ===== types-docs/lib/domain/musical-types.d.ts =====
 
-import type { CanonicalAccidental } from '@/lib/domain/musical-domain';
-import type { AppError } from '@/lib/errors/app-error';
-import type { PitchDetector } from '@/lib/pitch-detector';
+import type { CanonicalAccidental } from '@/lib/domain/musical-domain'
+import type { AppError } from '@/lib/errors/app-error'
+import type { PitchDetector } from '@/lib/pitch-detector'
 /** Represents the base name of a musical pitch. */
-export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+export type PitchName = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 /**
  * Represents a specific note on the musical staff.
  */
 export interface Pitch {
-    /** The letter name of the pitch. */
-    step: PitchName;
-    /** The octave number (e.g., 4 for Middle C). */
-    octave: number;
-    /**
-     * The accidental for the pitch in canonical format.
-     * @remarks -1 for flat, 0 for natural, 1 for sharp.
-     */
-    alter: CanonicalAccidental;
+  /** The letter name of the pitch. */
+  step: PitchName
+  /** The octave number (e.g., 4 for Middle C). */
+  octave: number
+  /**
+   * The accidental for the pitch in canonical format.
+   * @remarks -1 for flat, 0 for natural, 1 for sharp.
+   */
+  alter: CanonicalAccidental
 }
 /**
  * Represents the rhythmic duration of a note in standard musical notation.
  * 1 = Whole, 2 = Half, 4 = Quarter, 8 = Eighth, 16 = 16th, 32 = 32nd.
  */
-export type NoteDuration = 1 | 2 | 4 | 8 | 16 | 32;
+export type NoteDuration = 1 | 2 | 4 | 8 | 16 | 32
 /**
  * Represents a single musical note with its pitch and rhythmic duration.
  */
 export interface Note {
-    /** The pitch of the note. */
-    pitch: Pitch;
-    /** The duration of the note. */
-    duration: NoteDuration;
-    /** Optional pedagogical annotations for the note. */
-    annotations?: {
-        fingerNumber?: 1 | 2 | 3 | 4;
-        bowDirection?: 'up' | 'down';
-        warningFlag?: boolean;
-    };
+  /** The pitch of the note. */
+  pitch: Pitch
+  /** The duration of the note. */
+  duration: NoteDuration
+  /** Optional pedagogical annotations for the note. */
+  annotations?: {
+    fingerNumber?: 1 | 2 | 3 | 4
+    bowDirection?: 'up' | 'down'
+    warningFlag?: boolean
+  }
 }
 /** Categories for grouping exercises. */
-export type ExerciseCategory = 'Open Strings' | 'Scales' | 'Songs';
+export type ExerciseCategory = 'Open Strings' | 'Scales' | 'Songs'
 /** Difficulty levels for pedagogical progression. */
-export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 /**
  * Defines the attributes of a musical score.
  * Used for generating MusicXML headers.
  */
 export interface ScoreMetadata {
-    /** The clef used for the staff. Violin usually uses 'G'. */
-    clef: 'G' | 'F' | 'C';
-    /** The time signature of the piece. */
-    timeSignature: {
-        /** Number of beats per measure. */
-        beats: number;
-        /** The note value that represents one beat. */
-        beatType: number;
-    };
-    /**
-     * The key signature represented as the number of sharps (positive) or flats (negative).
-     * Example: 2 for D Major, -1 for F Major, 0 for C Major.
-     */
-    keySignature: number;
+  /** The clef used for the staff. Violin usually uses 'G'. */
+  clef: 'G' | 'F' | 'C'
+  /** The time signature of the piece. */
+  timeSignature: {
+    /** Number of beats per measure. */
+    beats: number
+    /** The note value that represents one beat. */
+    beatType: number
+  }
+  /**
+   * The key signature represented as the number of sharps (positive) or flats (negative).
+   * Example: 2 for D Major, -1 for F Major, 0 for C Major.
+   */
+  keySignature: number
 }
 /**
  * Interface for raw exercise data definitions.
  * This structure is used to define exercises in the category files.
  */
 export interface ExerciseData {
-    /** Unique identifier for the exercise. */
-    id: string;
-    /** Human-readable name of the exercise. */
-    name: string;
-    /** Brief description of the exercise's goal. */
-    description: string;
-    /** The pedagogical category. */
-    category: ExerciseCategory;
-    /** The intended difficulty level. */
-    difficulty: Difficulty;
-    /** Metadata required for score rendering. */
-    scoreMetadata: ScoreMetadata;
-    /** Ordered array of notes in the exercise. */
-    notes: Note[];
-    /** Technical goals for the exercise. */
-    technicalGoals: string[];
-    /** Estimated duration of the exercise. */
-    estimatedDuration: string;
-    /** Primary technique focused on. */
-    technicalTechnique: string;
-    /** Whether this exercise is recommended. */
-    recommended?: boolean;
+  /** Unique identifier for the exercise. */
+  id: string
+  /** Human-readable name of the exercise. */
+  name: string
+  /** Brief description of the exercise's goal. */
+  description: string
+  /** The pedagogical category. */
+  category: ExerciseCategory
+  /** The intended difficulty level. */
+  difficulty: Difficulty
+  /** Metadata required for score rendering. */
+  scoreMetadata: ScoreMetadata
+  /** Ordered array of notes in the exercise. */
+  notes: Note[]
+  /** Technical goals for the exercise. */
+  technicalGoals: string[]
+  /** Estimated duration of the exercise. */
+  estimatedDuration: string
+  /** Primary technique focused on. */
+  technicalTechnique: string
+  /** Whether this exercise is recommended. */
+  recommended?: boolean
 }
 /**
  * The processed exercise object consumed by the application.
  * Extends `ExerciseData` with the generated MusicXML string.
  */
 export interface Exercise extends ExerciseData {
-    /** The complete MusicXML representation of the exercise. */
-    musicXML: string;
+  /** The complete MusicXML representation of the exercise. */
+  musicXML: string
 }
 /**
  * Possible states for the tuner state machine.
@@ -1844,98 +2298,104 @@ export interface Exercise extends ExerciseData {
  * are only accessible when the state machine is in the appropriate phase.
  * Transitions: IDLE -\> INITIALIZING -\> READY -\> LISTENING \<-\> DETECTED
  */
-export type TunerState = {
-    kind: 'IDLE';
-} | {
-    kind: 'INITIALIZING';
-    readonly sessionToken: number;
-} | {
-    kind: 'READY';
-    readonly sessionToken: number;
-} | {
-    kind: 'LISTENING';
-    readonly sessionToken: number;
-} | {
-    kind: 'DETECTED';
-    pitch: number;
-    note: string;
-    cents: number;
-    confidence: number;
-    readonly sessionToken: number;
-} | {
-    kind: 'ERROR';
-    error: AppError;
-};
+export type TunerState =
+  | {
+      kind: 'IDLE'
+    }
+  | {
+      kind: 'INITIALIZING'
+      readonly sessionToken: number
+    }
+  | {
+      kind: 'READY'
+      readonly sessionToken: number
+    }
+  | {
+      kind: 'LISTENING'
+      readonly sessionToken: number
+    }
+  | {
+      kind: 'DETECTED'
+      pitch: number
+      note: string
+      cents: number
+      confidence: number
+      readonly sessionToken: number
+    }
+  | {
+      kind: 'ERROR'
+      error: AppError
+    }
 /** States for microphone permission handling. */
-export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED';
+export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
 /**
  * Interface representing the tuner store's state and actions.
  */
 export interface TunerStore {
-    /**
-     * Current state with session tracking.
-     *
-     * @remarks
-     * States with `sessionToken` prevent stale updates from previous sessions.
-     * If you call `initialize()` twice, only the latest session updates state.
-     */
-    state: TunerState;
-    /** Current microphone permission status. */
-    permissionState: PermissionState;
-    /** The pitch detection algorithm instance. */
-    detector: PitchDetector | null;
-    /** List of available audio input devices. */
-    devices: MediaDeviceInfo[];
-    /** ID of the currently selected audio input device. */
-    deviceId: string | null;
-    /**
-     * Input sensitivity (0 to 100).
-     * Maps to gain: 0 -\> 0x, 50 -\> 1x, 100 -\> 2x.
-     */
-    sensitivity: number;
-    /** Derived getter for the current analyser. */
-    analyser: AnalyserNode | null;
-    /**
-     * Initializes audio pipeline with automatic session management.
-     *
-     * @remarks
-     * **Concurrency Safety**:
-     * - Multiple calls are safe: previous sessions are automatically invalidated
-     * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
-     * - If a previous initialization is pending, it will be cancelled
-     *
-     * **State Transitions**:
-     * - IDLE → INITIALIZING → READY (success)
-     * - IDLE → INITIALIZING → ERROR (failure)
-     *
-     * @throws Never throws - errors are captured in state.error
-     */
-    initialize: () => Promise<void>;
-    /** Resets the store and attempts to initialize again. */
-    retry: () => Promise<void>;
-    /** Stops all audio processing and releases resources. */
-    reset: () => Promise<void>;
-    /**
-     * Updates the detected pitch and note based on new analysis results.
-     * @param pitch - The detected frequency in Hz.
-     * @param confidence - The confidence of the detection.
-     */
-    updatePitch: (pitch: number, confidence: number) => void;
-    /** Transitions state to `LISTENING`. Only valid if state is `READY`. */
-    startListening: () => void;
-    /** Transitions state to `READY` and clears detection data. */
-    stopListening: () => void;
-    /**
-     * Enumerates available audio input devices.
-     */
-    loadDevices: () => Promise<void>;
-    /** Sets the active microphone device and re-initializes. */
-    setDeviceId: (deviceId: string) => Promise<void>;
-    /**
-     * Sets the input sensitivity and updates the gain node immediately.
-     * @param sensitivity - New sensitivity value (0-100).
-     */
-    setSensitivity: (sensitivity: number) => void;
+  /**
+   * Current state with session tracking.
+   *
+   * @remarks
+   * States with `sessionToken` prevent stale updates from previous sessions.
+   * If you call `initialize()` twice, only the latest session updates state.
+   */
+  state: TunerState
+  /** Current microphone permission status. */
+  permissionState: PermissionState
+  /** The pitch detection algorithm instance. */
+  detector: PitchDetector | null
+  /** List of available audio input devices. */
+  devices: MediaDeviceInfo[]
+  /** ID of the currently selected audio input device. */
+  deviceId: string | null
+  /**
+   * Input sensitivity (0 to 100).
+   * Maps to gain: 0 -\> 0x, 50 -\> 1x, 100 -\> 2x.
+   */
+  sensitivity: number
+  /** Derived getter for the current analyser. */
+  analyser: AnalyserNode | null
+  /**
+   * Initializes audio pipeline with automatic session management.
+   *
+   * @remarks
+   * **Concurrency Safety**:
+   * - Multiple calls are safe: previous sessions are automatically invalidated
+   * - Uses internal token (exposed in state.sessionToken) to prevent race conditions
+   * - If a previous initialization is pending, it will be cancelled
+   *
+   * **State Transitions**:
+   * - IDLE → INITIALIZING → READY (success)
+   * - IDLE → INITIALIZING → ERROR (failure)
+   *
+   * @throws Never throws - errors are captured in state.error
+   */
+  initialize: () => Promise<void>
+  /** Resets the store and attempts to initialize again. */
+  retry: () => Promise<void>
+  /** Stops all audio processing and releases resources. */
+  reset: () => Promise<void>
+  /**
+   * Updates the detected pitch and note based on new analysis results.
+   * @param pitch - The detected frequency in Hz.
+   * @param confidence - The confidence of the detection.
+   */
+  updatePitch: (pitch: number, confidence: number) => void
+  /** Transitions state to `LISTENING`. Only valid if state is `READY`. */
+  startListening: () => void
+  /** Transitions state to `READY` and clears detection data. */
+  stopListening: () => void
+  /**
+   * Enumerates available audio input devices.
+   */
+  loadDevices: () => Promise<void>
+  /** Sets the active microphone device and re-initializes. */
+  setDeviceId: (deviceId: string) => Promise<void>
+  /**
+   * Sets the input sensitivity and updates the gain node immediately.
+   * @param sensitivity - New sensitivity value (0-100).
+   */
+  setSensitivity: (sensitivity: number) => void
 }
 
 // ===== types-docs/lib/domain/type-guards.d.ts =====
@@ -1947,28 +2407,28 @@ export interface TunerStore {
  * These are used to validate data at runtime, especially when receiving
  * data from external sources or persistence.
  */
-import type { Note, Exercise, Pitch } from './musical-types';
+import type { Note, Exercise, Pitch } from './musical-types'
 /**
  * Validates if an unknown value is a Pitch object.
  *
  * @param x - The value to check.
  * @returns True if x is a Pitch.
  */
-export declare function isPitch(x: unknown): x is Pitch;
+export declare function isPitch(x: unknown): x is Pitch
 /**
  * Validates if an unknown value is a Note object.
  *
  * @param x - The value to check.
  * @returns True if x is a Note.
  */
-export declare function isNote(x: unknown): x is Note;
+export declare function isNote(x: unknown): x is Note
 /**
  * Validates if an unknown value is an Exercise object.
  *
  * @param x - The value to check.
  * @returns True if x is an Exercise.
  */
-export declare function isExercise(x: unknown): x is Exercise;
+export declare function isExercise(x: unknown): x is Exercise
 
 // ===== types-docs/lib/errors/app-error.d.ts =====
 
@@ -1987,28 +2447,28 @@ export declare function isExercise(x: unknown): x is Exercise;
  * - 'error': A specific feature or component is broken, but the rest of the app may be functional.
  * - 'warning': An unexpected condition that does not yet cause a failure but might indicate a problem.
  */
-export type ErrorSeverity = 'fatal' | 'error' | 'warning';
+export type ErrorSeverity = 'fatal' | 'error' | 'warning'
 /**
  * A standardized dictionary of error codes.
  * @remarks Using codes instead of raw messages allows for easier error tracking,
  * localization, and prevents sensitive information from leaking into logs or UI.
  */
 export declare const ERROR_CODES: {
-    readonly UNKNOWN: "UNKNOWN";
-    readonly NOT_IMPLEMENTED: "NOT_IMPLEMENTED";
-    readonly AUDIO_CONTEXT_FAILED: "AUDIO_CONTEXT_FAILED";
-    readonly MIC_PERMISSION_DENIED: "MIC_PERMISSION_DENIED";
-    readonly MIC_NOT_FOUND: "MIC_NOT_FOUND";
-    readonly MIC_IN_USE: "MIC_IN_USE";
-    readonly MIC_GENERIC_ERROR: "MIC_GENERIC_ERROR";
-    readonly STATE_INVALID_TRANSITION: "STATE_INVALID_TRANSITION";
-    readonly DATA_VALIDATION_ERROR: "DATA_VALIDATION_ERROR";
-    readonly NOTE_PARSING_FAILED: "NOTE_PARSING_FAILED";
-    readonly OSMD_INIT_FAILED: "OSMD_INIT_FAILED";
-    readonly OSMD_RENDER_FAILED: "OSMD_RENDER_FAILED";
-    readonly COMPONENT_RENDER_ERROR: "COMPONENT_RENDER_ERROR";
-};
-export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+  readonly UNKNOWN: 'UNKNOWN'
+  readonly NOT_IMPLEMENTED: 'NOT_IMPLEMENTED'
+  readonly AUDIO_CONTEXT_FAILED: 'AUDIO_CONTEXT_FAILED'
+  readonly MIC_PERMISSION_DENIED: 'MIC_PERMISSION_DENIED'
+  readonly MIC_NOT_FOUND: 'MIC_NOT_FOUND'
+  readonly MIC_IN_USE: 'MIC_IN_USE'
+  readonly MIC_GENERIC_ERROR: 'MIC_GENERIC_ERROR'
+  readonly STATE_INVALID_TRANSITION: 'STATE_INVALID_TRANSITION'
+  readonly DATA_VALIDATION_ERROR: 'DATA_VALIDATION_ERROR'
+  readonly NOTE_PARSING_FAILED: 'NOTE_PARSING_FAILED'
+  readonly OSMD_INIT_FAILED: 'OSMD_INIT_FAILED'
+  readonly OSMD_RENDER_FAILED: 'OSMD_RENDER_FAILED'
+  readonly COMPONENT_RENDER_ERROR: 'COMPONENT_RENDER_ERROR'
+}
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
 /**
  * Represents a serializable, structured application error.
  *
@@ -2020,35 +2480,43 @@ export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
  * property can hold the original exception that was caught.
  */
 export declare class AppError extends Error {
-    readonly id: string;
-    readonly code: ErrorCode;
-    readonly severity: ErrorSeverity;
-    readonly context?: Record<string, unknown>;
-    readonly cause?: unknown;
-    constructor(params: {
-        message: string;
-        code?: ErrorCode;
-        severity?: ErrorSeverity;
-        context?: Record<string, unknown>;
-        cause?: unknown;
-    });
+  readonly id: string
+  readonly code: ErrorCode
+  readonly severity: ErrorSeverity
+  readonly context?: Record<string, unknown>
+  readonly cause?: unknown
+  constructor(params: {
+    message: string
+    code?: ErrorCode
+    severity?: ErrorSeverity
+    context?: Record<string, unknown>
+    cause?: unknown
+  })
 }
-export declare function toAppError(err: unknown, fallbackCode?: ErrorCode, context?: Record<string, unknown>): AppError;
+export declare function toAppError(
+  err: unknown,
+  fallbackCode?: ErrorCode,
+  context?: Record<string, unknown>,
+): AppError
 
 // ===== types-docs/lib/errors/app-error.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/exercise-recommender.d.ts =====
 
-import type { Exercise } from '@/lib/domain/musical-types';
-import type { AnalyticsStore } from '@/stores/analytics-store';
-type UserProgress = AnalyticsStore['progress'];
+import type { Exercise } from '@/lib/domain/musical-types'
+import type { AnalyticsStore } from '@/stores/analytics-store'
+type UserProgress = AnalyticsStore['progress']
 /**
  * Pedagogical exercise recommender logic.
  */
-export declare function getRecommendedExercise(exercises: Exercise[], userProgress: UserProgress, lastPlayedId?: string): Exercise | null;
-export {};
+export declare function getRecommendedExercise(
+  exercises: Exercise[],
+  userProgress: UserProgress,
+  lastPlayedId?: string,
+): Exercise | null
+export {}
 
 // ===== types-docs/lib/exercises/categories/open-strings.d.ts =====
 
@@ -2061,11 +2529,11 @@ export {};
  * These exercises are designed for absolute beginners to establish basic
  * bowing technique and ear training without the complexity of left-hand fingering.
  */
-import type { ExerciseData } from '../types';
+import type { ExerciseData } from '../types'
 /**
  * List of beginner exercises for open strings.
  */
-export declare const openStringsExercises: ExerciseData[];
+export declare const openStringsExercises: ExerciseData[]
 
 // ===== types-docs/lib/exercises/categories/scales.d.ts =====
 
@@ -2083,39 +2551,41 @@ export declare const openStringsExercises: ExerciseData[];
  * This module follows the Suzuki method progression, starting with
  * tetrachords (4-note patterns) before progressing to full octaves.
  */
-import type { ExerciseData } from '../types';
+import type { ExerciseData } from '../types'
 /**
  * Enhanced exercise data with violin-specific pedagogical information.
  */
 interface ViolinExerciseData extends ExerciseData {
-    /** Starting string for the exercise (G, D, A, or E) */
-    startingString?: 'G' | 'D' | 'A' | 'E';
-    /** Finger pattern for the exercise (e.g., "0-1-2-3" for open-1st-2nd-3rd finger) */
-    fingerPattern?: string;
-    /** Recommended tempo range in BPM */
-    tempoRange?: {
-        min: number;
-        max: number;
-    };
-    /** Learning objectives for this specific exercise */
-    learningObjectives?: string[];
+  /** Starting string for the exercise (G, D, A, or E) */
+  startingString?: 'G' | 'D' | 'A' | 'E'
+  /** Finger pattern for the exercise (e.g., "0-1-2-3" for open-1st-2nd-3rd finger) */
+  fingerPattern?: string
+  /** Recommended tempo range in BPM */
+  tempoRange?: {
+    min: number
+    max: number
+  }
+  /** Learning objectives for this specific exercise */
+  learningObjectives?: string[]
 }
 /**
  * Beginner scale exercises focusing on tetrachords and fundamental patterns.
  * Follows a progressive pedagogical approach starting with single-string exercises.
  */
-export declare const scalesExercises: readonly ViolinExerciseData[];
+export declare const scalesExercises: readonly ViolinExerciseData[]
 /**
  * Utility to get exercises by difficulty level.
  * Useful for progressive lesson planning.
  */
-export declare const getExercisesByDifficulty: (difficulty: "Beginner" | "Intermediate" | "Advanced") => ViolinExerciseData[];
+export declare const getExercisesByDifficulty: (
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced',
+) => ViolinExerciseData[]
 /**
  * Utility to get exercises by starting string.
  * Useful for focusing practice on specific strings.
  */
-export declare const getExercisesByString: (string: "G" | "D" | "A" | "E") => ViolinExerciseData[];
-export {};
+export declare const getExercisesByString: (string: 'G' | 'D' | 'A' | 'E') => ViolinExerciseData[]
+export {}
 
 // ===== types-docs/lib/exercises/categories/songs.d.ts =====
 
@@ -2128,11 +2598,11 @@ export {};
  * rhythm, string crossing) to recognizable melodies, increasing engagement
  * and musicality.
  */
-import type { ExerciseData } from '../types';
+import type { ExerciseData } from '../types'
 /**
  * List of beginner exercises featuring song fragments.
  */
-export declare const songsExercises: ExerciseData[];
+export declare const songsExercises: ExerciseData[]
 
 // ===== types-docs/lib/exercises/index.d.ts =====
 
@@ -2142,7 +2612,7 @@ export declare const songsExercises: ExerciseData[];
  * This file aggregates raw exercise data from various categories,
  * processes them to generate MusicXML, and exports the final collection.
  */
-import type { Exercise } from './types';
+import type { Exercise } from './types'
 /**
  * A comprehensive collection of all exercises available in the application.
  *
@@ -2152,7 +2622,7 @@ import type { Exercise } from './types';
  *
  * Exercises are processed once at module load time.
  */
-export declare const allExercises: Exercise[];
+export declare const allExercises: Exercise[]
 
 // ===== types-docs/lib/exercises/musicxml-builder.d.ts =====
 
@@ -2160,15 +2630,15 @@ export declare const allExercises: Exercise[];
  * MusicXMLBuilder
  * Provides logic for generating MusicXML 3.1 strings from structured exercise data.
  */
-import type { ExerciseData } from './types';
+import type { ExerciseData } from './types'
 /**
  * Generates a complete MusicXML string from an ExerciseData object.
  */
-export declare const generateMusicXML: (exercise: ExerciseData) => string;
+export declare const generateMusicXML: (exercise: ExerciseData) => string
 
 // ===== types-docs/lib/exercises/musicxml-builder.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/exercises/types.d.ts =====
 
@@ -2177,26 +2647,26 @@ export {};
  * Shared type definitions for violin exercises, covering musical properties,
  * score metadata, and exercise data structures.
  */
-export * from '@/lib/domain/musical-types';
+export * from '@/lib/domain/musical-types'
 
 // ===== types-docs/lib/exercises/utils.d.ts =====
 
 /**
  * Utility functions for handling exercise data.
  */
-import type { NoteDuration, Pitch } from './types';
+import type { NoteDuration, Pitch } from './types'
 /**
  * Calculates the duration of a note in milliseconds based on BPM.
  */
-export declare const getDurationMs: (duration: NoteDuration, bpm?: number) => number;
+export declare const getDurationMs: (duration: NoteDuration, bpm?: number) => number
 /**
  * Parses a pitch string (e.g., "G#4", "Bb3") into a Pitch object.
  */
-export declare const parsePitch: (pitchString: string) => Pitch;
+export declare const parsePitch: (pitchString: string) => Pitch
 
 // ===== types-docs/lib/exercises/utils.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/feature-flags.d.ts =====
 
@@ -2206,100 +2676,108 @@ export {};
  * This module provides a centralized way to manage experimental features
  * and conditional code execution based on environment variables.
  */
-export type FeatureFlagType = 'EXPERIMENTAL' | 'BETA' | 'STABLE' | 'UNSTABLE' | 'INTEGRATION' | 'PERFORMANCE' | 'UI_UX' | 'DEPRECATED';
+export type FeatureFlagType =
+  | 'EXPERIMENTAL'
+  | 'BETA'
+  | 'STABLE'
+  | 'UNSTABLE'
+  | 'INTEGRATION'
+  | 'PERFORMANCE'
+  | 'UI_UX'
+  | 'DEPRECATED'
 export interface FeatureFlagMetadata {
-    name: string;
-    key: string;
-    type: FeatureFlagType;
-    description: string;
-    defaultValue: boolean;
-    affectedFiles?: string[];
-    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-    rollbackStrategy?: string;
-    dependencies?: string[];
+  name: string
+  key: string
+  type: FeatureFlagType
+  description: string
+  defaultValue: boolean
+  affectedFiles?: string[]
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  rollbackStrategy?: string
+  dependencies?: string[]
 }
 export declare const FEATURE_FLAGS_METADATA: {
-    readonly FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
-        readonly name: "FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY";
-        readonly key: "practiceAdaptiveDifficulty";
-        readonly type: "STABLE";
-        readonly description: "Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.";
-        readonly defaultValue: true;
-        readonly riskLevel: "MEDIUM";
-        readonly affectedFiles: ["lib/practice-core.ts"];
-        readonly rollbackStrategy: "Revert to fixed difficulty levels.";
-    };
-    readonly FEATURE_AUDIO_WEB_WORKER: {
-        readonly name: "FEATURE_AUDIO_WEB_WORKER";
-        readonly key: "audioWebWorker";
-        readonly type: "PERFORMANCE";
-        readonly description: "Offload audio processing to a Web Worker.";
-        readonly defaultValue: false;
-        readonly riskLevel: "HIGH";
-        readonly affectedFiles: ["lib/pitch-detector.ts", "lib/note-stream.ts"];
-        readonly rollbackStrategy: "Fallback to main-thread audio processing.";
-    };
-    readonly FEATURE_UI_INTONATION_HEATMAPS: {
-        readonly name: "FEATURE_UI_INTONATION_HEATMAPS";
-        readonly key: "uiIntonationHeatmaps";
-        readonly type: "EXPERIMENTAL";
-        readonly description: "Show intonation heatmaps in the analytics dashboard.";
-        readonly defaultValue: false;
-        readonly riskLevel: "LOW";
-        readonly affectedFiles: ["components/analytics-dashboard.tsx"];
-        readonly rollbackStrategy: "Disable the heatmap visualization.";
-    };
-    readonly FEATURE_SOCIAL_PRACTICE_ROOMS: {
-        readonly name: "FEATURE_SOCIAL_PRACTICE_ROOMS";
-        readonly key: "socialPracticeRooms";
-        readonly type: "EXPERIMENTAL";
-        readonly description: "Real-time synchronization for group practice or teacher-led sessions.";
-        readonly defaultValue: false;
-        readonly riskLevel: "HIGH";
-        readonly affectedFiles: [];
-        readonly rollbackStrategy: "Disable real-time synchronization features.";
-    };
-};
+  readonly FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
+    readonly name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY'
+    readonly key: 'practiceAdaptiveDifficulty'
+    readonly type: 'STABLE'
+    readonly description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.'
+    readonly defaultValue: true
+    readonly riskLevel: 'MEDIUM'
+    readonly affectedFiles: ['lib/practice-core.ts']
+    readonly rollbackStrategy: 'Revert to fixed difficulty levels.'
+  }
+  readonly FEATURE_AUDIO_WEB_WORKER: {
+    readonly name: 'FEATURE_AUDIO_WEB_WORKER'
+    readonly key: 'audioWebWorker'
+    readonly type: 'PERFORMANCE'
+    readonly description: 'Offload audio processing to a Web Worker.'
+    readonly defaultValue: false
+    readonly riskLevel: 'HIGH'
+    readonly affectedFiles: ['lib/pitch-detector.ts', 'lib/note-stream.ts']
+    readonly rollbackStrategy: 'Fallback to main-thread audio processing.'
+  }
+  readonly FEATURE_UI_INTONATION_HEATMAPS: {
+    readonly name: 'FEATURE_UI_INTONATION_HEATMAPS'
+    readonly key: 'uiIntonationHeatmaps'
+    readonly type: 'EXPERIMENTAL'
+    readonly description: 'Show intonation heatmaps in the analytics dashboard.'
+    readonly defaultValue: false
+    readonly riskLevel: 'LOW'
+    readonly affectedFiles: ['components/analytics-dashboard.tsx']
+    readonly rollbackStrategy: 'Disable the heatmap visualization.'
+  }
+  readonly FEATURE_SOCIAL_PRACTICE_ROOMS: {
+    readonly name: 'FEATURE_SOCIAL_PRACTICE_ROOMS'
+    readonly key: 'socialPracticeRooms'
+    readonly type: 'EXPERIMENTAL'
+    readonly description: 'Real-time synchronization for group practice or teacher-led sessions.'
+    readonly defaultValue: false
+    readonly riskLevel: 'HIGH'
+    readonly affectedFiles: []
+    readonly rollbackStrategy: 'Disable real-time synchronization features.'
+  }
+}
 /**
  * Type representing all valid feature flag names.
  */
-export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA;
+export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA
 declare class FeatureFlagsManager {
-    /**
-     * Internal mapping to ensure Next.js bundler replaces environment variables.
-     * @internal
-     */
-    private getClientValue;
-    /**
-     * Checks if a feature flag is enabled.
-     *
-     * @remarks
-     * In Next.js, to access environment variables on the client,
-     * they must be prefixed with NEXT_PUBLIC_. This manager checks both
-     * the provided name and its NEXT_PUBLIC_ prefixed version.
-     */
-    isEnabled(flagName: FeatureFlagName): boolean;
-    get<T = unknown>(flagName: FeatureFlagName, defaultValue?: T): T | string | boolean | undefined;
-    getAll(): Record<string, boolean>;
-    validateFlags(): {
-        valid: boolean;
-        errors: string[];
-    };
+  /**
+   * Internal mapping to ensure Next.js bundler replaces environment variables.
+   * @internal
+   */
+  private getClientValue
+  /**
+   * Checks if a feature flag is enabled.
+   *
+   * @remarks
+   * In Next.js, to access environment variables on the client,
+   * they must be prefixed with NEXT_PUBLIC_. This manager checks both
+   * the provided name and its NEXT_PUBLIC_ prefixed version.
+   */
+  isEnabled(flagName: FeatureFlagName): boolean
+  get<T = unknown>(flagName: FeatureFlagName, defaultValue?: T): T | string | boolean | undefined
+  getAll(): Record<string, boolean>
+  validateFlags(): {
+    valid: boolean
+    errors: string[]
+  }
 }
-export declare const featureFlags: FeatureFlagsManager;
+export declare const featureFlags: FeatureFlagsManager
 /**
  * Hook to use a feature flag in a React component.
  */
-export declare function useFeatureFlag(flagName: FeatureFlagName): boolean;
+export declare function useFeatureFlag(flagName: FeatureFlagName): boolean
 /**
  * Hook to use multiple feature flags in a React component.
  */
-export declare function useFeatureFlags(flagNames: FeatureFlagName[]): Record<string, boolean>;
-export {};
+export declare function useFeatureFlags(flagNames: FeatureFlagName[]): Record<string, boolean>
+export {}
 
 // ===== types-docs/lib/feature-flags.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/infrastructure/audio-manager.d.ts =====
 
@@ -2310,43 +2788,43 @@ export {};
  * Encapsulates the complexity of initialization, resource tracking, and cleanup.
  */
 export interface AudioResources {
-    context: AudioContext;
-    stream: MediaStream;
-    analyser: AnalyserNode;
-    gainNode?: GainNode;
+  context: AudioContext
+  stream: MediaStream
+  analyser: AnalyserNode
+  gainNode?: GainNode
 }
 export declare class AudioManager {
-    private context;
-    private stream;
-    private analyser;
-    private source;
-    private gainNode;
-    /**
-     * Initializes the audio pipeline.
-     *
-     * @param deviceId - Optional ID of the microphone to use.
-     * @returns A promise that resolves to the initialized audio resources.
-     * @throws AppError if microphone access is denied or hardware fails.
-     */
-    initialize(deviceId?: string): Promise<AudioResources>;
-    /**
-     * Releases all audio resources and closes the context.
-     */
-    cleanup(): Promise<void>;
-    getContext(): AudioContext | null;
-    getStream(): MediaStream | null;
-    getAnalyser(): AnalyserNode | null;
-    setGain(value: number): void;
-    isActive(): boolean;
+  private context
+  private stream
+  private analyser
+  private source
+  private gainNode
+  /**
+   * Initializes the audio pipeline.
+   *
+   * @param deviceId - Optional ID of the microphone to use.
+   * @returns A promise that resolves to the initialized audio resources.
+   * @throws AppError if microphone access is denied or hardware fails.
+   */
+  initialize(deviceId?: string): Promise<AudioResources>
+  /**
+   * Releases all audio resources and closes the context.
+   */
+  cleanup(): Promise<void>
+  getContext(): AudioContext | null
+  getStream(): MediaStream | null
+  getAnalyser(): AnalyserNode | null
+  setGain(value: number): void
+  isActive(): boolean
 }
 /**
  * Singleton instance of the AudioManager to be used across the application.
  */
-export declare const audioManager: AudioManager;
+export declare const audioManager: AudioManager
 
 // ===== types-docs/lib/infrastructure/audio-manager.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/live-observations.d.ts =====
 
@@ -2354,17 +2832,20 @@ export {};
  * Calcula observaciones técnicas en tiempo real basándose en el historial
  * de detecciones recientes (sin esperar a completar la nota).
  */
-import { DetectedNote } from './practice-core';
-import { Observation } from './technique-types';
+import { DetectedNote } from './practice-core'
+import { Observation } from './technique-types'
 /**
  * Calcula observaciones en vivo que el estudiante puede corregir
  * MIENTRAS está tocando.
  */
-export declare function calculateLiveObservations(recentDetections: DetectedNote[], targetPitch: string): Observation[];
+export declare function calculateLiveObservations(
+  recentDetections: DetectedNote[],
+  targetPitch: string,
+): Observation[]
 
 // ===== types-docs/lib/live-observations.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/music-data.d.ts =====
 
@@ -2375,18 +2856,18 @@ export {};
  * @deprecated This module is maintained for backward compatibility.
  * Use the new exercise system in `lib/exercises/` for new features.
  */
-import type { Exercise as ModernExercise } from './exercises/types';
+import type { Exercise as ModernExercise } from './exercises/types'
 /**
  * Represents a single musical note in the legacy system.
  * @internal
  */
 interface LegacyNote {
-    /** Note name with octave (e.g., "G4"). */
-    pitch: string;
-    /** Rhythmic duration (e.g., "quarter"). */
-    duration: string;
-    /** The measure number where this note resides. */
-    measure: number;
+  /** Note name with octave (e.g., "G4"). */
+  pitch: string
+  /** Rhythmic duration (e.g., "quarter"). */
+  duration: string
+  /** The measure number where this note resides. */
+  measure: number
 }
 /**
  * Interface for the legacy Exercise object.
@@ -2395,42 +2876,42 @@ interface LegacyNote {
  * This type will be removed in v2.0.
  */
 export interface LegacyExercise {
-    /** Unique identifier. */
-    id: string;
-    /** Human-readable name. */
-    name: string;
-    /** List of notes in the exercise. */
-    notes: LegacyNote[];
-    /** Pre-generated MusicXML string. */
-    musicXML: string;
+  /** Unique identifier. */
+  id: string
+  /** Human-readable name. */
+  name: string
+  /** List of notes in the exercise. */
+  notes: LegacyNote[]
+  /** Pre-generated MusicXML string. */
+  musicXML: string
 }
 /**
  * Example legacy exercise for G Major Scale.
  */
-export declare const G_MAJOR_SCALE_EXERCISE: LegacyExercise;
+export declare const G_MAJOR_SCALE_EXERCISE: LegacyExercise
 /**
  * Adapts a legacy exercise into the modern Exercise format.
  */
-export declare function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise;
-export {};
+export declare function adaptLegacyExercise(legacy: LegacyExercise): ModernExercise
+export {}
 
 // ===== types-docs/lib/note-segmenter.d.ts =====
 
-import { TechniqueFrame } from './technique-types';
+import { TechniqueFrame } from './technique-types'
 /**
  * Configuration options for the `NoteSegmenter`.
  */
 export interface SegmenterOptions {
-    /** The minimum RMS value to be considered a potential signal. */
-    minRms: number;
-    /** The maximum RMS value to be considered silence. */
-    maxRmsSilence: number;
-    /** The minimum confidence score from the pitch detector to trust the note name. */
-    minConfidence: number;
-    /** The duration in milliseconds a signal must be present to trigger an `ONSET` event. */
-    onsetDebounceMs: number;
-    /** The duration in milliseconds a signal must be absent to trigger an `OFFSET` event. */
-    offsetDebounceMs: number;
+  /** The minimum RMS value to be considered a potential signal. */
+  minRms: number
+  /** The maximum RMS value to be considered silence. */
+  maxRmsSilence: number
+  /** The minimum confidence score from the pitch detector to trust the note name. */
+  minConfidence: number
+  /** The duration in milliseconds a signal must be present to trigger an `ONSET` event. */
+  onsetDebounceMs: number
+  /** The duration in milliseconds a signal must be absent to trigger an `OFFSET` event. */
+  offsetDebounceMs: number
 }
 /**
  * Possible segmenter events emitted during note detection.
@@ -2441,38 +2922,41 @@ export interface SegmenterOptions {
  * 2. NOTE_CHANGE: Pitch changes mid-sound (unusual, may indicate sliding)
  * 3. OFFSET: Sound ends -\> note completed with full analysis
  */
-export type SegmenterEvent = {
-    type: 'ONSET';
-    /** Timestamp when note attack was detected (ms) */
-    timestamp: number;
-    /** The detected note name (e.g., "A4") */
-    noteName: string;
-    /**
-     * Frames captured during silence/transition before this note.
-     * Used for analyzing attack quality and string crossing.
-     */
-    gapFrames: TechniqueFrame[];
-} | {
-    type: 'OFFSET';
-    /** Timestamp when note release was detected (ms) */
-    timestamp: number;
-    /**
-     * All frames captured during this note's sustain phase.
-     * Used for intonation, vibrato, and stability analysis.
-     */
-    frames: TechniqueFrame[];
-} | {
-    type: 'NOTE_CHANGE';
-    /** Timestamp of pitch change (ms) */
-    timestamp: number;
-    /** The new detected note name */
-    noteName: string;
-    /**
-     * Frames captured during the pitch transition.
-     * May indicate intentional glissando or unintentional sliding.
-     */
-    frames: TechniqueFrame[];
-};
+export type SegmenterEvent =
+  | {
+      type: 'ONSET'
+      /** Timestamp when note attack was detected (ms) */
+      timestamp: number
+      /** The detected note name (e.g., "A4") */
+      noteName: string
+      /**
+       * Frames captured during silence/transition before this note.
+       * Used for analyzing attack quality and string crossing.
+       */
+      gapFrames: TechniqueFrame[]
+    }
+  | {
+      type: 'OFFSET'
+      /** Timestamp when note release was detected (ms) */
+      timestamp: number
+      /**
+       * All frames captured during this note's sustain phase.
+       * Used for intonation, vibrato, and stability analysis.
+       */
+      frames: TechniqueFrame[]
+    }
+  | {
+      type: 'NOTE_CHANGE'
+      /** Timestamp of pitch change (ms) */
+      timestamp: number
+      /** The new detected note name */
+      noteName: string
+      /**
+       * Frames captured during the pitch transition.
+       * May indicate intentional glissando or unintentional sliding.
+       */
+      frames: TechniqueFrame[]
+    }
 /**
  * A stateful class that processes a stream of `TechniqueFrame`s and emits events for note onsets, offsets, and changes.
  *
@@ -2487,52 +2971,52 @@ export type SegmenterEvent = {
  * - Debouncing timers to prevent spurious events from short fluctuations.
  */
 export declare class NoteSegmenter {
-    private options;
-    private state;
-    private currentNoteName;
-    private frames;
-    private gapFrames;
-    private lastAboveThresholdTime;
-    private lastBelowThresholdTime;
-    private lastSignalTime;
-    private pendingNoteName;
-    private pendingSince;
-    /**
-     * Constructs a new `NoteSegmenter`.
-     * @param options - Optional configuration to override the default segmentation parameters.
-     */
-    constructor(options?: Partial<SegmenterOptions>);
-    /**
-     * Processes a single audio analysis frame.
-     *
-     * @param frame - Current pitch detection result
-     * @returns Event if state transition occurred, null otherwise
-     *
-     * @remarks
-     * **State Machine**:
-     * - SILENCE -\> ONSET (when RMS \> minRms)
-     * - ONSET -\> OFFSET (when RMS \< maxRmsSilence for offsetDebounceMs)
-     * - ONSET -\> NOTE_CHANGE (when detected note changes)
-     *
-     * Uses debouncing to prevent false triggers from noise.
-     */
-    processFrame(frame: TechniqueFrame): SegmenterEvent | null;
-    private handleSilenceState;
-    private handleNoteState;
-    private checkNoteChange;
-    /**
-     * Resets segmenter to initial state.
-     *
-     * @remarks
-     * Call between exercises or when audio context is recreated.
-     * Discards all buffered frames and resets internal timers.
-     */
-    reset(): void;
+  private options
+  private state
+  private currentNoteName
+  private frames
+  private gapFrames
+  private lastAboveThresholdTime
+  private lastBelowThresholdTime
+  private lastSignalTime
+  private pendingNoteName
+  private pendingSince
+  /**
+   * Constructs a new `NoteSegmenter`.
+   * @param options - Optional configuration to override the default segmentation parameters.
+   */
+  constructor(options?: Partial<SegmenterOptions>)
+  /**
+   * Processes a single audio analysis frame.
+   *
+   * @param frame - Current pitch detection result
+   * @returns Event if state transition occurred, null otherwise
+   *
+   * @remarks
+   * **State Machine**:
+   * - SILENCE -\> ONSET (when RMS \> minRms)
+   * - ONSET -\> OFFSET (when RMS \< maxRmsSilence for offsetDebounceMs)
+   * - ONSET -\> NOTE_CHANGE (when detected note changes)
+   *
+   * Uses debouncing to prevent false triggers from noise.
+   */
+  processFrame(frame: TechniqueFrame): SegmenterEvent | null
+  private handleSilenceState
+  private handleNoteState
+  private checkNoteChange
+  /**
+   * Resets segmenter to initial state.
+   *
+   * @remarks
+   * Call between exercises or when audio context is recreated.
+   * Discards all buffered frames and resets internal timers.
+   */
+  reset(): void
 }
 
 // ===== types-docs/lib/note-segmenter.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/note-stream.d.ts =====
 
@@ -2541,53 +3025,57 @@ export {};
  * pitch detection events into a stream of well-defined `PracticeEvent`s.
  * This decouples the audio input source from the state management logic.
  */
-import { type PracticeEvent, type TargetNote } from '@/lib/practice-core';
-import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port';
-import type { Exercise } from './exercises/types';
+import { type PracticeEvent, type TargetNote } from '@/lib/practice-core'
+import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
+import type { Exercise } from './exercises/types'
 /**
  * The raw data yielded from the pitch detector on each animation frame.
  */
 export interface RawPitchEvent {
-    /** The detected fundamental frequency in Hertz. */
-    pitchHz: number;
-    /** The pitch detector's confidence in the result (0-1). */
-    confidence: number;
-    /** The Root Mean Square (volume) of the audio buffer. */
-    rms: number;
-    /** The timestamp when the event was generated. */
-    timestamp: number;
+  /** The detected fundamental frequency in Hertz. */
+  pitchHz: number
+  /** The pitch detector's confidence in the result (0-1). */
+  confidence: number
+  /** The Root Mean Square (volume) of the audio buffer. */
+  rms: number
+  /** The timestamp when the event was generated. */
+  timestamp: number
 }
 /**
  * Configuration options for the note stream pipeline.
  */
 export interface NoteStreamOptions {
-    /** The minimum RMS (volume) to consider as a valid signal. */
-    minRms: number;
-    /** The minimum confidence score from the pitch detector to trust the result. */
-    minConfidence: number;
-    /** The allowable pitch deviation in cents for a note to be considered a match. */
-    centsTolerance: number;
-    /** The duration in milliseconds a note must be held to be considered "matched". */
-    requiredHoldTime: number;
-    /** The full exercise object, used for rhythm analysis. */
-    exercise?: Exercise;
-    /** The start time of the session, used as a reference for rhythm calculations. */
-    sessionStartTime?: number;
-    /** The beats per minute (BPM) of the exercise, for rhythm analysis. */
-    bpm: number;
+  /** The minimum RMS (volume) to consider as a valid signal. */
+  minRms: number
+  /** The minimum confidence score from the pitch detector to trust the result. */
+  minConfidence: number
+  /** The allowable pitch deviation in cents for a note to be considered a match. */
+  centsTolerance: number
+  /** The duration in milliseconds a note must be held to be considered "matched". */
+  requiredHoldTime: number
+  /** The full exercise object, used for rhythm analysis. */
+  exercise?: Exercise
+  /** The start time of the session, used as a reference for rhythm calculations. */
+  sessionStartTime?: number
+  /** The beats per minute (BPM) of the exercise, for rhythm analysis. */
+  bpm: number
 }
 /**
  * Immutable snapshot of pipeline context.
  * Captured once at pipeline creation to prevent state drift.
  */
 export interface PipelineContext {
-    readonly targetNote: () => TargetNote | null;
-    readonly getCurrentIndex: () => number;
+  readonly targetNote: () => TargetNote | null
+  readonly getCurrentIndex: () => number
 }
 /**
  * Creates an async iterable of raw pitch events using audio ports.
  */
-export declare function createRawPitchStream(audioLoop: AudioLoopPort, detector: PitchDetectionPort, signal: AbortSignal): AsyncGenerator<RawPitchEvent>;
+export declare function createRawPitchStream(
+  audioLoop: AudioLoopPort,
+  detector: PitchDetectionPort,
+  signal: AbortSignal,
+): AsyncGenerator<RawPitchEvent>
 /**
  * Creates a practice event processing pipeline.
  *
@@ -2618,14 +3106,20 @@ export declare function createRawPitchStream(audioLoop: AudioLoopPort, detector:
  * );
  * ```
  */
-export declare function createPracticeEventPipeline(rawPitchStream: AsyncIterable<RawPitchEvent>, targetNote: () => TargetNote | null, getCurrentIndex: () => number, options: Partial<NoteStreamOptions> & {
-    exercise: Exercise;
-    sessionStartTime: number;
-}, signal: AbortSignal): AsyncIterable<PracticeEvent>;
+export declare function createPracticeEventPipeline(
+  rawPitchStream: AsyncIterable<RawPitchEvent>,
+  targetNote: () => TargetNote | null,
+  getCurrentIndex: () => number,
+  options: Partial<NoteStreamOptions> & {
+    exercise: Exercise
+    sessionStartTime: number
+  },
+  signal: AbortSignal,
+): AsyncIterable<PracticeEvent>
 
 // ===== types-docs/lib/note-stream.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/observability/logger.d.ts =====
 
@@ -2638,7 +3132,7 @@ export {};
  * Datadog, or an OpenTelemetry collector) without changing the code at the
  * call sites.
  */
-import { ERROR_CODES } from '@/lib/errors/app-error';
+import { ERROR_CODES } from '@/lib/errors/app-error'
 /**
  * A simple, structured logger instance.
  * @remarks It provides methods for different log levels (`debug`, `info`, `warn`, `error`).
@@ -2646,27 +3140,31 @@ import { ERROR_CODES } from '@/lib/errors/app-error';
  * all caught exceptions are logged in a standardized format.
  */
 export declare const logger: {
-    debug: (msg: string, context?: Record<string, unknown>) => void;
-    info: (msg: string, context?: Record<string, unknown>) => void;
-    warn: (msg: string, context?: Record<string, unknown>) => void;
-    /**
-     * Logs a structured error.
-     * @param payload - Can be a simple string, or a structured object containing
-     * the error instance, a message, and additional context.
-     */
-    error: (payload: string | {
-        msg: string;
-        err: unknown;
-        code?: (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
-        context?: Record<string, unknown>;
-    }) => void;
-};
+  debug: (msg: string, context?: Record<string, unknown>) => void
+  info: (msg: string, context?: Record<string, unknown>) => void
+  warn: (msg: string, context?: Record<string, unknown>) => void
+  /**
+   * Logs a structured error.
+   * @param payload - Can be a simple string, or a structured object containing
+   * the error instance, a message, and additional context.
+   */
+  error: (
+    payload:
+      | string
+      | {
+          msg: string
+          err: unknown
+          code?: (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
+          context?: Record<string, unknown>
+        },
+  ) => void
+}
 
 // ===== types-docs/lib/persistence/migrator.d.ts =====
 
-export type MigrationFn<T = any> = (state: T) => T;
+export type MigrationFn<T = any> = (state: T) => T
 export interface MigratorConfig<T> {
-    [version: number]: MigrationFn<T>;
+  [version: number]: MigrationFn<T>
 }
 /**
  * Creates a declarative migrator for Zustand's persist middleware.
@@ -2679,14 +3177,20 @@ export interface MigratorConfig<T> {
  * });
  * ```
  */
-export declare function createMigrator<T>(config: MigratorConfig<T>): (persistedState: any, version: number) => T;
+export declare function createMigrator<T>(
+  config: MigratorConfig<T>,
+): (persistedState: any, version: number) => T
 
 // ===== types-docs/lib/persistence/validated-persist.d.ts =====
 
-import { StateCreator } from 'zustand';
-import { PersistOptions } from 'zustand/middleware';
-import { z } from 'zod';
-export declare const validatedPersist: <T>(schema: z.ZodType<T>, config: StateCreator<T, [["zustand/persist", unknown]], []>, options: PersistOptions<T>) => StateCreator<T, [], [["zustand/persist", T]]>;
+import { StateCreator } from 'zustand'
+import { PersistOptions } from 'zustand/middleware'
+import { z } from 'zod'
+export declare const validatedPersist: <T>(
+  schema: z.ZodType<T>,
+  config: StateCreator<T, [['zustand/persist', unknown]], []>,
+  options: PersistOptions<T>,
+) => StateCreator<T, [], [['zustand/persist', T]]>
 
 // ===== types-docs/lib/pitch-detector.d.ts =====
 
@@ -2701,10 +3205,10 @@ export declare const validatedPersist: <T>(schema: z.ZodType<T>, config: StateCr
  * by Alain de Cheveigné and Hideki Kawahara (2002)
  */
 export interface PitchDetectionResult {
-    /** Detected frequency in Hz (0 if no pitch detected) */
-    pitchHz: number;
-    /** Confidence level from 0.0 to 1.0 */
-    confidence: number;
+  /** Detected frequency in Hz (0 if no pitch detected) */
+  pitchHz: number
+  /** Confidence level from 0.0 to 1.0 */
+  confidence: number
 }
 /**
  * Pure JavaScript pitch detector optimized for violin.
@@ -2716,116 +3220,116 @@ export interface PitchDetectionResult {
  * The core logic is based on the original paper by de Cheveigné and Kawahara.
  */
 export declare class PitchDetector {
-    private readonly sampleRate;
-    /**
-     * The minimum frequency we care about (in Hz).
-     * For violin, the lowest note is G3 at ~196 Hz, but we go a bit lower for safety.
-     */
-    private readonly MIN_FREQUENCY;
-    /**
-     * The maximum frequency we care about (in Hz).
-     * For violin, the highest common note is around E7 at ~2637 Hz.
-     * We set this to 700 Hz by default to focus on the practical range for beginners.
-     */
-    private MAX_FREQUENCY;
-    /**
-     * The threshold for the YIN algorithm.
-     * Lower values = more strict (fewer false positives, might miss quiet notes)
-     * Higher values = more lenient (more detections, but less reliable)
-     * 0.1 is a good balance for musical instruments.
-     */
-    private readonly YIN_THRESHOLD;
-    /**
-     * The default threshold for the Root Mean Square (RMS) calculation.
-     * This value is used to determine if there's enough signal to attempt pitch detection.
-     * An RMS value below this threshold is considered silence.
-     */
-    private readonly DEFAULT_RMS_THRESHOLD;
-    /**
-     * Constructs a new PitchDetector instance.
-     *
-     * @param sampleRate - The sample rate of the audio context in which the detector will be used.
-     * @throws Will throw an error if the sample rate is not a positive number.
-     */
-    constructor(sampleRate: number);
-    /**
-     * Detects the pitch of an audio buffer using the full YIN algorithm.
-     *
-     * @remarks
-     * This is the core method of the class. It processes a raw audio buffer and returns the
-     * detected frequency and a confidence level. For performance, it's recommended to use
-     * `detectPitchWithValidation` to avoid running the algorithm on silent buffers.
-     *
-     * @param buffer - A `Float32Array` of raw audio data.
-     * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
-     */
-    detectPitch(buffer: Float32Array): PitchDetectionResult;
-    /** Step 1: Difference function */
-    private difference;
-    /** Step 2: Cumulative mean normalized difference function */
-    private cumulativeMeanNormalizedDifference;
-    /** Step 3: Absolute threshold */
-    private absoluteThreshold;
-    /** Step 4: Parabolic interpolation */
-    private parabolicInterpolation;
-    /**
-     * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
-     *
-     * @param buffer - The audio data to analyze.
-     * @returns The RMS value, a non-negative number.
-     */
-    calculateRMS(buffer: Float32Array): number;
-    /**
-     * Utility method to detect if there's enough signal to attempt pitch detection.
-     *
-     * @remarks
-     * This is used as a performance optimization to avoid running the expensive YIN algorithm
-     * on buffers that are essentially silent.
-     *
-     * @param buffer - The audio data to check.
-     * @param threshold - The RMS threshold above which a signal is considered present.
-     * @returns `true` if the buffer's RMS exceeds the threshold, `false` otherwise.
-     * @defaultValue `threshold` is `this.DEFAULT_RMS_THRESHOLD`.
-     */
-    hasSignal(buffer: Float32Array, threshold?: number): boolean;
-    /**
-     * A wrapper around `detectPitch` that first validates if the signal is strong enough.
-     *
-     * @remarks
-     * This is the recommended method for real-time pitch detection, as it prevents
-     * unnecessary computation on silent audio frames.
-     *
-     * @param buffer - The audio data to analyze.
-     * @param rmsThreshold - The RMS threshold to use for the signal check.
-     * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
-     * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
-     */
-    detectPitchWithValidation(buffer: Float32Array, rmsThreshold?: number): PitchDetectionResult;
-    /**
-     * Gets the sample rate the detector was configured with.
-     * @returns The sample rate in Hz.
-     */
-    getSampleRate(): number;
-    /**
-     * Gets the effective frequency range the detector is configured to find.
-     * @returns An object containing the min and max frequencies in Hz.
-     */
-    getFrequencyRange(): {
-        min: number;
-        max: number;
-    };
-    /**
-     * Updates the maximum frequency threshold for pitch detection.
-     *
-     * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
-     * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
-     *
-     * @example
-     * detector.setMaxFrequency(2637);  // ✅ E7 for violin
-     * detector.setMaxFrequency(-100);  // ❌ Throws AppError
-     * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
-     */
-    setMaxFrequency(maxHz: number): void;
+  private readonly sampleRate
+  /**
+   * The minimum frequency we care about (in Hz).
+   * For violin, the lowest note is G3 at ~196 Hz, but we go a bit lower for safety.
+   */
+  private readonly MIN_FREQUENCY
+  /**
+   * The maximum frequency we care about (in Hz).
+   * For violin, the highest common note is around E7 at ~2637 Hz.
+   * We set this to 700 Hz by default to focus on the practical range for beginners.
+   */
+  private MAX_FREQUENCY
+  /**
+   * The threshold for the YIN algorithm.
+   * Lower values = more strict (fewer false positives, might miss quiet notes)
+   * Higher values = more lenient (more detections, but less reliable)
+   * 0.1 is a good balance for musical instruments.
+   */
+  private readonly YIN_THRESHOLD
+  /**
+   * The default threshold for the Root Mean Square (RMS) calculation.
+   * This value is used to determine if there's enough signal to attempt pitch detection.
+   * An RMS value below this threshold is considered silence.
+   */
+  private readonly DEFAULT_RMS_THRESHOLD
+  /**
+   * Constructs a new PitchDetector instance.
+   *
+   * @param sampleRate - The sample rate of the audio context in which the detector will be used.
+   * @throws Will throw an error if the sample rate is not a positive number.
+   */
+  constructor(sampleRate: number)
+  /**
+   * Detects the pitch of an audio buffer using the full YIN algorithm.
+   *
+   * @remarks
+   * This is the core method of the class. It processes a raw audio buffer and returns the
+   * detected frequency and a confidence level. For performance, it's recommended to use
+   * `detectPitchWithValidation` to avoid running the algorithm on silent buffers.
+   *
+   * @param buffer - A `Float32Array` of raw audio data.
+   * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
+   */
+  detectPitch(buffer: Float32Array): PitchDetectionResult
+  /** Step 1: Difference function */
+  private difference
+  /** Step 2: Cumulative mean normalized difference function */
+  private cumulativeMeanNormalizedDifference
+  /** Step 3: Absolute threshold */
+  private absoluteThreshold
+  /** Step 4: Parabolic interpolation */
+  private parabolicInterpolation
+  /**
+   * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
+   *
+   * @param buffer - The audio data to analyze.
+   * @returns The RMS value, a non-negative number.
+   */
+  calculateRMS(buffer: Float32Array): number
+  /**
+   * Utility method to detect if there's enough signal to attempt pitch detection.
+   *
+   * @remarks
+   * This is used as a performance optimization to avoid running the expensive YIN algorithm
+   * on buffers that are essentially silent.
+   *
+   * @param buffer - The audio data to check.
+   * @param threshold - The RMS threshold above which a signal is considered present.
+   * @returns `true` if the buffer's RMS exceeds the threshold, `false` otherwise.
+   * @defaultValue `threshold` is `this.DEFAULT_RMS_THRESHOLD`.
+   */
+  hasSignal(buffer: Float32Array, threshold?: number): boolean
+  /**
+   * A wrapper around `detectPitch` that first validates if the signal is strong enough.
+   *
+   * @remarks
+   * This is the recommended method for real-time pitch detection, as it prevents
+   * unnecessary computation on silent audio frames.
+   *
+   * @param buffer - The audio data to analyze.
+   * @param rmsThreshold - The RMS threshold to use for the signal check.
+   * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
+   * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
+   */
+  detectPitchWithValidation(buffer: Float32Array, rmsThreshold?: number): PitchDetectionResult
+  /**
+   * Gets the sample rate the detector was configured with.
+   * @returns The sample rate in Hz.
+   */
+  getSampleRate(): number
+  /**
+   * Gets the effective frequency range the detector is configured to find.
+   * @returns An object containing the min and max frequencies in Hz.
+   */
+  getFrequencyRange(): {
+    min: number
+    max: number
+  }
+  /**
+   * Updates the maximum frequency threshold for pitch detection.
+   *
+   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
+   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
+   *
+   * @example
+   * detector.setMaxFrequency(2637);  // ✅ E7 for violin
+   * detector.setMaxFrequency(-100);  // ❌ Throws AppError
+   * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
+   */
+  setMaxFrequency(maxHz: number): void
 }
 /**
  * Helper function to create a PitchDetector from a Web Audio API `AudioContext`.
@@ -2837,11 +3341,11 @@ export declare class PitchDetector {
  * @param audioContext - The `AudioContext` of the current audio pipeline.
  * @returns A new, correctly configured `PitchDetector` instance.
  */
-export declare function createPitchDetectorFromContext(audioContext: AudioContext): PitchDetector;
+export declare function createPitchDetectorFromContext(audioContext: AudioContext): PitchDetector
 
 // ===== types-docs/lib/pitch-detector.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/ports/audio.port.d.ts =====
 
@@ -2849,39 +3353,39 @@ export {};
  * Puerto para análisis de audio independiente de Web Audio API
  * Permite testing con datos sintéticos
  */
-import { PitchDetectionResult } from '../pitch-detector';
+import { PitchDetectionResult } from '../pitch-detector'
 export interface AudioFramePort {
-    /**
-     * Obtiene el siguiente frame de audio
-     * @returns Buffer de muestras PCM float32 [-1, 1]
-     */
-    getFrame(): Float32Array;
-    /**
-     * Sample rate del stream
-     */
-    readonly sampleRate: number;
+  /**
+   * Obtiene el siguiente frame de audio
+   * @returns Buffer de muestras PCM float32 [-1, 1]
+   */
+  getFrame(): Float32Array
+  /**
+   * Sample rate del stream
+   */
+  readonly sampleRate: number
 }
 export interface PitchDetectionPort {
-    /**
-     * Detecta pitch del frame
-     * @throws Never - retorna confidence=0 en fallo
-     */
-    detect(frame: Float32Array): PitchDetectionResult;
-    /**
-     * Calcula el RMS (volumen) del frame
-     */
-    calculateRMS(frame: Float32Array): number;
+  /**
+   * Detecta pitch del frame
+   * @throws Never - retorna confidence=0 en fallo
+   */
+  detect(frame: Float32Array): PitchDetectionResult
+  /**
+   * Calcula el RMS (volumen) del frame
+   */
+  calculateRMS(frame: Float32Array): number
 }
 /**
  * Puerto para obtener frames en loop (reemplaza RAF)
  */
 export interface AudioLoopPort {
-    /**
-     * Ejecuta callback en cada frame disponible
-     * @param onFrame Callback ejecutado con cada nuevo frame
-     * @param signal Cancela el loop
-     */
-    start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>;
+  /**
+   * Ejecuta callback en cada frame disponible
+   * @param onFrame Callback ejecutado con cada nuevo frame
+   * @param signal Cancela el loop
+   */
+  start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>
 }
 
 // ===== types-docs/lib/practice-core.d.ts =====
@@ -2891,9 +3395,9 @@ export interface AudioLoopPort {
  * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
  */
-import { NoteTechnique, Observation } from './technique-types';
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types';
-export type { TargetNote };
+import { NoteTechnique, Observation } from './technique-types'
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+export type { TargetNote }
 /**
  * A valid note name in scientific pitch notation.
  *
@@ -2903,8 +3407,8 @@ export type { TargetNote };
  * Pattern: `^[A-G][#b]?[0-8]$`
  */
 export type NoteName = string & {
-    readonly __brand: unique symbol;
-};
+  readonly __brand: unique symbol
+}
 /**
  * Type guard to validate note name format.
  *
@@ -2913,7 +3417,7 @@ export type NoteName = string & {
  * @remarks
  * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
  */
-export declare function assertValidNoteName(name: string): asserts name is NoteName;
+export declare function assertValidNoteName(name: string): asserts name is NoteName
 /**
  * Represents a musical note with properties derived from its frequency.
  * @remarks
@@ -2922,32 +3426,32 @@ export declare function assertValidNoteName(name: string): asserts name is NoteN
  * This is intentional to catch data or programming errors early.
  */
 export declare class MusicalNote {
-    readonly frequency: number;
-    readonly midiNumber: number;
-    readonly noteName: string;
-    readonly octave: number;
-    readonly centsDeviation: number;
-    private constructor();
-    isEnharmonic(other: MusicalNote): boolean;
-    static fromFrequency(frequency: number): MusicalNote;
-    static fromMidi(midiNumber: number): MusicalNote;
-    /**
-     * Parses a note name in scientific pitch notation.
-     *
-     * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
-     * @returns A MusicalNote instance
-     *
-     * @remarks
-     * Throws `AppError` CODE: `NOTE_PARSING_FAILED` if format is invalid.
-     *
-     * @example
-     * ```ts
-     * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
-     * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
-     * ```
-     */
-    static fromName(fullName: NoteName): MusicalNote;
-    get nameWithOctave(): NoteName;
+  readonly frequency: number
+  readonly midiNumber: number
+  readonly noteName: string
+  readonly octave: number
+  readonly centsDeviation: number
+  private constructor()
+  isEnharmonic(other: MusicalNote): boolean
+  static fromFrequency(frequency: number): MusicalNote
+  static fromMidi(midiNumber: number): MusicalNote
+  /**
+   * Parses a note name in scientific pitch notation.
+   *
+   * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
+   * @returns A MusicalNote instance
+   *
+   * @remarks
+   * Throws `AppError` CODE: `NOTE_PARSING_FAILED` if format is invalid.
+   *
+   * @example
+   * ```ts
+   * MusicalNote.fromName("C#4" as NoteName); // ✅ OK
+   * MusicalNote.fromName("H9" as NoteName);  // ❌ Throws AppError
+   * ```
+   */
+  static fromName(fullName: NoteName): MusicalNote
+  get nameWithOctave(): NoteName
 }
 /**
  * Defines the tolerance boundaries for matching a note.
@@ -2955,55 +3459,62 @@ export declare class MusicalNote {
  * to prevent oscillation (hysteresis).
  */
 export interface MatchHysteresis {
-    /** Tolerance in cents to consider a note as "starting to match". */
-    enter: number;
-    /** Tolerance in cents to consider a note as "no longer matching". */
-    exit: number;
+  /** Tolerance in cents to consider a note as "starting to match". */
+  enter: number
+  /** Tolerance in cents to consider a note as "no longer matching". */
+  exit: number
 }
 /** Represents a note detected from the user's microphone input. */
 export interface DetectedNote {
-    pitch: string;
-    pitchHz: number;
-    cents: number;
-    timestamp: number;
-    confidence: number;
+  pitch: string
+  pitchHz: number
+  cents: number
+  timestamp: number
+  confidence: number
 }
 /** The status of the practice session. */
-export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed';
+export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed'
 /** The complete, self-contained state of the practice session. */
 export interface PracticeState {
-    status: PracticeStatus;
-    exercise: Exercise;
-    currentIndex: number;
-    detectionHistory: readonly DetectedNote[];
-    holdDuration?: number;
-    lastObservations?: Observation[];
-    perfectNoteStreak: number;
+  status: PracticeStatus
+  exercise: Exercise
+  currentIndex: number
+  detectionHistory: readonly DetectedNote[]
+  holdDuration?: number
+  lastObservations?: Observation[]
+  perfectNoteStreak: number
 }
 /** Events that can modify the practice state. */
-export type PracticeEvent = {
-    type: 'START';
-} | {
-    type: 'STOP';
-} | {
-    type: 'RESET';
-} | {
-    type: 'NOTE_DETECTED';
-    payload: DetectedNote;
-} | {
-    type: 'HOLDING_NOTE';
-    payload: {
-        duration: number;
-    };
-} | {
-    type: 'NOTE_MATCHED';
-    payload?: {
-        technique: NoteTechnique;
-        observations?: Observation[];
-    };
-} | {
-    type: 'NO_NOTE_DETECTED';
-};
+export type PracticeEvent =
+  | {
+      type: 'START'
+    }
+  | {
+      type: 'STOP'
+    }
+  | {
+      type: 'RESET'
+    }
+  | {
+      type: 'NOTE_DETECTED'
+      payload: DetectedNote
+    }
+  | {
+      type: 'HOLDING_NOTE'
+      payload: {
+        duration: number
+      }
+    }
+  | {
+      type: 'NOTE_MATCHED'
+      payload?: {
+        technique: NoteTechnique
+        observations?: Observation[]
+      }
+    }
+  | {
+      type: 'NO_NOTE_DETECTED'
+    }
 /**
  * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
  *
@@ -3016,7 +3527,7 @@ export type PracticeEvent = {
  * @param pitch - The pitch object from a `TargetNote`.
  * @returns A standardized note name string like `"C#4"` or `"Bb3"`.
  */
-export declare function formatPitchName(pitch: TargetNote['pitch']): NoteName;
+export declare function formatPitchName(pitch: TargetNote['pitch']): NoteName
 /**
  * Checks if a detected note matches a target note within a specified tolerance.
  * Supports hysteresis to prevent rapid toggling near the tolerance boundary.
@@ -3027,1340 +3538,1659 @@ export declare function formatPitchName(pitch: TargetNote['pitch']): NoteName;
  * @param isCurrentlyMatched - Whether the note was already matching in the previous frame.
  * @returns True if the detected note is considered a match.
  */
-export declare function isMatch(target: TargetNote, detected: DetectedNote, tolerance?: number | MatchHysteresis, isCurrentlyMatched?: boolean): boolean;
+export declare function isMatch(
+  target: TargetNote,
+  detected: DetectedNote,
+  tolerance?: number | MatchHysteresis,
+  isCurrentlyMatched?: boolean,
+): boolean
 /**
  * The core reducer for the practice mode, handling all state transitions.
  */
-export declare function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState;
+export declare function reducePracticeEvent(
+  state: PracticeState,
+  event: PracticeEvent,
+): PracticeState
 
 // ===== types-docs/lib/practice-core.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/practice-engine/engine.d.ts =====
 
-import { PracticeEngineEvent } from './engine.types';
-import { AudioFramePort, PitchDetectorPort } from './engine.ports';
-import { Exercise } from '../exercises/types';
-import { PracticeEngineState } from './engine.state';
-import { PracticeReducer } from './engine.reducer';
+import { PracticeEngineEvent } from './engine.types'
+import { AudioFramePort, PitchDetectorPort } from './engine.ports'
+import { Exercise } from '../exercises/types'
+import { PracticeEngineState } from './engine.state'
+import { PracticeReducer } from './engine.reducer'
 export interface PracticeEngineContext {
-    audio: AudioFramePort;
-    pitch: PitchDetectorPort;
-    exercise: Exercise;
-    reducer?: PracticeReducer;
+  audio: AudioFramePort
+  pitch: PitchDetectorPort
+  exercise: Exercise
+  reducer?: PracticeReducer
 }
 export interface PracticeEngine {
-    start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent>;
-    stop(): void;
-    getState(): PracticeEngineState;
+  start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent>
+  stop(): void
+  getState(): PracticeEngineState
 }
-export declare function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine;
+export declare function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 
 // ===== types-docs/lib/practice-engine/engine.ports.d.ts =====
 
-import { PracticeEngineState } from './engine.state';
+import { PracticeEngineState } from './engine.state'
 export interface AudioFramePort {
-    start(callback: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>;
-    stop(): void;
+  start(callback: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>
+  stop(): void
 }
 export interface PitchDetectorPort {
-    detect(frame: Float32Array): {
-        pitchHz: number;
-        confidence: number;
-    };
-    calculateRMS(frame: Float32Array): number;
+  detect(frame: Float32Array): {
+    pitchHz: number
+    confidence: number
+  }
+  calculateRMS(frame: Float32Array): number
 }
 export interface ScoreCursorPort {
-    moveTo(index: number): void;
-    highlight(index: number): void;
+  moveTo(index: number): void
+  highlight(index: number): void
 }
 export interface PracticeStatePort {
-    getState(): PracticeEngineState;
-    update(next: PracticeEngineState): void;
+  getState(): PracticeEngineState
+  update(next: PracticeEngineState): void
 }
 
 // ===== types-docs/lib/practice-engine/engine.reducer.d.ts =====
 
-import { PracticeEngineState } from './engine.state';
-import { PracticeEngineEvent } from './engine.types';
-export type PracticeReducer = (state: PracticeEngineState, event: PracticeEngineEvent) => PracticeEngineState;
-export declare const engineReducer: PracticeReducer;
+import { PracticeEngineState } from './engine.state'
+import { PracticeEngineEvent } from './engine.types'
+export type PracticeReducer = (
+  state: PracticeEngineState,
+  event: PracticeEngineEvent,
+) => PracticeEngineState
+export declare const engineReducer: PracticeReducer
 
 // ===== types-docs/lib/practice-engine/engine.state.d.ts =====
 
-import { PracticeEngineStatus, Observation, NoteTechnique } from './engine.types';
+import { PracticeEngineStatus, Observation, NoteTechnique } from './engine.types'
 export interface PracticeEngineState {
-    status: PracticeEngineStatus;
-    currentNoteIndex: number;
-    scoreLength: number;
-    liveObservations: Observation[];
-    lastTechnique?: NoteTechnique;
+  status: PracticeEngineStatus
+  currentNoteIndex: number
+  scoreLength: number
+  liveObservations: Observation[]
+  lastTechnique?: NoteTechnique
 }
-export declare const INITIAL_ENGINE_STATE: PracticeEngineState;
+export declare const INITIAL_ENGINE_STATE: PracticeEngineState
 
 // ===== types-docs/lib/practice-engine/engine.types.d.ts =====
 
-import { NoteTechnique, Observation } from '../technique-types';
-import { TargetNote } from '../practice-core';
-import { RawPitchEvent } from '../note-stream';
-export type { NoteTechnique, Observation, TargetNote, RawPitchEvent };
-export type PracticeEngineStatus = 'idle' | 'ready' | 'active' | 'completed';
+import { NoteTechnique, Observation } from '../technique-types'
+import { TargetNote } from '../practice-core'
+import { RawPitchEvent } from '../note-stream'
+export type { NoteTechnique, Observation, TargetNote, RawPitchEvent }
+export type PracticeEngineStatus = 'idle' | 'ready' | 'active' | 'completed'
 export interface PracticeEngineEvent {
-    type: 'NOTE_DETECTED' | 'HOLDING_NOTE' | 'NOTE_MATCHED' | 'NO_NOTE' | 'SESSION_COMPLETED';
-    payload?: any;
+  type: 'NOTE_DETECTED' | 'HOLDING_NOTE' | 'NOTE_MATCHED' | 'NO_NOTE' | 'SESSION_COMPLETED'
+  payload?: any
 }
 export interface CompletedNote {
-    index: number;
-    technique: NoteTechnique;
-    observations: Observation[];
+  index: number
+  technique: NoteTechnique
+  observations: Observation[]
 }
 
 // ===== types-docs/lib/practice/practice-event-sink.d.ts =====
 
-import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
+import { type PracticeState, type PracticeEvent } from '@/lib/practice-core'
 /**
  * A type representing the core state management functions of a Zustand store,
  * generic over the state type `T`.
  */
 type StoreApi<T> = {
-    getState: () => T;
-    setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: false) => void;
-};
+  getState: () => T
+  setState: (partial: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: false) => void
+}
 /**
  * Handles all state transitions and side effects for a given practice event.
  */
-export declare const handlePracticeEvent: <T extends {
-    practiceState: PracticeState | null;
-}>(event: PracticeEvent, store: StoreApi<T>, onCompleted: () => void, analytics?: {
-    endSession: () => void;
-}) => void;
-export {};
+export declare const handlePracticeEvent: <
+  T extends {
+    practiceState: PracticeState | null
+  },
+>(
+  event: PracticeEvent,
+  store: StoreApi<T>,
+  onCompleted: () => void,
+  analytics?: {
+    endSession: () => void
+  },
+) => void
+export {}
 
 // ===== types-docs/lib/practice/practice-states.d.ts =====
 
-import { PracticeState } from '../practice-core';
-import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
-import { Exercise } from '../exercises/types';
-import { AppError } from '../errors/app-error';
-import { PracticeSessionRunner } from './session-runner';
+import { PracticeState } from '../practice-core'
+import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
+import { Exercise } from '../exercises/types'
+import { AppError } from '../errors/app-error'
+import { PracticeSessionRunner } from './session-runner'
 /**
  * Estados del Practice Store como Discriminated Union
  * Elimina estados inválidos (ej: isStarting=true pero runner=null)
  */
-export type PracticeStoreState = IdleState | InitializingState | ReadyState | ActiveState | ErrorState;
+export type PracticeStoreState =
+  | IdleState
+  | InitializingState
+  | ReadyState
+  | ActiveState
+  | ErrorState
 export interface IdleState {
-    status: 'idle';
-    exercise: Exercise | null;
-    error: null;
+  status: 'idle'
+  exercise: Exercise | null
+  error: null
 }
 export interface InitializingState {
-    status: 'initializing';
-    exercise: Exercise | null;
-    progress: number;
+  status: 'initializing'
+  exercise: Exercise | null
+  progress: number
 }
 export interface ReadyState {
-    status: 'ready';
-    audioLoop: AudioLoopPort;
-    detector: PitchDetectionPort;
-    exercise: Exercise;
+  status: 'ready'
+  audioLoop: AudioLoopPort
+  detector: PitchDetectionPort
+  exercise: Exercise
 }
 export interface ActiveState {
-    status: 'active';
-    audioLoop: AudioLoopPort;
-    detector: PitchDetectionPort;
-    exercise: Exercise;
-    runner: PracticeSessionRunner;
-    practiceState: PracticeState;
+  status: 'active'
+  audioLoop: AudioLoopPort
+  detector: PitchDetectionPort
+  exercise: Exercise
+  runner: PracticeSessionRunner
+  practiceState: PracticeState
 }
 export interface ErrorState {
-    status: 'error';
-    error: AppError;
+  status: 'error'
+  error: AppError
 }
 /**
  * Transiciones permitidas
  */
 export declare const transitions: {
-    initialize: (exercise: Exercise | null) => InitializingState;
-    ready: (resources: {
-        audioLoop: AudioLoopPort;
-        detector: PitchDetectionPort;
-        exercise: Exercise;
-    }) => ReadyState;
-    start: (state: ReadyState, runner: PracticeSessionRunner) => ActiveState;
-    stop: (state: ActiveState) => ReadyState;
-    error: (error: AppError) => ErrorState;
-    reset: () => IdleState;
-    selectExercise: (exercise: Exercise) => IdleState;
-};
+  initialize: (exercise: Exercise | null) => InitializingState
+  ready: (resources: {
+    audioLoop: AudioLoopPort
+    detector: PitchDetectionPort
+    exercise: Exercise
+  }) => ReadyState
+  start: (state: ReadyState, runner: PracticeSessionRunner) => ActiveState
+  stop: (state: ActiveState) => ReadyState
+  error: (error: AppError) => ErrorState
+  reset: () => IdleState
+  selectExercise: (exercise: Exercise) => IdleState
+}
 
 // ===== types-docs/lib/practice/practice-states.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/practice/session-runner.d.ts =====
 
-import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
-import type { Exercise } from '@/lib/exercises/types';
-import { NoteTechnique } from '../technique-types';
+import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
+import type { Exercise } from '@/lib/exercises/types'
+import { NoteTechnique } from '../technique-types'
 export interface SessionResult {
-    completed: boolean;
-    reason: 'finished' | 'cancelled' | 'error';
-    error?: Error;
+  completed: boolean
+  reason: 'finished' | 'cancelled' | 'error'
+  error?: Error
 }
 export interface PracticeSessionRunner {
-    run(signal: AbortSignal): Promise<SessionResult>;
-    cancel(): void;
+  run(signal: AbortSignal): Promise<SessionResult>
+  cancel(): void
 }
 export interface SessionRunnerDependencies {
-    audioLoop: AudioLoopPort;
-    detector: PitchDetectionPort;
-    exercise: Exercise;
-    sessionStartTime: number;
-    store: {
-        getState: () => any;
-        setState: (partial: any) => void;
-        stop: () => Promise<void>;
-    };
-    analytics: {
-        endSession: () => void;
-        recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void;
-        recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void;
-    };
-    updatePitch?: (pitch: number, confidence: number) => void;
+  audioLoop: AudioLoopPort
+  detector: PitchDetectionPort
+  exercise: Exercise
+  sessionStartTime: number
+  store: {
+    getState: () => any
+    setState: (partial: any) => void
+    stop: () => Promise<void>
+  }
+  analytics: {
+    endSession: () => void
+    recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
+    recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
+  }
+  updatePitch?: (pitch: number, confidence: number) => void
 }
 export declare class PracticeSessionRunnerImpl implements PracticeSessionRunner {
-    private deps;
-    private controller;
-    private loopState;
-    constructor(deps: SessionRunnerDependencies);
-    run(signal: AbortSignal): Promise<SessionResult>;
-    cancel(): void;
-    private cleanup;
-    private runInternal;
-    private mapEngineEventToPracticeEvent;
-    private processEvent;
-    private handleMatchedNoteSideEffects;
+  private deps
+  private controller
+  private loopState
+  constructor(deps: SessionRunnerDependencies)
+  run(signal: AbortSignal): Promise<SessionResult>
+  cancel(): void
+  private cleanup
+  private runInternal
+  private mapEngineEventToPracticeEvent
+  private processEvent
+  private handleMatchedNoteSideEffects
 }
 /**
  * @deprecated Use PracticeSessionRunnerImpl directly
  */
-export declare function runPracticeSession(deps: SessionRunnerDependencies): Promise<SessionResult>;
+export declare function runPracticeSession(deps: SessionRunnerDependencies): Promise<SessionResult>
 
 // ===== types-docs/lib/practice/session-runner.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/schemas/persistence.schema.d.ts =====
 
-import { z } from 'zod';
-export declare const NoteTechniqueSchema: z.ZodObject<{
-    vibrato: z.ZodObject<{
-        present: z.ZodBoolean;
-        rateHz: z.ZodNumber;
-        widthCents: z.ZodNumber;
-        regularity: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        present: boolean;
-        rateHz: number;
-        widthCents: number;
-        regularity: number;
-    }, {
-        present: boolean;
-        rateHz: number;
-        widthCents: number;
-        regularity: number;
-    }>;
-    pitchStability: z.ZodObject<{
-        settlingStdCents: z.ZodNumber;
-        globalStdCents: z.ZodNumber;
-        driftCentsPerSec: z.ZodNumber;
-        inTuneRatio: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        settlingStdCents: number;
-        globalStdCents: number;
-        driftCentsPerSec: number;
-        inTuneRatio: number;
-    }, {
-        settlingStdCents: number;
-        globalStdCents: number;
-        driftCentsPerSec: number;
-        inTuneRatio: number;
-    }>;
-    rhythm: z.ZodObject<{
-        onsetErrorMs: z.ZodOptional<z.ZodNumber>;
-        durationErrorMs: z.ZodOptional<z.ZodNumber>;
-    }, "strip", z.ZodTypeAny, {
-        onsetErrorMs?: number | undefined;
-        durationErrorMs?: number | undefined;
-    }, {
-        onsetErrorMs?: number | undefined;
-        durationErrorMs?: number | undefined;
-    }>;
-}, "strip", z.ZodTypeAny, {
+import { z } from 'zod'
+export declare const NoteTechniqueSchema: z.ZodObject<
+  {
+    vibrato: z.ZodObject<
+      {
+        present: z.ZodBoolean
+        rateHz: z.ZodNumber
+        widthCents: z.ZodNumber
+        regularity: z.ZodNumber
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        present: boolean
+        rateHz: number
+        widthCents: number
+        regularity: number
+      },
+      {
+        present: boolean
+        rateHz: number
+        widthCents: number
+        regularity: number
+      }
+    >
+    pitchStability: z.ZodObject<
+      {
+        settlingStdCents: z.ZodNumber
+        globalStdCents: z.ZodNumber
+        driftCentsPerSec: z.ZodNumber
+        inTuneRatio: z.ZodNumber
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        settlingStdCents: number
+        globalStdCents: number
+        driftCentsPerSec: number
+        inTuneRatio: number
+      },
+      {
+        settlingStdCents: number
+        globalStdCents: number
+        driftCentsPerSec: number
+        inTuneRatio: number
+      }
+    >
+    rhythm: z.ZodObject<
+      {
+        onsetErrorMs: z.ZodOptional<z.ZodNumber>
+        durationErrorMs: z.ZodOptional<z.ZodNumber>
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        onsetErrorMs?: number | undefined
+        durationErrorMs?: number | undefined
+      },
+      {
+        onsetErrorMs?: number | undefined
+        durationErrorMs?: number | undefined
+      }
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
     vibrato: {
-        present: boolean;
-        rateHz: number;
-        widthCents: number;
-        regularity: number;
-    };
+      present: boolean
+      rateHz: number
+      widthCents: number
+      regularity: number
+    }
     rhythm: {
-        onsetErrorMs?: number | undefined;
-        durationErrorMs?: number | undefined;
-    };
+      onsetErrorMs?: number | undefined
+      durationErrorMs?: number | undefined
+    }
     pitchStability: {
-        settlingStdCents: number;
-        globalStdCents: number;
-        driftCentsPerSec: number;
-        inTuneRatio: number;
-    };
-}, {
+      settlingStdCents: number
+      globalStdCents: number
+      driftCentsPerSec: number
+      inTuneRatio: number
+    }
+  },
+  {
     vibrato: {
-        present: boolean;
-        rateHz: number;
-        widthCents: number;
-        regularity: number;
-    };
+      present: boolean
+      rateHz: number
+      widthCents: number
+      regularity: number
+    }
     rhythm: {
-        onsetErrorMs?: number | undefined;
-        durationErrorMs?: number | undefined;
-    };
+      onsetErrorMs?: number | undefined
+      durationErrorMs?: number | undefined
+    }
     pitchStability: {
-        settlingStdCents: number;
-        globalStdCents: number;
-        driftCentsPerSec: number;
-        inTuneRatio: number;
-    };
-}>;
-export declare const NoteResultSchema: z.ZodObject<{
-    noteIndex: z.ZodNumber;
-    targetPitch: z.ZodString;
-    attempts: z.ZodNumber;
-    timeToCompleteMs: z.ZodOptional<z.ZodNumber>;
-    averageCents: z.ZodNumber;
-    wasInTune: z.ZodBoolean;
-    technique: z.ZodOptional<z.ZodObject<{
-        vibrato: z.ZodObject<{
-            present: z.ZodBoolean;
-            rateHz: z.ZodNumber;
-            widthCents: z.ZodNumber;
-            regularity: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        }, {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        }>;
-        pitchStability: z.ZodObject<{
-            settlingStdCents: z.ZodNumber;
-            globalStdCents: z.ZodNumber;
-            driftCentsPerSec: z.ZodNumber;
-            inTuneRatio: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        }, {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        }>;
-        rhythm: z.ZodObject<{
-            onsetErrorMs: z.ZodOptional<z.ZodNumber>;
-            durationErrorMs: z.ZodOptional<z.ZodNumber>;
-        }, "strip", z.ZodTypeAny, {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        }, {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        }>;
-    }, "strip", z.ZodTypeAny, {
-        vibrato: {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        };
-        rhythm: {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        };
-        pitchStability: {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        };
-    }, {
-        vibrato: {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        };
-        rhythm: {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        };
-        pitchStability: {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        };
-    }>>;
-}, "strip", z.ZodTypeAny, {
-    averageCents: number;
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    wasInTune: boolean;
-    timeToCompleteMs?: number | undefined;
-    technique?: {
-        vibrato: {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        };
-        rhythm: {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        };
-        pitchStability: {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        };
-    } | undefined;
-}, {
-    averageCents: number;
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    wasInTune: boolean;
-    timeToCompleteMs?: number | undefined;
-    technique?: {
-        vibrato: {
-            present: boolean;
-            rateHz: number;
-            widthCents: number;
-            regularity: number;
-        };
-        rhythm: {
-            onsetErrorMs?: number | undefined;
-            durationErrorMs?: number | undefined;
-        };
-        pitchStability: {
-            settlingStdCents: number;
-            globalStdCents: number;
-            driftCentsPerSec: number;
-            inTuneRatio: number;
-        };
-    } | undefined;
-}>;
-export declare const PracticeSessionSchema: z.ZodObject<{
-    id: z.ZodString;
-    startTimeMs: z.ZodNumber;
-    endTimeMs: z.ZodNumber;
-    durationMs: z.ZodNumber;
-    exerciseId: z.ZodString;
-    exerciseName: z.ZodString;
-    mode: z.ZodEnum<["tuner", "practice"]>;
-    noteResults: z.ZodArray<z.ZodObject<{
-        noteIndex: z.ZodNumber;
-        targetPitch: z.ZodString;
-        attempts: z.ZodNumber;
-        timeToCompleteMs: z.ZodOptional<z.ZodNumber>;
-        averageCents: z.ZodNumber;
-        wasInTune: z.ZodBoolean;
-        technique: z.ZodOptional<z.ZodObject<{
-            vibrato: z.ZodObject<{
-                present: z.ZodBoolean;
-                rateHz: z.ZodNumber;
-                widthCents: z.ZodNumber;
-                regularity: z.ZodNumber;
-            }, "strip", z.ZodTypeAny, {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            }, {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            }>;
-            pitchStability: z.ZodObject<{
-                settlingStdCents: z.ZodNumber;
-                globalStdCents: z.ZodNumber;
-                driftCentsPerSec: z.ZodNumber;
-                inTuneRatio: z.ZodNumber;
-            }, "strip", z.ZodTypeAny, {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            }, {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            }>;
-            rhythm: z.ZodObject<{
-                onsetErrorMs: z.ZodOptional<z.ZodNumber>;
-                durationErrorMs: z.ZodOptional<z.ZodNumber>;
-            }, "strip", z.ZodTypeAny, {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            }, {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            }>;
-        }, "strip", z.ZodTypeAny, {
-            vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
-            rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
-            pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        }, {
-            vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
-            rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
-            pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        }>>;
-    }, "strip", z.ZodTypeAny, {
-        averageCents: number;
-        noteIndex: number;
-        targetPitch: string;
-        attempts: number;
-        wasInTune: boolean;
-        timeToCompleteMs?: number | undefined;
-        technique?: {
-            vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
-            rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
-            pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        } | undefined;
-    }, {
-        averageCents: number;
-        noteIndex: number;
-        targetPitch: string;
-        attempts: number;
-        wasInTune: boolean;
-        timeToCompleteMs?: number | undefined;
-        technique?: {
-            vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
-            rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
-            pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        } | undefined;
-    }>, "many">;
-    notesAttempted: z.ZodNumber;
-    notesCompleted: z.ZodNumber;
-    accuracy: z.ZodNumber;
-    averageCents: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    accuracy: number;
-    startTimeMs: number;
-    endTimeMs: number;
-    id: string;
-    durationMs: number;
+      settlingStdCents: number
+      globalStdCents: number
+      driftCentsPerSec: number
+      inTuneRatio: number
+    }
+  }
+>
+export declare const NoteResultSchema: z.ZodObject<
+  {
+    noteIndex: z.ZodNumber
+    targetPitch: z.ZodString
+    attempts: z.ZodNumber
+    timeToCompleteMs: z.ZodOptional<z.ZodNumber>
+    averageCents: z.ZodNumber
+    wasInTune: z.ZodBoolean
+    technique: z.ZodOptional<
+      z.ZodObject<
+        {
+          vibrato: z.ZodObject<
+            {
+              present: z.ZodBoolean
+              rateHz: z.ZodNumber
+              widthCents: z.ZodNumber
+              regularity: z.ZodNumber
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              present: boolean
+              rateHz: number
+              widthCents: number
+              regularity: number
+            },
+            {
+              present: boolean
+              rateHz: number
+              widthCents: number
+              regularity: number
+            }
+          >
+          pitchStability: z.ZodObject<
+            {
+              settlingStdCents: z.ZodNumber
+              globalStdCents: z.ZodNumber
+              driftCentsPerSec: z.ZodNumber
+              inTuneRatio: z.ZodNumber
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              settlingStdCents: number
+              globalStdCents: number
+              driftCentsPerSec: number
+              inTuneRatio: number
+            },
+            {
+              settlingStdCents: number
+              globalStdCents: number
+              driftCentsPerSec: number
+              inTuneRatio: number
+            }
+          >
+          rhythm: z.ZodObject<
+            {
+              onsetErrorMs: z.ZodOptional<z.ZodNumber>
+              durationErrorMs: z.ZodOptional<z.ZodNumber>
+            },
+            'strip',
+            z.ZodTypeAny,
+            {
+              onsetErrorMs?: number | undefined
+              durationErrorMs?: number | undefined
+            },
+            {
+              onsetErrorMs?: number | undefined
+              durationErrorMs?: number | undefined
+            }
+          >
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          vibrato: {
+            present: boolean
+            rateHz: number
+            widthCents: number
+            regularity: number
+          }
+          rhythm: {
+            onsetErrorMs?: number | undefined
+            durationErrorMs?: number | undefined
+          }
+          pitchStability: {
+            settlingStdCents: number
+            globalStdCents: number
+            driftCentsPerSec: number
+            inTuneRatio: number
+          }
+        },
+        {
+          vibrato: {
+            present: boolean
+            rateHz: number
+            widthCents: number
+            regularity: number
+          }
+          rhythm: {
+            onsetErrorMs?: number | undefined
+            durationErrorMs?: number | undefined
+          }
+          pitchStability: {
+            settlingStdCents: number
+            globalStdCents: number
+            driftCentsPerSec: number
+            inTuneRatio: number
+          }
+        }
+      >
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    averageCents: number
+    noteIndex: number
+    targetPitch: string
+    attempts: number
+    wasInTune: boolean
+    timeToCompleteMs?: number | undefined
+    technique?:
+      | {
+          vibrato: {
+            present: boolean
+            rateHz: number
+            widthCents: number
+            regularity: number
+          }
+          rhythm: {
+            onsetErrorMs?: number | undefined
+            durationErrorMs?: number | undefined
+          }
+          pitchStability: {
+            settlingStdCents: number
+            globalStdCents: number
+            driftCentsPerSec: number
+            inTuneRatio: number
+          }
+        }
+      | undefined
+  },
+  {
+    averageCents: number
+    noteIndex: number
+    targetPitch: string
+    attempts: number
+    wasInTune: boolean
+    timeToCompleteMs?: number | undefined
+    technique?:
+      | {
+          vibrato: {
+            present: boolean
+            rateHz: number
+            widthCents: number
+            regularity: number
+          }
+          rhythm: {
+            onsetErrorMs?: number | undefined
+            durationErrorMs?: number | undefined
+          }
+          pitchStability: {
+            settlingStdCents: number
+            globalStdCents: number
+            driftCentsPerSec: number
+            inTuneRatio: number
+          }
+        }
+      | undefined
+  }
+>
+export declare const PracticeSessionSchema: z.ZodObject<
+  {
+    id: z.ZodString
+    startTimeMs: z.ZodNumber
+    endTimeMs: z.ZodNumber
+    durationMs: z.ZodNumber
+    exerciseId: z.ZodString
+    exerciseName: z.ZodString
+    mode: z.ZodEnum<['tuner', 'practice']>
+    noteResults: z.ZodArray<
+      z.ZodObject<
+        {
+          noteIndex: z.ZodNumber
+          targetPitch: z.ZodString
+          attempts: z.ZodNumber
+          timeToCompleteMs: z.ZodOptional<z.ZodNumber>
+          averageCents: z.ZodNumber
+          wasInTune: z.ZodBoolean
+          technique: z.ZodOptional<
+            z.ZodObject<
+              {
+                vibrato: z.ZodObject<
+                  {
+                    present: z.ZodBoolean
+                    rateHz: z.ZodNumber
+                    widthCents: z.ZodNumber
+                    regularity: z.ZodNumber
+                  },
+                  'strip',
+                  z.ZodTypeAny,
+                  {
+                    present: boolean
+                    rateHz: number
+                    widthCents: number
+                    regularity: number
+                  },
+                  {
+                    present: boolean
+                    rateHz: number
+                    widthCents: number
+                    regularity: number
+                  }
+                >
+                pitchStability: z.ZodObject<
+                  {
+                    settlingStdCents: z.ZodNumber
+                    globalStdCents: z.ZodNumber
+                    driftCentsPerSec: z.ZodNumber
+                    inTuneRatio: z.ZodNumber
+                  },
+                  'strip',
+                  z.ZodTypeAny,
+                  {
+                    settlingStdCents: number
+                    globalStdCents: number
+                    driftCentsPerSec: number
+                    inTuneRatio: number
+                  },
+                  {
+                    settlingStdCents: number
+                    globalStdCents: number
+                    driftCentsPerSec: number
+                    inTuneRatio: number
+                  }
+                >
+                rhythm: z.ZodObject<
+                  {
+                    onsetErrorMs: z.ZodOptional<z.ZodNumber>
+                    durationErrorMs: z.ZodOptional<z.ZodNumber>
+                  },
+                  'strip',
+                  z.ZodTypeAny,
+                  {
+                    onsetErrorMs?: number | undefined
+                    durationErrorMs?: number | undefined
+                  },
+                  {
+                    onsetErrorMs?: number | undefined
+                    durationErrorMs?: number | undefined
+                  }
+                >
+              },
+              'strip',
+              z.ZodTypeAny,
+              {
+                vibrato: {
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
+                rhythm: {
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
+                pitchStability: {
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              },
+              {
+                vibrato: {
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
+                rhythm: {
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
+                pitchStability: {
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              }
+            >
+          >
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          averageCents: number
+          noteIndex: number
+          targetPitch: string
+          attempts: number
+          wasInTune: boolean
+          timeToCompleteMs?: number | undefined
+          technique?:
+            | {
+                vibrato: {
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
+                rhythm: {
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
+                pitchStability: {
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              }
+            | undefined
+        },
+        {
+          averageCents: number
+          noteIndex: number
+          targetPitch: string
+          attempts: number
+          wasInTune: boolean
+          timeToCompleteMs?: number | undefined
+          technique?:
+            | {
+                vibrato: {
+                  present: boolean
+                  rateHz: number
+                  widthCents: number
+                  regularity: number
+                }
+                rhythm: {
+                  onsetErrorMs?: number | undefined
+                  durationErrorMs?: number | undefined
+                }
+                pitchStability: {
+                  settlingStdCents: number
+                  globalStdCents: number
+                  driftCentsPerSec: number
+                  inTuneRatio: number
+                }
+              }
+            | undefined
+        }
+      >,
+      'many'
+    >
+    notesAttempted: z.ZodNumber
+    notesCompleted: z.ZodNumber
+    accuracy: z.ZodNumber
+    averageCents: z.ZodNumber
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    accuracy: number
+    startTimeMs: number
+    endTimeMs: number
+    id: string
+    durationMs: number
     noteResults: {
-        averageCents: number;
-        noteIndex: number;
-        targetPitch: string;
-        attempts: number;
-        wasInTune: boolean;
-        timeToCompleteMs?: number | undefined;
-        technique?: {
+      averageCents: number
+      noteIndex: number
+      targetPitch: string
+      attempts: number
+      wasInTune: boolean
+      timeToCompleteMs?: number | undefined
+      technique?:
+        | {
             vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
+              present: boolean
+              rateHz: number
+              widthCents: number
+              regularity: number
+            }
             rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
+              onsetErrorMs?: number | undefined
+              durationErrorMs?: number | undefined
+            }
             pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        } | undefined;
-    }[];
-    exerciseId: string;
-    exerciseName: string;
-    mode: "practice" | "tuner";
-    averageCents: number;
-    notesAttempted: number;
-    notesCompleted: number;
-}, {
-    accuracy: number;
-    startTimeMs: number;
-    endTimeMs: number;
-    id: string;
-    durationMs: number;
+              settlingStdCents: number
+              globalStdCents: number
+              driftCentsPerSec: number
+              inTuneRatio: number
+            }
+          }
+        | undefined
+    }[]
+    exerciseId: string
+    exerciseName: string
+    mode: 'practice' | 'tuner'
+    averageCents: number
+    notesAttempted: number
+    notesCompleted: number
+  },
+  {
+    accuracy: number
+    startTimeMs: number
+    endTimeMs: number
+    id: string
+    durationMs: number
     noteResults: {
-        averageCents: number;
-        noteIndex: number;
-        targetPitch: string;
-        attempts: number;
-        wasInTune: boolean;
-        timeToCompleteMs?: number | undefined;
-        technique?: {
+      averageCents: number
+      noteIndex: number
+      targetPitch: string
+      attempts: number
+      wasInTune: boolean
+      timeToCompleteMs?: number | undefined
+      technique?:
+        | {
             vibrato: {
-                present: boolean;
-                rateHz: number;
-                widthCents: number;
-                regularity: number;
-            };
+              present: boolean
+              rateHz: number
+              widthCents: number
+              regularity: number
+            }
             rhythm: {
-                onsetErrorMs?: number | undefined;
-                durationErrorMs?: number | undefined;
-            };
+              onsetErrorMs?: number | undefined
+              durationErrorMs?: number | undefined
+            }
             pitchStability: {
-                settlingStdCents: number;
-                globalStdCents: number;
-                driftCentsPerSec: number;
-                inTuneRatio: number;
-            };
-        } | undefined;
-    }[];
-    exerciseId: string;
-    exerciseName: string;
-    mode: "practice" | "tuner";
-    averageCents: number;
-    notesAttempted: number;
-    notesCompleted: number;
-}>;
-export declare const ExerciseStatsSchema: z.ZodObject<{
-    exerciseId: z.ZodString;
-    timesCompleted: z.ZodNumber;
-    bestAccuracy: z.ZodNumber;
-    averageAccuracy: z.ZodNumber;
-    fastestCompletionMs: z.ZodNumber;
-    lastPracticedMs: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    lastPracticedMs: number;
-    exerciseId: string;
-    fastestCompletionMs: number;
-    timesCompleted: number;
-    bestAccuracy: number;
-    averageAccuracy: number;
-}, {
-    lastPracticedMs: number;
-    exerciseId: string;
-    fastestCompletionMs: number;
-    timesCompleted: number;
-    bestAccuracy: number;
-    averageAccuracy: number;
-}>;
-export declare const ProgressEventSchema: z.ZodObject<{
-    ts: z.ZodNumber;
-    exerciseId: z.ZodString;
-    accuracy: z.ZodNumber;
-    rhythmErrorMs: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    accuracy: number;
-    exerciseId: string;
-    ts: number;
-    rhythmErrorMs: number;
-}, {
-    accuracy: number;
-    exerciseId: string;
-    ts: number;
-    rhythmErrorMs: number;
-}>;
-export declare const SkillAggregatesSchema: z.ZodObject<{
-    intonation: z.ZodNumber;
-    rhythm: z.ZodNumber;
-    overall: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    intonation: number;
-    rhythm: number;
-    overall: number;
-}, {
-    intonation: number;
-    rhythm: number;
-    overall: number;
-}>;
-export declare const ProgressSnapshotSchema: z.ZodObject<{
-    userId: z.ZodString;
-    window: z.ZodEnum<["7d", "30d", "all"]>;
-    aggregates: z.ZodObject<{
-        intonation: z.ZodNumber;
-        rhythm: z.ZodNumber;
-        overall: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        intonation: number;
-        rhythm: number;
-        overall: number;
-    }, {
-        intonation: number;
-        rhythm: number;
-        overall: number;
-    }>;
-    lastSessionId: z.ZodString;
-}, "strip", z.ZodTypeAny, {
-    userId: string;
-    window: "7d" | "30d" | "all";
+              settlingStdCents: number
+              globalStdCents: number
+              driftCentsPerSec: number
+              inTuneRatio: number
+            }
+          }
+        | undefined
+    }[]
+    exerciseId: string
+    exerciseName: string
+    mode: 'practice' | 'tuner'
+    averageCents: number
+    notesAttempted: number
+    notesCompleted: number
+  }
+>
+export declare const ExerciseStatsSchema: z.ZodObject<
+  {
+    exerciseId: z.ZodString
+    timesCompleted: z.ZodNumber
+    bestAccuracy: z.ZodNumber
+    averageAccuracy: z.ZodNumber
+    fastestCompletionMs: z.ZodNumber
+    lastPracticedMs: z.ZodNumber
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    lastPracticedMs: number
+    exerciseId: string
+    fastestCompletionMs: number
+    timesCompleted: number
+    bestAccuracy: number
+    averageAccuracy: number
+  },
+  {
+    lastPracticedMs: number
+    exerciseId: string
+    fastestCompletionMs: number
+    timesCompleted: number
+    bestAccuracy: number
+    averageAccuracy: number
+  }
+>
+export declare const ProgressEventSchema: z.ZodObject<
+  {
+    ts: z.ZodNumber
+    exerciseId: z.ZodString
+    accuracy: z.ZodNumber
+    rhythmErrorMs: z.ZodNumber
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    accuracy: number
+    exerciseId: string
+    ts: number
+    rhythmErrorMs: number
+  },
+  {
+    accuracy: number
+    exerciseId: string
+    ts: number
+    rhythmErrorMs: number
+  }
+>
+export declare const SkillAggregatesSchema: z.ZodObject<
+  {
+    intonation: z.ZodNumber
+    rhythm: z.ZodNumber
+    overall: z.ZodNumber
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    intonation: number
+    rhythm: number
+    overall: number
+  },
+  {
+    intonation: number
+    rhythm: number
+    overall: number
+  }
+>
+export declare const ProgressSnapshotSchema: z.ZodObject<
+  {
+    userId: z.ZodString
+    window: z.ZodEnum<['7d', '30d', 'all']>
+    aggregates: z.ZodObject<
+      {
+        intonation: z.ZodNumber
+        rhythm: z.ZodNumber
+        overall: z.ZodNumber
+      },
+      'strip',
+      z.ZodTypeAny,
+      {
+        intonation: number
+        rhythm: number
+        overall: number
+      },
+      {
+        intonation: number
+        rhythm: number
+        overall: number
+      }
+    >
+    lastSessionId: z.ZodString
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    userId: string
+    window: '7d' | '30d' | 'all'
     aggregates: {
-        intonation: number;
-        rhythm: number;
-        overall: number;
-    };
-    lastSessionId: string;
-}, {
-    userId: string;
-    window: "7d" | "30d" | "all";
+      intonation: number
+      rhythm: number
+      overall: number
+    }
+    lastSessionId: string
+  },
+  {
+    userId: string
+    window: '7d' | '30d' | 'all'
     aggregates: {
-        intonation: number;
-        rhythm: number;
-        overall: number;
-    };
-    lastSessionId: string;
-}>;
-export declare const ProgressStateSchema: z.ZodObject<{
-    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
-    totalPracticeSessions: z.ZodNumber;
-    totalPracticeTime: z.ZodNumber;
-    exercisesCompleted: z.ZodArray<z.ZodString, "many">;
-    currentStreak: z.ZodNumber;
-    longestStreak: z.ZodNumber;
-    intonationSkill: z.ZodNumber;
-    rhythmSkill: z.ZodNumber;
-    overallSkill: z.ZodNumber;
-    exerciseStats: z.ZodRecord<z.ZodString, z.ZodObject<{
-        exerciseId: z.ZodString;
-        timesCompleted: z.ZodNumber;
-        bestAccuracy: z.ZodNumber;
-        averageAccuracy: z.ZodNumber;
-        fastestCompletionMs: z.ZodNumber;
-        lastPracticedMs: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        lastPracticedMs: number;
-        exerciseId: string;
-        fastestCompletionMs: number;
-        timesCompleted: number;
-        bestAccuracy: number;
-        averageAccuracy: number;
-    }, {
-        lastPracticedMs: number;
-        exerciseId: string;
-        fastestCompletionMs: number;
-        timesCompleted: number;
-        bestAccuracy: number;
-        averageAccuracy: number;
-    }>>;
-    eventBuffer: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        ts: z.ZodNumber;
-        exerciseId: z.ZodString;
-        accuracy: z.ZodNumber;
-        rhythmErrorMs: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        accuracy: number;
-        exerciseId: string;
-        ts: number;
-        rhythmErrorMs: number;
-    }, {
-        accuracy: number;
-        exerciseId: string;
-        ts: number;
-        rhythmErrorMs: number;
-    }>, "many">>;
-    snapshots: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        userId: z.ZodString;
-        window: z.ZodEnum<["7d", "30d", "all"]>;
-        aggregates: z.ZodObject<{
-            intonation: z.ZodNumber;
-            rhythm: z.ZodNumber;
-            overall: z.ZodNumber;
-        }, "strip", z.ZodTypeAny, {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        }, {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        }>;
-        lastSessionId: z.ZodString;
-    }, "strip", z.ZodTypeAny, {
-        userId: string;
-        window: "7d" | "30d" | "all";
-        aggregates: {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        };
-        lastSessionId: string;
-    }, {
-        userId: string;
-        window: "7d" | "30d" | "all";
-        aggregates: {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        };
-        lastSessionId: string;
-    }>, "many">>;
-    eventCounter: z.ZodDefault<z.ZodNumber>;
-}, "strip", z.ZodTypeAny, {
-    exerciseStats: Record<string, {
-        lastPracticedMs: number;
-        exerciseId: string;
-        fastestCompletionMs: number;
-        timesCompleted: number;
-        bestAccuracy: number;
-        averageAccuracy: number;
-    }>;
-    currentStreak: number;
-    longestStreak: number;
-    schemaVersion: 1;
-    totalPracticeSessions: number;
-    totalPracticeTime: number;
-    exercisesCompleted: string[];
-    intonationSkill: number;
-    rhythmSkill: number;
-    overallSkill: number;
+      intonation: number
+      rhythm: number
+      overall: number
+    }
+    lastSessionId: string
+  }
+>
+export declare const ProgressStateSchema: z.ZodObject<
+  {
+    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>
+    totalPracticeSessions: z.ZodNumber
+    totalPracticeTime: z.ZodNumber
+    exercisesCompleted: z.ZodArray<z.ZodString, 'many'>
+    currentStreak: z.ZodNumber
+    longestStreak: z.ZodNumber
+    intonationSkill: z.ZodNumber
+    rhythmSkill: z.ZodNumber
+    overallSkill: z.ZodNumber
+    exerciseStats: z.ZodRecord<
+      z.ZodString,
+      z.ZodObject<
+        {
+          exerciseId: z.ZodString
+          timesCompleted: z.ZodNumber
+          bestAccuracy: z.ZodNumber
+          averageAccuracy: z.ZodNumber
+          fastestCompletionMs: z.ZodNumber
+          lastPracticedMs: z.ZodNumber
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          lastPracticedMs: number
+          exerciseId: string
+          fastestCompletionMs: number
+          timesCompleted: number
+          bestAccuracy: number
+          averageAccuracy: number
+        },
+        {
+          lastPracticedMs: number
+          exerciseId: string
+          fastestCompletionMs: number
+          timesCompleted: number
+          bestAccuracy: number
+          averageAccuracy: number
+        }
+      >
+    >
+    eventBuffer: z.ZodDefault<
+      z.ZodArray<
+        z.ZodObject<
+          {
+            ts: z.ZodNumber
+            exerciseId: z.ZodString
+            accuracy: z.ZodNumber
+            rhythmErrorMs: z.ZodNumber
+          },
+          'strip',
+          z.ZodTypeAny,
+          {
+            accuracy: number
+            exerciseId: string
+            ts: number
+            rhythmErrorMs: number
+          },
+          {
+            accuracy: number
+            exerciseId: string
+            ts: number
+            rhythmErrorMs: number
+          }
+        >,
+        'many'
+      >
+    >
+    snapshots: z.ZodDefault<
+      z.ZodArray<
+        z.ZodObject<
+          {
+            userId: z.ZodString
+            window: z.ZodEnum<['7d', '30d', 'all']>
+            aggregates: z.ZodObject<
+              {
+                intonation: z.ZodNumber
+                rhythm: z.ZodNumber
+                overall: z.ZodNumber
+              },
+              'strip',
+              z.ZodTypeAny,
+              {
+                intonation: number
+                rhythm: number
+                overall: number
+              },
+              {
+                intonation: number
+                rhythm: number
+                overall: number
+              }
+            >
+            lastSessionId: z.ZodString
+          },
+          'strip',
+          z.ZodTypeAny,
+          {
+            userId: string
+            window: '7d' | '30d' | 'all'
+            aggregates: {
+              intonation: number
+              rhythm: number
+              overall: number
+            }
+            lastSessionId: string
+          },
+          {
+            userId: string
+            window: '7d' | '30d' | 'all'
+            aggregates: {
+              intonation: number
+              rhythm: number
+              overall: number
+            }
+            lastSessionId: string
+          }
+        >,
+        'many'
+      >
+    >
+    eventCounter: z.ZodDefault<z.ZodNumber>
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    exerciseStats: Record<
+      string,
+      {
+        lastPracticedMs: number
+        exerciseId: string
+        fastestCompletionMs: number
+        timesCompleted: number
+        bestAccuracy: number
+        averageAccuracy: number
+      }
+    >
+    currentStreak: number
+    longestStreak: number
+    schemaVersion: 1
+    totalPracticeSessions: number
+    totalPracticeTime: number
+    exercisesCompleted: string[]
+    intonationSkill: number
+    rhythmSkill: number
+    overallSkill: number
     eventBuffer: {
-        accuracy: number;
-        exerciseId: string;
-        ts: number;
-        rhythmErrorMs: number;
-    }[];
+      accuracy: number
+      exerciseId: string
+      ts: number
+      rhythmErrorMs: number
+    }[]
     snapshots: {
-        userId: string;
-        window: "7d" | "30d" | "all";
-        aggregates: {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        };
-        lastSessionId: string;
-    }[];
-    eventCounter: number;
-}, {
-    exerciseStats: Record<string, {
-        lastPracticedMs: number;
-        exerciseId: string;
-        fastestCompletionMs: number;
-        timesCompleted: number;
-        bestAccuracy: number;
-        averageAccuracy: number;
-    }>;
-    currentStreak: number;
-    longestStreak: number;
-    totalPracticeSessions: number;
-    totalPracticeTime: number;
-    exercisesCompleted: string[];
-    intonationSkill: number;
-    rhythmSkill: number;
-    overallSkill: number;
-    schemaVersion?: 1 | undefined;
-    eventBuffer?: {
-        accuracy: number;
-        exerciseId: string;
-        ts: number;
-        rhythmErrorMs: number;
-    }[] | undefined;
-    snapshots?: {
-        userId: string;
-        window: "7d" | "30d" | "all";
-        aggregates: {
-            intonation: number;
-            rhythm: number;
-            overall: number;
-        };
-        lastSessionId: string;
-    }[] | undefined;
-    eventCounter?: number | undefined;
-}>;
-export declare const AchievementSchema: z.ZodObject<{
-    id: z.ZodString;
-    name: z.ZodString;
-    description: z.ZodString;
-    icon: z.ZodString;
-    unlockedAtMs: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    name: string;
-    unlockedAtMs: number;
-    id: string;
-    description: string;
-    icon: string;
-}, {
-    name: string;
-    unlockedAtMs: number;
-    id: string;
-    description: string;
-    icon: string;
-}>;
-export declare const AchievementsStateSchema: z.ZodObject<{
-    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
-    unlocked: z.ZodArray<z.ZodObject<{
-        id: z.ZodString;
-        name: z.ZodString;
-        description: z.ZodString;
-        icon: z.ZodString;
-        unlockedAtMs: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }, {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }>, "many">;
-    pending: z.ZodArray<z.ZodObject<{
-        id: z.ZodString;
-        name: z.ZodString;
-        description: z.ZodString;
-        icon: z.ZodString;
-        unlockedAtMs: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }, {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }>, "many">;
-}, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
+      userId: string
+      window: '7d' | '30d' | 'all'
+      aggregates: {
+        intonation: number
+        rhythm: number
+        overall: number
+      }
+      lastSessionId: string
+    }[]
+    eventCounter: number
+  },
+  {
+    exerciseStats: Record<
+      string,
+      {
+        lastPracticedMs: number
+        exerciseId: string
+        fastestCompletionMs: number
+        timesCompleted: number
+        bestAccuracy: number
+        averageAccuracy: number
+      }
+    >
+    currentStreak: number
+    longestStreak: number
+    totalPracticeSessions: number
+    totalPracticeTime: number
+    exercisesCompleted: string[]
+    intonationSkill: number
+    rhythmSkill: number
+    overallSkill: number
+    schemaVersion?: 1 | undefined
+    eventBuffer?:
+      | {
+          accuracy: number
+          exerciseId: string
+          ts: number
+          rhythmErrorMs: number
+        }[]
+      | undefined
+    snapshots?:
+      | {
+          userId: string
+          window: '7d' | '30d' | 'all'
+          aggregates: {
+            intonation: number
+            rhythm: number
+            overall: number
+          }
+          lastSessionId: string
+        }[]
+      | undefined
+    eventCounter?: number | undefined
+  }
+>
+export declare const AchievementSchema: z.ZodObject<
+  {
+    id: z.ZodString
+    name: z.ZodString
+    description: z.ZodString
+    icon: z.ZodString
+    unlockedAtMs: z.ZodNumber
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    name: string
+    unlockedAtMs: number
+    id: string
+    description: string
+    icon: string
+  },
+  {
+    name: string
+    unlockedAtMs: number
+    id: string
+    description: string
+    icon: string
+  }
+>
+export declare const AchievementsStateSchema: z.ZodObject<
+  {
+    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>
+    unlocked: z.ZodArray<
+      z.ZodObject<
+        {
+          id: z.ZodString
+          name: z.ZodString
+          description: z.ZodString
+          icon: z.ZodString
+          unlockedAtMs: z.ZodNumber
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        },
+        {
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }
+      >,
+      'many'
+    >
+    pending: z.ZodArray<
+      z.ZodObject<
+        {
+          id: z.ZodString
+          name: z.ZodString
+          description: z.ZodString
+          icon: z.ZodString
+          unlockedAtMs: z.ZodNumber
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        },
+        {
+          name: string
+          unlockedAtMs: number
+          id: string
+          description: string
+          icon: string
+        }
+      >,
+      'many'
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    schemaVersion: 1
     unlocked: {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }[];
+      name: string
+      unlockedAtMs: number
+      id: string
+      description: string
+      icon: string
+    }[]
     pending: {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }[];
-}, {
+      name: string
+      unlockedAtMs: number
+      id: string
+      description: string
+      icon: string
+    }[]
+  },
+  {
     unlocked: {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }[];
+      name: string
+      unlockedAtMs: number
+      id: string
+      description: string
+      icon: string
+    }[]
     pending: {
-        name: string;
-        unlockedAtMs: number;
-        id: string;
-        description: string;
-        icon: string;
-    }[];
-    schemaVersion?: 1 | undefined;
-}>;
-export declare const SessionHistoryStateSchema: z.ZodObject<{
-    sessions: z.ZodArray<z.ZodObject<{
-        id: z.ZodString;
-        startTimeMs: z.ZodNumber;
-        endTimeMs: z.ZodNumber;
-        durationMs: z.ZodNumber;
-        exerciseId: z.ZodString;
-        exerciseName: z.ZodString;
-        mode: z.ZodEnum<["tuner", "practice"]>;
-        noteResults: z.ZodArray<z.ZodObject<{
-            noteIndex: z.ZodNumber;
-            targetPitch: z.ZodString;
-            attempts: z.ZodNumber;
-            timeToCompleteMs: z.ZodOptional<z.ZodNumber>;
-            averageCents: z.ZodNumber;
-            wasInTune: z.ZodBoolean;
-            technique: z.ZodOptional<z.ZodObject<{
-                vibrato: z.ZodObject<{
-                    present: z.ZodBoolean;
-                    rateHz: z.ZodNumber;
-                    widthCents: z.ZodNumber;
-                    regularity: z.ZodNumber;
-                }, "strip", z.ZodTypeAny, {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                }, {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                }>;
-                pitchStability: z.ZodObject<{
-                    settlingStdCents: z.ZodNumber;
-                    globalStdCents: z.ZodNumber;
-                    driftCentsPerSec: z.ZodNumber;
-                    inTuneRatio: z.ZodNumber;
-                }, "strip", z.ZodTypeAny, {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                }, {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                }>;
-                rhythm: z.ZodObject<{
-                    onsetErrorMs: z.ZodOptional<z.ZodNumber>;
-                    durationErrorMs: z.ZodOptional<z.ZodNumber>;
-                }, "strip", z.ZodTypeAny, {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                }, {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                }>;
-            }, "strip", z.ZodTypeAny, {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            }, {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            }>>;
-        }, "strip", z.ZodTypeAny, {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }, {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }>, "many">;
-        notesAttempted: z.ZodNumber;
-        notesCompleted: z.ZodNumber;
-        accuracy: z.ZodNumber;
-        averageCents: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }, {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }>, "many">;
-}, "strip", z.ZodTypeAny, {
+      name: string
+      unlockedAtMs: number
+      id: string
+      description: string
+      icon: string
+    }[]
+    schemaVersion?: 1 | undefined
+  }
+>
+export declare const SessionHistoryStateSchema: z.ZodObject<
+  {
+    sessions: z.ZodArray<
+      z.ZodObject<
+        {
+          id: z.ZodString
+          startTimeMs: z.ZodNumber
+          endTimeMs: z.ZodNumber
+          durationMs: z.ZodNumber
+          exerciseId: z.ZodString
+          exerciseName: z.ZodString
+          mode: z.ZodEnum<['tuner', 'practice']>
+          noteResults: z.ZodArray<
+            z.ZodObject<
+              {
+                noteIndex: z.ZodNumber
+                targetPitch: z.ZodString
+                attempts: z.ZodNumber
+                timeToCompleteMs: z.ZodOptional<z.ZodNumber>
+                averageCents: z.ZodNumber
+                wasInTune: z.ZodBoolean
+                technique: z.ZodOptional<
+                  z.ZodObject<
+                    {
+                      vibrato: z.ZodObject<
+                        {
+                          present: z.ZodBoolean
+                          rateHz: z.ZodNumber
+                          widthCents: z.ZodNumber
+                          regularity: z.ZodNumber
+                        },
+                        'strip',
+                        z.ZodTypeAny,
+                        {
+                          present: boolean
+                          rateHz: number
+                          widthCents: number
+                          regularity: number
+                        },
+                        {
+                          present: boolean
+                          rateHz: number
+                          widthCents: number
+                          regularity: number
+                        }
+                      >
+                      pitchStability: z.ZodObject<
+                        {
+                          settlingStdCents: z.ZodNumber
+                          globalStdCents: z.ZodNumber
+                          driftCentsPerSec: z.ZodNumber
+                          inTuneRatio: z.ZodNumber
+                        },
+                        'strip',
+                        z.ZodTypeAny,
+                        {
+                          settlingStdCents: number
+                          globalStdCents: number
+                          driftCentsPerSec: number
+                          inTuneRatio: number
+                        },
+                        {
+                          settlingStdCents: number
+                          globalStdCents: number
+                          driftCentsPerSec: number
+                          inTuneRatio: number
+                        }
+                      >
+                      rhythm: z.ZodObject<
+                        {
+                          onsetErrorMs: z.ZodOptional<z.ZodNumber>
+                          durationErrorMs: z.ZodOptional<z.ZodNumber>
+                        },
+                        'strip',
+                        z.ZodTypeAny,
+                        {
+                          onsetErrorMs?: number | undefined
+                          durationErrorMs?: number | undefined
+                        },
+                        {
+                          onsetErrorMs?: number | undefined
+                          durationErrorMs?: number | undefined
+                        }
+                      >
+                    },
+                    'strip',
+                    z.ZodTypeAny,
+                    {
+                      vibrato: {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      }
+                      rhythm: {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      }
+                      pitchStability: {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      }
+                    },
+                    {
+                      vibrato: {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      }
+                      rhythm: {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      }
+                      pitchStability: {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      }
+                    }
+                  >
+                >
+              },
+              'strip',
+              z.ZodTypeAny,
+              {
+                averageCents: number
+                noteIndex: number
+                targetPitch: string
+                attempts: number
+                wasInTune: boolean
+                timeToCompleteMs?: number | undefined
+                technique?:
+                  | {
+                      vibrato: {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      }
+                      rhythm: {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      }
+                      pitchStability: {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      }
+                    }
+                  | undefined
+              },
+              {
+                averageCents: number
+                noteIndex: number
+                targetPitch: string
+                attempts: number
+                wasInTune: boolean
+                timeToCompleteMs?: number | undefined
+                technique?:
+                  | {
+                      vibrato: {
+                        present: boolean
+                        rateHz: number
+                        widthCents: number
+                        regularity: number
+                      }
+                      rhythm: {
+                        onsetErrorMs?: number | undefined
+                        durationErrorMs?: number | undefined
+                      }
+                      pitchStability: {
+                        settlingStdCents: number
+                        globalStdCents: number
+                        driftCentsPerSec: number
+                        inTuneRatio: number
+                      }
+                    }
+                  | undefined
+              }
+            >,
+            'many'
+          >
+          notesAttempted: z.ZodNumber
+          notesCompleted: z.ZodNumber
+          accuracy: z.ZodNumber
+          averageCents: z.ZodNumber
+        },
+        'strip',
+        z.ZodTypeAny,
+        {
+          accuracy: number
+          startTimeMs: number
+          endTimeMs: number
+          id: string
+          durationMs: number
+          noteResults: {
+            averageCents: number
+            noteIndex: number
+            targetPitch: string
+            attempts: number
+            wasInTune: boolean
+            timeToCompleteMs?: number | undefined
+            technique?:
+              | {
+                  vibrato: {
+                    present: boolean
+                    rateHz: number
+                    widthCents: number
+                    regularity: number
+                  }
+                  rhythm: {
+                    onsetErrorMs?: number | undefined
+                    durationErrorMs?: number | undefined
+                  }
+                  pitchStability: {
+                    settlingStdCents: number
+                    globalStdCents: number
+                    driftCentsPerSec: number
+                    inTuneRatio: number
+                  }
+                }
+              | undefined
+          }[]
+          exerciseId: string
+          exerciseName: string
+          mode: 'practice' | 'tuner'
+          averageCents: number
+          notesAttempted: number
+          notesCompleted: number
+        },
+        {
+          accuracy: number
+          startTimeMs: number
+          endTimeMs: number
+          id: string
+          durationMs: number
+          noteResults: {
+            averageCents: number
+            noteIndex: number
+            targetPitch: string
+            attempts: number
+            wasInTune: boolean
+            timeToCompleteMs?: number | undefined
+            technique?:
+              | {
+                  vibrato: {
+                    present: boolean
+                    rateHz: number
+                    widthCents: number
+                    regularity: number
+                  }
+                  rhythm: {
+                    onsetErrorMs?: number | undefined
+                    durationErrorMs?: number | undefined
+                  }
+                  pitchStability: {
+                    settlingStdCents: number
+                    globalStdCents: number
+                    driftCentsPerSec: number
+                    inTuneRatio: number
+                  }
+                }
+              | undefined
+          }[]
+          exerciseId: string
+          exerciseName: string
+          mode: 'practice' | 'tuner'
+          averageCents: number
+          notesAttempted: number
+          notesCompleted: number
+        }
+      >,
+      'many'
+    >
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
     sessions: {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }[];
-}, {
+      accuracy: number
+      startTimeMs: number
+      endTimeMs: number
+      id: string
+      durationMs: number
+      noteResults: {
+        averageCents: number
+        noteIndex: number
+        targetPitch: string
+        attempts: number
+        wasInTune: boolean
+        timeToCompleteMs?: number | undefined
+        technique?:
+          | {
+              vibrato: {
+                present: boolean
+                rateHz: number
+                widthCents: number
+                regularity: number
+              }
+              rhythm: {
+                onsetErrorMs?: number | undefined
+                durationErrorMs?: number | undefined
+              }
+              pitchStability: {
+                settlingStdCents: number
+                globalStdCents: number
+                driftCentsPerSec: number
+                inTuneRatio: number
+              }
+            }
+          | undefined
+      }[]
+      exerciseId: string
+      exerciseName: string
+      mode: 'practice' | 'tuner'
+      averageCents: number
+      notesAttempted: number
+      notesCompleted: number
+    }[]
+  },
+  {
     sessions: {
-        accuracy: number;
-        startTimeMs: number;
-        endTimeMs: number;
-        id: string;
-        durationMs: number;
-        noteResults: {
-            averageCents: number;
-            noteIndex: number;
-            targetPitch: string;
-            attempts: number;
-            wasInTune: boolean;
-            timeToCompleteMs?: number | undefined;
-            technique?: {
-                vibrato: {
-                    present: boolean;
-                    rateHz: number;
-                    widthCents: number;
-                    regularity: number;
-                };
-                rhythm: {
-                    onsetErrorMs?: number | undefined;
-                    durationErrorMs?: number | undefined;
-                };
-                pitchStability: {
-                    settlingStdCents: number;
-                    globalStdCents: number;
-                    driftCentsPerSec: number;
-                    inTuneRatio: number;
-                };
-            } | undefined;
-        }[];
-        exerciseId: string;
-        exerciseName: string;
-        mode: "practice" | "tuner";
-        averageCents: number;
-        notesAttempted: number;
-        notesCompleted: number;
-    }[];
-}>;
-export declare const PreferencesStateSchema: z.ZodObject<{
-    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>;
-    feedbackLevel: z.ZodEnum<["beginner", "intermediate", "advanced"]>;
-    showTechnicalDetails: z.ZodBoolean;
-    enableCelebrations: z.ZodBoolean;
-    enableHaptics: z.ZodBoolean;
-    soundFeedbackEnabled: z.ZodBoolean;
-}, "strip", z.ZodTypeAny, {
-    schemaVersion: 1;
-    feedbackLevel: "beginner" | "intermediate" | "advanced";
-    showTechnicalDetails: boolean;
-    enableCelebrations: boolean;
-    enableHaptics: boolean;
-    soundFeedbackEnabled: boolean;
-}, {
-    feedbackLevel: "beginner" | "intermediate" | "advanced";
-    showTechnicalDetails: boolean;
-    enableCelebrations: boolean;
-    enableHaptics: boolean;
-    soundFeedbackEnabled: boolean;
-    schemaVersion?: 1 | undefined;
-}>;
+      accuracy: number
+      startTimeMs: number
+      endTimeMs: number
+      id: string
+      durationMs: number
+      noteResults: {
+        averageCents: number
+        noteIndex: number
+        targetPitch: string
+        attempts: number
+        wasInTune: boolean
+        timeToCompleteMs?: number | undefined
+        technique?:
+          | {
+              vibrato: {
+                present: boolean
+                rateHz: number
+                widthCents: number
+                regularity: number
+              }
+              rhythm: {
+                onsetErrorMs?: number | undefined
+                durationErrorMs?: number | undefined
+              }
+              pitchStability: {
+                settlingStdCents: number
+                globalStdCents: number
+                driftCentsPerSec: number
+                inTuneRatio: number
+              }
+            }
+          | undefined
+      }[]
+      exerciseId: string
+      exerciseName: string
+      mode: 'practice' | 'tuner'
+      averageCents: number
+      notesAttempted: number
+      notesCompleted: number
+    }[]
+  }
+>
+export declare const PreferencesStateSchema: z.ZodObject<
+  {
+    schemaVersion: z.ZodDefault<z.ZodLiteral<1>>
+    feedbackLevel: z.ZodEnum<['beginner', 'intermediate', 'advanced']>
+    showTechnicalDetails: z.ZodBoolean
+    enableCelebrations: z.ZodBoolean
+    enableHaptics: z.ZodBoolean
+    soundFeedbackEnabled: z.ZodBoolean
+  },
+  'strip',
+  z.ZodTypeAny,
+  {
+    schemaVersion: 1
+    feedbackLevel: 'beginner' | 'intermediate' | 'advanced'
+    showTechnicalDetails: boolean
+    enableCelebrations: boolean
+    enableHaptics: boolean
+    soundFeedbackEnabled: boolean
+  },
+  {
+    feedbackLevel: 'beginner' | 'intermediate' | 'advanced'
+    showTechnicalDetails: boolean
+    enableCelebrations: boolean
+    enableHaptics: boolean
+    soundFeedbackEnabled: boolean
+    schemaVersion?: 1 | undefined
+  }
+>
 
 // ===== types-docs/lib/technique-analysis-agent.d.ts =====
 
-import { TechniqueFrame, NoteSegment, NoteTechnique, Observation, AnalysisOptions } from './technique-types';
+import {
+  TechniqueFrame,
+  NoteSegment,
+  NoteTechnique,
+  Observation,
+  AnalysisOptions,
+} from './technique-types'
 /**
  * A stateful agent that analyzes note segments to provide detailed technical feedback.
  *
@@ -4378,70 +5208,74 @@ import { TechniqueFrame, NoteSegment, NoteTechnique, Observation, AnalysisOption
  *     and filtered pedagogical tips ready for display to the user.
  */
 export declare class TechniqueAnalysisAgent {
-    private options;
-    /**
-     * Constructs a new TechniqueAnalysisAgent with optional configuration.
-     * @param options - Configuration overrides for the analysis heuristics.
-     */
-    constructor(options?: Partial<AnalysisOptions>);
-    /**
-     * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
-     *
-     * @param segment - The `NoteSegment` to analyze, containing all frames of the note.
-     * @param gapFrames - Optional frames from the silence preceding the note, used for transition analysis.
-     * @returns A `NoteTechnique` object with detailed metrics.
-     */
-    analyzeSegment(segment: NoteSegment, gapFrames?: TechniqueFrame[], prevSegment?: NoteSegment | null): NoteTechnique;
-    private calculateStability;
-    private calculateVibrato;
-    private calculateAttackRelease;
-    private calculateResonance;
-    private calculateRhythm;
-    private calculateTransition;
-    calculateGlissando(gapFrames: TechniqueFrame[]): number;
-    calculateLandingError(currentFrames: TechniqueFrame[], startTime: number): number;
-    calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number): number;
-    /**
-     * Generates a list of human-readable observations based on computed technique metrics.
-     *
-     * @remarks
-     * This method acts as an "intelligent feedback motor". It applies a set of pedagogical rules
-     * and heuristics to the quantitative data in the `NoteTechnique` object to produce
-     * actionable, prioritized feedback for the user. The observations are sorted by
-     * a combination of severity and confidence.
-     *
-     * @param technique - The `NoteTechnique` object produced by `analyzeSegment`.
-     * @returns An array of `Observation` objects, ready for display.
-     */
-    generateObservations(technique: NoteTechnique): Observation[];
-    private generateStabilityObservations;
-    private generateVibratoObservations;
-    private generateAttackObservations;
-    private generateTransitionObservations;
-    private generateResonanceObservations;
-    private generateRhythmObservations;
-    /** @internal */
-    private calculateStdDev;
-    /**
-     * Calculates the pitch drift over a series of frames using linear regression.
-     * @internal
-     */
-    private calculateDrift;
-    /**
-     * Removes the linear trend from a series of cents values.
-     * @internal
-     */
-    private detrend;
-    /**
-     * Finds the dominant period in a signal using autocorrelation.
-     * @internal
-     */
-    private findPeriod;
+  private options
+  /**
+   * Constructs a new TechniqueAnalysisAgent with optional configuration.
+   * @param options - Configuration overrides for the analysis heuristics.
+   */
+  constructor(options?: Partial<AnalysisOptions>)
+  /**
+   * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
+   *
+   * @param segment - The `NoteSegment` to analyze, containing all frames of the note.
+   * @param gapFrames - Optional frames from the silence preceding the note, used for transition analysis.
+   * @returns A `NoteTechnique` object with detailed metrics.
+   */
+  analyzeSegment(
+    segment: NoteSegment,
+    gapFrames?: TechniqueFrame[],
+    prevSegment?: NoteSegment | null,
+  ): NoteTechnique
+  private calculateStability
+  private calculateVibrato
+  private calculateAttackRelease
+  private calculateResonance
+  private calculateRhythm
+  private calculateTransition
+  calculateGlissando(gapFrames: TechniqueFrame[]): number
+  calculateLandingError(currentFrames: TechniqueFrame[], startTime: number): number
+  calculateCorrectionCount(currentFrames: TechniqueFrame[], startTime: number): number
+  /**
+   * Generates a list of human-readable observations based on computed technique metrics.
+   *
+   * @remarks
+   * This method acts as an "intelligent feedback motor". It applies a set of pedagogical rules
+   * and heuristics to the quantitative data in the `NoteTechnique` object to produce
+   * actionable, prioritized feedback for the user. The observations are sorted by
+   * a combination of severity and confidence.
+   *
+   * @param technique - The `NoteTechnique` object produced by `analyzeSegment`.
+   * @returns An array of `Observation` objects, ready for display.
+   */
+  generateObservations(technique: NoteTechnique): Observation[]
+  private generateStabilityObservations
+  private generateVibratoObservations
+  private generateAttackObservations
+  private generateTransitionObservations
+  private generateResonanceObservations
+  private generateRhythmObservations
+  /** @internal */
+  private calculateStdDev
+  /**
+   * Calculates the pitch drift over a series of frames using linear regression.
+   * @internal
+   */
+  private calculateDrift
+  /**
+   * Removes the linear trend from a series of cents values.
+   * @internal
+   */
+  private detrend
+  /**
+   * Finds the dominant period in a signal using autocorrelation.
+   * @internal
+   */
+  private findPeriod
 }
 
 // ===== types-docs/lib/technique-analysis-agent.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/technique-types.d.ts =====
 
@@ -4452,213 +5286,213 @@ export {};
  * A single frame of analysis from the audio pipeline, enriched with technique-related data.
  */
 export interface TechniqueFrame {
-    /** The timestamp of the frame in milliseconds. */
-    timestamp: number;
-    /** The detected fundamental frequency in Hertz. */
-    pitchHz: number;
-    /** The pitch deviation in cents from the nearest note. */
-    cents: number;
-    /** The Root Mean Square (volume) of the frame. */
-    rms: number;
-    /** The confidence of the pitch detection algorithm (0-1). */
-    confidence: number;
-    /** The name of the detected note (e.g., "C#4"). */
-    noteName: string;
+  /** The timestamp of the frame in milliseconds. */
+  timestamp: number
+  /** The detected fundamental frequency in Hertz. */
+  pitchHz: number
+  /** The pitch deviation in cents from the nearest note. */
+  cents: number
+  /** The Root Mean Square (volume) of the frame. */
+  rms: number
+  /** The confidence of the pitch detection algorithm (0-1). */
+  confidence: number
+  /** The name of the detected note (e.g., "C#4"). */
+  noteName: string
 }
 /**
  * Metrics related to the quality and characteristics of vibrato.
  */
 export interface VibratoMetrics {
-    /** `true` if vibrato is detected in the note segment. */
-    present: boolean;
-    /** Vibrato rate in Hz (typical range: 4-8 Hz) */
-    rateHz: number;
-    /** Vibrato width in cents (typical range: 10-50 cents) */
-    widthCents: number;
-    /**
-     * Vibrato regularity score.
-     *
-     * @remarks
-     * Range: 0.0 to 1.0.
-     * - 0.0: Completely irregular/random oscillation
-     * - 0.5: Moderately regular
-     * - 1.0: Perfect sinusoidal regularity
-     */
-    regularity: number;
+  /** `true` if vibrato is detected in the note segment. */
+  present: boolean
+  /** Vibrato rate in Hz (typical range: 4-8 Hz) */
+  rateHz: number
+  /** Vibrato width in cents (typical range: 10-50 cents) */
+  widthCents: number
+  /**
+   * Vibrato regularity score.
+   *
+   * @remarks
+   * Range: 0.0 to 1.0.
+   * - 0.0: Completely irregular/random oscillation
+   * - 0.5: Moderately regular
+   * - 1.0: Perfect sinusoidal regularity
+   */
+  regularity: number
 }
 /**
  * Metrics related to pitch stability and intonation control.
  */
 export interface PitchStability {
-    /** The standard deviation of pitch (in cents) after the initial note attack (settling period). */
-    settlingStdCents: number;
-    /** The overall standard deviation of pitch (in cents) for the entire note. */
-    globalStdCents: number;
-    /** The rate of pitch change over time, calculated via linear regression, in cents per second. */
-    driftCentsPerSec: number;
-    /** The proportion of frames (0-1) that are within the target intonation tolerance. */
-    inTuneRatio: number;
+  /** The standard deviation of pitch (in cents) after the initial note attack (settling period). */
+  settlingStdCents: number
+  /** The overall standard deviation of pitch (in cents) for the entire note. */
+  globalStdCents: number
+  /** The rate of pitch change over time, calculated via linear regression, in cents per second. */
+  driftCentsPerSec: number
+  /** The proportion of frames (0-1) that are within the target intonation tolerance. */
+  inTuneRatio: number
 }
 /**
  * Metrics related to the beginning (attack) and end (release) of a note.
  */
 export interface AttackReleaseMetrics {
-    /** The time in milliseconds from note onset to reaching 90% of the maximum volume (RMS). */
-    attackTimeMs: number;
-    /** The pitch difference in cents between the start of the note and its stable pitch, indicating a "scoop". */
-    pitchScoopCents: number;
-    /** The standard deviation of pitch (in cents) in the final milliseconds of the note, indicating release control. */
-    releaseStability: number;
+  /** The time in milliseconds from note onset to reaching 90% of the maximum volume (RMS). */
+  attackTimeMs: number
+  /** The pitch difference in cents between the start of the note and its stable pitch, indicating a "scoop". */
+  pitchScoopCents: number
+  /** The standard deviation of pitch (in cents) in the final milliseconds of the note, indicating release control. */
+  releaseStability: number
 }
 /**
  * Metrics related to the tonal quality and resonance of the note.
  */
 export interface ResonanceMetrics {
-    /** `true` if a "wolf tone" (a problematic, unstable resonance) is suspected. */
-    suspectedWolf: boolean;
-    /** A score indicating the presence of periodic volume fluctuations (beating). */
-    rmsBeatingScore: number;
-    /** A score indicating chaotic or unstable pitch fluctuations. */
-    pitchChaosScore: number;
-    /** The proportion of high-volume frames that have low pitch-detection confidence. */
-    lowConfRatio: number;
+  /** `true` if a "wolf tone" (a problematic, unstable resonance) is suspected. */
+  suspectedWolf: boolean
+  /** A score indicating the presence of periodic volume fluctuations (beating). */
+  rmsBeatingScore: number
+  /** A score indicating chaotic or unstable pitch fluctuations. */
+  pitchChaosScore: number
+  /** The proportion of high-volume frames that have low pitch-detection confidence. */
+  lowConfRatio: number
 }
 /**
  * Metrics related to the transition between two notes.
  */
 export interface TransitionMetrics {
-    /** The duration in milliseconds of the silence or glissando between notes. */
-    transitionTimeMs: number;
-    /** The total pitch change in cents during an audible slide (glissando). */
-    glissAmountCents: number;
-    /** The average pitch error in cents at the very beginning of the new note. */
-    landingErrorCents: number;
-    /** The number of times the pitch crosses the center line during the note's start, indicating instability. */
-    correctionCount: number;
+  /** The duration in milliseconds of the silence or glissando between notes. */
+  transitionTimeMs: number
+  /** The total pitch change in cents during an audible slide (glissando). */
+  glissAmountCents: number
+  /** The average pitch error in cents at the very beginning of the new note. */
+  landingErrorCents: number
+  /** The number of times the pitch crosses the center line during the note's start, indicating instability. */
+  correctionCount: number
 }
 /**
  * Configuration options for the technique analysis agent.
  */
 export interface AnalysisOptions {
-    /**
-     * Time to wait for pitch to settle after note onset.
-     *
-     * @remarks
-     * Range: 50-500 ms.
-     * Default: 150.
-     */
-    settlingTimeMs: number;
-    /**
-     * Maximum pitch deviation to consider "in tune".
-     *
-     * @remarks
-     * Range: 5-50 cents.
-     * Default: 25.
-     */
-    inTuneThresholdCents: number;
-    /**
-     * Minimum vibrato rate to detect.
-     *
-     * @remarks
-     * Range: 3-6 Hz.
-     * Default: 4.
-     */
-    vibratoMinRateHz: number;
-    /**
-     * Maximum vibrato rate to detect.
-     *
-     * @remarks
-     * Range: 6-10 Hz.
-     * Default: 8.
-     */
-    vibratoMaxRateHz: number;
-    /**
-     * Minimum vibrato width to consider present.
-     *
-     * @remarks
-     * Range: 5-20 cents.
-     * Default: 10.
-     */
-    vibratoMinWidthCents: number;
-    /**
-     * Minimum regularity score to classify as intentional vibrato.
-     *
-     * @remarks
-     * Range: 0.3-0.8.
-     * Default: 0.5.
-     */
-    vibratoMinRegularity: number;
+  /**
+   * Time to wait for pitch to settle after note onset.
+   *
+   * @remarks
+   * Range: 50-500 ms.
+   * Default: 150.
+   */
+  settlingTimeMs: number
+  /**
+   * Maximum pitch deviation to consider "in tune".
+   *
+   * @remarks
+   * Range: 5-50 cents.
+   * Default: 25.
+   */
+  inTuneThresholdCents: number
+  /**
+   * Minimum vibrato rate to detect.
+   *
+   * @remarks
+   * Range: 3-6 Hz.
+   * Default: 4.
+   */
+  vibratoMinRateHz: number
+  /**
+   * Maximum vibrato rate to detect.
+   *
+   * @remarks
+   * Range: 6-10 Hz.
+   * Default: 8.
+   */
+  vibratoMaxRateHz: number
+  /**
+   * Minimum vibrato width to consider present.
+   *
+   * @remarks
+   * Range: 5-20 cents.
+   * Default: 10.
+   */
+  vibratoMinWidthCents: number
+  /**
+   * Minimum regularity score to classify as intentional vibrato.
+   *
+   * @remarks
+   * Range: 0.3-0.8.
+   * Default: 0.5.
+   */
+  vibratoMinRegularity: number
 }
 /**
  * Metrics related to rhythmic accuracy.
  */
 export interface RhythmMetrics {
-    /** The timing error in milliseconds of the note's start (onset) compared to the expected time. */
-    onsetErrorMs: number;
-    /** The error in milliseconds of the note's total duration compared to the expected duration. */
-    durationErrorMs?: number;
+  /** The timing error in milliseconds of the note's start (onset) compared to the expected time. */
+  onsetErrorMs: number
+  /** The error in milliseconds of the note's total duration compared to the expected duration. */
+  durationErrorMs?: number
 }
 /**
  * A comprehensive collection of all technique metrics calculated for a single note.
  */
 export interface NoteTechnique {
-    vibrato: VibratoMetrics;
-    pitchStability: PitchStability;
-    attackRelease: AttackReleaseMetrics;
-    resonance: ResonanceMetrics;
-    rhythm: RhythmMetrics;
-    transition: TransitionMetrics;
+  vibrato: VibratoMetrics
+  pitchStability: PitchStability
+  attackRelease: AttackReleaseMetrics
+  resonance: ResonanceMetrics
+  rhythm: RhythmMetrics
+  transition: TransitionMetrics
 }
 /**
  * Represents a completed musical note, containing all its analysis frames and metadata.
  */
 export interface NoteSegment {
-    /** The zero-based index of the note within the exercise. */
-    noteIndex: number;
-    /** The target pitch for the note (e.g., "A#4"). */
-    targetPitch: string;
-    /** The timestamp of the note's start (onset) in milliseconds. */
-    startTime: number;
-    /** The timestamp of the note's end (offset) in milliseconds. */
-    endTime: number;
-    /** The expected start time for rhythm analysis. */
-    expectedStartTime?: number;
-    /** The expected duration for rhythm analysis. */
-    expectedDuration?: number;
-    /** An array of all `TechniqueFrame`s that comprise the note. */
-    frames: TechniqueFrame[];
+  /** The zero-based index of the note within the exercise. */
+  noteIndex: number
+  /** The target pitch for the note (e.g., "A#4"). */
+  targetPitch: string
+  /** The timestamp of the note's start (onset) in milliseconds. */
+  startTime: number
+  /** The timestamp of the note's end (offset) in milliseconds. */
+  endTime: number
+  /** The expected start time for rhythm analysis. */
+  expectedStartTime?: number
+  /** The expected duration for rhythm analysis. */
+  expectedDuration?: number
+  /** An array of all `TechniqueFrame`s that comprise the note. */
+  frames: TechniqueFrame[]
 }
 /**
  * Represents a piece of human-readable pedagogical feedback.
  */
 export interface Observation {
-    /** The category of the observation. */
-    type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition';
-    /**
-     * Severity level of the technical issue.
-     *
-     * @remarks
-     * - 1: Minor issue (cosmetic, does not affect musicality)
-     * - 2: Moderate issue (noticeable, affects quality)
-     * - 3: Critical issue (fundamental flaw, requires immediate attention)
-     */
-    severity: 1 | 2 | 3;
-    /**
-     * Confidence in this observation.
-     *
-     * @remarks
-     * Range: 0.0 to 1.0.
-     * - \< 0.5: Low confidence (speculative, may be noise)
-     * - 0.5-0.8: Moderate confidence (likely accurate)
-     * - \> 0.8: High confidence (very reliable)
-     */
-    confidence: number;
-    /** User-facing description of the issue */
-    message: string;
-    /** Actionable pedagogical advice */
-    tip: string;
-    /** Optional raw data supporting this observation (for debugging) */
-    evidence?: unknown;
+  /** The category of the observation. */
+  type: 'intonation' | 'vibrato' | 'rhythm' | 'attack' | 'stability' | 'resonance' | 'transition'
+  /**
+   * Severity level of the technical issue.
+   *
+   * @remarks
+   * - 1: Minor issue (cosmetic, does not affect musicality)
+   * - 2: Moderate issue (noticeable, affects quality)
+   * - 3: Critical issue (fundamental flaw, requires immediate attention)
+   */
+  severity: 1 | 2 | 3
+  /**
+   * Confidence in this observation.
+   *
+   * @remarks
+   * Range: 0.0 to 1.0.
+   * - \< 0.5: Low confidence (speculative, may be noise)
+   * - 0.5-0.8: Moderate confidence (likely accurate)
+   * - \> 0.8: High confidence (very reliable)
+   */
+  confidence: number
+  /** User-facing description of the issue */
+  message: string
+  /** Actionable pedagogical advice */
+  tip: string
+  /** Optional raw data supporting this observation (for debugging) */
+  evidence?: unknown
 }
 
 // ===== types-docs/lib/ui-utils.d.ts =====
@@ -4678,11 +5512,11 @@ export interface Observation {
  * clamp(15, 0, 10);  // 10
  * clamp(5, 10, 0);   // ❌ Throws AppError
  */
-export declare function clamp(value: number, min: number, max: number): number;
+export declare function clamp(value: number, min: number, max: number): number
 
 // ===== types-docs/lib/ui-utils.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/lib/user-preferences.d.ts =====
 
@@ -4690,21 +5524,24 @@ export {};
  * Sistema de niveles de feedback que adapta la complejidad visual
  * según la experiencia del usuario
  */
-export type FeedbackLevel = 'beginner' | 'intermediate' | 'advanced';
+export type FeedbackLevel = 'beginner' | 'intermediate' | 'advanced'
 export interface UserPreferences {
-    feedbackLevel: FeedbackLevel;
-    showTechnicalDetails: boolean;
-    enableCelebrations: boolean;
-    enableHaptics: boolean;
-    soundFeedbackEnabled: boolean;
+  feedbackLevel: FeedbackLevel
+  showTechnicalDetails: boolean
+  enableCelebrations: boolean
+  enableHaptics: boolean
+  soundFeedbackEnabled: boolean
 }
-export declare const FEEDBACK_CONFIGS: Record<FeedbackLevel, {
-    showCents: boolean;
-    centsTolerance: number;
-    showConfidence: boolean;
-    visualStyle: 'emoji' | 'technical' | 'hybrid';
-    celebrationIntensity: 'subtle' | 'moderate' | 'enthusiastic';
-}>;
+export declare const FEEDBACK_CONFIGS: Record<
+  FeedbackLevel,
+  {
+    showCents: boolean
+    centsTolerance: number
+    showConfidence: boolean
+    visualStyle: 'emoji' | 'technical' | 'hybrid'
+    celebrationIntensity: 'subtle' | 'moderate' | 'enthusiastic'
+  }
+>
 
 // ===== types-docs/lib/utils.d.ts =====
 
@@ -4712,7 +5549,7 @@ export declare const FEEDBACK_CONFIGS: Record<FeedbackLevel, {
  * Utils
  * General purpose utility functions for the application.
  */
-import { type ClassValue } from 'clsx';
+import { type ClassValue } from 'clsx'
 /**
  * Merges multiple Tailwind CSS classes and resolves conflicts.
  *
@@ -4728,46 +5565,84 @@ import { type ClassValue } from 'clsx';
  * cn('px-2 py-1', isPrimary && 'bg-blue-500', className)
  * ```
  */
-export declare function cn(...inputs: ClassValue[]): string;
+export declare function cn(...inputs: ClassValue[]): string
 
 // ===== types-docs/playwright.config.d.ts =====
 
-declare const _default: import("@playwright/test").PlaywrightTestConfig<{}, {}>;
-export default _default;
+declare const _default: import('@playwright/test').PlaywrightTestConfig<{}, {}>
+export default _default
 
 // ===== types-docs/stores/achievements.store.d.ts =====
 
-import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions';
+import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 export interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    unlockedAtMs: number;
+  id: string
+  name: string
+  description: string
+  icon: string
+  unlockedAtMs: number
 }
 interface AchievementsState {
-    schemaVersion: 1;
-    unlocked: Achievement[];
-    pending: Achievement[];
+  schemaVersion: 1
+  unlocked: Achievement[]
+  pending: Achievement[]
 }
 interface AchievementsActions {
-    check: (stats: AchievementCheckStats) => Achievement[];
-    markShown: (id: string) => void;
+  check: (stats: AchievementCheckStats) => Achievement[]
+  markShown: (id: string) => void
 }
-export declare const useAchievementsStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<AchievementsState & AchievementsActions>, "setState" | "persist"> & {
-    setState(partial: (AchievementsState & AchievementsActions) | Partial<AchievementsState & AchievementsActions> | ((state: AchievementsState & AchievementsActions) => (AchievementsState & AchievementsActions) | Partial<AchievementsState & AchievementsActions>), replace?: false | undefined): unknown;
-    setState(state: (AchievementsState & AchievementsActions) | ((state: AchievementsState & AchievementsActions) => AchievementsState & AchievementsActions), replace: true): unknown;
+export declare const useAchievementsStore: import('zustand').UseBoundStore<
+  Omit<
+    import('zustand').StoreApi<AchievementsState & AchievementsActions>,
+    'setState' | 'persist'
+  > & {
+    setState(
+      partial:
+        | (AchievementsState & AchievementsActions)
+        | Partial<AchievementsState & AchievementsActions>
+        | ((
+            state: AchievementsState & AchievementsActions,
+          ) =>
+            | (AchievementsState & AchievementsActions)
+            | Partial<AchievementsState & AchievementsActions>),
+      replace?: false | undefined,
+    ): unknown
+    setState(
+      state:
+        | (AchievementsState & AchievementsActions)
+        | ((
+            state: AchievementsState & AchievementsActions,
+          ) => AchievementsState & AchievementsActions),
+      replace: true,
+    ): unknown
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<AchievementsState & AchievementsActions, AchievementsState & AchievementsActions, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: AchievementsState & AchievementsActions) => void) => () => void;
-        onFinishHydration: (fn: (state: AchievementsState & AchievementsActions) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<AchievementsState & AchievementsActions, AchievementsState & AchievementsActions, unknown>>;
-    };
-}>;
-export {};
+      setOptions: (
+        options: Partial<
+          import('zustand/middleware').PersistOptions<
+            AchievementsState & AchievementsActions,
+            AchievementsState & AchievementsActions,
+            unknown
+          >
+        >,
+      ) => void
+      clearStorage: () => void
+      rehydrate: () => Promise<void> | void
+      hasHydrated: () => boolean
+      onHydrate: (fn: (state: AchievementsState & AchievementsActions) => void) => () => void
+      onFinishHydration: (
+        fn: (state: AchievementsState & AchievementsActions) => void,
+      ) => () => void
+      getOptions: () => Partial<
+        import('zustand/middleware').PersistOptions<
+          AchievementsState & AchievementsActions,
+          AchievementsState & AchievementsActions,
+          unknown
+        >
+      >
+    }
+  }
+>
+export {}
 
 // ===== types-docs/stores/analytics-facade.d.ts =====
 
@@ -4776,165 +5651,178 @@ export {};
  * @deprecated Usar stores individuales directamente
  */
 export declare const useAnalyticsStore: (() => {
-    currentSession: import("./session.store").PracticeSession | null;
-    sessions: import("./session.store").PracticeSession[];
-    progress: {
-        achievements: import("./achievements.store").Achievement[];
-        schemaVersion: 1;
-        totalPracticeSessions: number;
-        totalPracticeTime: number;
-        exercisesCompleted: string[];
-        currentStreak: number;
-        longestStreak: number;
-        intonationSkill: number;
-        rhythmSkill: number;
-        overallSkill: number;
-        exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
-        eventBuffer: import("./progress.store").ProgressEvent[];
-        snapshots: import("./progress.store").ProgressSnapshot[];
-        eventCounter: number;
-        addSession: (session: import("./session.store").PracticeSession) => void;
-        updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
-    };
-    currentPerfectStreak: number;
-    startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
-    endSession: () => import("./session.store").PracticeSession | null;
-    recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
-    recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: any) => void;
-    checkAndUnlockAchievements: () => import("./achievements.store").Achievement[];
-    getSessionHistory: (days?: number) => import("./session.store").PracticeSession[];
-    getExerciseStats: (exerciseId: string) => import("./progress.store").ExerciseStats;
-    getTodayStats: () => {
-        duration: number;
-        accuracy: number;
-        sessionsCount: number;
-    };
-    getStreakInfo: () => {
-        current: number;
-        longest: number;
-    };
+  currentSession: import('./session.store').PracticeSession | null
+  sessions: import('./session.store').PracticeSession[]
+  progress: {
+    achievements: import('./achievements.store').Achievement[]
+    schemaVersion: 1
+    totalPracticeSessions: number
+    totalPracticeTime: number
+    exercisesCompleted: string[]
+    currentStreak: number
+    longestStreak: number
+    intonationSkill: number
+    rhythmSkill: number
+    overallSkill: number
+    exerciseStats: Record<string, import('./progress.store').ExerciseStats>
+    eventBuffer: import('./progress.store').ProgressEvent[]
+    snapshots: import('./progress.store').ProgressSnapshot[]
+    eventCounter: number
+    addSession: (session: import('./session.store').PracticeSession) => void
+    updateSkills: (sessions: import('./session.store').PracticeSession[]) => void
+  }
+  currentPerfectStreak: number
+  startSession: (exerciseId: string, exerciseName: string, mode?: 'tuner' | 'practice') => void
+  endSession: () => import('./session.store').PracticeSession | null
+  recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
+  recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: any) => void
+  checkAndUnlockAchievements: () => import('./achievements.store').Achievement[]
+  getSessionHistory: (days?: number) => import('./session.store').PracticeSession[]
+  getExerciseStats: (exerciseId: string) => import('./progress.store').ExerciseStats
+  getTodayStats: () => {
+    duration: number
+    accuracy: number
+    sessionsCount: number
+  }
+  getStreakInfo: () => {
+    current: number
+    longest: number
+  }
 }) & {
-    getState: () => {
-        currentSession: import("./session.store").PracticeSession | null;
-        sessions: import("./session.store").PracticeSession[];
-        progress: {
-            achievements: import("./achievements.store").Achievement[];
-            schemaVersion: 1;
-            totalPracticeSessions: number;
-            totalPracticeTime: number;
-            exercisesCompleted: string[];
-            currentStreak: number;
-            longestStreak: number;
-            intonationSkill: number;
-            rhythmSkill: number;
-            overallSkill: number;
-            exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
-            eventBuffer: import("./progress.store").ProgressEvent[];
-            snapshots: import("./progress.store").ProgressSnapshot[];
-            eventCounter: number;
-            addSession: (session: import("./session.store").PracticeSession) => void;
-            updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
-        };
-        currentPerfectStreak: number;
-        startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
-        recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
-        recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: import("../lib/technique-types").NoteTechnique) => void;
-        endSession: () => import("./session.store").PracticeSession | null;
-        checkAndUnlockAchievements: () => never[];
-    };
-    setState: (partial: any) => void;
-    persist: {
-        getOptions: () => {
-            migrate: (persisted: any, version: number) => any;
-        };
-    };
-};
+  getState: () => {
+    currentSession: import('./session.store').PracticeSession | null
+    sessions: import('./session.store').PracticeSession[]
+    progress: {
+      achievements: import('./achievements.store').Achievement[]
+      schemaVersion: 1
+      totalPracticeSessions: number
+      totalPracticeTime: number
+      exercisesCompleted: string[]
+      currentStreak: number
+      longestStreak: number
+      intonationSkill: number
+      rhythmSkill: number
+      overallSkill: number
+      exerciseStats: Record<string, import('./progress.store').ExerciseStats>
+      eventBuffer: import('./progress.store').ProgressEvent[]
+      snapshots: import('./progress.store').ProgressSnapshot[]
+      eventCounter: number
+      addSession: (session: import('./session.store').PracticeSession) => void
+      updateSkills: (sessions: import('./session.store').PracticeSession[]) => void
+    }
+    currentPerfectStreak: number
+    startSession: (exerciseId: string, exerciseName: string, mode?: 'tuner' | 'practice') => void
+    recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
+    recordNoteCompletion: (
+      noteIndex: number,
+      timeMs: number,
+      technique?: import('../lib/technique-types').NoteTechnique,
+    ) => void
+    endSession: () => import('./session.store').PracticeSession | null
+    checkAndUnlockAchievements: () => never[]
+  }
+  setState: (partial: any) => void
+  persist: {
+    getOptions: () => {
+      migrate: (persisted: any, version: number) => any
+    }
+  }
+}
 
 // ===== types-docs/stores/analytics-store.d.ts =====
 
-import { NoteTechnique } from '../lib/technique-types';
-import type { Exercise } from '@/lib/domain/musical-types';
+import { NoteTechnique } from '../lib/technique-types'
+import type { Exercise } from '@/lib/domain/musical-types'
 /** Represents a single, completed practice session. */
 export interface PracticeSession {
-    id: string;
-    startTimeMs: number;
-    endTimeMs: number;
-    durationMs: number;
-    exerciseId: string;
-    exerciseName: string;
-    mode: 'tuner' | 'practice';
-    notesAttempted: number;
-    notesCompleted: number;
-    accuracy: number;
-    averageCents: number;
-    noteResults: NoteResult[];
+  id: string
+  startTimeMs: number
+  endTimeMs: number
+  durationMs: number
+  exerciseId: string
+  exerciseName: string
+  mode: 'tuner' | 'practice'
+  notesAttempted: number
+  notesCompleted: number
+  accuracy: number
+  averageCents: number
+  noteResults: NoteResult[]
 }
 /** Contains detailed metrics for a single note within a practice session. */
 interface NoteResult {
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    timeToCompleteMs: number;
-    averageCents: number;
-    wasInTune: boolean;
-    technique?: NoteTechnique;
+  noteIndex: number
+  targetPitch: string
+  attempts: number
+  timeToCompleteMs: number
+  averageCents: number
+  wasInTune: boolean
+  technique?: NoteTechnique
 }
 /** A comprehensive model of the user's long-term progress and stats. */
 interface UserProgress {
-    userId: string;
-    totalPracticeSessions: number;
-    totalPracticeTime: number;
-    exercisesCompleted: Exercise['id'][];
-    currentStreak: number;
-    longestStreak: number;
-    intonationSkill: number;
-    rhythmSkill: number;
-    overallSkill: number;
-    achievements: Achievement[];
-    exerciseStats: Record<string, ExerciseStats>;
+  userId: string
+  totalPracticeSessions: number
+  totalPracticeTime: number
+  exercisesCompleted: Exercise['id'][]
+  currentStreak: number
+  longestStreak: number
+  intonationSkill: number
+  rhythmSkill: number
+  overallSkill: number
+  achievements: Achievement[]
+  exerciseStats: Record<string, ExerciseStats>
 }
 /** Stores lifetime performance statistics for a specific exercise. */
 interface ExerciseStats {
-    exerciseId: string;
-    timesCompleted: number;
-    bestAccuracy: number;
-    averageAccuracy: number;
-    fastestCompletionMs: number;
-    lastPracticedMs: number;
+  exerciseId: string
+  timesCompleted: number
+  bestAccuracy: number
+  averageAccuracy: number
+  fastestCompletionMs: number
+  lastPracticedMs: number
 }
 /** Represents a single unlockable achievement. */
 export interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    unlockedAtMs: number;
+  id: string
+  name: string
+  description: string
+  icon: string
+  unlockedAtMs: number
 }
 /**
  * Defines the state and actions for the analytics Zustand store.
  */
 export interface AnalyticsStore {
-    currentSession: PracticeSession | null;
-    sessions: PracticeSession[];
-    progress: UserProgress;
-    currentPerfectStreak: number;
-    onAchievementUnlocked?: (achievement: Achievement) => void;
-    startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void;
-    endSession: () => void;
-    recordNoteAttempt: (noteIndex: number, targetPitch: string, cents: number, wasInTune: boolean) => void;
-    recordNoteCompletion: (noteIndex: number, timeToCompleteMs: number, technique?: NoteTechnique) => void;
-    checkAndUnlockAchievements: () => void;
-    getSessionHistory: (days?: number) => PracticeSession[];
-    getExerciseStats: (exerciseId: string) => ExerciseStats | null;
-    getTodayStats: () => {
-        duration: number;
-        accuracy: number;
-        sessionsCount: number;
-    };
-    getStreakInfo: () => {
-        current: number;
-        longest: number;
-    };
+  currentSession: PracticeSession | null
+  sessions: PracticeSession[]
+  progress: UserProgress
+  currentPerfectStreak: number
+  onAchievementUnlocked?: (achievement: Achievement) => void
+  startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
+  endSession: () => void
+  recordNoteAttempt: (
+    noteIndex: number,
+    targetPitch: string,
+    cents: number,
+    wasInTune: boolean,
+  ) => void
+  recordNoteCompletion: (
+    noteIndex: number,
+    timeToCompleteMs: number,
+    technique?: NoteTechnique,
+  ) => void
+  checkAndUnlockAchievements: () => void
+  getSessionHistory: (days?: number) => PracticeSession[]
+  getExerciseStats: (exerciseId: string) => ExerciseStats | null
+  getTodayStats: () => {
+    duration: number
+    accuracy: number
+    sessionsCount: number
+  }
+  getStreakInfo: () => {
+    current: number
+    longest: number
+  }
 }
 /**
  * Zustand persistence middleware with typed storage.
@@ -4946,24 +5834,49 @@ export interface AnalyticsStore {
  * 2. No functions, Dates, or class instances in state
  * 3. Use partialize option to exclude non-serializable fields
  */
-export declare const useAnalyticsStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<AnalyticsStore>, "setState" | "persist"> & {
-    setState(partial: AnalyticsStore | Partial<AnalyticsStore> | ((state: AnalyticsStore) => AnalyticsStore | Partial<AnalyticsStore>), replace?: false | undefined): unknown;
-    setState(state: AnalyticsStore | ((state: AnalyticsStore) => AnalyticsStore), replace: true): unknown;
+export declare const useAnalyticsStore: import('zustand').UseBoundStore<
+  Omit<import('zustand').StoreApi<AnalyticsStore>, 'setState' | 'persist'> & {
+    setState(
+      partial:
+        | AnalyticsStore
+        | Partial<AnalyticsStore>
+        | ((state: AnalyticsStore) => AnalyticsStore | Partial<AnalyticsStore>),
+      replace?: false | undefined,
+    ): unknown
+    setState(
+      state: AnalyticsStore | ((state: AnalyticsStore) => AnalyticsStore),
+      replace: true,
+    ): unknown
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "progress" | "sessions">, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: AnalyticsStore) => void) => () => void;
-        onFinishHydration: (fn: (state: AnalyticsStore) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "progress" | "sessions">, unknown>>;
-    };
-}>;
-export {};
+      setOptions: (
+        options: Partial<
+          import('zustand/middleware').PersistOptions<
+            AnalyticsStore,
+            Pick<AnalyticsStore, 'progress' | 'sessions'>,
+            unknown
+          >
+        >,
+      ) => void
+      clearStorage: () => void
+      rehydrate: () => Promise<void> | void
+      hasHydrated: () => boolean
+      onHydrate: (fn: (state: AnalyticsStore) => void) => () => void
+      onFinishHydration: (fn: (state: AnalyticsStore) => void) => () => void
+      getOptions: () => Partial<
+        import('zustand/middleware').PersistOptions<
+          AnalyticsStore,
+          Pick<AnalyticsStore, 'progress' | 'sessions'>,
+          unknown
+        >
+      >
+    }
+  }
+>
+export {}
 
 // ===== types-docs/stores/analytics-store.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/stores/practice-store.d.ts =====
 
@@ -4981,194 +5894,282 @@ export {};
  * - Resource Lifecycle: Resource-first cleanup in stop() to prevent leaks.
  * - Reactivity: analyser and detector are stored in state for UI consistency.
  */
-import { AppError } from '@/lib/errors/app-error';
-import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port';
-import { PracticeStoreState } from '@/lib/practice/practice-states';
-import type { Exercise } from '@/lib/exercises/types';
-import { Observation } from '@/lib/technique-types';
-import { PracticeState, PracticeEvent } from '@/lib/practice-core';
+import { AppError } from '@/lib/errors/app-error'
+import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
+import { PracticeStoreState } from '@/lib/practice/practice-states'
+import type { Exercise } from '@/lib/exercises/types'
+import { Observation } from '@/lib/technique-types'
+import { PracticeState, PracticeEvent } from '@/lib/practice-core'
 interface PracticeStore {
-    state: PracticeStoreState;
-    practiceState: PracticeState | null;
-    error: AppError | null;
-    liveObservations: Observation[];
-    autoStartEnabled: boolean;
-    analyser: AnalyserNode | null;
-    audioLoop: AudioLoopPort | null;
-    detector: PitchDetectionPort | null;
-    isStarting: boolean;
-    sessionId: number;
-    analyser: AnalyserNode | null;
-    detector: PitchDetectionPort | null;
-    loadExercise: (exercise: Exercise) => Promise<void>;
-    setAutoStart: (enabled: boolean) => void;
-    setNoteIndex: (index: number) => void;
-    initializeAudio: () => Promise<void>;
-    start: () => Promise<void>;
-    stop: () => Promise<void>;
-    reset: () => Promise<void>;
-    consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>;
+  state: PracticeStoreState
+  practiceState: PracticeState | null
+  error: AppError | null
+  liveObservations: Observation[]
+  autoStartEnabled: boolean
+  analyser: AnalyserNode | null
+  audioLoop: AudioLoopPort | null
+  detector: PitchDetectionPort | null
+  isStarting: boolean
+  sessionId: number
+  analyser: AnalyserNode | null
+  detector: PitchDetectionPort | null
+  loadExercise: (exercise: Exercise) => Promise<void>
+  setAutoStart: (enabled: boolean) => void
+  setNoteIndex: (index: number) => void
+  initializeAudio: () => Promise<void>
+  start: () => Promise<void>
+  stop: () => Promise<void>
+  reset: () => Promise<void>
+  consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }
-export declare const usePracticeStore: import("zustand").UseBoundStore<import("zustand").StoreApi<PracticeStore>>;
-export {};
+export declare const usePracticeStore: import('zustand').UseBoundStore<
+  import('zustand').StoreApi<PracticeStore>
+>
+export {}
 
 // ===== types-docs/stores/preferences-store.d.ts =====
 
-import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences';
+import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences'
 interface PreferencesStore extends UserPreferences {
-    schemaVersion: 1;
-    setFeedbackLevel: (level: FeedbackLevel) => void;
-    toggleTechnicalDetails: () => void;
-    toggleCelebrations: () => void;
-    toggleHaptics: () => void;
-    toggleSoundFeedback: () => void;
-    resetToDefaults: () => void;
+  schemaVersion: 1
+  setFeedbackLevel: (level: FeedbackLevel) => void
+  toggleTechnicalDetails: () => void
+  toggleCelebrations: () => void
+  toggleHaptics: () => void
+  toggleSoundFeedback: () => void
+  resetToDefaults: () => void
 }
-export declare const usePreferencesStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<PreferencesStore>, "setState" | "persist"> & {
-    setState(partial: PreferencesStore | Partial<PreferencesStore> | ((state: PreferencesStore) => PreferencesStore | Partial<PreferencesStore>), replace?: false | undefined): unknown;
-    setState(state: PreferencesStore | ((state: PreferencesStore) => PreferencesStore), replace: true): unknown;
+export declare const usePreferencesStore: import('zustand').UseBoundStore<
+  Omit<import('zustand').StoreApi<PreferencesStore>, 'setState' | 'persist'> & {
+    setState(
+      partial:
+        | PreferencesStore
+        | Partial<PreferencesStore>
+        | ((state: PreferencesStore) => PreferencesStore | Partial<PreferencesStore>),
+      replace?: false | undefined,
+    ): unknown
+    setState(
+      state: PreferencesStore | ((state: PreferencesStore) => PreferencesStore),
+      replace: true,
+    ): unknown
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<PreferencesStore, PreferencesStore, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: PreferencesStore) => void) => () => void;
-        onFinishHydration: (fn: (state: PreferencesStore) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<PreferencesStore, PreferencesStore, unknown>>;
-    };
-}>;
-export {};
+      setOptions: (
+        options: Partial<
+          import('zustand/middleware').PersistOptions<PreferencesStore, PreferencesStore, unknown>
+        >,
+      ) => void
+      clearStorage: () => void
+      rehydrate: () => Promise<void> | void
+      hasHydrated: () => boolean
+      onHydrate: (fn: (state: PreferencesStore) => void) => () => void
+      onFinishHydration: (fn: (state: PreferencesStore) => void) => () => void
+      getOptions: () => Partial<
+        import('zustand/middleware').PersistOptions<PreferencesStore, PreferencesStore, unknown>
+      >
+    }
+  }
+>
+export {}
 
 // ===== types-docs/stores/progress.store.d.ts =====
 
-import { PracticeSession } from './session.store';
+import { PracticeSession } from './session.store'
 export interface ProgressEvent {
-    ts: number;
-    exerciseId: string;
-    accuracy: number;
-    rhythmErrorMs: number;
+  ts: number
+  exerciseId: string
+  accuracy: number
+  rhythmErrorMs: number
 }
 export interface SkillAggregates {
-    intonation: number;
-    rhythm: number;
-    overall: number;
+  intonation: number
+  rhythm: number
+  overall: number
 }
 export interface ProgressSnapshot {
-    userId: string;
-    window: '7d' | '30d' | 'all';
-    aggregates: SkillAggregates;
-    lastSessionId: string;
+  userId: string
+  window: '7d' | '30d' | 'all'
+  aggregates: SkillAggregates
+  lastSessionId: string
 }
 export interface ExerciseStats {
-    exerciseId: string;
-    timesCompleted: number;
-    bestAccuracy: number;
-    averageAccuracy: number;
-    fastestCompletionMs: number;
-    lastPracticedMs: number;
+  exerciseId: string
+  timesCompleted: number
+  bestAccuracy: number
+  averageAccuracy: number
+  fastestCompletionMs: number
+  lastPracticedMs: number
 }
 export interface ProgressState {
-    schemaVersion: 1;
-    totalPracticeSessions: number;
-    totalPracticeTime: number;
-    exercisesCompleted: string[];
-    currentStreak: number;
-    longestStreak: number;
-    intonationSkill: number;
-    rhythmSkill: number;
-    overallSkill: number;
-    exerciseStats: Record<string, ExerciseStats>;
-    eventBuffer: ProgressEvent[];
-    snapshots: ProgressSnapshot[];
-    eventCounter: number;
+  schemaVersion: 1
+  totalPracticeSessions: number
+  totalPracticeTime: number
+  exercisesCompleted: string[]
+  currentStreak: number
+  longestStreak: number
+  intonationSkill: number
+  rhythmSkill: number
+  overallSkill: number
+  exerciseStats: Record<string, ExerciseStats>
+  eventBuffer: ProgressEvent[]
+  snapshots: ProgressSnapshot[]
+  eventCounter: number
 }
 interface ProgressActions {
-    addSession: (session: PracticeSession) => void;
-    updateSkills: (sessions: PracticeSession[]) => void;
+  addSession: (session: PracticeSession) => void
+  updateSkills: (sessions: PracticeSession[]) => void
 }
-export declare const useProgressStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<ProgressState & ProgressActions>, "setState" | "persist"> & {
-    setState(partial: (ProgressState & ProgressActions) | Partial<ProgressState & ProgressActions> | ((state: ProgressState & ProgressActions) => (ProgressState & ProgressActions) | Partial<ProgressState & ProgressActions>), replace?: false | undefined): unknown;
-    setState(state: (ProgressState & ProgressActions) | ((state: ProgressState & ProgressActions) => ProgressState & ProgressActions), replace: true): unknown;
+export declare const useProgressStore: import('zustand').UseBoundStore<
+  Omit<import('zustand').StoreApi<ProgressState & ProgressActions>, 'setState' | 'persist'> & {
+    setState(
+      partial:
+        | (ProgressState & ProgressActions)
+        | Partial<ProgressState & ProgressActions>
+        | ((
+            state: ProgressState & ProgressActions,
+          ) => (ProgressState & ProgressActions) | Partial<ProgressState & ProgressActions>),
+      replace?: false | undefined,
+    ): unknown
+    setState(
+      state:
+        | (ProgressState & ProgressActions)
+        | ((state: ProgressState & ProgressActions) => ProgressState & ProgressActions),
+      replace: true,
+    ): unknown
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<ProgressState & ProgressActions, ProgressState & ProgressActions, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: ProgressState & ProgressActions) => void) => () => void;
-        onFinishHydration: (fn: (state: ProgressState & ProgressActions) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<ProgressState & ProgressActions, ProgressState & ProgressActions, unknown>>;
-    };
-}>;
-export {};
+      setOptions: (
+        options: Partial<
+          import('zustand/middleware').PersistOptions<
+            ProgressState & ProgressActions,
+            ProgressState & ProgressActions,
+            unknown
+          >
+        >,
+      ) => void
+      clearStorage: () => void
+      rehydrate: () => Promise<void> | void
+      hasHydrated: () => boolean
+      onHydrate: (fn: (state: ProgressState & ProgressActions) => void) => () => void
+      onFinishHydration: (fn: (state: ProgressState & ProgressActions) => void) => () => void
+      getOptions: () => Partial<
+        import('zustand/middleware').PersistOptions<
+          ProgressState & ProgressActions,
+          ProgressState & ProgressActions,
+          unknown
+        >
+      >
+    }
+  }
+>
+export {}
 
 // ===== types-docs/stores/progress.store.test.d.ts =====
 
-export {};
+export {}
 
 // ===== types-docs/stores/session-history.store.d.ts =====
 
-import { PracticeSession } from './session.store';
+import { PracticeSession } from './session.store'
 interface SessionHistoryState {
-    sessions: PracticeSession[];
+  sessions: PracticeSession[]
 }
 interface SessionHistoryActions {
-    addSession: (session: PracticeSession) => void;
-    getHistory: (days?: number) => PracticeSession[];
+  addSession: (session: PracticeSession) => void
+  getHistory: (days?: number) => PracticeSession[]
 }
-export declare const useSessionHistoryStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<SessionHistoryState & SessionHistoryActions>, "setState" | "persist"> & {
-    setState(partial: (SessionHistoryState & SessionHistoryActions) | Partial<SessionHistoryState & SessionHistoryActions> | ((state: SessionHistoryState & SessionHistoryActions) => (SessionHistoryState & SessionHistoryActions) | Partial<SessionHistoryState & SessionHistoryActions>), replace?: false | undefined): unknown;
-    setState(state: (SessionHistoryState & SessionHistoryActions) | ((state: SessionHistoryState & SessionHistoryActions) => SessionHistoryState & SessionHistoryActions), replace: true): unknown;
+export declare const useSessionHistoryStore: import('zustand').UseBoundStore<
+  Omit<
+    import('zustand').StoreApi<SessionHistoryState & SessionHistoryActions>,
+    'setState' | 'persist'
+  > & {
+    setState(
+      partial:
+        | (SessionHistoryState & SessionHistoryActions)
+        | Partial<SessionHistoryState & SessionHistoryActions>
+        | ((
+            state: SessionHistoryState & SessionHistoryActions,
+          ) =>
+            | (SessionHistoryState & SessionHistoryActions)
+            | Partial<SessionHistoryState & SessionHistoryActions>),
+      replace?: false | undefined,
+    ): unknown
+    setState(
+      state:
+        | (SessionHistoryState & SessionHistoryActions)
+        | ((
+            state: SessionHistoryState & SessionHistoryActions,
+          ) => SessionHistoryState & SessionHistoryActions),
+      replace: true,
+    ): unknown
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<SessionHistoryState & SessionHistoryActions, SessionHistoryState & SessionHistoryActions, unknown>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => Promise<void> | void;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: SessionHistoryState & SessionHistoryActions) => void) => () => void;
-        onFinishHydration: (fn: (state: SessionHistoryState & SessionHistoryActions) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<SessionHistoryState & SessionHistoryActions, SessionHistoryState & SessionHistoryActions, unknown>>;
-    };
-}>;
-export {};
+      setOptions: (
+        options: Partial<
+          import('zustand/middleware').PersistOptions<
+            SessionHistoryState & SessionHistoryActions,
+            SessionHistoryState & SessionHistoryActions,
+            unknown
+          >
+        >,
+      ) => void
+      clearStorage: () => void
+      rehydrate: () => Promise<void> | void
+      hasHydrated: () => boolean
+      onHydrate: (fn: (state: SessionHistoryState & SessionHistoryActions) => void) => () => void
+      onFinishHydration: (
+        fn: (state: SessionHistoryState & SessionHistoryActions) => void,
+      ) => () => void
+      getOptions: () => Partial<
+        import('zustand/middleware').PersistOptions<
+          SessionHistoryState & SessionHistoryActions,
+          SessionHistoryState & SessionHistoryActions,
+          unknown
+        >
+      >
+    }
+  }
+>
+export {}
 
 // ===== types-docs/stores/session.store.d.ts =====
 
-import { NoteTechnique } from '../lib/technique-types';
+import { NoteTechnique } from '../lib/technique-types'
 export interface NoteResult {
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    timeToCompleteMs?: number;
-    averageCents: number;
-    wasInTune: boolean;
-    technique?: NoteTechnique;
+  noteIndex: number
+  targetPitch: string
+  attempts: number
+  timeToCompleteMs?: number
+  averageCents: number
+  wasInTune: boolean
+  technique?: NoteTechnique
 }
 export interface PracticeSession {
-    id: string;
-    startTimeMs: number;
-    endTimeMs: number;
-    durationMs: number;
-    exerciseId: string;
-    exerciseName: string;
-    mode: 'tuner' | 'practice';
-    noteResults: NoteResult[];
-    notesAttempted: number;
-    notesCompleted: number;
-    accuracy: number;
-    averageCents: number;
+  id: string
+  startTimeMs: number
+  endTimeMs: number
+  durationMs: number
+  exerciseId: string
+  exerciseName: string
+  mode: 'tuner' | 'practice'
+  noteResults: NoteResult[]
+  notesAttempted: number
+  notesCompleted: number
+  accuracy: number
+  averageCents: number
 }
 interface SessionState {
-    current: PracticeSession | null;
-    isActive: boolean;
-    perfectNoteStreak: number;
+  current: PracticeSession | null
+  isActive: boolean
+  perfectNoteStreak: number
 }
 interface SessionActions {
-    start: (exerciseId: string, exerciseName: string, mode?: 'tuner' | 'practice') => void;
-    end: () => PracticeSession | null;
-    recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
-    recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
+  start: (exerciseId: string, exerciseName: string, mode?: 'tuner' | 'practice') => void
+  end: () => PracticeSession | null
+  recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
+  recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void
 }
-export declare const useSessionStore: import("zustand").UseBoundStore<import("zustand").StoreApi<SessionState & SessionActions>>;
-export {};
+export declare const useSessionStore: import('zustand').UseBoundStore<
+  import('zustand').StoreApi<SessionState & SessionActions>
+>
+export {}
 
 // ===== types-docs/stores/tuner-store.d.ts =====
 
@@ -5179,17 +6180,19 @@ export {};
  * It manages the audio pipeline for real-time pitch detection, microphone permissions,
  * and device selection.
  */
-import type { TunerStore } from '@/lib/domain/musical-types';
+import type { TunerStore } from '@/lib/domain/musical-types'
 /**
  * Hook for accessing the tuner store.
  */
-export declare const useTunerStore: import("zustand").UseBoundStore<import("zustand").StoreApi<TunerStore>>;
+export declare const useTunerStore: import('zustand').UseBoundStore<
+  import('zustand').StoreApi<TunerStore>
+>
 
 // ===== types-docs/vitest.config.d.ts =====
 
-declare const _default: import("vite").UserConfig;
-export default _default;
+declare const _default: import('vite').UserConfig
+export default _default
 
 // ===== types-docs/vitest.setup.d.ts =====
 
-export {};
+export {}

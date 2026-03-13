@@ -5,6 +5,7 @@ This project uses a centralized feature flag system to manage experimental featu
 ## 🛠 How it Works
 
 The system is powered by:
+
 - **`lib/feature-flags.ts`**: The core logic, including `FeatureFlagsManager` and React hooks.
 - **Environment Variables**: Flags are enabled/disabled via `.env` files.
 - **`FEATURE_FLAGS_METADATA`**: Centralized definition of all available flags, their types, and descriptions.
@@ -24,8 +25,8 @@ The system is powered by:
         defaultValue: false,
         riskLevel: 'LOW',
         affectedFiles: ['components/analytics-dashboard.tsx'],
-        rollbackStrategy: 'Disable the heatmap visualization.'
-      }
+        rollbackStrategy: 'Disable the heatmap visualization.',
+      },
     }
     ```
 3.  **Add to `.env.example`**:
@@ -38,6 +39,7 @@ The system is powered by:
 ## 💻 Usage in Code
 
 ### React Components (Client-side)
+
 Use the `useFeatureFlag` hook:
 
 ```tsx
@@ -46,15 +48,12 @@ import { useFeatureFlag } from '@/lib/feature-flags'
 export function MyComponent() {
   const isEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
 
-  return (
-    <div>
-      {isEnabled ? <HeatmapView /> : <PlaceholderView />}
-    </div>
-  )
+  return <div>{isEnabled ? <HeatmapView /> : <PlaceholderView />}</div>
 }
 ```
 
 ### Server-side or General TypeScript
+
 Use the `featureFlags` singleton:
 
 ```typescript

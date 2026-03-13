@@ -22,7 +22,7 @@ interface AchievementToastProps {
 export function AchievementToast({
   achievement,
   onDismiss,
-  autoHideDuration = 5000
+  autoHideDuration = 5000,
 }: AchievementToastProps) {
   const [isVisible, setIsVisible] = useState(true)
   const { width, height } = useWindowSize()
@@ -41,12 +41,10 @@ export function AchievementToast({
     common: 'from-slate-600 to-slate-700',
     rare: 'from-blue-600 to-blue-700',
     epic: 'from-purple-600 to-purple-700',
-    legendary: 'from-amber-500 to-orange-600'
+    legendary: 'from-amber-500 to-orange-600',
   }
 
-  const gradient = definition
-    ? rarityColors[definition.rarity]
-    : rarityColors.common
+  const gradient = definition ? rarityColors[definition.rarity] : rarityColors.common
 
   return (
     <AnimatePresence>
@@ -54,7 +52,7 @@ export function AchievementToast({
         <>
           {/* Confetti effect for special achievements */}
           {definition?.reward?.confetti && (
-            <div className="fixed inset-0 z-[100] pointer-events-none">
+            <div className="pointer-events-none fixed inset-0 z-[100]">
               <Confetti
                 width={width}
                 height={height}
@@ -71,43 +69,39 @@ export function AchievementToast({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="fixed bottom-6 right-6 z-[110] max-w-sm"
+            className="fixed right-6 bottom-6 z-[110] max-w-sm"
           >
-            <div className={`
-              bg-gradient-to-r ${gradient}
-              rounded-lg shadow-2xl overflow-hidden
-              border-2 border-white/20
-            `}>
+            <div
+              className={`bg-gradient-to-r ${gradient} overflow-hidden rounded-lg border-2 border-white/20 shadow-2xl`}
+            >
               <div className="flex items-start gap-4 p-4 text-white">
                 {/* Icon */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.2, type: 'spring' }}
-                  className="text-5xl flex-shrink-0"
+                  className="flex-shrink-0 text-5xl"
                 >
                   {achievement.icon}
                 </motion.div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider mb-1">
+                    <p className="mb-1 text-[10px] font-semibold tracking-wider text-white/80 uppercase">
                       Achievement Unlocked!
                     </p>
-                    <h3 className="text-lg font-bold text-white mb-1 leading-tight">
+                    <h3 className="mb-1 text-lg leading-tight font-bold text-white">
                       {achievement.name}
                     </h3>
-                    <p className="text-sm text-white/90 leading-snug">
-                      {achievement.description}
-                    </p>
+                    <p className="text-sm leading-snug text-white/90">{achievement.description}</p>
 
                     {definition?.reward?.message && (
-                      <p className="text-xs text-white/70 mt-2 italic">
+                      <p className="mt-2 text-xs text-white/70 italic">
                         "{definition.reward.message}"
                       </p>
                     )}
@@ -118,7 +112,7 @@ export function AchievementToast({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="flex-shrink-0 text-white/60 hover:text-white hover:bg-white/10"
+                  className="flex-shrink-0 text-white/60 hover:bg-white/10 hover:text-white"
                   onClick={() => setIsVisible(false)}
                 >
                   <X className="h-4 w-4" />
@@ -147,8 +141,8 @@ export function AchievementNotificationManager() {
     // Configurar el callback en el store
     useAnalyticsStore.setState({
       onAchievementUnlocked: (achievement) => {
-        setQueue(prev => [...prev, achievement])
-      }
+        setQueue((prev) => [...prev, achievement])
+      },
     })
 
     // Limpiar al desmontar
@@ -161,16 +155,11 @@ export function AchievementNotificationManager() {
   useEffect(() => {
     if (!current && queue.length > 0) {
       setCurrent(queue[0])
-      setQueue(prev => prev.slice(1))
+      setQueue((prev) => prev.slice(1))
     }
   }, [current, queue])
 
   if (!current) return null
 
-  return (
-    <AchievementToast
-      achievement={current}
-      onDismiss={() => setCurrent(null)}
-    />
-  )
+  return <AchievementToast achievement={current} onDismiss={() => setCurrent(null)} />
 }

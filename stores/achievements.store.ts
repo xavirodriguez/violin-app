@@ -114,13 +114,13 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
       pending: [],
 
       check: (stats) => {
-        const unlockedIds = get().unlocked.map(a => a.id)
+        const unlockedIds = get().unlocked.map((a) => a.id)
         const newAchievements = checkAchievements(stats, unlockedIds)
 
         if (newAchievements.length > 0) {
-          set(state => ({
+          set((state) => ({
             unlocked: [...state.unlocked, ...newAchievements],
-            pending: [...state.pending, ...newAchievements]
+            pending: [...state.pending, ...newAchievements],
           }))
         }
 
@@ -128,10 +128,10 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
       },
 
       markShown: (id) => {
-        set(state => ({
-          pending: state.pending.filter(a => a.id !== id)
+        set((state) => ({
+          pending: state.pending.filter((a) => a.id !== id),
         }))
-      }
+      },
     }),
     {
       name: 'violin-achievements',
@@ -139,9 +139,9 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
       migrate: createMigrator({
         1: (state: any) => ({
           ...state,
-          schemaVersion: 1
-        })
-      })
-    }
-  )
+          schemaVersion: 1,
+        }),
+      }),
+    },
+  ),
 )

@@ -13,7 +13,11 @@
           {
             "task_id": "PROM_TEL_001",
             "description": "Remove FEATURE_TELEMETRY_ACCURACY from lib/feature-flags.ts",
-            "acceptance_criteria": ["Metadata removed", "Key removed from getClientValue", "Type updated"],
+            "acceptance_criteria": [
+              "Metadata removed",
+              "Key removed from getClientValue",
+              "Type updated"
+            ],
             "effort_estimate_hours": 0.5,
             "priority": "critical",
             "dependencies": [],
@@ -40,7 +44,10 @@
           {
             "task_id": "STAB_ADAPT_001",
             "description": "Update FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY to STABLE and enable by default",
-            "acceptance_criteria": ["type changed to STABLE (using existing type or adding it)", "defaultValue changed to true"],
+            "acceptance_criteria": [
+              "type changed to STABLE (using existing type or adding it)",
+              "defaultValue changed to true"
+            ],
             "effort_estimate_hours": 0.5,
             "priority": "high",
             "dependencies": [],

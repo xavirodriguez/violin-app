@@ -12,32 +12,35 @@ export interface UserPreferences {
   soundFeedbackEnabled: boolean
 }
 
-export const FEEDBACK_CONFIGS: Record<FeedbackLevel, {
-  showCents: boolean
-  centsTolerance: number
-  showConfidence: boolean
-  visualStyle: 'emoji' | 'technical' | 'hybrid'
-  celebrationIntensity: 'subtle' | 'moderate' | 'enthusiastic'
-}> = {
+export const FEEDBACK_CONFIGS: Record<
+  FeedbackLevel,
+  {
+    showCents: boolean
+    centsTolerance: number
+    showConfidence: boolean
+    visualStyle: 'emoji' | 'technical' | 'hybrid'
+    celebrationIntensity: 'subtle' | 'moderate' | 'enthusiastic'
+  }
+> = {
   beginner: {
     showCents: false,
     centsTolerance: 25,
     showConfidence: false,
     visualStyle: 'emoji',
-    celebrationIntensity: 'enthusiastic'
+    celebrationIntensity: 'enthusiastic',
   },
   intermediate: {
     showCents: true,
     centsTolerance: 15,
     showConfidence: false,
     visualStyle: 'hybrid',
-    celebrationIntensity: 'moderate'
+    celebrationIntensity: 'moderate',
   },
   advanced: {
     showCents: true,
     centsTolerance: 10,
     showConfidence: true,
     visualStyle: 'technical',
-    celebrationIntensity: 'subtle'
-  }
+    celebrationIntensity: 'subtle',
+  },
 }

@@ -121,8 +121,5 @@ export interface AudioLoopPort {
    *
    * @throws Error - If the loop fails to start or encounters a fatal hardware error.
    */
-  start(
-    onFrame: (frame: Float32Array) => void,
-    signal: AbortSignal
-  ): Promise<void>
+  start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>
 }
