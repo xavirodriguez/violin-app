@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { PracticeSession } from './session.store'
-import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
 
 /**

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences'
 import { analytics } from '@/lib/analytics-tracker'
-import { validatedPersist } from '@/lib/persistence/validated-persist'
+import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { PreferencesStateSchema } from '@/lib/schemas/persistence.schema'
 
