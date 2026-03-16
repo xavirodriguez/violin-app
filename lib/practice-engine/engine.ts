@@ -4,6 +4,7 @@ import {
   createRawPitchStream,
   createPracticeEventPipeline,
   NoteStreamOptions,
+  RawPitchEvent,
 } from '../note-stream'
 import { Exercise } from '../exercises/types'
 import { EngineState, INITIAL_ENGINE_STATE } from './engine.state'

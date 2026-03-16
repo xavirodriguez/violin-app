@@ -92,30 +92,34 @@ describe('Practice Mode Integration Flow', () => {
     }
 
     // Simulate NOTE_DETECTED
-    handlePracticeEvent(
-      {
+    handlePracticeEvent({
+      event: {
         type: 'NOTE_DETECTED',
         payload: { pitch: 'A4', pitchHz: 440, cents: 10, timestamp: Date.now(), confidence: 0.9 },
       },
-      storeApi,
-      () => {},
-    )
+      store: storeApi,
+      onCompleted: () => {},
+    })
     expect(usePracticeStore.getState().practiceState?.detectionHistory.length).toBeGreaterThan(0)
 
     // Simulate HOLDING_NOTE
-    handlePracticeEvent({ type: 'HOLDING_NOTE', payload: { duration: 250 } }, storeApi, () => {})
+    handlePracticeEvent({
+      event: { type: 'HOLDING_NOTE', payload: { duration: 250 } },
+      store: storeApi,
+      onCompleted: () => {},
+    })
     expect(usePracticeStore.getState().practiceState?.status).toBe('validating')
     expect(usePracticeStore.getState().practiceState?.holdDuration).toBe(250)
 
     // Simulate NOTE_MATCHED
-    handlePracticeEvent(
-      {
+    handlePracticeEvent({
+      event: {
         type: 'NOTE_MATCHED',
         payload: { technique: {} as unknown as NoteTechnique, observations: [] },
       },
-      storeApi,
-      () => {},
-    )
+      store: storeApi,
+      onCompleted: () => {},
+    })
 
     // Status should be 'correct' (transiently) and index should increment
     expect(usePracticeStore.getState().practiceState?.status).toBe('correct')
@@ -123,14 +127,14 @@ describe('Practice Mode Integration Flow', () => {
     expect(usePracticeStore.getState().practiceState?.holdDuration).toBe(0)
 
     // Simulate next note detection (should reset status to listening)
-    handlePracticeEvent(
-      {
+    handlePracticeEvent({
+      event: {
         type: 'NOTE_DETECTED',
         payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
       },
-      storeApi,
-      () => {},
-    )
+      store: storeApi,
+      onCompleted: () => {},
+    })
     expect(usePracticeStore.getState().practiceState?.status).toBe('listening')
 
     // 4. PHASE 5: Completion
@@ -138,45 +142,45 @@ describe('Practice Mode Integration Flow', () => {
     const totalNotes = exercise.notes.length
     for (let i = 1; i < totalNotes - 1; i++) {
       // Reset status to listening by detecting a note
-      handlePracticeEvent(
-        {
+      handlePracticeEvent({
+        event: {
           type: 'NOTE_DETECTED',
           payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
         },
-        storeApi,
-        () => {},
-      )
+        store: storeApi,
+        onCompleted: () => {},
+      })
 
-      handlePracticeEvent(
-        {
+      handlePracticeEvent({
+        event: {
           type: 'NOTE_MATCHED',
           payload: { technique: {} as unknown as NoteTechnique, observations: [] },
         },
-        storeApi,
-        () => {},
-      )
+        store: storeApi,
+        onCompleted: () => {},
+      })
     }
 
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(totalNotes - 1)
 
     // Final note match
-    handlePracticeEvent(
-      {
+    handlePracticeEvent({
+      event: {
         type: 'NOTE_DETECTED',
         payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
       },
-      storeApi,
-      () => {},
-    )
+      store: storeApi,
+      onCompleted: () => {},
+    })
 
-    handlePracticeEvent(
-      {
+    handlePracticeEvent({
+      event: {
         type: 'NOTE_MATCHED',
         payload: { technique: {} as unknown as NoteTechnique, observations: [] },
       },
-      storeApi,
-      () => {},
-    )
+      store: storeApi,
+      onCompleted: () => {},
+    })
     expect(usePracticeStore.getState().practiceState?.status).toBe('completed')
   })
 

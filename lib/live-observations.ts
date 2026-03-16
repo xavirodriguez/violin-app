@@ -37,38 +37,48 @@ export function calculateLiveObservations(
 }
 
 function analyzeIntonation(detections: readonly DetectedNote[]): Observation[] {
-  const avgCents = detections.reduce((sum, d) => sum + d.cents, 0) / detections.length
-  if (Math.abs(avgCents) <= 15) return []
+  const sum = detections.reduce((acc, d) => acc + d.cents, 0)
+  const avgCents = sum / detections.length
+  const isCorrect = Math.abs(avgCents) <= 15
 
-  return [
-    {
-      type: 'intonation',
-      severity: 2,
-      confidence: 0.9 as Ratio01,
-      message: avgCents > 0 ? 'Consistently sharp' : 'Consistently flat',
-      tip:
-        avgCents > 0
-          ? 'Move your finger slightly down (toward scroll)'
-          : 'Move your finger slightly up (toward bridge)',
-      evidence: { avgCents },
-    },
-  ]
+  if (isCorrect) {
+    return []
+  }
+
+  const observation: Observation = {
+    type: 'intonation',
+    severity: 2,
+    confidence: 0.9 as Ratio01,
+    message: avgCents > 0 ? 'Consistently sharp' : 'Consistently flat',
+    tip:
+      avgCents > 0
+        ? 'Move your finger slightly down (toward scroll)'
+        : 'Move your finger slightly up (toward bridge)',
+    evidence: { avgCents },
+  }
+
+  return [observation]
 }
 
 function analyzeStability(detections: readonly DetectedNote[]): Observation[] {
-  const stdDev = calculateStdDev(detections.map((d) => d.cents))
-  if (stdDev <= 12) return []
+  const cents = detections.map((d) => d.cents)
+  const stdDev = calculateStdDev(cents)
+  const isStable = stdDev <= 12
 
-  return [
-    {
-      type: 'stability',
-      severity: 2,
-      confidence: 0.85 as Ratio01,
-      message: 'Pitch is wavering',
-      tip: 'Apply steady finger pressure and keep your hand relaxed',
-      evidence: { stdDev },
-    },
-  ]
+  if (isStable) {
+    return []
+  }
+
+  const observation: Observation = {
+    type: 'stability',
+    severity: 2,
+    confidence: 0.85 as Ratio01,
+    message: 'Pitch is wavering',
+    tip: 'Apply steady finger pressure and keep your hand relaxed',
+    evidence: { stdDev },
+  }
+
+  return [observation]
 }
 
 function analyzeNoteAccuracy(
@@ -76,34 +86,43 @@ function analyzeNoteAccuracy(
   targetPitch: string,
 ): Observation[] {
   const isWrongNote = detections.every((d) => d.pitch !== targetPitch)
-  if (!isWrongNote) return []
 
-  return [
-    {
-      type: 'intonation',
-      severity: 3,
-      confidence: 0.95 as Ratio01,
-      message: `Playing ${detections[0].pitch} instead of ${targetPitch}`,
-      tip: 'Check your finger position on the fingerboard',
-      evidence: { detectedPitch: detections[0].pitch, targetPitch },
-    },
-  ]
+  if (!isWrongNote) {
+    return []
+  }
+
+  const detected = detections[0].pitch
+  const observation: Observation = {
+    type: 'intonation',
+    severity: 3,
+    confidence: 0.95 as Ratio01,
+    message: `Playing ${detected} instead of ${targetPitch}`,
+    tip: 'Check your finger position on the fingerboard',
+    evidence: { detectedPitch: detected, targetPitch },
+  }
+
+  return [observation]
 }
 
 function analyzeToneQuality(detections: readonly DetectedNote[]): Observation[] {
-  const avgConfidence = detections.reduce((sum, d) => sum + d.confidence, 0) / detections.length
-  if (avgConfidence >= 0.7) return []
+  const sum = detections.reduce((acc, d) => acc + d.confidence, 0)
+  const avgConfidence = sum / detections.length
+  const isGood = avgConfidence >= 0.7
 
-  return [
-    {
-      type: 'attack',
-      severity: 1,
-      confidence: 0.7 as Ratio01,
-      message: 'Weak or unclear tone',
-      tip: 'Apply more bow pressure and check contact point',
-      evidence: { avgConfidence },
-    },
-  ]
+  if (isGood) {
+    return []
+  }
+
+  const observation: Observation = {
+    type: 'attack',
+    severity: 1,
+    confidence: 0.7 as Ratio01,
+    message: 'Weak or unclear tone',
+    tip: 'Apply more bow pressure and check contact point',
+    evidence: { avgConfidence },
+  }
+
+  return [observation]
 }
 
 /**
@@ -111,9 +130,16 @@ function analyzeToneQuality(detections: readonly DetectedNote[]): Observation[] 
  * @internal
  */
 function calculateStdDev(values: number[]): number {
-  if (values.length === 0) return 0
-  const mean = values.reduce((sum, v) => sum + v, 0) / values.length
+  const count = values.length
+  if (count === 0) {
+    return 0
+  }
+
+  const sum = values.reduce((acc, v) => acc + v, 0)
+  const mean = sum / count
   const squareDiffs = values.map((v) => (v - mean) ** 2)
-  const avgSquareDiff = squareDiffs.reduce((sum, v) => sum + v, 0) / values.length
+  const varianceSum = squareDiffs.reduce((acc, v) => acc + v, 0)
+  const avgSquareDiff = varianceSum / count
+
   return Math.sqrt(avgSquareDiff)
 }

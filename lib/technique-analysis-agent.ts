@@ -33,7 +33,13 @@ export class TechniqueAnalysisAgent {
   private options: Required<AnalysisOptions>
 
   constructor(options: AnalysisOptions = {}) {
-    this.options = { ...DEFAULT_OPTIONS, ...options }
+    const mergedOptions = { ...DEFAULT_OPTIONS, ...options }
+    this.options = mergedOptions
+    const isReady = !!this.options
+
+    if (!isReady) {
+      throw new Error('Analysis agent initialization failed')
+    }
   }
 
   /**
@@ -63,7 +69,10 @@ export class TechniqueAnalysisAgent {
    */
   generateObservations(technique: NoteTechnique): Observation[] {
     const all = this.collectObservations(technique)
-    return this.prioritizeObservations(all)
+    const prioritized = this.prioritizeObservations(all)
+    const result = prioritized
+
+    return result
   }
 
   private collectObservations(technique: NoteTechnique): Observation[] {
@@ -117,17 +126,39 @@ export class TechniqueAnalysisAgent {
   }
 
   private createEmptyStability(): PitchStability {
+    const zeroCents = 0 as Cents
+    const zeroRatio = 0 as Ratio01
+    const zeroDrift = 0
+
     return {
-      settlingStdCents: 0 as Cents,
-      globalStdCents: 0 as Cents,
-      driftCentsPerSec: 0,
-      inTuneRatio: 0 as Ratio01,
+      settlingStdCents: zeroCents,
+      globalStdCents: zeroCents,
+      driftCentsPerSec: zeroDrift,
+      inTuneRatio: zeroRatio,
     }
   }
 
   private calculateVibrato(frames: PitchedFrame[]): VibratoMetrics {
-    if (!this.isVibratoCandidate(frames)) return { present: false }
+    if (!this.isVibratoCandidate(frames)) {
+      return { present: false }
+    }
 
+    const metrics = this.computeVibratoMetrics(frames)
+    const isValid = this.isVibratoValid(metrics)
+
+    return {
+      present: isValid,
+      rateHz: isValid ? metrics.rateHz : undefined,
+      widthCents: isValid ? metrics.widthCents : undefined,
+      regularity: isValid ? metrics.regularity : undefined,
+    }
+  }
+
+  private computeVibratoMetrics(frames: PitchedFrame[]): {
+    rateHz: Hz
+    widthCents: Cents
+    regularity: Ratio01
+  } {
     const detrended = this.detrend(frames)
     const widthCents = (this.calculateStdDev(detrended) * 2.828) as Cents
     const { periodMs, correlation } = this.findPeriod(
@@ -137,14 +168,7 @@ export class TechniqueAnalysisAgent {
     const rateHz = (periodMs > 0 ? 1000 / periodMs : 0) as Hz
     const regularity = Math.max(0, correlation) as Ratio01
 
-    const isValid = this.isVibratoValid({ rateHz, widthCents, regularity })
-
-    return {
-      present: isValid,
-      rateHz: isValid ? rateHz : undefined,
-      widthCents: isValid ? widthCents : undefined,
-      regularity: isValid ? regularity : undefined,
-    }
+    return { rateHz, widthCents, regularity }
   }
 
   private isVibratoCandidate(frames: PitchedFrame[]): boolean {
@@ -255,19 +279,30 @@ export class TechniqueAnalysisAgent {
   }
 
   private createEmptyResonance(): ResonanceMetrics {
+    const defaultRatio = 0 as Ratio01
+    const defaultChaos = 0
+    const defaultWolf = false
+
     return {
-      suspectedWolf: false,
-      rmsBeatingScore: 0 as Ratio01,
-      pitchChaosScore: 0,
-      lowConfRatio: 0 as Ratio01,
+      suspectedWolf: defaultWolf,
+      rmsBeatingScore: defaultRatio,
+      pitchChaosScore: defaultChaos,
+      lowConfRatio: defaultRatio,
     }
   }
 
   private calculateLowConfRatio(frames: PitchedFrame[]): Ratio01 {
     const highRmsFrames = frames.filter((f) => f.rms > 0.02)
-    if (highRmsFrames.length === 0) return 0 as Ratio01
+    const hasSamples = highRmsFrames.length > 0
+
+    if (!hasSamples) {
+      return 0 as Ratio01
+    }
+
     const lowConfCount = highRmsFrames.filter((f) => f.confidence < 0.6).length
-    return (lowConfCount / highRmsFrames.length) as Ratio01
+    const ratio = (lowConfCount / highRmsFrames.length) as Ratio01
+
+    return ratio
   }
 
   private calculateRmsBeatingScore(frames: PitchedFrame[]): Ratio01 {
@@ -320,25 +355,45 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateTransitionTime(gapFrames: ReadonlyArray<TechniqueFrame>): TimestampMs {
-    if (gapFrames.length < 2) return 0 as TimestampMs
-    return (gapFrames[gapFrames.length - 1].timestamp - gapFrames[0].timestamp) as TimestampMs
+    if (gapFrames.length < 2) {
+      return 0 as TimestampMs
+    }
+
+    const start = gapFrames[0].timestamp
+    const end = gapFrames[gapFrames.length - 1].timestamp
+    const duration = (end - start) as TimestampMs
+
+    return duration
   }
 
   private calculateGlissAmount(gapFrames: ReadonlyArray<TechniqueFrame>): Cents {
-    const pitchedGap = gapFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    return this.calculateGlissando(pitchedGap) as Cents
+    const pitchedGap = gapFrames.filter((f): f is PitchedFrame => {
+      return f.kind === 'pitched'
+    })
+    const gliss = this.calculateGlissando(pitchedGap)
+    const amount = gliss as Cents
+
+    return amount
   }
 
   private calculateLandingErrorMetric(currentFrames: ReadonlyArray<TechniqueFrame>): Cents {
-    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
-    return this.calculateLandingError(pitchedCurrent, startTime) as Cents
+    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => {
+      return f.kind === 'pitched'
+    })
+    const start = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
+    const error = this.calculateLandingError(pitchedCurrent, start)
+
+    return error as Cents
   }
 
   private calculateCorrectionMetric(currentFrames: ReadonlyArray<TechniqueFrame>): number {
-    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    const startTime = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
-    return this.calculateCorrectionCount(pitchedCurrent, startTime)
+    const pitchedCurrent = currentFrames.filter((f): f is PitchedFrame => {
+      return f.kind === 'pitched'
+    })
+    const start = currentFrames[0]?.timestamp ?? (0 as TimestampMs)
+    const count = this.calculateCorrectionCount(pitchedCurrent, start)
+
+    return count
   }
 
   private calculateGlissando(gapFrames: PitchedFrame[]): number {
@@ -387,38 +442,62 @@ export class TechniqueAnalysisAgent {
 
   private generateVibratoObservations(technique: NoteTechnique): Observation[] {
     const { present, rateHz, widthCents, regularity } = technique.vibrato
-    if (present && rateHz !== undefined && widthCents !== undefined && regularity !== undefined) {
+    const hasFullMetrics =
+      present && rateHz !== undefined && widthCents !== undefined && regularity !== undefined
+
+    if (hasFullMetrics) {
       return this.analyzePresentVibrato(rateHz, widthCents)
     }
+
     return this.analyzeInconsistentVibrato(technique.vibrato)
   }
 
   private analyzePresentVibrato(rateHz: number, widthCents: number): Observation[] {
-    if (rateHz < 4.5) {
-      return [
-        {
-          type: 'vibrato',
-          severity: 1,
-          confidence: 0.8 as Ratio01,
-          message: 'Slow vibrato detected',
-          tip: 'Try to slightly increase the speed of your hand oscillation.',
-          evidence: { rate: rateHz },
-        },
-      ]
+    const slow = this.checkSlowVibrato(rateHz)
+    if (slow.length > 0) {
+      return slow
     }
-    if (widthCents > 35) {
-      return [
-        {
-          type: 'vibrato',
-          severity: 1,
-          confidence: 0.8 as Ratio01,
-          message: 'Wide vibrato detected',
-          tip: 'Focus on a narrower, more controlled oscillation.',
-          evidence: { width: widthCents },
-        },
-      ]
+
+    const wide = this.checkWideVibrato(widthCents)
+    if (wide.length > 0) {
+      return wide
     }
+
     return []
+  }
+
+  private checkSlowVibrato(rateHz: number): Observation[] {
+    if (rateHz >= 4.5) {
+      return []
+    }
+
+    return [
+      {
+        type: 'vibrato',
+        severity: 1,
+        confidence: 0.8 as Ratio01,
+        message: 'Slow vibrato detected',
+        tip: 'Try to slightly increase the speed of your hand oscillation.',
+        evidence: { rate: rateHz },
+      },
+    ]
+  }
+
+  private checkWideVibrato(widthCents: number): Observation[] {
+    if (widthCents <= 35) {
+      return []
+    }
+
+    return [
+      {
+        type: 'vibrato',
+        severity: 1,
+        confidence: 0.8 as Ratio01,
+        message: 'Wide vibrato detected',
+        tip: 'Focus on a narrower, more controlled oscillation.',
+        evidence: { width: widthCents },
+      },
+    ]
   }
 
   private analyzeInconsistentVibrato(vibrato: VibratoMetrics): Observation[] {
@@ -544,11 +623,18 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateStdDev(values: number[]): number {
-    if (values.length === 0) return 0
-    const mean = values.reduce((a, b) => a + b) / values.length
-    const squareDiffs = values.map((v) => (v - mean) ** 2)
-    const avgSquareDiff = squareDiffs.reduce((a, b) => a + b) / values.length
-    return Math.sqrt(avgSquareDiff)
+    const size = values.length
+    if (size === 0) {
+      return 0
+    }
+
+    const sum = values.reduce((acc, v) => acc + v, 0)
+    const mean = sum / size
+    const deviations = values.map((v) => (v - mean) ** 2)
+    const varianceSum = deviations.reduce((acc, v) => acc + v, 0)
+    const averageVariance = varianceSum / size
+
+    return Math.sqrt(averageVariance)
   }
 
   private performLinearRegression(frames: PitchedFrame[]): { slope: number; intercept: number } {

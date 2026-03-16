@@ -129,7 +129,8 @@ function validateFrequency(frequency: number): void {
   const isValid = isFinite && isPositive
 
   if (!isValid) {
-    throw new Error(`Invalid frequency: ${frequency}`)
+    const errorPrefix = 'Invalid frequency'
+    throw new Error(`${errorPrefix}: ${frequency}`)
   }
 }
 
@@ -313,10 +314,19 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
     START: handleStart,
     STOP: handleStopReset,
     RESET: handleStopReset,
-    NOTE_DETECTED: (s, e) => handleNoteDetected(s, e.payload),
-    HOLDING_NOTE: (s, e) => handleHoldingNote(s, e.payload.duration),
-    NO_NOTE_DETECTED: handleNoNoteDetected,
-    NOTE_MATCHED: (s, e) => handleNoteMatched(s, e.payload),
+    NOTE_DETECTED: (s, e) => {
+      const typedEvent = e as Extract<PracticeEvent, { type: 'NOTE_DETECTED' }>
+      return handleNoteDetected(s, typedEvent.payload)
+    },
+    HOLDING_NOTE: (s, e) => {
+      const typedEvent = e as Extract<PracticeEvent, { type: 'HOLDING_NOTE' }>
+      return handleHoldingNote(s, typedEvent.payload.duration)
+    },
+    NO_NOTE_DETECTED: (s, _e) => handleNoNoteDetected(s),
+    NOTE_MATCHED: (s, e) => {
+      const typedEvent = e as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>
+      return handleNoteMatched(s, typedEvent.payload)
+    },
   }
 
   const handler = handlers[event.type]
@@ -349,11 +359,15 @@ function handleStopReset(state: PracticeState): PracticeState {
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
   const status = getStatusAfterDetection(state.status)
+  const history = updateDetectionHistory(state.detectionHistory, payload)
+  const isListening = status === 'listening'
+  const holdDuration = isListening ? 0 : state.holdDuration
+
   return {
     ...state,
-    detectionHistory: updateDetectionHistory(state.detectionHistory, payload),
+    detectionHistory: history,
     status,
-    holdDuration: status === 'listening' ? 0 : state.holdDuration,
+    holdDuration,
   }
 }
 
@@ -370,24 +384,35 @@ function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus 
   const isMatchedOrValidating = currentStatus === 'validating' || currentStatus === 'correct'
   const nextStatus = isMatchedOrValidating ? 'listening' : currentStatus
   const finalStatus = nextStatus
+  const result = finalStatus
 
-  return finalStatus
+  return result
 }
 
 function handleHoldingNote(state: PracticeState, duration: number): PracticeState {
-  const isListeningOrValidating = state.status === 'listening' || state.status === 'validating'
-  if (!isListeningOrValidating) return state
+  const isListening = state.status === 'listening'
+  const isValidating = state.status === 'validating'
+  const isEligible = isListening || isValidating
+
+  if (!isEligible) {
+    return state
+  }
+
   const nextState = { ...state, status: 'validating' as PracticeStatus, holdDuration: duration }
 
   return nextState
 }
 
 function handleNoNoteDetected(state: PracticeState): PracticeState {
+  const history: DetectedNote[] = []
+  const status: PracticeStatus = 'listening'
+  const duration = 0
+
   const resetState = {
     ...state,
-    detectionHistory: [],
-    status: 'listening' as PracticeStatus,
-    holdDuration: 0,
+    detectionHistory: history,
+    status,
+    holdDuration: duration,
   }
 
   return resetState
@@ -409,13 +434,17 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
 function canMatchNote(status: PracticeStatus): boolean {
   const isCandidate = status === 'listening' || status === 'validating'
   const isEligible = isCandidate
+  const result = isEligible
 
-  return isEligible
+  return result
 }
 
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {
   const lastDetection = state.detectionHistory[0]
-  const isPerfect = payload?.isPerfect ?? (lastDetection && Math.abs(lastDetection.cents) < 5)
+  const isExtPerfect = payload?.isPerfect
+  const isIntPerfect = lastDetection && Math.abs(lastDetection.cents) < 5
+  const isPerfect = isExtPerfect ?? isIntPerfect
+
   return isPerfect ? state.perfectNoteStreak + 1 : 0
 }
 

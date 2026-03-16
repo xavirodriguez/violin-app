@@ -143,16 +143,30 @@ export class NoteSegmenter {
     const isSignalPresent = this.isSignal(frame)
     const isSilence = frame.rms < this.options.maxRmsSilence
     const now = frame.timestamp
+    const context = { frame, isSignalPresent, isSilence, now }
 
     if (this.state.kind === 'SILENCE') {
-      return this.handleSilenceState({ frame, isSignalPresent, isSilence, now })
+      return this.handleSilenceState(context)
     }
-    return this.handleNoteState({ frame, isSignalPresent, isSilence, now })
+
+    return this.handleNoteState(context)
+  }
+
+  reset(): void {
+    const initialState: SegmenterState = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
+    this.state = initialState
+    this.frames = []
+    this.gapFrames = []
+    this.lastSignalTime = undefined
+    this.segmentCount = 0
   }
 
   private isSignal(frame: TechniqueFrame): boolean {
     const isRmsSignal = frame.rms > this.options.minRms
-    const isPitchSignal = frame.kind === 'pitched' && frame.confidence > this.options.minConfidence
+    const isPitched = frame.kind === 'pitched'
+    const hasConfidence = frame.confidence > this.options.minConfidence
+    const isPitchSignal = isPitched && hasConfidence
+
     return isRmsSignal && isPitchSignal
   }
 
@@ -206,9 +220,12 @@ export class NoteSegmenter {
       pendingNoteName: undefined,
       pendingSince: undefined,
     }
-    this.frames = [this.gapFrames[this.gapFrames.length - 1]!]
+
+    const lastGapFrame = this.gapFrames[this.gapFrames.length - 1]!
+    this.frames = [lastGapFrame]
     const gap = Object.freeze([...this.gapFrames])
     this.gapFrames = []
+
     return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
   }
 
@@ -284,9 +301,12 @@ export class NoteSegmenter {
   private triggerOffset(params: { noteName: MusicalNoteName; now: TimestampMs }): SegmenterEvent {
     const { noteName, now } = params
     const segment = this.createSegment(noteName)
-    this.state = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
+    const nextState: SilenceState = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
+
+    this.state = nextState
     this.frames = []
     this.lastSignalTime = undefined
+
     return { type: 'OFFSET', timestamp: now, segment }
   }
 
@@ -314,8 +334,15 @@ export class NoteSegmenter {
   }
 
   private resetPendingNoteChange(noteState: NoteState): void {
-    noteState.pendingNoteName = undefined
-    noteState.pendingSince = undefined
+    const clearName = undefined
+    const clearTime = undefined
+    noteState.pendingNoteName = clearName
+    noteState.pendingSince = clearTime
+    const isReset = noteState.pendingNoteName === undefined
+
+    if (!isReset) {
+      throw new Error('Pending note change reset failed')
+    }
   }
 
   private processPendingNoteChange(params: {
@@ -345,6 +372,7 @@ export class NoteSegmenter {
     const segment = this.createSegment(noteState.currentNoteName)
     noteState.currentNoteName = frame.noteName
     this.frames = [frame]
+
     noteState.pendingNoteName = undefined
     noteState.pendingSince = undefined
     noteState.lastSignalTime = now
@@ -381,11 +409,4 @@ export class NoteSegmenter {
     }
   }
 
-  reset(): void {
-    this.state = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
-    this.frames = []
-    this.gapFrames = []
-    this.lastSignalTime = undefined
-    this.segmentCount = 0
-  }
 }

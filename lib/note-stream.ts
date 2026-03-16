@@ -143,15 +143,11 @@ export async function* createRawPitchStream(params: {
 }): AsyncGenerator<RawPitchEvent> {
   const { audioLoop, detector, signal } = params
   const state: StreamState = { queue: [] }
-  const loopPromise = audioLoop.start(
-    (frame) => pushFrameToQueue({ state, frame, detector }),
-    signal,
-  )
+
+  const loopPromise = startAudioLoop({ audioLoop, state, detector, signal })
+
   try {
-    while (!signal.aborted) {
-      while (state.queue.length > 0) yield state.queue.shift()!
-      await waitForFrame(state, signal)
-    }
+    yield* iterateStreamQueue({ state, signal })
   } catch (e) {
     handleStreamError(e)
   } finally {
@@ -159,10 +155,42 @@ export async function* createRawPitchStream(params: {
   }
 }
 
+function startAudioLoop(params: {
+  audioLoop: AudioLoopPort
+  state: StreamState
+  detector: PitchDetectionPort
+  signal: AbortSignal
+}): Promise<void> {
+  const { audioLoop, state, detector, signal } = params
+  const push = (frame: Float32Array) => pushFrameToQueue({ state, frame, detector })
+
+  return audioLoop.start(push, signal)
+}
+
+async function* iterateStreamQueue(params: {
+  state: StreamState
+  signal: AbortSignal
+}): AsyncGenerator<RawPitchEvent> {
+  const { state, signal } = params
+
+  while (!signal.aborted) {
+    while (state.queue.length > 0) {
+      yield state.queue.shift()!
+    }
+    await waitForFrame(state, signal)
+  }
+}
+
 function handleStreamError(error: unknown): void {
-  if (error instanceof Error && error.name === 'AbortError') return
+  const isAbort = error instanceof Error && error.name === 'AbortError'
+  if (isAbort) {
+    return
+  }
+
   const message = error ? String(error) : 'undefined error'
-  console.warn(`[PIPELINE] createRawPitchStream error: ${message}`)
+  const logPrefix = '[PIPELINE] createRawPitchStream error:'
+
+  console.warn(`${logPrefix} ${message}`)
 }
 
 /**
@@ -182,25 +210,50 @@ async function* technicalAnalysisWindow(params: {
   signal: AbortSignal
 }): AsyncGenerator<PracticeEvent> {
   const { source, context, optionsOrGetter, signal } = params
+  const setup = initializeAnalysisWindow(optionsOrGetter)
+  const { segmenter, agent, state } = setup
+
+  for await (const raw of source) {
+    if (signal.aborted) {
+      break
+    }
+
+    const options = resolveOptions(optionsOrGetter)
+    const processParams = { raw, state, segmenter, agent, context, options }
+
+    yield* processRawPitchEvent(processParams)
+
+    if (signal.aborted) {
+      break
+    }
+  }
+}
+
+function initializeAnalysisWindow(
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
+) {
   const initialOptions = resolveOptions(optionsOrGetter)
   const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
   const state = createInitialTechnicalState()
 
-  for await (const raw of source) {
-    if (signal.aborted) break
-    const options = resolveOptions(optionsOrGetter)
-    yield* processRawPitchEvent({ raw, state, segmenter, agent, context, options })
-    if (signal.aborted) break
-  }
+  return { segmenter, agent, state }
 }
 
 function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)): NoteStreamOptions {
-  return typeof options === 'function' ? options() : options
+  const isFunction = typeof options === 'function'
+  const resolved = isFunction ? options() : options
+
+  return resolved
 }
 
 function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
-  return new NoteSegmenter({ minRms: options.minRms, minConfidence: options.minConfidence })
+  const segmenterConfig = {
+    minRms: options.minRms,
+    minConfidence: options.minConfidence,
+  }
+
+  return new NoteSegmenter(segmenterConfig)
 }
 
 function createInitialTechnicalState(): TechnicalAnalysisState {
@@ -249,24 +302,41 @@ function* processFrameAndSegments(params: {
   const segmentEvent = segmenter.processFrame(frame)
 
   if (segmentEvent && context.targetNote) {
-    yield* handleSegmentEvents({
+    const eventParams = {
       state,
       event: segmentEvent,
       targetNote: context.targetNote,
       options,
       agent,
       currentIndex: context.currentIndex,
-    })
+    }
+    yield* handleSegmentEvents(eventParams)
   }
 
-  if (state.currentSegmentStart !== undefined && frame.kind === 'pitched' && context.targetNote) {
+  yield* maybeEmitHoldingEvent({ frame, state, context, options })
+}
+
+function* maybeEmitHoldingEvent(params: {
+  frame: TechniqueFrame
+  state: TechnicalAnalysisState
+  context: PipelineContext
+  options: NoteStreamOptions
+}): Generator<PracticeEvent> {
+  const { frame, state, context, options } = params
+  const isHoldingCandidate =
+    state.currentSegmentStart !== undefined && frame.kind === 'pitched' && context.targetNote
+
+  if (isHoldingCandidate) {
     const holdingEvent = checkHoldingStatus({
       state,
-      currentTarget: context.targetNote,
-      frame,
+      currentTarget: context.targetNote!,
+      frame: frame as PitchedFrame,
       options,
     })
-    if (holdingEvent) yield holdingEvent
+
+    if (holdingEvent) {
+      yield holdingEvent
+    }
   }
 }
 
@@ -277,15 +347,32 @@ function convertToTechniqueFrame(params: {
 }): TechniqueFrame {
   const { raw, noteName, cents } = params
   const isPitched = noteName && raw.confidence > 0.1
+
   if (!isPitched) {
-    return {
-      kind: 'unpitched',
-      timestamp: raw.timestamp as TimestampMs,
-      rms: raw.rms,
-      confidence: raw.confidence,
-    }
+    return createUnpitchedFrame(raw)
   }
-  return {
+
+  return createPitchedFrame({ raw, noteName, cents })
+}
+
+function createUnpitchedFrame(raw: RawPitchEvent): TechniqueFrame {
+  const frame: TechniqueFrame = {
+    kind: 'unpitched',
+    timestamp: raw.timestamp as TimestampMs,
+    rms: raw.rms,
+    confidence: raw.confidence,
+  }
+
+  return frame
+}
+
+function createPitchedFrame(params: {
+  raw: RawPitchEvent
+  noteName: string
+  cents: number
+}): TechniqueFrame {
+  const { raw, noteName, cents } = params
+  const frame: TechniqueFrame = {
     kind: 'pitched',
     timestamp: raw.timestamp as TimestampMs,
     pitchHz: raw.pitchHz as Hz,
@@ -294,6 +381,8 @@ function convertToTechniqueFrame(params: {
     confidence: raw.confidence,
     noteName: noteName as MusicalNoteName,
   }
+
+  return frame
 }
 
 interface SegmentEventParams {
@@ -452,24 +541,35 @@ function checkHoldingStatus(params: {
   options: NoteStreamOptions
 }): PracticeEvent | undefined {
   const { state, currentTarget, frame, options } = params
-  if (state.currentSegmentStart !== undefined) {
-    const lastDetected: DetectedNote = {
-      pitch: frame.noteName,
-      pitchHz: frame.pitchHz,
-      cents: frame.cents,
-      timestamp: frame.timestamp,
-      confidence: frame.confidence,
-    }
-    if (
-      isMatch({ target: currentTarget, detected: lastDetected, tolerance: options.centsTolerance })
-    ) {
-      return {
-        type: 'HOLDING_NOTE',
-        payload: { duration: frame.timestamp - state.currentSegmentStart },
-      }
+  const start = state.currentSegmentStart
+
+  if (start === undefined) {
+    return undefined
+  }
+
+  const detected = createDetectedNote(frame)
+  const matchParams = { target: currentTarget, detected, tolerance: options.centsTolerance }
+
+  if (isMatch(matchParams)) {
+    return {
+      type: 'HOLDING_NOTE',
+      payload: { duration: frame.timestamp - start },
     }
   }
+
   return undefined
+}
+
+function createDetectedNote(frame: PitchedFrame): DetectedNote {
+  const note: DetectedNote = {
+    pitch: frame.noteName,
+    pitchHz: frame.pitchHz,
+    cents: frame.cents,
+    timestamp: frame.timestamp,
+    confidence: frame.confidence,
+  }
+
+  return note
 }
 
 function parseMusicalNote(pitchHz: number) {
