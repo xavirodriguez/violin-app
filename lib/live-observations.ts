@@ -18,22 +18,27 @@ export function calculateLiveObservations(
   recentDetections: readonly DetectedNote[],
   targetPitch: string,
 ): Observation[] {
-  if (recentDetections.length < 5) return []
+  const isTooSmall = recentDetections.length < 5
+  if (isTooSmall) return []
 
   const last10 = recentDetections.slice(0, 10)
-  const intonation = analyzeIntonation(last10)
-  const stability = intonation.length === 0 ? analyzeStability(last10) : []
-
-  const observations: Observation[] = [
-    ...intonation,
-    ...stability,
-    ...analyzeNoteAccuracy(last10, targetPitch),
-    ...analyzeToneQuality(last10),
-  ]
+  const observations = gatherTechnicalObservations(last10, targetPitch)
 
   return observations
     .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
     .slice(0, 2)
+}
+
+function gatherTechnicalObservations(
+  detections: readonly DetectedNote[],
+  targetPitch: string
+): Observation[] {
+  const intonation = analyzeIntonation(detections)
+  const stability = intonation.length === 0 ? analyzeStability(detections) : []
+  const accuracy = analyzeNoteAccuracy(detections, targetPitch)
+  const tone = analyzeToneQuality(detections)
+
+  return [...intonation, ...stability, ...accuracy, ...tone]
 }
 
 function analyzeIntonation(detections: readonly DetectedNote[]): Observation[] {
@@ -45,19 +50,24 @@ function analyzeIntonation(detections: readonly DetectedNote[]): Observation[] {
     return []
   }
 
-  const observation: Observation = {
+  return [createIntonationObservation(avgCents)]
+}
+
+function createIntonationObservation(avgCents: number): Observation {
+  const isSharp = avgCents > 0
+  const message = isSharp ? 'Consistently sharp' : 'Consistently flat'
+  const tip = isSharp
+    ? 'Move your finger slightly down (toward scroll)'
+    : 'Move your finger slightly up (toward bridge)'
+
+  return {
     type: 'intonation',
     severity: 2,
     confidence: 0.9 as Ratio01,
-    message: avgCents > 0 ? 'Consistently sharp' : 'Consistently flat',
-    tip:
-      avgCents > 0
-        ? 'Move your finger slightly down (toward scroll)'
-        : 'Move your finger slightly up (toward bridge)',
+    message,
+    tip,
     evidence: { avgCents },
   }
-
-  return [observation]
 }
 
 function analyzeStability(detections: readonly DetectedNote[]): Observation[] {
@@ -69,7 +79,11 @@ function analyzeStability(detections: readonly DetectedNote[]): Observation[] {
     return []
   }
 
-  const observation: Observation = {
+  return [createStabilityObservation(stdDev)]
+}
+
+function createStabilityObservation(stdDev: number): Observation {
+  return {
     type: 'stability',
     severity: 2,
     confidence: 0.85 as Ratio01,
@@ -77,8 +91,6 @@ function analyzeStability(detections: readonly DetectedNote[]): Observation[] {
     tip: 'Apply steady finger pressure and keep your hand relaxed',
     evidence: { stdDev },
   }
-
-  return [observation]
 }
 
 function analyzeNoteAccuracy(
@@ -91,17 +103,18 @@ function analyzeNoteAccuracy(
     return []
   }
 
-  const detected = detections[0].pitch
-  const observation: Observation = {
+  return [createAccuracyObservation(detections[0].pitch, targetPitch)]
+}
+
+function createAccuracyObservation(detected: string, target: string): Observation {
+  return {
     type: 'intonation',
     severity: 3,
     confidence: 0.95 as Ratio01,
-    message: `Playing ${detected} instead of ${targetPitch}`,
+    message: `Playing ${detected} instead of ${target}`,
     tip: 'Check your finger position on the fingerboard',
-    evidence: { detectedPitch: detected, targetPitch },
+    evidence: { detectedPitch: detected, targetPitch: target },
   }
-
-  return [observation]
 }
 
 function analyzeToneQuality(detections: readonly DetectedNote[]): Observation[] {
@@ -113,7 +126,11 @@ function analyzeToneQuality(detections: readonly DetectedNote[]): Observation[] 
     return []
   }
 
-  const observation: Observation = {
+  return [createToneObservation(avgConfidence)]
+}
+
+function createToneObservation(avgConfidence: number): Observation {
+  return {
     type: 'attack',
     severity: 1,
     confidence: 0.7 as Ratio01,
@@ -121,8 +138,6 @@ function analyzeToneQuality(detections: readonly DetectedNote[]): Observation[] 
     tip: 'Apply more bow pressure and check contact point',
     evidence: { avgConfidence },
   }
-
-  return [observation]
 }
 
 /**

@@ -52,46 +52,13 @@ export class AudioManager {
    * @throws AppError if microphone access is denied or hardware fails.
    */
   async initialize(deviceId?: string): Promise<AudioResources> {
-    // 1. Ensure previous resources are cleaned up
     await this.cleanup()
 
     try {
-      // 2. Request MediaStream
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId
-          ? {
-              deviceId: { exact: deviceId },
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false,
-            }
-          : {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false,
-            },
-      })
-
-      // 3. Initialize AudioContext and Analyser
-      this.context = new AudioContext()
-      this.analyser = this.context.createAnalyser()
-      this.analyser.fftSize = 2048
-      this.analyser.smoothingTimeConstant = 0
-
-      // 4. Initialize Gain
-      this.gainNode = this.context.createGain()
-
-      // 5. Connect pipeline: source -> gain -> analyser
-      this.source = this.context.createMediaStreamSource(this.stream)
-      this.source.connect(this.gainNode)
-      this.gainNode.connect(this.analyser)
-
-      return {
-        context: this.context,
-        stream: this.stream,
-        analyser: this.analyser,
-        gainNode: this.gainNode,
-      }
+      this.stream = await this.acquireMicStream(deviceId)
+      this.initializeContextNodes()
+      this.buildAudioGraph()
+      return this.getAudioResources()
     } catch (err) {
       await this.cleanup()
       throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
@@ -102,34 +69,10 @@ export class AudioManager {
    * Releases all audio resources and closes the context.
    */
   async cleanup(): Promise<void> {
-    if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop())
-      this.stream = undefined
-    }
-
-    if (this.source) {
-      this.source.disconnect()
-      this.source = undefined
-    }
-
-    if (this.gainNode) {
-      this.gainNode.disconnect()
-      this.gainNode = undefined
-    }
-
-    if (this.analyser) {
-      this.analyser.disconnect()
-      this.analyser = undefined
-    }
-
-    if (this.context && this.context.state !== 'closed') {
-      try {
-        await this.context.close()
-      } catch (_err) {
-        // Ignore errors during close
-      }
-      this.context = undefined
-    }
+    this.stopMediaTracks()
+    this.disconnectAudioNodes()
+    await this.closeAudioContext()
+    this.resetResourceReferences()
   }
 
   /**
@@ -137,7 +80,11 @@ export class AudioManager {
    * @returns The active `AudioContext` or `undefined` if not initialized.
    */
   getContext(): AudioContext | undefined {
-    return this.context
+    const activeContext = this.context
+    const isInitialized = !!activeContext
+    const contextToReturn = isInitialized ? activeContext : undefined
+
+    return contextToReturn
   }
 
   /**
@@ -145,7 +92,11 @@ export class AudioManager {
    * @returns The active `MediaStream` or `undefined` if not initialized.
    */
   getStream(): MediaStream | undefined {
-    return this.stream
+    const activeStream = this.stream
+    const isInitialized = !!activeStream
+    const streamToReturn = isInitialized ? activeStream : undefined
+
+    return streamToReturn
   }
 
   /**
@@ -153,7 +104,11 @@ export class AudioManager {
    * @returns The active `AnalyserNode` or `undefined` if not initialized.
    */
   getAnalyser(): AnalyserNode | undefined {
-    return this.analyser
+    const activeAnalyser = this.analyser
+    const isInitialized = !!activeAnalyser
+    const analyserToReturn = isInitialized ? activeAnalyser : undefined
+
+    return analyserToReturn
   }
 
   /**
@@ -162,8 +117,10 @@ export class AudioManager {
    * @param value - Gain value (usually 0.0 to 2.0).
    */
   setGain(value: number): void {
-    if (this.gainNode) {
-      this.gainNode.gain.value = value
+    const gainNode = this.gainNode
+    const hasNode = !!gainNode
+    if (hasNode) {
+      gainNode.gain.value = value
     }
   }
 
@@ -172,7 +129,104 @@ export class AudioManager {
    * @returns `true` if context is initialized and not closed.
    */
   isActive(): boolean {
-    return !!this.context && this.context.state !== 'closed'
+    const context = this.context
+    const exists = !!context
+    const isNotClosed = exists && context.state !== 'closed'
+    const isCurrentlyActive = exists && isNotClosed
+
+    return isCurrentlyActive
+  }
+
+  private async acquireMicStream(deviceId?: string): Promise<MediaStream> {
+    const constraints = this.getAudioConstraints(deviceId)
+    const stream = await navigator.mediaDevices.getUserMedia(constraints)
+    const isValid = !!stream
+    if (!isValid) {
+      throw new Error('Failed to acquire microphone stream')
+    }
+    return stream
+  }
+
+  private getAudioConstraints(deviceId?: string): MediaStreamConstraints {
+    const config = {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+    }
+
+    return {
+      audio: deviceId ? { ...config, deviceId: { exact: deviceId } } : config,
+    }
+  }
+
+  private initializeContextNodes(): void {
+    this.context = new AudioContext()
+    this.analyser = this.context.createAnalyser()
+    this.analyser.fftSize = 2048
+    this.analyser.smoothingTimeConstant = 0
+    this.gainNode = this.context.createGain()
+  }
+
+  private buildAudioGraph(): void {
+    const hasContext = !!this.context && !!this.stream
+    const hasNodes = !!this.gainNode && !!this.analyser
+    if (!hasContext || !hasNodes) {
+      throw new Error('Audio components not initialized')
+    }
+    this.source = this.context!.createMediaStreamSource(this.stream!)
+    this.source.connect(this.gainNode!)
+    this.gainNode!.connect(this.analyser!)
+  }
+
+  private getAudioResources(): AudioResources {
+    const isReady = !!this.context && !!this.stream && !!this.analyser
+    if (!isReady) {
+      throw new Error('Required audio resources missing')
+    }
+    return {
+      context: this.context!,
+      stream: this.stream!,
+      analyser: this.analyser!,
+      gainNode: this.gainNode,
+    }
+  }
+
+  private stopMediaTracks(): void {
+    const stream = this.stream
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+      this.stream = undefined
+    }
+  }
+
+  private disconnectAudioNodes(): void {
+    this.source?.disconnect()
+    this.gainNode?.disconnect()
+    this.analyser?.disconnect()
+    this.source = undefined
+    this.gainNode = undefined
+    this.analyser = undefined
+  }
+
+  private async closeAudioContext(): Promise<void> {
+    const context = this.context
+    const isClosable = context && context.state !== 'closed'
+    if (isClosable) {
+      try {
+        await context.close()
+      } catch (error) {
+        console.warn('Error closing AudioContext:', error)
+      }
+      this.context = undefined
+    }
+  }
+
+  private resetResourceReferences(): void {
+    this.stream = undefined
+    this.source = undefined
+    this.gainNode = undefined
+    this.analyser = undefined
+    this.context = undefined
   }
 }
 
