@@ -90,7 +90,8 @@ function createSafeSet(params: {
 }) {
   const { set, get, currentToken } = params
   return (partial: SafePartial) => {
-    if (get().sessionToken !== currentToken) return
+    const isStale = get().sessionToken !== currentToken
+    if (isStale) return
     set((currentState) => resolveSafeUpdate({ currentState, partial }))
   }
 }
@@ -98,18 +99,30 @@ function createSafeSet(params: {
 function resolveSafeUpdate(params: ResolveUpdateParams): Partial<PracticeStore> {
   const { currentState, partial } = params
   const next = typeof partial === 'function' ? partial(currentState) : partial
+  const updates = computeStateUpdates({ currentState, next })
+
+  return injectActiveStateUpdates({
+    currentState,
+    updates,
+    practiceState: updates.practiceState,
+  })
+}
+
+function computeStateUpdates(params: {
+  currentState: PracticeStore
+  next: Partial<SafeUpdate>
+}): Partial<PracticeStore> {
+  const { currentState, next } = params
   const practiceState = next.practiceState || currentState.practiceState
-  const liveObservations = practiceState
+  const liveObs = practiceState
     ? getUpdatedLiveObservations(practiceState)
     : currentState.liveObservations
 
-  const updates: Partial<PracticeStore> = {
+  return {
     ...next,
     practiceState,
-    liveObservations: next.liveObservations ?? liveObservations,
+    liveObservations: next.liveObservations ?? liveObs,
   }
-
-  return injectActiveStateUpdates({ currentState, updates, practiceState })
 }
 
 function injectActiveStateUpdates(params: {
@@ -118,10 +131,14 @@ function injectActiveStateUpdates(params: {
   practiceState: PracticeState | undefined
 }): Partial<PracticeStore> {
   const { currentState, updates, practiceState } = params
-  if (currentState.state.status === 'active') {
+  const status = currentState.state.status
+  const isActive = status === 'active'
+
+  if (isActive) {
+    const activeState = currentState.state as ActiveState
     updates.state = {
-      ...currentState.state,
-      practiceState: practiceState || currentState.state.practiceState,
+      ...activeState,
+      practiceState: (practiceState || activeState.practiceState) as PracticeState,
     }
   }
   return updates
@@ -194,7 +211,8 @@ function syncWithTuner(token: string | number, detector: PitchDetectionPort | un
 function finalizeAnalyticsSession() {
   try {
     const session = useSessionStore.getState().end()
-    if (session) {
+    const hasSession = !!session
+    if (hasSession) {
       useProgressStore.getState().addSession(session)
     }
   } catch (err) {
@@ -206,7 +224,8 @@ function finalizeAnalyticsSession() {
  * Cancels the active session runner and its associated pipeline.
  */
 function cancelActiveRunner(state: PracticeStoreState) {
-  if (state.status === 'active') {
+  const isActive = state.status === 'active'
+  if (isActive) {
     try {
       state.abortController.abort()
       state.runner.cancel()
@@ -220,15 +239,26 @@ function cancelActiveRunner(state: PracticeStoreState) {
  * Returns the state updates required to return the store to an idle/ready state.
  */
 function getStopStateUpdates(currentState: PracticeStore): Partial<PracticeStore> {
-  const isCancellable =
-    currentState.state.status === 'active' || currentState.state.status === 'ready'
+  const status = currentState.state.status
+  const isCancellable = status === 'active' || status === 'ready'
+  const nextState = isCancellable
+    ? transitions.stop(currentState.state as ActiveState | ReadyState)
+    : currentState.state
+
   return {
-    state: isCancellable
-      ? transitions.stop(currentState.state as ActiveState | ReadyState)
-      : currentState.state,
-    practiceState: currentState.practiceState
-      ? { ...currentState.practiceState, status: 'idle' }
-      : undefined,
+    state: nextState,
+    practiceState: getIdleDomainState(currentState.practiceState),
+    ...getCleanedResourcesState(),
+  }
+}
+
+function getIdleDomainState(practiceState: PracticeState | undefined): PracticeState | undefined {
+  if (!practiceState) return undefined
+  return { ...practiceState, status: 'idle' }
+}
+
+function getCleanedResourcesState() {
+  return {
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -262,13 +292,11 @@ function updateStateFromEvent(params: {
 }) {
   const { set, event, token } = params
   set((currentState) => {
-    if (currentState.sessionToken !== token || !currentState.practiceState) return currentState
+    const isStale = currentState.sessionToken !== token
+    if (isStale || !currentState.practiceState) return currentState
     const practiceState = updatePracticeState(currentState.practiceState, event)
-    return {
-      ...currentState,
-      practiceState,
-      liveObservations: practiceState ? getUpdatedLiveObservations(practiceState) : [],
-    }
+    const observations = practiceState ? getUpdatedLiveObservations(practiceState) : []
+    return { ...currentState, practiceState, liveObservations: observations }
   })
 }
 
@@ -276,8 +304,12 @@ function updateStateFromEvent(params: {
  * Determines if the audio hardware can be initialized based on current state.
  */
 function shouldInitialize(state: PracticeStoreState, isInitializing: boolean): boolean {
-  if (isInitializing || !state.exercise) return false
-  return state.status === 'idle' || state.status === 'error'
+  const hasExercise = !!state.exercise
+  const status = state.status
+  const isCorrectStatus = status === 'idle' || status === 'error'
+  const canInit = !isInitializing && hasExercise && isCorrectStatus
+
+  return canInit
 }
 
 /**
@@ -289,10 +321,12 @@ function getSuccessInitUpdates(params: {
   adapters: { detector: PitchDetectionPort; audioLoop: AudioLoopPort }
 }): Partial<PracticeStore> {
   const { currentState, resources, adapters } = params
+  const exercise = currentState.state.exercise!
+  const nextState = transitions.ready({ ...adapters, exercise })
   return {
     ...currentState,
     ...adapters,
-    state: transitions.ready({ ...adapters, exercise: currentState.state.exercise! }),
+    state: nextState,
     analyser: resources.analyser,
     isInitializing: false,
   }
@@ -303,11 +337,12 @@ function getSuccessInitUpdates(params: {
  */
 function getFailureInitUpdates(currentState: PracticeStore, err: unknown): Partial<PracticeStore> {
   const error = toAppError(err)
+  const exercise = currentState.state.exercise
   return {
     ...currentState,
     error,
     isInitializing: false,
-    state: transitions.error(error, currentState.state.exercise),
+    state: transitions.error(error, exercise),
   }
 }
 
@@ -446,21 +481,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     setNoteIndex: (index) => {
       const state = get().practiceState
       if (!state) return
-
-      const total = state.exercise.notes.length
-      const clamped = Math.max(0, Math.min(index, total - 1))
-      const history: DetectedNote[] = []
-
-      set((currentState) => ({
-        ...currentState,
-        practiceState: {
-          ...state,
-          currentIndex: clamped,
-          status: 'listening',
-          holdDuration: 0,
-          detectionHistory: history,
-        },
-      }))
+      const updates = getResetStateForIndex(state, index)
+      set((currentState) => ({ ...currentState, practiceState: updates }))
     },
 
     initializeAudio: async () => {
@@ -480,10 +502,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     start: async () => {
       set({ isStarting: true, error: undefined })
       try {
-        const ready = await ensureReadyState({
-          getState: get,
-          initializeAudio: get().initializeAudio,
-        })
+        const readyParams = { getState: get, initializeAudio: get().initializeAudio }
+        const ready = await ensureReadyState(readyParams)
         await attemptToStart(ready, commenceSession, set)
       } catch (error) {
         set((currentState) => ({ ...currentState, error: toAppError(error), isStarting: false }))
@@ -503,22 +523,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     reset: async () => {
       const current = get()
       await current.stop()
-
-      const emptyObservations: Observation[] = []
-      const idleState: PracticeStoreState = {
-        status: 'idle',
-        exercise: undefined,
-        error: undefined,
-      }
-
-      set((currentState) => ({
-        ...currentState,
-        state: idleState,
-        practiceState: undefined,
-        error: undefined,
-        liveObservations: emptyObservations,
-        sessionToken: undefined,
-      }))
+      set((currentState) => ({ ...currentState, ...getResetUpdates() }))
     },
 
     consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
@@ -532,3 +537,33 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
   }
 })
+
+function getResetStateForIndex(state: PracticeState, index: number): PracticeState {
+  const total = state.exercise.notes.length
+  const clamped = Math.max(0, Math.min(index, total - 1))
+  const history: DetectedNote[] = []
+
+  return {
+    ...state,
+    currentIndex: clamped,
+    status: 'listening',
+    holdDuration: 0,
+    detectionHistory: history,
+  }
+}
+
+function getResetUpdates() {
+  const idleState: PracticeStoreState = {
+    status: 'idle',
+    exercise: undefined,
+    error: undefined,
+  }
+
+  return {
+    state: idleState,
+    practiceState: undefined,
+    error: undefined,
+    liveObservations: [],
+    sessionToken: undefined,
+  }
+}

@@ -57,13 +57,22 @@ export function validateOptions(options: SegmenterOptions): void {
 }
 
 function validateRmsOptions(options: SegmenterOptions): void {
-  if (options.minRms <= options.maxRmsSilence) {
+  const minRmsValue = options.minRms
+  const silenceThreshold = options.maxRmsSilence
+  const isInvalid = minRmsValue <= silenceThreshold
+
+  if (isInvalid) {
     throw new Error('minRms must be greater than maxRmsSilence')
   }
 }
 
 function validateConfidence(minConfidence: number): void {
-  if (minConfidence < 0 || minConfidence > 1) {
+  const confidence = minConfidence
+  const isBelowZero = confidence < 0
+  const isAboveOne = confidence > 1
+  const isInvalid = isBelowZero || isAboveOne
+
+  if (isInvalid) {
     throw new Error('minConfidence must be between 0 and 1')
   }
 }
@@ -76,13 +85,19 @@ function validateDurations(options: SegmenterOptions): void {
     options.pitchDropoutToleranceMs,
     options.noisyGapResetMs,
   ]
-  if (durations.some((d) => d < 0)) {
+  const hasNegative = durations.some((d) => d < 0)
+
+  if (hasNegative) {
     throw new Error('All duration options must be non-negative')
   }
 }
 
 function validateBuffers(options: SegmenterOptions): void {
-  if (options.maxGapFrames <= 0 || options.maxNoteFrames <= 0) {
+  const gapLimit = options.maxGapFrames
+  const noteLimit = options.maxNoteFrames
+  const isInvalid = gapLimit <= 0 || noteLimit <= 0
+
+  if (isInvalid) {
     throw new Error('Buffer limits must be positive')
   }
 }
@@ -135,8 +150,10 @@ export class NoteSegmenter {
   private segmentCount = 0
 
   constructor(options: Partial<SegmenterOptions> = {}) {
-    this.options = { ...defaultOptions, ...options }
-    validateOptions(this.options)
+    const mergedOptions = { ...defaultOptions, ...options }
+    this.options = mergedOptions
+    const finalOptions = this.options
+    validateOptions(finalOptions)
   }
 
   processFrame(frame: TechniqueFrame): SegmenterEvent | undefined {
@@ -212,6 +229,16 @@ export class NoteSegmenter {
 
   private triggerOnset(params: { noteName: MusicalNoteName; now: TimestampMs }): SegmenterEvent {
     const { noteName, now } = params
+    this.initializeNoteState(noteName, now)
+    this.prepareFramesForOnset()
+
+    const gap = Object.freeze([...this.gapFrames])
+    this.gapFrames = []
+
+    return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
+  }
+
+  private initializeNoteState(noteName: MusicalNoteName, now: TimestampMs): void {
     this.state = {
       kind: 'NOTE',
       currentNoteName: noteName,
@@ -220,13 +247,11 @@ export class NoteSegmenter {
       pendingNoteName: undefined,
       pendingSince: undefined,
     }
+  }
 
+  private prepareFramesForOnset(): void {
     const lastGapFrame = this.gapFrames[this.gapFrames.length - 1]!
     this.frames = [lastGapFrame]
-    const gap = Object.freeze([...this.gapFrames])
-    this.gapFrames = []
-
-    return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
   }
 
   private handleNoteState(params: {

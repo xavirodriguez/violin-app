@@ -71,26 +71,43 @@ export const handlePracticeEvent = <T extends { practiceState: PracticeState | u
   params: HandlePracticeEventParams<T>,
 ) => {
   const { event, store, onCompleted, analytics } = params
-  if (!event?.type) return
+  const hasType = !!event?.type
+  if (!hasType) return
 
   const practiceState = store.getState().practiceState
-  if (!practiceState) return
+  const hasState = !!practiceState
+  if (!hasState) return
 
+  const transitionParams = { event, store }
+  const shouldTriggerCompletion = processEventTransitions(transitionParams)
+
+  if (shouldTriggerCompletion) {
+    executeCompletionSideEffects(onCompleted, analytics)
+  }
+}
+
+function processEventTransitions<T extends { practiceState: PracticeState | undefined }>(params: {
+  event: PracticeEvent
+  store: StoreApi<T>
+}): boolean {
+  const { event, store } = params
   let shouldTriggerCompletion = false
 
   store.setState((state) => {
-    if (!state.practiceState) return state
-    const nextState = reducePracticeEvent(state.practiceState, event)
+    const currentState = state.practiceState
+    if (!currentState) return state
 
-    if (nextState.status === 'completed' && state.practiceState.status !== 'completed') {
+    const nextState = reducePracticeEvent(currentState, event)
+    const isNowComplete = nextState.status === 'completed'
+    const wasNotComplete = currentState.status !== 'completed'
+
+    if (isNowComplete && wasNotComplete) {
       shouldTriggerCompletion = true
     }
     return { ...state, practiceState: nextState }
   })
 
-  if (shouldTriggerCompletion) {
-    executeCompletionSideEffects(onCompleted, analytics)
-  }
+  return shouldTriggerCompletion
 }
 
 function executeCompletionSideEffects(
@@ -101,6 +118,8 @@ function executeCompletionSideEffects(
     analytics?.endSession()
     onCompleted()
   } catch (error) {
-    console.error('[EVENT SINK] Failed completion side effects:', error)
+    const logPrefix = '[EVENT SINK]'
+    const message = 'Failed completion side effects:'
+    console.error(`${logPrefix} ${message}`, error)
   }
 }

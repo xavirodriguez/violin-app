@@ -285,8 +285,7 @@ export function isNewMatch(params: {
   tolerance?: number | MatchHysteresis
 }): boolean {
   const { target, detected, tolerance = 25 } = params
-  const isCurrentlyMatched = false
-  const matchStatus = isCurrentlyMatched ? 'maintaining' : 'initial'
+  const matchStatus = 'initial'
 
   return isMatch({ target, detected, tolerance, matchStatus })
 }
@@ -300,8 +299,7 @@ export function isStillMatched(params: {
   tolerance?: number | MatchHysteresis
 }): boolean {
   const { target, detected, tolerance = 25 } = params
-  const isCurrentlyMatched = true
-  const matchStatus = isCurrentlyMatched ? 'maintaining' : 'initial'
+  const matchStatus = 'maintaining'
 
   return isMatch({ target, detected, tolerance, matchStatus })
 }
@@ -310,6 +308,11 @@ export function isStillMatched(params: {
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
+  const handler = getEventHandler(event.type)
+  return handler ? handler(state, event) : state
+}
+
+function getEventHandler(type: string) {
   const handlers: Record<string, (s: PracticeState, e: PracticeEvent) => PracticeState> = {
     START: handleStart,
     STOP: handleStopReset,
@@ -329,8 +332,7 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
     },
   }
 
-  const handler = handlers[event.type]
-  return handler ? handler(state, event) : state
+  return handlers[type]
 }
 
 function handleStart(state: PracticeState): PracticeState {
