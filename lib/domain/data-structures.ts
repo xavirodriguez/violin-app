@@ -39,20 +39,34 @@ export class FixedRingBuffer<T, N extends number> {
    * @returns A readonly array of items. Mutations will not affect the buffer.
    */
   toArray(): readonly T[] {
-    return [...this.items] // Defensive copy
+    const defensiveCopy = [...this.items]
+    const snapshot = defensiveCopy
+    const readonlySnapshot: readonly T[] = snapshot
+
+    return readonlySnapshot
   }
 
   /**
    * Clears all items from the buffer.
    */
   clear(): void {
-    this.items = []
+    const emptyList: T[] = []
+    this.items = emptyList
+    const isCleared = this.items.length === 0
+
+    if (!isCleared) {
+      throw new Error('Buffer clear failed')
+    }
   }
 
   /**
    * Returns the number of items currently in the buffer.
    */
   get length(): number {
-    return this.items.length
+    const currentItems = this.items
+    const count = currentItems.length
+    const result = count
+
+    return result
   }
 }

@@ -122,7 +122,11 @@ describe('Full Flow Verification Checklist', () => {
     }
 
     // In actual app, runPracticeSession would call handlePracticeEvent AND update TunerStore
-    handlePracticeEvent({ type: 'NOTE_DETECTED', payload: detectedNote }, storeApi, () => {})
+    handlePracticeEvent({
+      event: { type: 'NOTE_DETECTED', payload: detectedNote },
+      store: storeApi,
+      onCompleted: () => {},
+    })
 
     expect(usePracticeStore.getState().practiceState?.detectionHistory[0]).toEqual(detectedNote)
 
@@ -154,15 +158,15 @@ describe('Full Flow Verification Checklist', () => {
         practiceState: { ...s.practiceState!, status: 'listening' },
       }))
 
-      handlePracticeEvent(
-        {
+      handlePracticeEvent({
+        event: {
           type: 'NOTE_MATCHED',
           // @ts-expect-error - Mocking payload for test
           payload: { technique: {}, observations: [] },
         },
-        storeApi,
-        () => {},
-      )
+        store: storeApi,
+        onCompleted: () => {},
+      })
     }
 
     expect(usePracticeStore.getState().practiceState?.status).toBe('completed')

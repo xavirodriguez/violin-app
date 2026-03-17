@@ -18,13 +18,16 @@ const HANDLERS: Record<
 > = {
   NOTE_DETECTED: (state) => ({ ...state, status: 'active' }),
   HOLDING_NOTE: (state) => ({ ...state, status: 'active' }),
-  NOTE_MATCHED: (state, event) => ({
-    ...state,
-    currentNoteIndex: state.currentNoteIndex + 1,
-    lastTechnique: event.payload.technique,
-    liveObservations: [],
-    perfectNoteStreak: event.payload.isPerfect ? state.perfectNoteStreak + 1 : 0,
-  }),
+  NOTE_MATCHED: (state, event) => {
+    const typedEvent = event as Extract<PracticeEngineEvent, { type: 'NOTE_MATCHED' }>
+    return {
+      ...state,
+      currentNoteIndex: state.currentNoteIndex + 1,
+      lastTechnique: typedEvent.payload.technique,
+      liveObservations: [],
+      perfectNoteStreak: typedEvent.payload.isPerfect ? state.perfectNoteStreak + 1 : 0,
+    }
+  },
   SESSION_COMPLETED: (state) => ({ ...state, status: 'completed' }),
   NO_NOTE: (state) => state,
 }

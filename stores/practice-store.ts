@@ -9,7 +9,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { type PracticeState, type PracticeEvent } from '@/lib/practice-core'
+import { type PracticeState, type PracticeEvent, DetectedNote } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -43,7 +43,7 @@ import {
 } from './practice-store-helpers'
 
 import type { Exercise } from '@/lib/exercises/types'
-import { Observation } from '@/lib/technique-types'
+import { Observation, NoteTechnique } from '@/lib/technique-types'
 
 /**
  * Main store for managing the practice mode lifecycle and real-time audio pipeline.
@@ -170,7 +170,7 @@ function buildRunnerAnalyticsInterface(): RunnerAnalytics {
     recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => {
       useSessionStore.getState().recordAttempt(index, pitch, cents, inTune)
     },
-    recordNoteCompletion: (index: number, time: number, technique: any) => {
+    recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => {
       useSessionStore.getState().recordCompletion(index, time, technique)
     },
     endSession: finalizeAnalyticsSession,
@@ -323,6 +323,41 @@ function startAnalyticsSession(exercise: Exercise | undefined) {
   }
 }
 
+function beginAudioInitialization(
+  set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void,
+) {
+  set((currentState) => ({
+    ...currentState,
+    isInitializing: true,
+    error: undefined,
+    state: transitions.initialize(currentState.state.exercise),
+  }))
+}
+
+async function acquireAudioResources() {
+  const deviceId = useTunerStore.getState().deviceId || undefined
+  const resources = await audioManager.initialize(deviceId)
+  const isOk = !!resources
+
+  if (!isOk) {
+    throw new Error('Audio resource acquisition failed')
+  }
+
+  return resources
+}
+
+async function attemptToStart(
+  ready: ReadyState | undefined,
+  commence: (ready: ReadyState) => Promise<void>,
+  set: (partial: Partial<PracticeStore>) => void,
+) {
+  if (ready) {
+    await commence(ready)
+  } else {
+    set({ isStarting: false })
+  }
+}
+
 /**
  * Returns the state updates for starting a practice session.
  */
@@ -402,36 +437,39 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }))
     },
 
-    setAutoStart: (enabled) =>
-      set((currentState) => ({ ...currentState, autoStartEnabled: enabled })),
+    setAutoStart: (enabled) => {
+      const nextValue = enabled
+      const updates = { autoStartEnabled: nextValue }
+      set((currentState) => ({ ...currentState, ...updates }))
+    },
 
     setNoteIndex: (index) => {
-      const practiceState = get().practiceState
-      if (!practiceState) return
+      const state = get().practiceState
+      if (!state) return
+
+      const total = state.exercise.notes.length
+      const clamped = Math.max(0, Math.min(index, total - 1))
+      const history: DetectedNote[] = []
+
       set((currentState) => ({
         ...currentState,
         practiceState: {
-          ...practiceState,
-          currentIndex: Math.max(0, Math.min(index, practiceState.exercise.notes.length - 1)),
+          ...state,
+          currentIndex: clamped,
           status: 'listening',
           holdDuration: 0,
-          detectionHistory: [],
+          detectionHistory: history,
         },
       }))
     },
 
     initializeAudio: async () => {
-      if (!shouldInitialize(get().state, get().isInitializing)) return
-      set((currentState) => ({
-        ...currentState,
-        isInitializing: true,
-        error: undefined,
-        state: transitions.initialize(currentState.state.exercise),
-      }))
+      const canInit = shouldInitialize(get().state, get().isInitializing)
+      if (!canInit) return
+
+      beginAudioInitialization(set)
       try {
-        const resources = await audioManager.initialize(
-          useTunerStore.getState().deviceId || undefined,
-        )
+        const resources = await acquireAudioResources()
         const adapters = createAudioAdapters(resources)
         set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
       } catch (err) {
@@ -446,31 +484,39 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           getState: get,
           initializeAudio: get().initializeAudio,
         })
-        if (ready) {
-          await commenceSession(ready)
-        } else {
-          set({ isStarting: false })
-        }
+        await attemptToStart(ready, commenceSession, set)
       } catch (error) {
         set((currentState) => ({ ...currentState, error: toAppError(error), isStarting: false }))
       }
     },
 
     stop: async () => {
-      cancelActiveRunner(get().state)
+      const activeState = get().state
+      cancelActiveRunner(activeState)
       await audioManager.cleanup()
+
       finalizeAnalyticsSession()
-      set((currentState) => ({ ...currentState, ...getStopStateUpdates(currentState) }))
+      const updates = getStopStateUpdates(get())
+      set((currentState) => ({ ...currentState, ...updates }))
     },
 
     reset: async () => {
-      await get().stop()
+      const current = get()
+      await current.stop()
+
+      const emptyObservations: Observation[] = []
+      const idleState: PracticeStoreState = {
+        status: 'idle',
+        exercise: undefined,
+        error: undefined,
+      }
+
       set((currentState) => ({
         ...currentState,
-        state: { status: 'idle', exercise: undefined, error: undefined },
+        state: idleState,
         practiceState: undefined,
         error: undefined,
-        liveObservations: [],
+        liveObservations: emptyObservations,
         sessionToken: undefined,
       }))
     },
