@@ -6,18 +6,41 @@ import pako from 'pako';
  * Serializes and compresses a value.
  */
 export function serializeAndCompress(value: unknown): string {
-  const str = superjson.stringify(value);
-  const compressed = pako.deflate(str);
-  return btoa(String.fromCharCode(...compressed));
+  const jsonString = superjson.stringify(value);
+  const compressedBuffer = pako.deflate(jsonString);
+  const binaryString = String.fromCharCode(...compressedBuffer);
+  const base64String = btoa(binaryString);
+
+  return base64String;
 }
 
 /**
  * Decompresses and deserializes a value.
  */
 export function decompressAndDeserialize(val: string): unknown {
-  const bin = Uint8Array.from(atob(val), (c) => c.charCodeAt(0));
-  const decompressed = pako.inflate(bin, { to: 'string' });
-  return superjson.parse(decompressed);
+  const binaryData = atob(val);
+  const bytes = Uint8Array.from(binaryData, (c) => c.charCodeAt(0));
+  const decompressedJson = pako.inflate(bytes, { to: 'string' });
+  const result = superjson.parse(decompressedJson);
+
+  return result;
+}
+
+function handleValidationError(name: string, error: unknown): void {
+  const prefix = `[Persist] ❌ Validation failed for ${name}.`;
+  const suffix = 'Falling back to default state.';
+  const message = `${prefix} ${suffix}`;
+  console.error(message, error);
+}
+
+function mergeState<T>(validated: T, current: T, mergeFn?: (p: T, c: T) => T): T {
+  const hasCustomMerge = !!mergeFn;
+  if (hasCustomMerge) {
+    return mergeFn!(validated, current);
+  }
+  const merged = { ...current, ...validated };
+
+  return merged;
 }
 
 /**
@@ -32,23 +55,18 @@ export function validateAndMerge<T>(
     merge?: (persisted: T, current: T) => T;
   }
 ): T {
-  if (persistedState === undefined || persistedState === null) {
+  const isMissing = persistedState == undefined;
+  if (isMissing) {
     return currentState;
   }
 
   try {
     const validated = schema.parse(persistedState);
-    console.log(`[Persist] ✅ State validated for ${options.name}`);
-
-    if (options.merge) {
-      return options.merge(validated, currentState);
-    }
-    return { ...currentState, ...validated };
+    const logMsg = `[Persist] ✅ State validated for ${options.name}`;
+    console.log(logMsg);
+    return mergeState(validated, currentState, options.merge);
   } catch (validationError) {
-    console.error(
-      `[Persist] ❌ Validation failed for ${options.name}. Falling back to default state.`,
-      validationError
-    );
+    handleValidationError(options.name, validationError);
     return currentState;
   }
 }

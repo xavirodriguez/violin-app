@@ -87,9 +87,14 @@ export class TechniqueAnalysisAgent {
   }
 
   private prioritizeObservations(observations: Observation[]): Observation[] {
-    return observations
-      .sort((a, b) => b.severity * b.confidence - a.severity * a.confidence)
-      .slice(0, 3)
+    const sorted = observations.sort((a, b) => {
+      const scoreA = a.severity * a.confidence
+      const scoreB = b.severity * b.confidence
+      return scoreB - scoreA
+    })
+    const limited = sorted.slice(0, 3)
+
+    return limited
   }
 
   private calculateStability(frames: PitchedFrame[]): PitchStability {

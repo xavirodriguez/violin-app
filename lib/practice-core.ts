@@ -30,9 +30,13 @@ export type NoteName = string & { readonly __brand: unique symbol }
  * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
-  if (!/^[A-G](?:b{1,2}|#{1,2})?[0-8]$/.test(name)) {
+  const noteRegex = /^[A-G](?:b{1,2}|#{1,2})?[0-8]$/
+  const isValid = noteRegex.test(name)
+
+  if (!isValid) {
+    const message = `Invalid note name format: "${name}" (expected scientific pitch notation, e.g., "A4", "Bb3", octave 0-8)`
     throw new AppError({
-      message: `Invalid note name format: "${name}" (expected scientific pitch notation, e.g., "A4", "Bb3", octave 0-8)`,
+      message,
       code: ERROR_CODES.NOTE_PARSING_FAILED,
     })
   }
@@ -117,9 +121,12 @@ export class MusicalNote {
   }
 
   get nameWithOctave(): NoteName {
-    const result = `${this.noteName}${this.octave}`
+    const namePart = this.noteName
+    const octavePart = this.octave
+    const result = `${namePart}${octavePart}`
+
     assertValidNoteName(result)
-    return result
+    return result as NoteName
   }
 }
 
@@ -267,9 +274,11 @@ function checkPitchAndTune(params: {
   tolerance: number
 }): boolean {
   const { target, detected, tolerance } = params
-  const targetNote = MusicalNote.fromName(formatPitchName(target.pitch))
-  assertValidNoteName(detected.pitch)
-  const detectedNote = MusicalNote.fromName(detected.pitch)
+  const targetNoteName = formatPitchName(target.pitch)
+  const targetNote = MusicalNote.fromName(targetNoteName)
+  const detectedNoteName = detected.pitch as NoteName
+  assertValidNoteName(detectedNoteName)
+  const detectedNote = MusicalNote.fromName(detectedNoteName)
 
   const isPitchMatch = targetNote.isEnharmonic(detectedNote)
   const isInTune = Math.abs(detected.cents) < tolerance
@@ -286,8 +295,9 @@ export function isNewMatch(params: {
 }): boolean {
   const { target, detected, tolerance = 25 } = params
   const matchStatus = 'initial'
+  const isMatched = isMatch({ target, detected, tolerance, matchStatus })
 
-  return isMatch({ target, detected, tolerance, matchStatus })
+  return isMatched
 }
 
 /**
@@ -300,8 +310,9 @@ export function isStillMatched(params: {
 }): boolean {
   const { target, detected, tolerance = 25 } = params
   const matchStatus = 'maintaining'
+  const isStillMatchedResult = isMatch({ target, detected, tolerance, matchStatus })
 
-  return isMatch({ target, detected, tolerance, matchStatus })
+  return isStillMatchedResult
 }
 
 /**
@@ -309,7 +320,9 @@ export function isStillMatched(params: {
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
   const handler = getEventHandler(event.type)
-  return handler ? handler(state, event) : state
+  const resultState = handler ? handler(state, event) : state
+
+  return resultState
 }
 
 function getEventHandler(type: string) {
@@ -336,27 +349,31 @@ function getEventHandler(type: string) {
 }
 
 function handleStart(state: PracticeState): PracticeState {
-  return {
+  const nextState = {
     ...state,
-    status: 'listening',
+    status: 'listening' as PracticeStatus,
     currentIndex: 0,
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
     perfectNoteStreak: 0,
   }
+
+  return nextState
 }
 
 function handleStopReset(state: PracticeState): PracticeState {
-  return {
+  const nextState = {
     ...state,
-    status: 'idle',
+    status: 'idle' as PracticeStatus,
     currentIndex: 0,
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
     perfectNoteStreak: 0,
   }
+
+  return nextState
 }
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
@@ -377,15 +394,19 @@ function updateDetectionHistory(
   history: readonly DetectedNote[],
   payload: DetectedNote,
 ): readonly DetectedNote[] {
-  const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-  buffer.push(...history.slice().reverse(), payload)
-  return buffer.toArray()
+  const bufferLimit = 10
+  const buffer = new FixedRingBuffer<DetectedNote, 10>(bufferLimit)
+  const reversedHistory = history.slice().reverse()
+  buffer.push(...reversedHistory, payload)
+  const result = buffer.toArray()
+
+  return result
 }
 
 function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
   const isMatchedOrValidating = currentStatus === 'validating' || currentStatus === 'correct'
   const nextStatus = isMatchedOrValidating ? 'listening' : currentStatus
-  const finalStatus = nextStatus
+  const finalStatus = nextStatus as PracticeStatus
   const result = finalStatus
 
   return result
@@ -423,10 +444,12 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
 
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
-  if (!canMatchNote(state.status)) return state
+  const isEligible = canMatchNote(state.status)
+  if (!isEligible) return state
 
   const newStreak = calculateNewStreak(state, payload)
-  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
+  const totalNotes = state.exercise.notes.length
+  const isLastNote = state.currentIndex >= totalNotes - 1
 
   return isLastNote
     ? finalizePracticeSession({ state, payload, streak: newStreak })
@@ -434,8 +457,9 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
 }
 
 function canMatchNote(status: PracticeStatus): boolean {
-  const isCandidate = status === 'listening' || status === 'validating'
-  const isEligible = isCandidate
+  const isListening = status === 'listening'
+  const isValidating = status === 'validating'
+  const isEligible = isListening || isValidating
   const result = isEligible
 
   return result
@@ -444,10 +468,12 @@ function canMatchNote(status: PracticeStatus): boolean {
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {
   const lastDetection = state.detectionHistory[0]
   const isExtPerfect = payload?.isPerfect
-  const isIntPerfect = lastDetection && Math.abs(lastDetection.cents) < 5
+  const centsError = lastDetection ? Math.abs(lastDetection.cents) : 100
+  const isIntPerfect = centsError < 5
   const isPerfect = isExtPerfect ?? isIntPerfect
+  const nextStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
 
-  return isPerfect ? state.perfectNoteStreak + 1 : 0
+  return nextStreak
 }
 
 function finalizePracticeSession(params: {
@@ -456,13 +482,16 @@ function finalizePracticeSession(params: {
   streak: number
 }): PracticeState {
   const { state, payload, streak } = params
-  return {
+  const obs = payload?.observations ?? []
+  const resultState = {
     ...state,
-    status: 'completed',
+    status: 'completed' as PracticeStatus,
     holdDuration: 0,
-    lastObservations: payload?.observations ?? [],
+    lastObservations: obs,
     perfectNoteStreak: streak,
   }
+
+  return resultState
 }
 
 function advanceToNextNote(params: {
@@ -471,13 +500,16 @@ function advanceToNextNote(params: {
   streak: number
 }): PracticeState {
   const { state, payload, streak } = params
-  return {
+  const obs = payload?.observations ?? []
+  const resultState = {
     ...state,
     currentIndex: state.currentIndex + 1,
-    status: 'correct',
+    status: 'correct' as PracticeStatus,
     detectionHistory: [],
     holdDuration: 0,
-    lastObservations: payload?.observations ?? [],
+    lastObservations: obs,
     perfectNoteStreak: streak,
   }
+
+  return resultState
 }
