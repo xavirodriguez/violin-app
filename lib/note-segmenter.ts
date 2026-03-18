@@ -170,7 +170,10 @@ export class NoteSegmenter {
   }
 
   reset(): void {
-    const initialState: SegmenterState = { kind: 'SILENCE', lastAboveThresholdTime: undefined }
+    const kind = 'SILENCE'
+    const lastAboveThresholdTime = undefined
+    const initialState: SegmenterState = { kind, lastAboveThresholdTime }
+
     this.state = initialState
     this.frames = []
     this.gapFrames = []
@@ -183,8 +186,9 @@ export class NoteSegmenter {
     const isPitched = frame.kind === 'pitched'
     const hasConfidence = frame.confidence > this.options.minConfidence
     const isPitchSignal = isPitched && hasConfidence
+    const result = isRmsSignal && isPitchSignal
 
-    return isRmsSignal && isPitchSignal
+    return result
   }
 
   private handleSilenceState(params: {
@@ -250,7 +254,9 @@ export class NoteSegmenter {
   }
 
   private prepareFramesForOnset(): void {
-    const lastGapFrame = this.gapFrames[this.gapFrames.length - 1]!
+    const framesRef = this.gapFrames
+    const lastIndex = framesRef.length - 1
+    const lastGapFrame = framesRef[lastIndex]!
     this.frames = [lastGapFrame]
   }
 
@@ -355,7 +361,11 @@ export class NoteSegmenter {
     noteState: NoteState
   }): boolean {
     const { frame, isSignal, noteState } = params
-    return isSignal && frame.kind === 'pitched' && frame.noteName !== noteState.currentNoteName
+    const isPitched = frame.kind === 'pitched'
+    const hasChanged = isPitched && frame.noteName !== noteState.currentNoteName
+    const isDifferent = isSignal && hasChanged
+
+    return isDifferent
   }
 
   private resetPendingNoteChange(noteState: NoteState): void {
@@ -363,8 +373,8 @@ export class NoteSegmenter {
     const clearTime = undefined
     noteState.pendingNoteName = clearName
     noteState.pendingSince = clearTime
-    const isReset = noteState.pendingNoteName === undefined
 
+    const isReset = noteState.pendingNoteName === undefined
     if (!isReset) {
       throw new Error('Pending note change reset failed')
     }
