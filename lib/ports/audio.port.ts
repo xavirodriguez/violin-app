@@ -14,9 +14,12 @@ import { PitchDetectionResult } from '../pitch-detector'
  */
 export interface AudioFramePort {
   /**
-   * Retrieves the next available frame of audio data.
+   * Captures and retrieves the next available frame of audio data.
    *
    * @remarks
+   * **Side Effects**: This method typically performs a side-effect by reading
+   * from a live hardware buffer (e.g., via `getFloatTimeDomainData`).
+   *
    * **Performance & Memory**:
    * For performance reasons, many implementations (like {@link WebAudioFrameAdapter})
    * will return a reference to a pre-allocated internal buffer. Consumers should
@@ -29,7 +32,7 @@ export interface AudioFramePort {
    *
    * @returns A {@link Float32Array} of PCM samples.
    */
-  getFrame(): Float32Array
+  captureFrame(): Float32Array
 
   /**
    * The sample rate of the audio stream in Hz (e.g., 44100).

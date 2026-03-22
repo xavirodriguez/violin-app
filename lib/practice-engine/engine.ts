@@ -99,25 +99,46 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
   const reducer = ctx.reducer ?? engineReducer
   let state = getInitialEngineState(ctx.exercise)
 
-  const getOptions = () => getEngineOptions(ctx.exercise, state.perfectNoteStreak)
   const updateState = (e: PracticeEngineEvent) => (state = reducer(state, e))
+  const getOptions = () => getEngineOptions(ctx.exercise, state.perfectNoteStreak)
 
+  return buildEngineObject({
+    ctx,
+    getState: () => state,
+    updateState,
+    getOptions,
+    isRunning: () => isRunning,
+    setRunning: (val) => (isRunning = val),
+  })
+}
+
+interface EngineBuilderParams {
+  ctx: PracticeEngineContext
+  getState: () => EngineState
+  updateState: (e: PracticeEngineEvent) => void
+  getOptions: () => NoteStreamOptions
+  isRunning: () => boolean
+  setRunning: (val: boolean) => void
+}
+
+function buildEngineObject(params: EngineBuilderParams): PracticeEngine {
+  const { ctx, getState, updateState, getOptions, isRunning, setRunning } = params
   return {
     async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
-      if (isRunning) return
-      isRunning = true
+      if (isRunning()) return
+      setRunning(true)
       try {
-        const loopParams = { ctx, getState: () => state, updateState, getOptions, signal }
+        const loopParams = { ctx, getState, updateState, getOptions, signal }
         yield* runEngineLoop(loopParams)
       } finally {
-        isRunning = false
+        setRunning(false)
       }
     },
     stop() {
-      isRunning = false
+      setRunning(false)
     },
     getState() {
-      return state
+      return getState()
     },
   }
 }
@@ -169,12 +190,20 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
  * @internal
  */
 async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
-  const { ctx, getState, signal, getOptions, updateState } = params
+  const { ctx, signal } = params
   const stream = createRawPitchStream({ audioLoop: ctx.audio, detector: ctx.pitch, signal })
   const startTime = Date.now()
 
+  return yield* executeNoteLoop({ ...params, stream, startTime })
+}
+
+async function* executeNoteLoop(params: EngineRunnerParams & {
+  stream: AsyncIterable<RawPitchEvent>
+  startTime: number
+}): AsyncGenerator<PracticeEngineEvent> {
+  const { getState, signal } = params
   while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
-    yield* iterateScoreNotes({ ctx, getState, signal, getOptions, updateState, stream, startTime })
+    yield* iterateScoreNotes(params)
   }
 }
 
@@ -234,16 +263,13 @@ function setupPipeline(params: {
  * @internal
  */
 async function* processPipeline(params: PipelineParams): AsyncGenerator<PracticeEngineEvent> {
-  const { pipeline, getState, noteIndex, updateState, signal } = params
+  const { pipeline, getState, noteIndex, signal } = params
   for await (const event of pipeline) {
     if (signal.aborted) break
-    yield* handlePipelineEvent({ event, getState, noteIndex, updateState, signal })
-    const isTerminated = shouldTerminatePipeline({
-      event: mapPipelineEventToEngineEvent(event) ?? { type: 'NO_NOTE' },
-      state: getState(),
-      noteIndex,
-    })
-    if (isTerminated) break
+    yield* handlePipelineEvent({ ...params, event })
+    const currentEvent = mapPipelineEventToEngineEvent(event) ?? { type: 'NO_NOTE' }
+    const terminationParams = { event: currentEvent, state: getState(), noteIndex }
+    if (shouldTerminatePipeline(terminationParams)) break
   }
 }
 
