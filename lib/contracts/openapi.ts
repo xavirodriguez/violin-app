@@ -1,7 +1,7 @@
 import { OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi'
 import { registry } from './registry'
 
-export const generateOpenApiDocument = (): any => {
+export const generateOpenApiDocument = (): unknown => {
   const generator = new OpenApiGeneratorV3(registry.definitions)
 
   return generator.generateDocument({
@@ -15,4 +15,4 @@ export const generateOpenApiDocument = (): any => {
   })
 }
 
-export const openApiDocument: any = generateOpenApiDocument()
+export const openApiDocument: unknown = generateOpenApiDocument()

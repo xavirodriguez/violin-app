@@ -216,7 +216,8 @@ async function* technicalAnalysisWindow(params: {
   for await (const raw of source) {
     if (signal.aborted) break
     const options = resolveOptions(optionsOrGetter)
-    yield* processSourceEvents({ raw, state, segmenter, agent, context, options })
+    const procParams = { raw, state, segmenter, agent, context, options }
+    yield* processSourceEvents(procParams)
     if (signal.aborted) break
   }
 }
@@ -424,13 +425,16 @@ interface SegmentEventParams {
 
 function* handleSegmentEvents(params: SegmentEventParams): Generator<PracticeEvent> {
   const { state, event, targetNote, options, agent, currentIndex } = params
-  if (event.type === 'ONSET') {
+  const isOnset = event.type === 'ONSET'
+
+  if (isOnset) {
     state.lastGapFrames = event.gapFrames
     state.currentSegmentStart = event.timestamp
     return
   }
 
-  yield* processCompletionEvent({ state, event, targetNote, options, agent, currentIndex })
+  const completionParams = { state, event, targetNote, options, agent, currentIndex }
+  yield* processCompletionEvent(completionParams)
 }
 
 function* processCompletionEvent(params: {
@@ -504,12 +508,13 @@ function isDetectionHighQuality(params: {
 function handleSegmentCompletion(params: CompletionParams): PracticeEvent | undefined {
   const { state, event, currentTarget, options, currentIndex, agent } = params
   const segment = event.segment
-  const pitchedFrames = segment.frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+  const frames = segment.frames
+  const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
   if (pitchedFrames.length === 0) return undefined
 
-  const matchParams = { target: currentTarget, segment, pitchedFrames, options }
-  if (!currentTarget || !isValidMatch(matchParams)) {
+  const isMatched = currentTarget && isValidMatch({ target: currentTarget, segment, pitchedFrames, options })
+  if (!isMatched) {
     return undefined
   }
 
@@ -530,9 +535,17 @@ function finalizeSegmentAnalysis(params: {
     gapFrames: [...state.lastGapFrames],
     prevSegment: state.prevSegment,
   })
-  const observations = agent.generateObservations(technique)
 
   updateStateAfterCompletion(state, finalSegment)
+  return createMatchedEvent({ technique, agent })
+}
+
+function createMatchedEvent(params: {
+  technique: NoteTechnique
+  agent: TechniqueAnalysisAgent
+}): PracticeEvent {
+  const { technique, agent } = params
+  const observations = agent.generateObservations(technique)
 
   return { type: 'NOTE_MATCHED', payload: { technique, observations } }
 }

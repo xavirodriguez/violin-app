@@ -52,13 +52,24 @@ export class TechniqueAnalysisAgent {
   }): NoteTechnique {
     const { segment, gapFrames = [], prevSegment } = params
     const frames = segment.frames
-    const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const pitched = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
+    return this.buildTechniqueObject({ segment, frames, pitched, gapFrames, prevSegment })
+  }
+
+  private buildTechniqueObject(params: {
+    segment: NoteSegment
+    frames: readonly TechniqueFrame[]
+    pitched: PitchedFrame[]
+    gapFrames: ReadonlyArray<TechniqueFrame>
+    prevSegment?: NoteSegment
+  }): NoteTechnique {
+    const { segment, frames, pitched, gapFrames, prevSegment } = params
     return {
-      vibrato: this.calculateVibrato(pitchedFrames),
-      pitchStability: this.calculateStability(pitchedFrames),
+      vibrato: this.calculateVibrato(pitched),
+      pitchStability: this.calculateStability(pitched),
       attackRelease: this.calculateAttackRelease(frames),
-      resonance: this.calculateResonance(pitchedFrames),
+      resonance: this.calculateResonance(pitched),
       rhythm: this.calculateRhythm(segment),
       transition: this.calculateTransition({ gapFrames, currentFrames: frames, prevSegment }),
     }
@@ -98,8 +109,13 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateStability(frames: PitchedFrame[]): PitchStability {
-    if (frames.length === 0) return this.createEmptyStability()
+    const noFrames = frames.length === 0
+    if (noFrames) return this.createEmptyStability()
 
+    return this.computeStabilityMetrics(frames)
+  }
+
+  private computeStabilityMetrics(frames: PitchedFrame[]): PitchStability {
     const globalStd = this.calculateStdDev(frames.map((f) => f.cents)) as Cents
     const settlingStd = this.calculateSettlingStd(frames) as Cents
     const { slope: drift } = this.performLinearRegression(frames)
@@ -144,13 +160,22 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateVibrato(frames: PitchedFrame[]): VibratoMetrics {
-    if (!this.isVibratoCandidate(frames)) {
+    const isCandidate = this.isVibratoCandidate(frames)
+    if (!isCandidate) {
       return { present: false }
     }
 
     const metrics = this.computeVibratoMetrics(frames)
     const isValid = this.isVibratoValid(metrics)
 
+    return this.assembleVibratoResult({ metrics, isValid })
+  }
+
+  private assembleVibratoResult(params: {
+    metrics: { rateHz: Hz; widthCents: Cents; regularity: Ratio01 }
+    isValid: boolean
+  }): VibratoMetrics {
+    const { metrics, isValid } = params
     return {
       present: isValid,
       rateHz: isValid ? metrics.rateHz : undefined,
@@ -268,8 +293,13 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateResonance(frames: PitchedFrame[]): ResonanceMetrics {
-    if (frames.length < 10) return this.createEmptyResonance()
+    const isTooSmall = frames.length < 10
+    if (isTooSmall) return this.createEmptyResonance()
 
+    return this.computeResonanceMetrics(frames)
+  }
+
+  private computeResonanceMetrics(frames: PitchedFrame[]): ResonanceMetrics {
     const lowConfRatio = this.calculateLowConfRatio(frames)
     const rmsBeatingScore = this.calculateRmsBeatingScore(frames)
     const pitchChaosScore = this.calculateStdDev(this.detrend(frames))
@@ -351,12 +381,17 @@ export class TechniqueAnalysisAgent {
     prevSegment: NoteSegment | undefined
   }): TransitionMetrics {
     const { gapFrames, currentFrames } = params
-    const transitionTimeMs = this.calculateTransitionTime(gapFrames)
-    const glissAmountCents = this.calculateGlissAmount(gapFrames)
-    const landingErrorCents = this.calculateLandingErrorMetric(currentFrames)
-    const correctionCount = this.calculateCorrectionMetric(currentFrames)
+    const timeMs = this.calculateTransitionTime(gapFrames)
+    const glissCents = this.calculateGlissAmount(gapFrames)
+    const landingCents = this.calculateLandingErrorMetric(currentFrames)
+    const corrections = this.calculateCorrectionMetric(currentFrames)
 
-    return { transitionTimeMs, glissAmountCents, landingErrorCents, correctionCount }
+    return {
+      transitionTimeMs: timeMs,
+      glissAmountCents: glissCents,
+      landingErrorCents: landingCents,
+      correctionCount: corrections,
+    }
   }
 
   private calculateTransitionTime(gapFrames: ReadonlyArray<TechniqueFrame>): TimestampMs {

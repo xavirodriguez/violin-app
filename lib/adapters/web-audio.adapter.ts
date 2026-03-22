@@ -48,8 +48,9 @@ export class WebAudioFrameAdapter implements AudioFramePort {
    * @throws This method does not throw, but will return silent data if the
    *         hardware is unavailable.
    */
-  getFrame(): Float32Array {
-    this.analyser.getFloatTimeDomainData(this.buffer as any)
+  captureFrame(): Float32Array {
+    // @ts-expect-error - Float32Array<ArrayBufferLike> vs Float32Array<ArrayBuffer> mismatch in strict Web Audio types
+    this.analyser.getFloatTimeDomainData(this.buffer)
     return this.buffer
   }
 
@@ -129,7 +130,7 @@ export class WebAudioLoopAdapter implements AudioLoopPort {
           return
         }
 
-        onFrame(this.framePort.getFrame())
+        onFrame(this.framePort.captureFrame())
         requestAnimationFrame(loop)
       }
 

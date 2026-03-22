@@ -50,10 +50,11 @@ const defaultOptions: SegmenterOptions = {
  * @throws Error if options are invalid or inconsistent.
  */
 export function validateOptions(options: SegmenterOptions): void {
-  validateRmsOptions(options)
-  validateConfidence(options.minConfidence)
-  validateDurations(options)
-  validateBuffers(options)
+  const currentOptions = options
+  validateRmsOptions(currentOptions)
+  validateConfidence(currentOptions.minConfidence)
+  validateDurations(currentOptions)
+  validateBuffers(currentOptions)
 }
 
 function validateRmsOptions(options: SegmenterOptions): void {
@@ -198,10 +199,13 @@ export class NoteSegmenter {
     now: TimestampMs
   }): SegmenterEvent | undefined {
     const { frame, isSignalPresent, isSilence, now } = params
-    this.pushToBuffer({ buffer: this.gapFrames, frame, limit: this.options.maxGapFrames })
+    const limit = this.options.maxGapFrames
+    this.pushToBuffer({ buffer: this.gapFrames, frame, limit })
+
     if (isSignalPresent) {
       return this.processSilenceSignal({ frame: frame as PitchedFrame, now })
     }
+
     this.resetSilenceOnThreshold(isSilence, now)
     return undefined
   }
@@ -213,20 +217,35 @@ export class NoteSegmenter {
     const { frame, now } = params
     this.lastSignalTime = now
     const silenceState = this.state as SilenceState
+
+    return this.evaluateOnsetEligibility({ silenceState, frame, now })
+  }
+
+  private evaluateOnsetEligibility(params: {
+    silenceState: SilenceState
+    frame: PitchedFrame
+    now: TimestampMs
+  }): SegmenterEvent | undefined {
+    const { silenceState, frame, now } = params
     if (silenceState.lastAboveThresholdTime === undefined) {
       silenceState.lastAboveThresholdTime = now
       return undefined
     }
-    if (now - silenceState.lastAboveThresholdTime >= this.options.onsetDebounceMs) {
+
+    const elapsed = now - silenceState.lastAboveThresholdTime
+    if (elapsed >= this.options.onsetDebounceMs) {
       return this.triggerOnset({ noteName: frame.noteName, now })
     }
     return undefined
   }
 
   private resetSilenceOnThreshold(isSilence: boolean, now: TimestampMs): void {
-    const isNoisyGap =
-      this.lastSignalTime !== undefined && now - this.lastSignalTime > this.options.noisyGapResetMs
-    if (isSilence || isNoisyGap) {
+    const lastSignal = this.lastSignalTime
+    const noisyThreshold = this.options.noisyGapResetMs
+    const isNoisyGap = lastSignal !== undefined && now - lastSignal > noisyThreshold
+    const shouldReset = isSilence || isNoisyGap
+
+    if (shouldReset) {
       ;(this.state as SilenceState).lastAboveThresholdTime = undefined
     }
   }
@@ -257,7 +276,9 @@ export class NoteSegmenter {
     const framesRef = this.gapFrames
     const lastIndex = framesRef.length - 1
     const lastGapFrame = framesRef[lastIndex]!
-    this.frames = [lastGapFrame]
+    const initialNoteFrames = [lastGapFrame]
+
+    this.frames = initialNoteFrames
   }
 
   private handleNoteState(params: {
@@ -297,9 +318,11 @@ export class NoteSegmenter {
     noteState: NoteState
   }): boolean {
     const { isSignalPresent, isSilence, now, noteState } = params
-    const hasPitchDropout =
-      !isSignalPresent && now - noteState.lastSignalTime > this.options.pitchDropoutToleranceMs
-    return isSilence || hasPitchDropout
+    const dropoutThreshold = this.options.pitchDropoutToleranceMs
+    const hasPitchDropout = !isSignalPresent && now - noteState.lastSignalTime > dropoutThreshold
+    const shouldTrigger = isSilence || hasPitchDropout
+
+    return shouldTrigger
   }
 
   private resetOffsetTimer(params: {
@@ -348,7 +371,9 @@ export class NoteSegmenter {
     noteState: NoteState
   }): SegmenterEvent | undefined {
     const { frame, isSignalPresent, now, noteState } = params
-    if (this.isDifferentNoteDetected({ frame, isSignal: isSignalPresent, noteState })) {
+    const isDifferent = this.isDifferentNoteDetected({ frame, isSignal: isSignalPresent, noteState })
+
+    if (isDifferent) {
       return this.processPendingNoteChange({ frame: frame as PitchedFrame, now, noteState })
     }
     this.resetPendingNoteChange(noteState)
@@ -362,7 +387,8 @@ export class NoteSegmenter {
   }): boolean {
     const { frame, isSignal, noteState } = params
     const isPitched = frame.kind === 'pitched'
-    const hasChanged = isPitched && frame.noteName !== noteState.currentNoteName
+    const currentName = noteState.currentNoteName
+    const hasChanged = isPitched && frame.noteName !== currentName
     const isDifferent = isSignal && hasChanged
 
     return isDifferent
@@ -392,7 +418,19 @@ export class NoteSegmenter {
       return undefined
     }
 
-    if (now - (noteState.pendingSince ?? 0) >= this.options.noteChangeDebounceMs) {
+    return this.evaluateNoteChangeEligibility({ frame, now, noteState })
+  }
+
+  private evaluateNoteChangeEligibility(params: {
+    frame: PitchedFrame
+    now: TimestampMs
+    noteState: NoteState
+  }): SegmenterEvent | undefined {
+    const { frame, now, noteState } = params
+    const pendingSince = noteState.pendingSince ?? 0
+    const elapsed = now - pendingSince
+
+    if (elapsed >= this.options.noteChangeDebounceMs) {
       return this.triggerNoteChange({ frame, now, noteState })
     }
     return undefined
@@ -420,14 +458,26 @@ export class NoteSegmenter {
     const frames = Object.freeze([...this.frames])
     const startTime = frames[0]?.timestamp ?? (0 as TimestampMs)
     const endTime = frames[frames.length - 1]?.timestamp ?? (0 as TimestampMs)
+    const durationMs = (endTime - startTime) as TimestampMs
 
+    return this.assembleSegment({ frames, startTime, endTime, durationMs, noteName })
+  }
+
+  private assembleSegment(params: {
+    frames: readonly TechniqueFrame[]
+    startTime: TimestampMs
+    endTime: TimestampMs
+    durationMs: TimestampMs
+    noteName: MusicalNoteName
+  }): NoteSegment {
+    const { frames, startTime, endTime, durationMs, noteName } = params
     return {
       segmentId: `seg-${Date.now()}-${this.segmentCount++}`,
       noteIndex: 0,
       targetPitch: noteName,
       startTime,
       endTime,
-      durationMs: (endTime - startTime) as TimestampMs,
+      durationMs,
       frames,
     }
   }
