@@ -1,5 +1,5 @@
 /**
- * Sistema de logros basado en milestones de práctica
+ * Achievement system based on practice milestones
  */
 
 export interface AchievementDefinition {
@@ -18,7 +18,7 @@ export interface AchievementDefinition {
 }
 
 export interface AchievementCheckStats {
-  // Stats de sesión actual
+  // Stats for the current session
   currentSession: {
     correctNotes: number
     perfectNoteStreak: number
@@ -27,7 +27,7 @@ export interface AchievementCheckStats {
     exerciseId: string
   }
 
-  // Stats históricos
+  // Historical statistics
   totalSessions: number
   totalPracticeDays: number
   currentStreak: number
@@ -35,6 +35,8 @@ export interface AchievementCheckStats {
   exercisesCompleted: string[]
   totalPracticeTimeMs: number
   averageAccuracy: number
+  /** Cumulative number of notes completed across all sessions. */
+  totalNotesCompleted: number
 }
 
 export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
@@ -180,6 +182,20 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     condition: (stats) => stats.totalSessions >= 100,
     reward: {
       message: '100 sessions! Your dedication is inspiring.',
+      confetti: true,
+    },
+  },
+
+  {
+    id: 'notes-mastered-100',
+    name: '100 Notes Mastered',
+    description: 'Successfully play 100 notes in tune',
+    icon: '📈',
+    category: 'mastery',
+    rarity: 'rare',
+    condition: (stats) => stats.totalNotesCompleted >= 100,
+    reward: {
+      message: '100 notes in tune! You are building great muscle memory.',
       confetti: true,
     },
   },

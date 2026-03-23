@@ -1,21 +1,27 @@
-import { ACHIEVEMENT_DEFINITIONS, AchievementCheckStats } from './achievement-definitions'
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  AchievementCheckStats,
+  AchievementDefinition,
+} from './achievement-definitions'
 import type { Achievement } from '@/stores/analytics-store'
 
 /**
- * Verifica qué logros se han desbloqueado con las estadísticas actuales
+ * Identifies which achievements have been newly unlocked based on current statistics.
+ *
+ * @param params - The stats and already unlocked IDs.
+ * @returns An array of newly unlocked {@link Achievement} objects.
  */
-export function checkAchievements(
-  stats: AchievementCheckStats,
-  unlockedAchievementIds: string[],
-): Achievement[] {
+export function checkAchievements(params: {
+  stats: AchievementCheckStats
+  unlockedAchievementIds: string[]
+}): Achievement[] {
+  const { stats, unlockedAchievementIds } = params
   const newlyUnlocked: Achievement[] = []
 
   for (const def of ACHIEVEMENT_DEFINITIONS) {
-    // Saltar si ya está desbloqueado
-    if (unlockedAchievementIds.includes(def.id)) continue
+    const isEligible = isEligibleForUnlock({ def, stats, unlockedAchievementIds })
 
-    // Verificar condición
-    if (def.condition(stats)) {
+    if (isEligible) {
       newlyUnlocked.push({
         id: def.id,
         name: def.name,
@@ -30,23 +36,52 @@ export function checkAchievements(
 }
 
 /**
- * Obtiene la definición completa de un logro por ID
+ * Determines if an achievement definition is eligible to be unlocked.
+ * @internal
  */
-export function getAchievementDefinition(id: string) {
-  return ACHIEVEMENT_DEFINITIONS.find((def) => def.id === id)
+function isEligibleForUnlock(params: {
+  def: AchievementDefinition
+  stats: AchievementCheckStats
+  unlockedAchievementIds: string[]
+}): boolean {
+  const { def, stats, unlockedAchievementIds } = params
+  const alreadyUnlocked = unlockedAchievementIds.includes(def.id)
+  const conditionMet = def.condition(stats)
+  const isEligible = !alreadyUnlocked && conditionMet
+
+  return isEligible
 }
 
 /**
- * Obtiene todos los logros disponibles agrupados por categoría
+ * Retrieves the full definition of an achievement by its unique identifier.
+ *
+ * @param id - The achievement ID to look up.
+ * @returns The definition object or undefined if not found.
  */
-export function getAllAchievementsByCategory() {
-  const grouped: Record<string, typeof ACHIEVEMENT_DEFINITIONS> = {}
+export function getAchievementDefinition(id: string): AchievementDefinition | undefined {
+  const definitions = ACHIEVEMENT_DEFINITIONS
+  const targetId = id
+  const result = definitions.find((def) => def.id === targetId)
+  const finalResult = result ?? undefined
 
-  for (const achievement of ACHIEVEMENT_DEFINITIONS) {
-    if (!grouped[achievement.category]) {
-      grouped[achievement.category] = []
+  return finalResult
+}
+
+/**
+ * Groups all available achievements by their respective categories.
+ *
+ * @returns A record mapping category names to arrays of definitions.
+ */
+export function getAllAchievementsByCategory(): Record<string, AchievementDefinition[]> {
+  const grouped: Record<string, AchievementDefinition[]> = {}
+  const allDefinitions = ACHIEVEMENT_DEFINITIONS
+
+  for (const achievement of allDefinitions) {
+    const category = achievement.category
+    if (!grouped[category]) {
+      grouped[category] = []
     }
-    grouped[achievement.category].push(achievement)
+    grouped[category].push(achievement)
   }
 
   return grouped
