@@ -8,273 +8,117 @@ import { analytics } from '@/lib/analytics-tracker'
 
 /**
  * Data model for a completed practice session.
- *
- * @remarks
- * This model captures the summarized outcome of a session once it has
- * finished. It is used for history tracking and skill calculation.
- *
- * @public
  */
 export interface PracticeSession {
-  /** Unique session identifier (UUID). */
   id: string
-  /** Unix timestamp when the session started. */
   startTimeMs: number
-  /** Unix timestamp when the session ended. */
   endTimeMs: number
-  /** Total duration in milliseconds. */
   durationMs: number
-  /** ID of the exercise practiced. */
   exerciseId: string
-  /** Name of the exercise. */
   exerciseName: string
-  /** Mode of the session ('tuner' or 'practice'). */
   mode: 'tuner' | 'practice'
-  /** Total number of pitch analysis frames processed. */
   notesAttempted: number
-  /** Total number of notes successfully matched. */
   notesCompleted: number
-  /** Overall accuracy percentage (0-100). */
   accuracy: number
-  /** Overall average pitch deviation in cents. */
   averageCents: number
-  /** Detailed results for each note played during the session. */
   noteResults: NoteResult[]
 }
 
-/**
- * Metric summary for an individual note within a session.
- *
- * @internal
- */
-interface NoteResult {
-  /** Index of the note in the exercise. */
+/** @internal */
+export interface NoteResult {
   noteIndex: number
-  /** Expected scientific pitch name (e.g., "A4"). */
   targetPitch: string
-  /** Number of attempts/frames spent on this note. */
   attempts: number
-  /** Time taken to complete the note in milliseconds. */
   timeToCompleteMs: number
-  /** Average cents deviation for this note. */
   averageCents: number
-  /** Whether the note was eventually played in-tune. */
   wasInTune: boolean
-  /** Detected technique metrics (rhythm, attack, etc.). */
   technique?: NoteTechnique
 }
 
 /**
  * Long-term progress and skill model for the user.
- *
- * @remarks
- * This object is the primary target for local persistence. It tracks the
- * user's growth over time across different technical domains.
- *
- * @public
  */
 export interface UserProgress {
-  /** Unique user identifier. */
   userId: string
-  /** Count of all sessions ever started. */
   totalPracticeSessions: number
-  /** Lifetime practice time in seconds. */
   totalPracticeTime: number
-  /** List of IDs for exercises that have been completed at least once. */
   exercisesCompleted: Exercise['id'][]
-  /** Consecutive days practiced. */
   currentStreak: number
-  /** Highest streak ever achieved by the user. */
   longestStreak: number
-  /** Normalized skill level for intonation (0-100), based on accuracy trends. */
   intonationSkill: number
-  /** Normalized skill level for rhythm (0-100), based on timing precision. */
   rhythmSkill: number
-  /** Combined overall skill level (0-100). */
   overallSkill: number
-  /** List of unlocked achievements and milestones. */
   achievements: Achievement[]
-  /** Map of per-exercise lifetime statistics, indexed by exercise ID. */
   exerciseStats: Record<string, ExerciseStats>
 }
 
-/**
- * Persistent statistics for a specific exercise.
- *
- * @internal
- */
-interface ExerciseStats {
-  /** ID of the exercise. */
+/** @internal */
+export interface ExerciseStats {
   exerciseId: string
-  /** Number of times this exercise was completed. */
   timesCompleted: number
-  /** Highest accuracy ever achieved on this exercise. */
   bestAccuracy: number
-  /** Rolling average of accuracy across all attempts. */
   averageAccuracy: number
-  /** Fastest completion time recorded for this exercise. */
   fastestCompletionMs: number
-  /** Unix timestamp of the last time this exercise was practiced. */
   lastPracticedMs: number
 }
 
 /**
  * Represents a musical achievement or milestone earned by the user.
- *
- * @public
  */
 export interface Achievement {
-  /** Unique achievement ID. */
   id: string
-  /** Display name. */
   name: string
-  /** Description of the criteria met to earn this achievement. */
   description: string
-  /** Icon or emoji representation for the UI. */
   icon: string
-  /** Unix timestamp of when it was unlocked. */
   unlockedAtMs: number
+}
+
+/** Parameters for recording a note attempt. */
+export interface RecordAttemptParams {
+  noteIndex: number
+  targetPitch: string
+  cents: number
+  wasInTune: boolean
+}
+
+/** Parameters for recording a note completion. */
+export interface RecordCompletionParams {
+  noteIndex: number
+  timeToCompleteMs: number
+  technique?: NoteTechnique
 }
 
 /**
  * Interface for the Analytics Store, managing long-term progress and session history.
- *
- * @remarks
- * This store coordinates the persistence of user data and the calculation
- * of pedagogical metrics.
- *
- * @public
  */
 export interface AnalyticsStore {
-  /** The session currently being recorded, if any. */
   currentSession: PracticeSession | undefined
-  /** History of the last 100 completed sessions. */
   sessions: PracticeSession[]
-  /** Aggregated user progress, skill levels, and achievements. */
   progress: UserProgress
-  /** Optional callback for when a new achievement is unlocked (used for toasts/animations). */
   onAchievementUnlocked?: (achievement: Achievement) => void
-
-  /**
-   * Initializes a new practice session recording.
-   *
-   * @remarks
-   * Resets the `currentSession` state and tracks the start event.
-   *
-   * @param exerciseId - The ID of the exercise to practice.
-   * @param exerciseName - The display name of the exercise.
-   * @param mode - The session mode.
-   */
-  startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
-
-  /**
-   * Finalizes the current session, updates lifetime stats, and checks for achievements.
-   *
-   * @remarks
-   * This is a multi-step process that:
-   * 1. **Persistence**: Updates per-exercise `ExerciseStats` with new accuracy and timing data.
-   * 2. **Consistency**: Updates the user's daily practice streak.
-   * 3. **Pedagogy**: Recalculates intonation and rhythm skill levels based on new history.
-   * 4. **Gamification**: Checks for and unlocks any new achievements earned.
-   * 5. **Cleanup**: Clears the `currentSession` to ready the store for the next session.
-   *
-   * @returns The completed {@link PracticeSession} summary.
-   */
-  endSession: () => void
-
-  /**
-   * Records a pitch detection attempt for the current active session.
-   *
-   * @remarks
-   * High-frequency call that updates rolling averages for the current note.
-   *
-   * @param noteIndex - Index of the note being played.
-   * @param targetPitch - Expected pitch name.
-   * @param cents - Deviation in cents.
-   * @param wasInTune - Whether the attempt met the tolerance threshold.
-   */
-  recordNoteAttempt: (
-    noteIndex: number,
-    targetPitch: string,
-    cents: number,
-    wasInTune: boolean,
-  ) => void
-
-  /**
-   * Records the successful completion of a note.
-   *
-   * @remarks
-   * Updates the session progress and triggers achievement checks for streaks.
-   *
-   * @param noteIndex - Index of the note.
-   * @param timeToCompleteMs - Time taken to hold the note in tune.
-   * @param technique - Detected technique details (e.g., rhythm metrics).
-   */
-  recordNoteCompletion: (
-    noteIndex: number,
-    timeToCompleteMs: number,
-    technique?: NoteTechnique,
-  ) => void
-
-  /**
-   * Evaluates current user stats against defined achievement criteria.
-   *
-   * @remarks
-   * If new achievements are found, they are added to the progress state and
-   * the `onAchievementUnlocked` callback is triggered.
-   */
-  checkAndUnlockAchievements: () => void
-
-  /**
-   * Current streak of notes played with high accuracy (`< 5` cents) in the current session.
-   */
   currentPerfectStreak: number
 
-  /**
-   * Retrieves a filtered history of sessions within a time window.
-   *
-   * @param days - Number of days to look back. Defaults to 7.
-   * @returns Filtered session array.
-   */
+  startSession: (exerciseId: string, exerciseName: string, mode: 'tuner' | 'practice') => void
+  endSession: () => void
+  recordNoteAttempt: (noteIndex: number, targetPitch: string, cents: number, wasInTune: boolean) => void
+  recordNoteCompletion: (noteIndex: number, timeToCompleteMs: number, technique?: NoteTechnique) => void
+  checkAndUnlockAchievements: () => void
   getSessionHistory: (days?: number) => PracticeSession[]
-
-  /**
-   * Gets the persistent statistics for a specific exercise.
-   *
-   * @param exerciseId - The ID to look up.
-   * @returns The stats object or undefined if never practiced.
-   */
   getExerciseStats: (exerciseId: string) => ExerciseStats | undefined
-
-  /**
-   * Calculates aggregated performance stats for the current calendar day.
-   *
-   * @returns Summary of duration, accuracy, and session count.
-   */
   getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
-
-  /**
-   * Returns current and longest practice streaks.
-   */
   getStreakInfo: () => { current: number; longest: number }
 }
 
 const DAY_MS = 86_400_000
 
-/**
- * Normalizes a timestamp to the beginning of the day.
- * @internal
- */
+/** @internal */
 function startOfDayMs(ms: number): number {
   const d = new Date(ms)
   d.setHours(0, 0, 0, 0)
   return d.getTime()
 }
 
-/**
- * Coerces unknown values into a numeric timestamp in milliseconds.
- * @internal
- */
+/** @internal */
 function toMs(value: unknown): number {
   if (typeof value === 'number') return value
   if (value instanceof Date) return value.getTime()
@@ -286,23 +130,7 @@ function toMs(value: unknown): number {
 }
 
 /**
- * Zustand store for persistent analytics, progress tracking, and achievement management.
- *
- * @remarks
- * This store uses `persist` middleware to save user progress to local storage.
- *
- * **Key Features**:
- * 1. **Session Lifecycle**: Handles the transition from active recording to historical data.
- * 2. **Skill Level Heuristics**: Calculates normalized intonation and rhythm scores based on recent performance trends.
- * 3. **Daily Streaks**: Tracks consistency using a rolling 24-hour window.
- * 4. **Schema Migrations**: Implements robust logic for handling legacy data formats (versions 1-3) during rehydration.
- *
- * @example
- * ```ts
- * const { progress, endSession } = useAnalyticsStore();
- * ```
- *
- * @public
+ * Zustand store for persistent analytics and progress tracking.
  */
 export const useAnalyticsStore = create<AnalyticsStore>()(
   persist<AnalyticsStore, [], [], Pick<AnalyticsStore, 'sessions' | 'progress'>>(
@@ -349,40 +177,11 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const { currentSession, sessions, progress } = get()
         if (currentSession === undefined) return
 
-        const endTimeMs = Date.now()
-        const durationMs = endTimeMs - currentSession.startTimeMs
-        const completedSession: PracticeSession = { ...currentSession, endTimeMs, durationMs }
+        const completedSession = finalizeSessionData(currentSession)
         const newSessions = [completedSession, ...sessions]
+        const newProgress = getUpdatedProgress(progress, completedSession, sessions)
 
-        const nextExerciseStats = updateExerciseStats(
-          progress.exerciseStats,
-          currentSession.exerciseId,
-          completedSession.accuracy,
-          durationMs,
-          endTimeMs,
-        )
-
-        const newProgress: UserProgress = {
-          ...progress,
-          totalPracticeSessions: progress.totalPracticeSessions + 1,
-          totalPracticeTime: progress.totalPracticeTime + Math.floor(durationMs / 1000),
-          exerciseStats: nextExerciseStats,
-          exercisesCompleted: progress.exercisesCompleted.includes(currentSession.exerciseId)
-            ? progress.exercisesCompleted
-            : [...progress.exercisesCompleted, currentSession.exerciseId],
-        }
-
-        updateStreak(newProgress, sessions)
-        calculateSkills(newProgress, newSessions)
-
-        analytics.track('practice_session_completed', {
-          exerciseId: currentSession.exerciseId,
-          durationMs,
-          accuracy: completedSession.accuracy,
-        })
-
-        const newAchievements = checkLegacyAchievements(newProgress, completedSession, newSessions)
-        newProgress.achievements = [...progress.achievements, ...newAchievements]
+        trackCompletionAnalytics(completedSession)
 
         set({
           currentSession: undefined,
@@ -394,29 +193,22 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
         set((state) => {
           const prevSession = state.currentSession
-          if (!prevSession) return state
+          if (prevSession === undefined) return state
 
-          const nextNoteResults = updateNoteResults(
-            prevSession.noteResults,
-            noteIndex,
-            targetPitch,
-            cents,
-            wasInTune,
-          )
+          const params = { noteIndex, targetPitch, cents, wasInTune }
+          const nextNoteResults = updateNoteResults({
+            noteResults: prevSession.noteResults,
+            ...params,
+          })
 
-          const inTuneNotes = nextNoteResults.filter((nr) => nr.wasInTune).length
-          const accuracy =
-            nextNoteResults.length > 0 ? (inTuneNotes / nextNoteResults.length) * 100 : 0
-          const totalCents = nextNoteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
-          const averageCents = nextNoteResults.length > 0 ? totalCents / nextNoteResults.length : 0
+          const summary = calculateSessionSummary(nextNoteResults)
 
           return {
             currentSession: {
               ...prevSession,
               notesAttempted: prevSession.notesAttempted + 1,
               noteResults: nextNoteResults,
-              accuracy,
-              averageCents,
+              ...summary,
             },
           }
         })
@@ -424,26 +216,21 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       recordNoteCompletion: (noteIndex, timeToCompleteMs, technique) => {
         const state = get()
-        if (!state.currentSession) return
+        if (state.currentSession === undefined) return
 
         const noteResult = state.currentSession.noteResults.find((nr) => nr.noteIndex === noteIndex)
-        // Pedagogy: a "perfect" note is within 5 cents
-        const wasPerfect = noteResult && Math.abs(noteResult.averageCents) < 5
+        const wasPerfect = noteResult !== undefined && Math.abs(noteResult.averageCents) < 5
+        const newPerfectStreak = wasPerfect ? state.currentPerfectStreak + 1 : 0
 
-        // Update streak
-        const newStreak = wasPerfect ? state.currentPerfectStreak + 1 : 0
-        if (newStreak > 0 && newStreak % 5 === 0) {
-          analytics.track('perfect_note_streak', { streak_length: newStreak })
-        }
+        handleStreakMilestones(newPerfectStreak)
 
         set((state) => {
           const prevSession = state.currentSession
-          if (!prevSession) return state
-          const nextNoteResults = prevSession.noteResults.map((nr) =>
-            nr.noteIndex === noteIndex ? { ...nr, timeToCompleteMs, technique } : nr,
-          )
+          if (prevSession === undefined) return state
+          const params = { noteIndex, timeToCompleteMs, technique }
+          const nextNoteResults = updateCompletedNote(prevSession.noteResults, params)
           return {
-            currentPerfectStreak: newStreak,
+            currentPerfectStreak: newPerfectStreak,
             currentSession: {
               ...prevSession,
               notesCompleted: prevSession.notesCompleted + 1,
@@ -452,54 +239,19 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           }
         })
 
-        // Check achievements after each completed note
         get().checkAndUnlockAchievements()
       },
 
       checkAndUnlockAchievements: () => {
         const state = get()
-        if (!state.currentSession) return
+        if (state.currentSession === undefined) return
 
-        // Build stats for checker
-        const stats: AchievementCheckStats = {
-          currentSession: {
-            correctNotes: state.currentSession.notesCompleted,
-            perfectNoteStreak: state.currentPerfectStreak,
-            accuracy: state.currentSession.accuracy,
-            durationMs: Date.now() - state.currentSession.startTimeMs,
-            exerciseId: state.currentSession.exerciseId,
-          },
-          totalSessions: state.sessions.length,
-          totalPracticeDays: calculatePracticeDays(state.sessions),
-          currentStreak: state.progress.currentStreak,
-          longestStreak: state.progress.longestStreak,
-          exercisesCompleted: state.progress.exercisesCompleted || [],
-          totalPracticeTimeMs: state.progress.totalPracticeTime * 1000,
-          averageAccuracy: state.progress.overallSkill,
-        }
-
-        // Get IDs of already unlocked achievements
+        const stats = buildAchievementStats(state)
         const unlockedIds = state.progress.achievements.map((a) => a.id)
-
-        // Check for new achievements
-        const newAchievements = checkAchievements(stats, unlockedIds)
+        const newAchievements = checkAchievements({ stats, unlockedAchievementIds: unlockedIds })
 
         if (newAchievements.length > 0) {
-          set((state) => ({
-            progress: {
-              ...state.progress,
-              achievements: [...state.progress.achievements, ...newAchievements],
-            },
-          }))
-
-          // Notify each newly unlocked achievement
-          newAchievements.forEach((achievement) => {
-            state.onAchievementUnlocked?.(achievement)
-            analytics.track('achievement_unlocked', {
-              achievementId: achievement.id,
-              achievementName: achievement.name,
-            })
-          })
+          processNewAchievements(set, state, newAchievements)
         }
       },
 
@@ -542,96 +294,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       version: 3,
       migrate: (persisted: unknown, version: number) => {
         if (!persisted) return persisted as AnalyticsStore
-        const persistedData = persisted as Record<string, unknown>
-        if (version < 3) {
-          if (Array.isArray(persistedData.sessions)) {
-            persistedData.sessions = persistedData.sessions.map((s: unknown) => {
-              const session = s as Record<string, unknown>
-              const { duration, ...rest } = session || {}
-              return {
-                ...rest,
-                durationMs: ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000,
-                noteResults: Array.isArray(session.noteResults)
-                  ? session.noteResults.map((nr: unknown) => {
-                      const noteResult = nr as Record<string, unknown>
-                      const { timeToComplete, ...nrRest } = noteResult || {}
-                      return {
-                        ...nrRest,
-                        timeToCompleteMs:
-                          (noteResult.timeToCompleteMs as number) ??
-                          (timeToComplete as number) ??
-                          0,
-                      }
-                    })
-                  : [],
-              }
-            })
-          }
-          const progress = persistedData.progress as Record<string, unknown> | undefined
-          if (progress?.exerciseStats) {
-            Object.values(
-              progress.exerciseStats as Record<string, Record<string, unknown>>,
-            ).forEach((stats) => {
-              if (
-                stats.fastestCompletion !== undefined &&
-                stats.fastestCompletionMs === undefined
-              ) {
-                stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
-                delete stats.fastestCompletion
-              }
-            })
-          }
-        }
-
-        const sessions = Array.isArray(persistedData.sessions)
-          ? persistedData.sessions.map((s: unknown) => {
-              const session = s as Record<string, unknown>
-              const { startTime, endTime, ...rest } = session || {}
-              return {
-                ...rest,
-                startTimeMs: toMs(session?.startTimeMs ?? startTime),
-                endTimeMs: toMs(session?.endTimeMs ?? endTime),
-              }
-            })
-          : []
-
-        const progress = (persistedData.progress as Record<string, unknown>) || {}
-        const achievements = Array.isArray(progress.achievements)
-          ? progress.achievements.map((a: unknown) => {
-              const achievement = a as Record<string, unknown>
-              const { unlockedAt, ...rest } = achievement || {}
-              return {
-                ...rest,
-                unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
-              }
-            })
-          : []
-
-        const exerciseStats =
-          (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
-        const migratedExerciseStats = Object.fromEntries(
-          Object.entries(exerciseStats).map(([k, v]) => {
-            const stats = v as Record<string, unknown>
-            const { lastPracticed, ...rest } = stats || {}
-            return [
-              k,
-              {
-                ...rest,
-                lastPracticedMs: toMs(stats?.lastPracticedMs ?? lastPracticed),
-              },
-            ]
-          }),
-        )
-
-        return {
-          ...persistedData,
-          sessions,
-          progress: {
-            ...progress,
-            achievements,
-            exerciseStats: migratedExerciseStats,
-          },
-        } as AnalyticsStore
+        return migratePersistence(persisted, version)
       },
       partialize: (state) => ({
         sessions: state.sessions,
@@ -641,41 +304,137 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
   ),
 )
 
-/**
- * Calculates a normalized skill level for intonation based on recent sessions.
- *
- * @remarks
- * **Algorithm**:
- * - Takes the last 10 sessions (windowed analysis).
- * - Calculates a base `avgAccuracy` across the window.
- * - Applies a `trend` factor: the difference between the most recent 5 sessions
- *   and the 5 before them.
- * - Result is clamped between 0 and 100.
- *
- * @param sessions - History of completed sessions.
- * @returns Normalized skill score (0-100).
- * @internal
- */
+function finalizeSessionData(session: PracticeSession): PracticeSession {
+  const endTimeMs = Date.now()
+  const durationMs = endTimeMs - session.startTimeMs
+  const finalized: PracticeSession = { ...session, endTimeMs, durationMs }
+
+  return finalized
+}
+
+function getUpdatedProgress(
+  progress: UserProgress,
+  completedSession: PracticeSession,
+  sessions: PracticeSession[],
+): UserProgress {
+  const nextExerciseStats = updateExerciseStats(
+    progress.exerciseStats,
+    completedSession.exerciseId,
+    completedSession.accuracy,
+    completedSession.durationMs,
+    completedSession.endTimeMs,
+  )
+
+  const newProgress: UserProgress = {
+    ...progress,
+    totalPracticeSessions: progress.totalPracticeSessions + 1,
+    totalPracticeTime: progress.totalPracticeTime + Math.floor(completedSession.durationMs / 1000),
+    exerciseStats: nextExerciseStats,
+    exercisesCompleted: progress.exercisesCompleted.includes(completedSession.exerciseId)
+      ? progress.exercisesCompleted
+      : [...progress.exercisesCompleted, completedSession.exerciseId],
+  }
+
+  updateStreak(newProgress, sessions)
+  const allSessions = [completedSession, ...sessions]
+  calculateSkills(newProgress, allSessions)
+
+  return newProgress
+}
+
+function trackCompletionAnalytics(session: PracticeSession): void {
+  analytics.track('practice_session_completed', {
+    exerciseId: session.exerciseId,
+    durationMs: session.durationMs,
+    accuracy: session.accuracy,
+  })
+}
+
+function calculateSessionSummary(noteResults: NoteResult[]) {
+  const inTuneNotes = noteResults.filter((nr) => nr.wasInTune).length
+  const accuracy = noteResults.length > 0 ? (inTuneNotes / noteResults.length) * 100 : 0
+  const totalCents = noteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
+  const averageCents = noteResults.length > 0 ? totalCents / noteResults.length : 0
+
+  return { accuracy, averageCents }
+}
+
+function handleStreakMilestones(streak: number): void {
+  const isMilestone = streak > 0 && streak % 5 === 0
+  if (isMilestone) {
+    analytics.track('perfect_note_streak', { streak_length: streak })
+  }
+}
+
+function updateCompletedNote(noteResults: NoteResult[], params: RecordCompletionParams): NoteResult[] {
+  const { noteIndex, timeToCompleteMs, technique } = params
+  const results = noteResults.map((nr) =>
+    nr.noteIndex === noteIndex ? { ...nr, timeToCompleteMs, technique } : nr,
+  )
+
+  return results
+}
+
+function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
+  const { currentSession, currentPerfectStreak, sessions, progress } = state
+  if (currentSession === undefined) {
+    throw new Error('Cannot build achievement stats without active session')
+  }
+
+  const totalCompleted = sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
+  const totalNotesCompleted = totalCompleted + currentSession.notesCompleted
+
+  return {
+    currentSession: {
+      correctNotes: currentSession.notesCompleted,
+      perfectNoteStreak: currentPerfectStreak,
+      accuracy: currentSession.accuracy,
+      durationMs: Date.now() - currentSession.startTimeMs,
+      exerciseId: currentSession.exerciseId,
+    },
+    totalSessions: sessions.length,
+    totalPracticeDays: calculatePracticeDays(sessions),
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
+    exercisesCompleted: progress.exercisesCompleted || [],
+    totalPracticeTimeMs: progress.totalPracticeTime * 1000,
+    averageAccuracy: progress.overallSkill,
+    totalNotesCompleted,
+  }
+}
+
+function processNewAchievements(
+  set: (update: Partial<AnalyticsStore> | ((s: AnalyticsStore) => Partial<AnalyticsStore>)) => void,
+  state: AnalyticsStore,
+  newAchievements: Achievement[],
+): void {
+  set((prev) => ({
+    progress: {
+      ...prev.progress,
+      achievements: [...prev.progress.achievements, ...newAchievements],
+    },
+  }))
+
+  newAchievements.forEach((achievement) => {
+    state.onAchievementUnlocked?.(achievement)
+    analytics.track('achievement_unlocked', {
+      achievementId: achievement.id,
+      achievementName: achievement.name,
+    })
+  })
+}
+
 function calculateIntonationSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
-  const avgAccuracy = recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length
-  const trend =
-    recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
-  return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
+  const totalAcc = recentSessions.reduce((sum, s) => sum + s.accuracy, 0)
+  const avgAccuracy = totalAcc / recentSessions.length
+  const trend = recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
+  const skill = Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
+
+  return skill
 }
 
-/**
- * Updates persistent lifetime statistics for a specific exercise.
- *
- * @param exerciseStats - Current exercise stats map.
- * @param exerciseId - Target exercise ID.
- * @param accuracy - Accuracy achieved in the latest attempt.
- * @param durationMs - Time taken to complete.
- * @param endTimeMs - Completion timestamp.
- * @returns Updated exercise stats map.
- * @internal
- */
 function updateExerciseStats(
   exerciseStats: Record<string, ExerciseStats>,
   exerciseId: string,
@@ -698,16 +457,6 @@ function updateExerciseStats(
   return { ...exerciseStats, [exerciseId]: updated }
 }
 
-/**
- * Updates the user's daily practice streak based on the latest activity.
- *
- * @remarks
- * A streak is maintained if the user practices at least once every calendar day.
- *
- * @param progress - The user progress object to mutate.
- * @param sessions - Session history for context.
- * @internal
- */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
   const lastSession = sessions[0]
@@ -722,94 +471,37 @@ function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   }
 }
 
-/**
- * Recalculates all high-level skill metrics for the user.
- *
- * @param progress - The user progress object to update.
- * @param sessions - Recent session history.
- * @internal
- */
 function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
   progress.intonationSkill = calculateIntonationSkill(sessions)
   progress.rhythmSkill = calculateRhythmSkill(sessions)
-  progress.overallSkill = Math.round((progress.intonationSkill + progress.rhythmSkill) / 2)
+  const overall = Math.round((progress.intonationSkill + progress.rhythmSkill) / 2)
+  progress.overallSkill = overall
 }
 
-/**
- * Calculates the total number of unique calendar days practiced.
- *
- * @param sessions - Full session history.
- * @returns Count of unique days.
- * @internal
- */
 function calculatePracticeDays(sessions: PracticeSession[]): number {
-  const uniqueDays = new Set(sessions.map((s) => new Date(s.endTimeMs).toDateString()))
+  const dates = sessions.map((s) => new Date(s.endTimeMs).toDateString())
+  const uniqueDays = new Set(dates)
+
   return uniqueDays.size
 }
 
-/**
- * Helper to update the note results array with a new attempt.
- *
- * @remarks
- * Implements an incremental average calculation for cents deviation.
- *
- * @param noteResults - Current results array.
- * @param noteIndex - Target note index.
- * @param targetPitch - Scientific pitch name.
- * @param cents - Pitch deviation in cents.
- * @param wasInTune - Whether the note was played in tune.
- * @returns New results array.
- * @internal
- */
-function updateNoteResults(
-  noteResults: NoteResult[],
-  noteIndex: number,
-  targetPitch: string,
-  cents: number,
-  wasInTune: boolean,
-): NoteResult[] {
+function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResult[] }): NoteResult[] {
+  const { noteResults, noteIndex, targetPitch, cents, wasInTune } = params
   const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
   if (existing) {
     return noteResults.map((nr) => {
       if (nr.noteIndex !== noteIndex) return nr
       const nextAttempts = nr.attempts + 1
       const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
-      return {
-        ...nr,
-        targetPitch,
-        attempts: nextAttempts,
-        averageCents: nextAverageCents,
-        wasInTune,
-      }
+      return { ...nr, targetPitch, attempts: nextAttempts, averageCents: nextAverageCents, wasInTune }
     })
   }
   return [
     ...noteResults,
-    {
-      noteIndex,
-      targetPitch,
-      attempts: 1,
-      timeToCompleteMs: 0,
-      averageCents: cents,
-      wasInTune,
-    },
+    { noteIndex, targetPitch, attempts: 1, timeToCompleteMs: 0, averageCents: cents, wasInTune },
   ]
 }
 
-/**
- * Calculates a normalized skill level for rhythm based on recent sessions.
- *
- * @remarks
- * **Algorithm**:
- * - Aggregates all note results from the last 10 sessions.
- * - Calculates Mean Absolute Error (MAE) of rhythmic onsets.
- * - Calculates the percentage of notes played within a "Professional" window (`<= 40ms`).
- * - Combined score: `(maeScore + percentInWindow) / 2`.
- *
- * @param sessions - Recent session history.
- * @returns Normalized rhythm score (0-100).
- * @internal
- */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
@@ -834,55 +526,80 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
   return Math.round(score)
 }
 
-/**
- * Checks for legacy achievements based on session outcomes.
- *
- * @remarks
- * This function handles simple achievements that don't require the full
- * asynchronous `achievement-checker` logic.
- *
- * @param progress - Current user progress.
- * @param session - The latest completed session.
- * @param allSessions - History of all sessions.
- * @returns Array of newly unlocked achievements.
- * @internal
- */
-function checkLegacyAchievements(
-  progress: UserProgress,
-  session: PracticeSession,
-  allSessions: PracticeSession[],
-): Achievement[] {
-  const achievements: Achievement[] = []
-  if (session.accuracy === 100 && !progress.achievements.find((a) => a.id === 'first-perfect')) {
-    achievements.push({
-      id: 'first-perfect',
-      name: 'First Perfect Scale',
-      description: 'Completed a scale with 100% accuracy!',
-      icon: '🎯',
-      unlockedAtMs: Date.now(),
-    })
+function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
+  const persistedData = persisted as Record<string, unknown>
+  if (version < 3) {
+    migrateV1V2(persistedData)
   }
-  if (progress.currentStreak === 7 && !progress.achievements.find((a) => a.id === 'week-streak')) {
-    achievements.push({
-      id: 'week-streak',
-      name: '7-Day Streak',
-      description: 'Practiced for 7 days in a row!',
-      icon: '🔥',
-      unlockedAtMs: Date.now(),
-    })
-  }
-  const totalNotesCompleted = allSessions.reduce(
-    (sum: number, s: PracticeSession) => sum + s.notesCompleted,
-    0,
+
+  const sessions = Array.isArray(persistedData.sessions)
+    ? persistedData.sessions.map((s: unknown) => {
+        const session = s as Record<string, unknown>
+        const { startTime, endTime, ...rest } = session || {}
+        return {
+          ...rest,
+          startTimeMs: toMs(session?.startTimeMs ?? startTime),
+          endTimeMs: toMs(session?.endTimeMs ?? endTime),
+        }
+      })
+    : []
+
+  const progress = (persistedData.progress as Record<string, unknown>) || {}
+  const achievements = Array.isArray(progress.achievements)
+    ? progress.achievements.map((a: unknown) => {
+        const achievement = a as Record<string, unknown>
+        const { unlockedAt, ...rest } = achievement || {}
+        return {
+          ...rest,
+          unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
+        }
+      })
+    : []
+
+  const exerciseStats = (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
+  const migratedExerciseStats = Object.fromEntries(
+    Object.entries(exerciseStats).map(([k, v]) => {
+      const stats = v as Record<string, unknown>
+      const { lastPracticed, ...rest } = stats || {}
+      return [k, { ...rest, lastPracticedMs: toMs(stats?.lastPracticedMs ?? lastPracticed) }]
+    }),
   )
-  if (totalNotesCompleted >= 100 && !progress.achievements.find((a) => a.id === '100-notes')) {
-    achievements.push({
-      id: '100-notes',
-      name: '100 Notes Mastered',
-      description: 'Successfully played 100 notes in tune!',
-      icon: '📈',
-      unlockedAtMs: Date.now(),
+
+  return {
+    ...persistedData,
+    sessions,
+    progress: { ...progress, achievements, exerciseStats: migratedExerciseStats },
+  } as AnalyticsStore
+}
+
+function migrateV1V2(data: Record<string, unknown>): void {
+  if (Array.isArray(data.sessions)) {
+    data.sessions = data.sessions.map((s: unknown) => {
+      const session = s as Record<string, unknown>
+      const { duration, ...rest } = session || {}
+      return {
+        ...rest,
+        durationMs: ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000,
+        noteResults: Array.isArray(session.noteResults)
+          ? session.noteResults.map((nr: unknown) => {
+              const noteResult = nr as Record<string, unknown>
+              const { timeToComplete, ...nrRest } = noteResult || {}
+              return {
+                ...nrRest,
+                timeToCompleteMs: (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0,
+              }
+            })
+          : [],
+      }
     })
   }
-  return achievements
+  const progress = data.progress as Record<string, unknown> | undefined
+  if (progress?.exerciseStats) {
+    Object.values(progress.exerciseStats as Record<string, Record<string, unknown>>).forEach((stats) => {
+      if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
+        stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
+        delete stats.fastestCompletion
+      }
+    })
+  }
 }
