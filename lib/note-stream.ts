@@ -120,17 +120,27 @@ function pushFrameToQueue(params: {
  */
 async function waitForFrame(state: StreamState, signal: AbortSignal): Promise<void> {
   if (state.queue.length > 0 || signal.aborted) return
-  await new Promise<void>((resolve) => {
-    state.resolver = resolve
-    signal.addEventListener(
-      'abort',
-      () => {
-        state.resolver = undefined
-        resolve()
-      },
-      { once: true },
-    )
+
+  const { promise, resolve } = createSignalPromise(state)
+  const abortHandler = () => {
+    state.resolver = undefined
+    resolve()
+  }
+
+  signal.addEventListener('abort', abortHandler, { once: true })
+  await promise
+  signal.removeEventListener('abort', abortHandler)
+}
+
+function createSignalPromise(state: StreamState) {
+  let resolve: () => void
+  const promise = new Promise<void>((r) => {
+    resolve = r
+    state.resolver = r
   })
+  const result = { promise, resolve: resolve! }
+
+  return result
 }
 
 /**
@@ -145,7 +155,15 @@ export async function* createRawPitchStream(params: {
   const state: StreamState = { queue: [] }
 
   const loopPromise = startAudioLoop({ audioLoop, state, detector, signal })
+  yield* executeStreamLoop({ state, signal, loopPromise })
+}
 
+async function* executeStreamLoop(params: {
+  state: StreamState
+  signal: AbortSignal
+  loopPromise: Promise<void>
+}): AsyncGenerator<RawPitchEvent> {
+  const { state, signal, loopPromise } = params
   try {
     yield* iterateStreamQueue({ state, signal })
   } catch (e) {
@@ -189,8 +207,9 @@ function handleStreamError(error: unknown): void {
 
   const message = error ? String(error) : 'undefined error'
   const logPrefix = '[PIPELINE] createRawPitchStream error:'
+  const finalLog = `${logPrefix} ${message}`
 
-  console.warn(`${logPrefix} ${message}`)
+  console.warn(finalLog)
 }
 
 /**
@@ -213,6 +232,19 @@ async function* technicalAnalysisWindow(params: {
   const setup = initializeAnalysisWindow(optionsOrGetter)
   const { segmenter, agent, state } = setup
 
+  yield* processRawStream({ source, context, optionsOrGetter, signal, segmenter, agent, state })
+}
+
+async function* processRawStream(params: {
+  source: AsyncIterable<RawPitchEvent>
+  context: PipelineContext
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
+  signal: AbortSignal
+  segmenter: NoteSegmenter
+  agent: TechniqueAnalysisAgent
+  state: TechnicalAnalysisState
+}): AsyncGenerator<PracticeEvent> {
+  const { source, context, optionsOrGetter, signal, segmenter, agent, state } = params
   for await (const raw of source) {
     if (signal.aborted) break
     const options = resolveOptions(optionsOrGetter)
@@ -322,17 +354,40 @@ function* handleDetectedSegment(params: {
 }): Generator<PracticeEvent> {
   const { segmentEvent, state, agent, context, options } = params
   const targetNote = context.targetNote
-  if (segmentEvent && targetNote) {
-    const eventParams = {
-      state,
-      event: segmentEvent,
-      targetNote,
-      options,
-      agent,
-      currentIndex: context.currentIndex,
-    }
-    yield* handleSegmentEvents(eventParams)
+  if (segmentEvent === undefined || targetNote === undefined) {
+    return
   }
+
+  const eventParams = getSegmentEventParams({
+    state,
+    event: segmentEvent,
+    targetNote,
+    options,
+    agent,
+    context,
+  })
+  yield* handleSegmentEvents(eventParams)
+}
+
+function getSegmentEventParams(params: {
+  state: TechnicalAnalysisState
+  event: SegmenterEvent
+  targetNote: TargetNote
+  options: NoteStreamOptions
+  agent: TechniqueAnalysisAgent
+  context: PipelineContext
+}): SegmentEventParams {
+  const { state, event, targetNote, options, agent, context } = params
+  const eventParams = {
+    state,
+    event,
+    targetNote,
+    options,
+    agent,
+    currentIndex: context.currentIndex,
+  }
+
+  return eventParams
 }
 
 function* maybeEmitHoldingEvent(params: {
@@ -638,6 +693,15 @@ function createDetectedNote(frame: PitchedFrame): DetectedNote {
 }
 
 function parseMusicalNote(pitchHz: number) {
+  const noteClass = getNoteClassFromPitch(pitchHz)
+  const noteName = noteClass?.nameWithOctave ?? ''
+  const cents = noteClass?.centsDeviation ?? 0
+  const result = { noteName, cents }
+
+  return result
+}
+
+function getNoteClassFromPitch(pitchHz: number): MusicalNoteClass | undefined {
   let noteClass: MusicalNoteClass | undefined = undefined
   try {
     const hasPitch = pitchHz > 0
@@ -648,10 +712,7 @@ function parseMusicalNote(pitchHz: number) {
     // Ignore invalid frequencies
   }
 
-  return {
-    noteName: noteClass?.nameWithOctave ?? '',
-    cents: noteClass?.centsDeviation ?? 0,
-  }
+  return noteClass
 }
 
 function calculateRhythmExpectations(params: {
