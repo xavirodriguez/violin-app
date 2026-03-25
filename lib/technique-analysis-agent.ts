@@ -57,6 +57,17 @@ export class TechniqueAnalysisAgent {
     return this.buildTechniqueObject({ segment, frames, pitched, gapFrames, prevSegment })
   }
 
+  /**
+   * Generates a set of user-facing observations from the technique metrics.
+   */
+  generateObservations(technique: NoteTechnique): Observation[] {
+    const all = this.collectObservations(technique)
+    const prioritized = this.prioritizeObservations(all)
+    const result = prioritized
+
+    return result
+  }
+
   private buildTechniqueObject(params: {
     segment: NoteSegment
     frames: readonly TechniqueFrame[]
@@ -73,17 +84,6 @@ export class TechniqueAnalysisAgent {
       rhythm: this.calculateRhythm(segment),
       transition: this.calculateTransition({ gapFrames, currentFrames: frames, prevSegment }),
     }
-  }
-
-  /**
-   * Generates a set of user-facing observations from the technique metrics.
-   */
-  generateObservations(technique: NoteTechnique): Observation[] {
-    const all = this.collectObservations(technique)
-    const prioritized = this.prioritizeObservations(all)
-    const result = prioritized
-
-    return result
   }
 
   private collectObservations(technique: NoteTechnique): Observation[] {

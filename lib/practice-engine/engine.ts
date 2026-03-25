@@ -122,33 +122,39 @@ interface EngineBuilderParams {
 }
 
 function buildEngineObject(params: EngineBuilderParams): PracticeEngine {
-  const { ctx, getState, updateState, getOptions, isRunning, setRunning } = params
-  return {
-    async *start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent> {
-      if (isRunning()) return
-      setRunning(true)
-      try {
-        const loopParams = { ctx, getState, updateState, getOptions, signal }
-        yield* runEngineLoop(loopParams)
-      } finally {
-        setRunning(false)
-      }
-    },
-    stop() {
-      setRunning(false)
-    },
-    getState() {
-      return getState()
-    },
+  const { getState, setRunning } = params
+  const engine: PracticeEngine = {
+    start: (signal) => executeEngineStart({ ...params, signal }),
+    stop: () => setRunning(false),
+    getState: () => getState(),
+  }
+  const result = engine
+
+  return result
+}
+
+async function* executeEngineStart(
+  params: EngineBuilderParams & { signal: AbortSignal },
+): AsyncGenerator<PracticeEngineEvent> {
+  const { isRunning, setRunning, ...loopParams } = params
+  if (isRunning()) return
+  setRunning(true)
+  try {
+    yield* runEngineLoop(loopParams)
+  } finally {
+    setRunning(false)
   }
 }
 
 function getInitialEngineState(exercise: Exercise): EngineState {
-  const initialState = {
+  const noteCount = exercise.notes.length
+  const initialState: EngineState = {
     ...INITIAL_ENGINE_STATE,
-    scoreLength: exercise.notes.length,
+    scoreLength: noteCount,
   }
-  return initialState
+  const result = initialState
+
+  return result
 }
 
 /**
@@ -177,9 +183,12 @@ function getEngineOptions(exercise: Exercise, perfectNoteStreak: number): NoteSt
  * @internal
  */
 function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
-  const centsTolerance = Math.max(10, 25 - Math.floor(perfectNoteStreak / 3) * 5)
-  const requiredHoldTime = Math.min(800, 500 + Math.floor(perfectNoteStreak / 5) * 100)
-  return { centsTolerance, requiredHoldTime }
+  const streakValue = perfectNoteStreak
+  const centsTolerance = Math.max(10, 25 - Math.floor(streakValue / 3) * 5)
+  const requiredHoldTime = Math.min(800, 500 + Math.floor(streakValue / 5) * 100)
+  const result = { centsTolerance, requiredHoldTime }
+
+  return result
 }
 
 /**
@@ -312,17 +321,23 @@ function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEven
   if (event.type === 'NOTE_DETECTED') return { type: 'NOTE_DETECTED', payload: event.payload }
   if (event.type === 'HOLDING_NOTE') return { type: 'HOLDING_NOTE', payload: event.payload }
   if (event.type === 'NOTE_MATCHED' && event.payload) {
-    return {
-      type: 'NOTE_MATCHED',
-      payload: {
-        technique: event.payload.technique,
-        observations: event.payload.observations ?? [],
-        isPerfect: event.payload.isPerfect ?? false,
-      },
-    }
+    return mapMatchedEvent(event.payload)
   }
   const isNoNote = event.type === 'NO_NOTE_DETECTED'
-  return isNoNote ? { type: 'NO_NOTE' } : undefined
+  const result = isNoNote ? ({ type: 'NO_NOTE' } as PracticeEngineEvent) : undefined
+
+  return result
+}
+
+function mapMatchedEvent(payload: { technique: any; observations?: any[]; isPerfect?: boolean }): PracticeEngineEvent {
+  const technique = payload.technique
+  const observations = payload.observations ?? []
+  const isPerfect = payload.isPerfect ?? false
+
+  return {
+    type: 'NOTE_MATCHED',
+    payload: { technique, observations, isPerfect },
+  }
 }
 
 /**
@@ -354,8 +369,11 @@ function shouldTerminatePipeline(params: {
  */
 function isTerminalEvent(event: PracticeEngineEvent, state: EngineState): boolean {
   const isMatch = event.type === 'NOTE_MATCHED'
-  const isLast = state.currentNoteIndex >= state.scoreLength
-  return isMatch && isLast
+  const isLastNote = state.currentNoteIndex >= state.scoreLength
+  const isTerminal = isMatch && isLastNote
+  const result = isTerminal
+
+  return result
 }
 
 /**

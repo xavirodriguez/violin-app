@@ -67,7 +67,7 @@ export const FEATURE_FLAGS_METADATA = {
   FEATURE_UI_INTONATION_HEATMAPS: {
     name: 'FEATURE_UI_INTONATION_HEATMAPS',
     key: 'uiIntonationHeatmaps',
-    type: 'STABLE',
+    type: 'BETA',
     description: 'Show intonation heatmaps in the analytics dashboard.',
     defaultValue: true,
     riskLevel: 'LOW',
@@ -112,24 +112,19 @@ class FeatureFlagsManager {
    * @internal
    */
   private getClientValue(flagName: string): string | undefined {
-    switch (flagName) {
-      case 'FEATURE_AUDIO_WEB_WORKER':
-        return (
-          process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
-        )
-      case 'FEATURE_UI_INTONATION_HEATMAPS':
-        return (
-          process.env.FEATURE_UI_INTONATION_HEATMAPS ??
-          process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS
-        )
-      case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
-        return (
-          process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
-          process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
-        )
-      default:
-        return undefined
+    const clientMapping: Record<string, string | undefined> = {
+      FEATURE_AUDIO_WEB_WORKER:
+        process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER,
+      FEATURE_UI_INTONATION_HEATMAPS:
+        process.env.FEATURE_UI_INTONATION_HEATMAPS ??
+        process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS,
+      FEATURE_SOCIAL_PRACTICE_ROOMS:
+        process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
+        process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
     }
+    const result = clientMapping[flagName]
+
+    return result
   }
 
   /**
@@ -186,22 +181,38 @@ class FeatureFlagsManager {
 
   validateFlags(): { valid: boolean; errors: string[] } {
     const errors: string[] = []
+    this.checkFlagDependencies(errors)
 
-    // Check dependencies
-    for (const flagName in FEATURE_FLAGS_METADATA) {
-      const name = flagName as FeatureFlagName
-      const metadata = FEATURE_FLAGS_METADATA[name] as FeatureFlagMetadata
+    const isValid = errors.length === 0
+    const result = { valid: isValid, errors }
 
-      if (this.isEnabled(name) && metadata.dependencies) {
-        for (const dep of metadata.dependencies) {
-          if (!this.isEnabled(dep as FeatureFlagName)) {
-            errors.push(`Flag "${name}" is enabled but its dependency "${dep}" is disabled.`)
-          }
-        }
-      }
+    return result
+  }
+
+  private checkFlagDependencies(errors: string[]): void {
+    const flagNames = Object.keys(FEATURE_FLAGS_METADATA) as FeatureFlagName[]
+    for (const name of flagNames) {
+      const metadata = FEATURE_FLAGS_METADATA[name]
+      this.validateSingleFlagDependencies({ name, metadata, errors })
     }
+  }
 
-    return { valid: errors.length === 0, errors }
+  private validateSingleFlagDependencies(params: {
+    name: FeatureFlagName
+    metadata: FeatureFlagMetadata
+    errors: string[]
+  }): void {
+    const { name, metadata, errors } = params
+    const isEnabled = this.isEnabled(name)
+    const dependencies = metadata.dependencies
+
+    if (isEnabled && dependencies) {
+      dependencies.forEach((dep) => {
+        if (!this.isEnabled(dep as FeatureFlagName)) {
+          errors.push(`Flag "${name}" is enabled but its dependency "${dep}" is disabled.`)
+        }
+      })
+    }
   }
 }
 
@@ -211,9 +222,12 @@ export const featureFlags = new FeatureFlagsManager()
  * Hook to use a feature flag in a React component.
  */
 export function useFeatureFlag(flagName: FeatureFlagName): boolean {
-  // In a real app, this might subscribe to a store or use useSyncExternalStore
-  // for real-time updates, but for now we'll just return the value.
-  return featureFlags.isEnabled(flagName)
+  const manager = featureFlags
+  const targetFlag = flagName
+  const isEnabled = manager.isEnabled(targetFlag)
+  const result = isEnabled
+
+  return result
 }
 
 /**
@@ -221,8 +235,12 @@ export function useFeatureFlag(flagName: FeatureFlagName): boolean {
  */
 export function useFeatureFlags(flagNames: FeatureFlagName[]): Record<string, boolean> {
   const result: Record<string, boolean> = {}
+  const manager = featureFlags
+
   flagNames.forEach((name) => {
-    result[name] = featureFlags.isEnabled(name)
+    const isEnabled = manager.isEnabled(name)
+    result[name] = isEnabled
   })
+
   return result
 }
