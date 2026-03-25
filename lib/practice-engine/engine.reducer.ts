@@ -16,20 +16,47 @@ const HANDLERS: Record<
   PracticeEngineEvent['type'],
   (state: EngineState, event: PracticeEngineEvent) => EngineState
 > = {
-  NOTE_DETECTED: (state) => ({ ...state, status: 'active' }),
-  HOLDING_NOTE: (state) => ({ ...state, status: 'active' }),
+  NOTE_DETECTED: (state) => {
+    const activeStatus = 'active'
+    const nextState = { ...state, status: activeStatus }
+    const result = nextState
+
+    return result
+  },
+  HOLDING_NOTE: (state) => {
+    const activeStatus = 'active'
+    const nextState = { ...state, status: activeStatus }
+    const result = nextState
+
+    return result
+  },
   NOTE_MATCHED: (state, event) => {
     const typedEvent = event as Extract<PracticeEngineEvent, { type: 'NOTE_MATCHED' }>
+    const { technique, isPerfect } = typedEvent.payload
+    const nextIndex = state.currentNoteIndex + 1
+    const nextStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
+
     return {
       ...state,
-      currentNoteIndex: state.currentNoteIndex + 1,
-      lastTechnique: typedEvent.payload.technique,
+      currentNoteIndex: nextIndex,
+      lastTechnique: technique,
       liveObservations: [],
-      perfectNoteStreak: typedEvent.payload.isPerfect ? state.perfectNoteStreak + 1 : 0,
+      perfectNoteStreak: nextStreak,
     }
   },
-  SESSION_COMPLETED: (state) => ({ ...state, status: 'completed' }),
-  NO_NOTE: (state) => state,
+  SESSION_COMPLETED: (state) => {
+    const completedStatus = 'completed'
+    const nextState = { ...state, status: completedStatus }
+    const result = nextState
+
+    return result
+  },
+  NO_NOTE: (state) => {
+    const currentState = state
+    const result = currentState
+
+    return result
+  },
 }
 
 /**

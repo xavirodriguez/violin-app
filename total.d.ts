@@ -2697,16 +2697,6 @@ export interface FeatureFlagMetadata {
   dependencies?: string[]
 }
 export declare const FEATURE_FLAGS_METADATA: {
-  readonly FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
-    readonly name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY'
-    readonly key: 'practiceAdaptiveDifficulty'
-    readonly type: 'STABLE'
-    readonly description: 'Dynamic adjustment of cents tolerance and required hold time based on perfect note streaks.'
-    readonly defaultValue: true
-    readonly riskLevel: 'MEDIUM'
-    readonly affectedFiles: ['lib/practice-core.ts']
-    readonly rollbackStrategy: 'Revert to fixed difficulty levels.'
-  }
   readonly FEATURE_AUDIO_WEB_WORKER: {
     readonly name: 'FEATURE_AUDIO_WEB_WORKER'
     readonly key: 'audioWebWorker'

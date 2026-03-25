@@ -29,6 +29,25 @@ import { AppError, ERROR_CODES } from '../errors/app-error'
  */
 export type CanonicalAccidental = -1 | 0 | 1
 
+/** @internal */
+const ACCIDENTAL_MAP: Record<string, CanonicalAccidental> = {
+  '1': 1,
+  sharp: 1,
+  '#': 1,
+  '2': 1,
+  'double-sharp': 1,
+  '##': 1,
+  '-1': -1,
+  flat: -1,
+  b: -1,
+  '-2': -1,
+  'double-flat': -1,
+  bb: -1,
+  '0': 0,
+  natural: 0,
+  '': 0,
+}
+
 /**
  * Normalizes various accidental representations to the canonical numeric format.
  *
@@ -59,31 +78,16 @@ export type CanonicalAccidental = -1 | 0 | 1
  * @public
  */
 export function normalizeAccidental(input: number | string | undefined): CanonicalAccidental {
-  const mapping: Record<string, CanonicalAccidental> = {
-    '1': 1,
-    sharp: 1,
-    '#': 1,
-    '2': 1,
-    'double-sharp': 1,
-    '##': 1,
-    '-1': -1,
-    flat: -1,
-    b: -1,
-    '-2': -1,
-    'double-flat': -1,
-    bb: -1,
-    '0': 0,
-    natural: 0,
-    '': 0,
-  }
-
   if (input === undefined) {
     return 0
   }
 
   const key = String(input)
-  if (key in mapping) {
-    return mapping[key]
+  const mapping = ACCIDENTAL_MAP
+  const result = mapping[key]
+
+  if (result !== undefined) {
+    return result
   }
 
   throw new AppError({

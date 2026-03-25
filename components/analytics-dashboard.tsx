@@ -161,9 +161,17 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
  * @internal
  */
 function formatTime(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  return `${minutes}m`
+  const totalSeconds = seconds
+  const isLessOneMinute = totalSeconds < 60
+
+  if (isLessOneMinute) {
+    return `${totalSeconds}s`
+  }
+
+  const minutes = Math.floor(totalSeconds / 60)
+  const result = `${minutes}m`
+
+  return result
 }
 
 /**
@@ -171,26 +179,57 @@ function formatTime(seconds: number): string {
  * @internal
  */
 function getLast7DaysData(sessions: PracticeSession[]) {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const data = []
+  const dayIndices = [6, 5, 4, 3, 2, 1, 0]
+  const result = dayIndices.map((offset) => {
+    return getDailyStats({ sessions, dayOffset: offset })
+  })
 
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    const dayName = days[date.getDay()]
+  return result
+}
 
-    const daySessions = sessions.filter((s) => {
-      const sessionDate = new Date(s.endTimeMs)
-      return sessionDate.toDateString() === date.toDateString()
-    })
+interface DailyStatsParams {
+  sessions: PracticeSession[]
+  dayOffset: number
+}
 
-    const totalMinutes = daySessions.reduce((sum, s) => sum + s.durationMs / 60000, 0)
+function getDailyStats(params: DailyStatsParams) {
+  const { sessions, dayOffset } = params
+  const targetDate = new Date()
+  targetDate.setDate(targetDate.getDate() - dayOffset)
 
-    data.push({
-      day: dayName,
-      minutes: Math.round(totalMinutes),
-    })
+  const dayName = getDayName(targetDate)
+  const daySessions = filterSessionsByDate(sessions, targetDate)
+  const totalMinutes = calculateTotalMinutes(daySessions)
+
+  return {
+    day: dayName,
+    minutes: Math.round(totalMinutes),
   }
+}
 
-  return data
+function getDayName(date: Date): string {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const index = date.getDay()
+  const name = days[index]
+
+  return name
+}
+
+function filterSessionsByDate(sessions: PracticeSession[], date: Date) {
+  const targetDateStr = date.toDateString()
+  const filtered = sessions.filter((s) => {
+    const sessionDate = new Date(s.endTimeMs)
+    return sessionDate.toDateString() === targetDateStr
+  })
+
+  return filtered
+}
+
+function calculateTotalMinutes(sessions: PracticeSession[]): number {
+  const MS_PER_MINUTE = 60000
+  const total = sessions.reduce((sum, s) => {
+    return sum + s.durationMs / MS_PER_MINUTE
+  }, 0)
+
+  return total
 }
