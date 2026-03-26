@@ -72,9 +72,10 @@ export class MusicalNote {
   isEnharmonic(other: MusicalNote): boolean {
     const selfMidi = this.midiNumber
     const otherMidi = other.midiNumber
-    const areEqual = selfMidi === otherMidi
+    const isSamePitch = selfMidi === otherMidi
 
-    return areEqual
+    const result = isSamePitch
+    return result
   }
 
   static fromFrequency(frequency: number): MusicalNote {
@@ -91,9 +92,12 @@ export class MusicalNote {
   static fromMidi(midiNumber: number): MusicalNote {
     const isNumberValid = Number.isFinite(midiNumber)
     if (!isNumberValid) {
-      throw new Error(`Invalid MIDI number: ${midiNumber}`)
+      const errorMsg = `Invalid MIDI number: ${midiNumber}`
+      throw new Error(errorMsg)
     }
-    const frequency = A4_FREQUENCY * Math.pow(2, (midiNumber - A4_MIDI) / 12)
+
+    const interval = (midiNumber - A4_MIDI) / 12
+    const frequency = A4_FREQUENCY * Math.pow(2, interval)
     const note = MusicalNote.fromFrequency(frequency)
 
     return note
@@ -405,11 +409,11 @@ function updateDetectionHistory(
 
 function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
   const isMatchedOrValidating = currentStatus === 'validating' || currentStatus === 'correct'
-  const nextStatus = isMatchedOrValidating ? 'listening' : currentStatus
-  const finalStatus = nextStatus as PracticeStatus
-  const result = finalStatus
+  const shouldReset = isMatchedOrValidating
+  const nextStatus = shouldReset ? 'listening' : currentStatus
 
-  return result
+  const finalStatus = nextStatus as PracticeStatus
+  return finalStatus
 }
 
 function handleHoldingNote(state: PracticeState, duration: number): PracticeState {
@@ -427,15 +431,15 @@ function handleHoldingNote(state: PracticeState, duration: number): PracticeStat
 }
 
 function handleNoNoteDetected(state: PracticeState): PracticeState {
-  const history: DetectedNote[] = []
-  const status: PracticeStatus = 'listening'
-  const duration = 0
+  const emptyHistory: DetectedNote[] = []
+  const listeningStatus: PracticeStatus = 'listening'
+  const zeroDuration = 0
 
   const resetState = {
     ...state,
-    detectionHistory: history,
-    status,
-    holdDuration: duration,
+    detectionHistory: emptyHistory,
+    status: listeningStatus,
+    holdDuration: zeroDuration,
   }
 
   return resetState
@@ -459,10 +463,10 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
 function canMatchNote(status: PracticeStatus): boolean {
   const isListening = status === 'listening'
   const isValidating = status === 'validating'
-  const isEligible = isListening || isValidating
-  const result = isEligible
+  const isMatchCandidate = isListening || isValidating
 
-  return result
+  const isEligible = isMatchCandidate
+  return isEligible
 }
 
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {

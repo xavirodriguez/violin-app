@@ -97,8 +97,15 @@ export interface SessionRunnerDependencies {
 export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   private abortController: AbortController | undefined
   private sessionStats = { lastProcessedIndex: -1, noteStartTime: Date.now() }
+  private environment: SessionRunnerDependencies
 
-  constructor(private environment: SessionRunnerDependencies) {}
+  constructor(environment: SessionRunnerDependencies) {
+    const hasEnvironment = !!environment
+    if (!hasEnvironment) {
+      throw new Error('Environment is required')
+    }
+    this.environment = environment
+  }
 
   async run(externalSignal: AbortSignal): Promise<SessionResult> {
     this.cancel()
@@ -118,11 +125,19 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   cancel(): void {
-    this.abortController?.abort()
+    const controller = this.abortController
+    const hasController = !!controller
+
+    if (hasController) {
+      controller.abort()
+    }
   }
 
   private determineResult(signal: AbortSignal): SessionResult {
-    const isCancelled = this.abortController?.signal.aborted || signal.aborted
+    const abortedInternal = !!this.abortController?.signal.aborted
+    const abortedExternal = signal.aborted
+    const isCancelled = abortedInternal || abortedExternal
+
     return {
       completed: !isCancelled,
       reason: isCancelled ? 'cancelled' : 'finished',
@@ -132,10 +147,14 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   private handleRunError(error: unknown): SessionResult {
     const isAbort =
       error instanceof Error && (error.name === 'AbortError' || error.message === 'Aborted')
-    if (isAbort) return { completed: false, reason: 'cancelled' }
+
+    if (isAbort) {
+      return { completed: false, reason: 'cancelled' }
+    }
 
     console.error('[Runner] Session execution failed:', error)
-    return { completed: false, reason: 'error', error: error as Error }
+    const errorResult: SessionResult = { completed: false, reason: 'error', error: error as Error }
+    return errorResult
   }
 
   private async executeLoop(signal: AbortSignal): Promise<void> {
@@ -154,7 +173,9 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private processEngineEvent(event: PracticeEngineEvent, signal: AbortSignal): void {
     const legacyEvent = this.mapToLegacyEvent(event)
-    this.dispatchInternalEvent(legacyEvent, signal)
+    const contextSignal = signal
+
+    this.dispatchInternalEvent(legacyEvent, contextSignal)
   }
 
   private mapToLegacyEvent(event: PracticeEngineEvent): PracticeEvent {
@@ -171,40 +192,48 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private dispatchInternalEvent(event: PracticeEvent, signal: AbortSignal): void {
-    if (!event.type) return
-
     const state = this.environment.store.getState().practiceState
-    if (!state) return
+    const isReady = !!event.type && !!state
+
+    if (!isReady) return
 
     this.synchronizeFeedback(event)
     if (signal.aborted) return
 
-    this.handleEventCompletion(event, state)
+    this.handleEventCompletion(event, state!)
     this.propagateToEventSink(event)
   }
 
   private synchronizeFeedback(event: PracticeEvent): void {
-    if (event.type === 'NOTE_DETECTED') {
+    const isDetected = event.type === 'NOTE_DETECTED'
+    const isNotDetected = event.type === 'NO_NOTE_DETECTED'
+
+    if (isDetected) {
       this.environment.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
       this.logTelemetry(event.payload)
-    } else if (event.type === 'NO_NOTE_DETECTED') {
+    } else if (isNotDetected) {
       this.environment.updatePitch?.(0, 0)
     }
   }
 
   private handleEventCompletion(event: PracticeEvent, state: PracticeState): void {
-    if (event.type === 'NOTE_MATCHED') {
-      this.recordNoteMilestone(event, state)
+    const isMatched = event.type === 'NOTE_MATCHED'
+
+    if (isMatched) {
+      const matchedEvent = event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>
+      this.recordNoteMilestone(matchedEvent, state)
     }
   }
 
   private propagateToEventSink(event: PracticeEvent): void {
-    handlePracticeEvent({
+    const sinkParams = {
       event,
       store: this.environment.store,
       onCompleted: () => void this.environment.store.stop(),
       analytics: this.environment.analytics,
-    })
+    }
+
+    handlePracticeEvent(sinkParams)
   }
 
   private logTelemetry(payload: {
@@ -213,12 +242,14 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     confidence: number
     timestamp: number
   }): void {
-    console.log('[TELEMETRY] Pitch Accuracy:', {
+    const telemetryData = {
       pitch: payload.pitch,
       cents: payload.cents,
       confidence: payload.confidence,
       timestamp: payload.timestamp,
-    })
+    }
+
+    console.log('[TELEMETRY] Pitch Accuracy:', telemetryData)
   }
 
   private recordNoteMilestone(
@@ -248,13 +279,23 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private updateRunnerStats(index: number): void {
-    this.sessionStats = { lastProcessedIndex: index, noteStartTime: Date.now() }
+    const nextStats = {
+      lastProcessedIndex: index,
+      noteStartTime: Date.now(),
+    }
+
+    this.sessionStats = nextStats
   }
 }
 
 /**
  * @deprecated Use `PracticeSessionRunnerImpl` directly.
  */
-export async function runPracticeSession(deps: SessionRunnerDependencies) {
-  return new PracticeSessionRunnerImpl(deps).run(new AbortController().signal)
+export async function runPracticeSession(deps: SessionRunnerDependencies): Promise<SessionResult> {
+  const runner = new PracticeSessionRunnerImpl(deps)
+  const controller = new AbortController()
+  const signal = controller.signal
+
+  const result = await runner.run(signal)
+  return result
 }
