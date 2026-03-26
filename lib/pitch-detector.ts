@@ -243,9 +243,12 @@ export class PitchDetector {
   private difference(buffer: Float32Array, searchSize: number): Float32Array {
     const yinBuffer = new Float32Array(searchSize)
     for (let tau = 1; tau < searchSize; tau++) {
-      yinBuffer[tau] = this.calculateSquaredDifferenceSum(buffer, tau)
+      const squaredDiff = this.calculateSquaredDifferenceSum(buffer, tau)
+      yinBuffer[tau] = squaredDiff
     }
-    return yinBuffer
+
+    const resultBuffer = yinBuffer
+    return resultBuffer
   }
 
   private calculateSquaredDifferenceSum(buffer: Float32Array, tau: number): number {
@@ -258,7 +261,9 @@ export class PitchDetector {
       const delta = buffer[i] - buffer[i + tau]
       sum += delta * delta
     }
-    return sum
+
+    const finalSum = sum
+    return finalSum
   }
 
   /** Step 2: Cumulative mean normalized difference function */
@@ -267,22 +272,31 @@ export class PitchDetector {
     yinBuffer[0] = 1
     for (let tau = 1; tau < yinBuffer.length; tau++) {
       runningSum += yinBuffer[tau]
-      yinBuffer[tau] = runningSum === 0 ? 1 : (yinBuffer[tau] * tau) / runningSum
+      const currentVal = yinBuffer[tau]
+      const normalized = runningSum === 0 ? 1 : (currentVal * tau) / runningSum
+      yinBuffer[tau] = normalized
     }
   }
 
   /** Step 3: Absolute threshold */
   private absoluteThreshold(yinBuffer: Float32Array): number {
     const thresholdTau = this.findFirstBelowThreshold(yinBuffer)
-    if (thresholdTau !== -1) return thresholdTau
+    const foundBelowThreshold = thresholdTau !== -1
 
-    return this.findGlobalMinimum(yinBuffer)
+    if (foundBelowThreshold) {
+      return thresholdTau
+    }
+
+    const globalMinimumTau = this.findGlobalMinimum(yinBuffer)
+    return globalMinimumTau
   }
 
   private findFirstBelowThreshold(yinBuffer: Float32Array): number {
     for (let tau = 2; tau < yinBuffer.length; tau++) {
-      if (yinBuffer[tau] < this.YIN_THRESHOLD) {
-        return this.localMinimum(yinBuffer, tau)
+      const isBelowThreshold = yinBuffer[tau] < this.YIN_THRESHOLD
+      if (isBelowThreshold) {
+        const localMin = this.localMinimum(yinBuffer, tau)
+        return localMin
       }
     }
     return -1
@@ -290,22 +304,29 @@ export class PitchDetector {
 
   private localMinimum(yinBuffer: Float32Array, tau: number): number {
     let t = tau
-    while (t + 1 < yinBuffer.length && yinBuffer[t + 1] < yinBuffer[t]) {
+    while (t + 1 < yinBuffer.length) {
+      const isNextSmaller = yinBuffer[t + 1] < yinBuffer[t]
+      if (!isNextSmaller) break
       t++
     }
-    return t
+
+    const localMinIndex = t
+    return localMinIndex
   }
 
   private findGlobalMinimum(yinBuffer: Float32Array): number {
     let minValue = 1
     let minTau = -1
     for (let tau = 2; tau < yinBuffer.length; tau++) {
-      if (yinBuffer[tau] < minValue) {
+      const isSmaller = yinBuffer[tau] < minValue
+      if (isSmaller) {
         minValue = yinBuffer[tau]
         minTau = tau
       }
     }
-    return minTau
+
+    const resultTau = minTau
+    return resultTau
   }
 
   /** Step 4: Parabolic interpolation */
