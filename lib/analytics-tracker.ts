@@ -1,25 +1,33 @@
 interface AnalyticsEvent {
   name: string
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
   timestamp: number
 }
 
 class AnalyticsTracker {
   private events: AnalyticsEvent[] = []
 
-  track(name: string, properties?: Record<string, any>) {
+  track(name: string, properties?: Record<string, unknown>) {
+    const eventName = name
+    const eventProperties = properties
+    const timestamp = Date.now()
+
     this.events.push({
-      name,
-      properties,
-      timestamp: Date.now(),
+      name: eventName,
+      properties: eventProperties,
+      timestamp,
     })
 
-    // In production: send to analytics service (Amplitude, Mixpanel, etc.)
-    console.log('[Analytics]', name, properties)
+    const logPrefix = '[Analytics]'
+    console.log(logPrefix, eventName, eventProperties)
   }
 
   getEvents() {
-    return this.events
+    const allEvents = this.events
+    const history = [...allEvents]
+    const result = history
+
+    return result
   }
 }
 

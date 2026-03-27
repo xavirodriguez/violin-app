@@ -40,54 +40,72 @@ const isProduction = process.env.NODE_ENV === 'production'
  */
 function log(payload: LogPayload): void {
   const { msg, level = 'info', err, context, code } = payload
-  const timestamp = new Date().toISOString()
   const appError: AppError | undefined = err ? toAppError(err) : undefined
+  const logParams = { msg, level, appError, context, code }
 
-  // In a real production scenario, you would add your observability hook here.
-  // For example: `if (isProduction) { Sentry.capture(...) }`
-  // For this project, we'll log structured JSON in production for potential collection.
   if (isProduction) {
-    console[level](
-      JSON.stringify({
-        timestamp,
-        level,
-        msg,
-        code: appError?.code || code || 'NONE',
-        err: appError
-          ? {
-              id: appError.id,
-              name: appError.name,
-              message: appError.message,
-              stack: appError.stack,
-              cause: appError.cause,
-            }
-          : undefined,
-        context: { ...appError?.context, ...context },
-      }),
-    )
+    logProduction(logParams)
     return
   }
 
-  // --- Development Logging: Enhanced readability ---
-  const levelColors: Record<LogLevel, string> = {
+  logDevelopment(logParams)
+}
+
+interface InternalLogParams {
+  msg: string
+  level: LogLevel
+  appError: AppError | undefined
+  context: Record<string, unknown> | undefined
+  code: (typeof ERROR_CODES)[keyof typeof ERROR_CODES] | undefined
+}
+
+function logProduction(params: InternalLogParams): void {
+  const { msg, level, appError, context, code } = params
+  const timestamp = new Date().toISOString()
+  const payload = JSON.stringify({
+    timestamp,
+    level,
+    msg,
+    code: appError?.code || code || 'NONE',
+    err: appError ? serializeError(appError) : undefined,
+    context: { ...appError?.context, ...context },
+  })
+
+  console[level](payload)
+}
+
+function serializeError(err: AppError) {
+  return {
+    id: err.id,
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    cause: err.cause,
+  }
+}
+
+function logDevelopment(params: InternalLogParams): void {
+  const { msg, level, appError, context, code } = params
+  const colors = getLevelColors()
+  const levelColor = colors[level]
+  const resetColor = '\x1b[0m'
+  const timestamp = new Date().toISOString()
+
+  console[level](`${levelColor}[${level.toUpperCase()}]${resetColor} ${msg}`, {
+    Code: appError?.code || code,
+    Timestamp: timestamp,
+    'Error Obj': appError,
+    Context: { ...appError?.context, ...context },
+  })
+}
+
+function getLevelColors(): Record<LogLevel, string> {
+  return {
     debug: '\x1b[36m', // Cyan
     info: '\x1b[32m', // Green
     warn: '\x1b[33m', // Yellow
     error: '\x1b[31m', // Red
   }
-  const resetColor = '\x1b[0m'
-  const levelColor = levelColors[level]
-
-  console[level](
-    `${levelColor}[${level.toUpperCase()}]${resetColor} ${msg}`,
-    // Optional data is displayed in a collapsed group for cleaner logs.
-    {
-      Code: appError?.code || code,
-      Timestamp: timestamp,
-      'Error Obj': appError,
-      Context: { ...appError?.context, ...context },
-    },
-  )
 }
 
 /**
@@ -98,13 +116,22 @@ function log(payload: LogPayload): void {
  */
 export const logger = {
   debug: (msg: string, context?: Record<string, unknown>) => {
-    log({ msg, level: 'debug', context })
+    const level: LogLevel = 'debug'
+    const payload = { msg, level, context }
+
+    log(payload)
   },
   info: (msg: string, context?: Record<string, unknown>) => {
-    log({ msg, level: 'info', context })
+    const level: LogLevel = 'info'
+    const payload = { msg, level, context }
+
+    log(payload)
   },
   warn: (msg: string, context?: Record<string, unknown>) => {
-    log({ msg, level: 'warn', context })
+    const level: LogLevel = 'warn'
+    const payload = { msg, level, context }
+
+    log(payload)
   },
   /**
    * Logs a structured error.
@@ -121,10 +148,10 @@ export const logger = {
           context?: Record<string, unknown>
         },
   ) => {
-    if (typeof payload === 'string') {
-      log({ msg: payload, level: 'error' })
-    } else {
-      log({ ...payload, level: 'error' })
-    }
+    const input = payload
+    const isString = typeof input === 'string'
+    const logPayload = isString ? { msg: input, level: 'error' as const } : { ...input, level: 'error' as const }
+
+    log(logPayload)
   },
 }

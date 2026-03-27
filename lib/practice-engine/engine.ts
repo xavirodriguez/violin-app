@@ -10,6 +10,7 @@ import { Exercise } from '../exercises/types'
 import { EngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 import { PracticeEvent, TargetNote } from '../practice-core'
+import { NoteTechnique, Observation } from '../technique-types'
 
 /**
  * Configuration context for the {@link PracticeEngine}.
@@ -95,21 +96,24 @@ interface EventHandlerParams {
  * @public
  */
 export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine {
+  const core = createEngineCore(ctx)
+  const engine = buildEngineObject({ ...core, ctx })
+
+  return engine
+}
+
+function createEngineCore(ctx: PracticeEngineContext) {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
   let state = getInitialEngineState(ctx.exercise)
 
-  const updateState = (e: PracticeEngineEvent) => (state = reducer(state, e))
-  const getOptions = () => getEngineOptions(ctx.exercise, state.perfectNoteStreak)
-
-  return buildEngineObject({
-    ctx,
+  return {
     getState: () => state,
-    updateState,
-    getOptions,
+    updateState: (e: PracticeEngineEvent) => (state = reducer(state, e)),
+    getOptions: () => getEngineOptions(ctx.exercise, state.perfectNoteStreak),
     isRunning: () => isRunning,
-    setRunning: (val) => (isRunning = val),
-  })
+    setRunning: (val: boolean) => (isRunning = val),
+  }
 }
 
 interface EngineBuilderParams {
@@ -137,7 +141,9 @@ async function* executeEngineStart(
   params: EngineBuilderParams & { signal: AbortSignal },
 ): AsyncGenerator<PracticeEngineEvent> {
   const { isRunning, setRunning, ...loopParams } = params
-  if (isRunning()) return
+  const alreadyRunning = isRunning()
+  if (alreadyRunning) return
+
   setRunning(true)
   try {
     yield* runEngineLoop(loopParams)
@@ -152,8 +158,8 @@ function getInitialEngineState(exercise: Exercise): EngineState {
     ...INITIAL_ENGINE_STATE,
     scoreLength: noteCount,
   }
-  const result = initialState
 
+  const result = initialState
   return result
 }
 
@@ -184,10 +190,12 @@ function getEngineOptions(exercise: Exercise, perfectNoteStreak: number): NoteSt
  */
 function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
   const streakValue = perfectNoteStreak
-  const centsTolerance = Math.max(10, 25 - Math.floor(streakValue / 3) * 5)
-  const requiredHoldTime = Math.min(800, 500 + Math.floor(streakValue / 5) * 100)
-  const result = { centsTolerance, requiredHoldTime }
+  const toleranceBase = 25
+  const centsTolerance = Math.max(10, toleranceBase - Math.floor(streakValue / 3) * 5)
+  const holdBase = 500
+  const requiredHoldTime = Math.min(800, holdBase + Math.floor(streakValue / 5) * 100)
 
+  const result = { centsTolerance, requiredHoldTime }
   return result
 }
 
@@ -220,9 +228,22 @@ async function* iterateScoreNotes(params: EngineRunnerParams & {
   stream: AsyncIterable<RawPitchEvent>
   startTime: number
 }): AsyncGenerator<PracticeEngineEvent> {
-  const { ctx, getState, signal, getOptions, updateState, stream, startTime } = params
+  const pipelineParams = getPipelineParams(params)
+  const pipeline = setupPipeline(pipelineParams)
+  const { getState, updateState, signal } = params
   const noteIndex = getState().currentNoteIndex
-  const pipelineParams = {
+
+  yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
+}
+
+function getPipelineParams(params: EngineRunnerParams & {
+  stream: AsyncIterable<RawPitchEvent>
+  startTime: number
+}): SetupPipelineParams {
+  const { ctx, getState, stream, getOptions, signal, startTime } = params
+  const noteIndex = getState().currentNoteIndex
+
+  return {
     exercise: ctx.exercise,
     noteIndex,
     startTime,
@@ -230,38 +251,38 @@ async function* iterateScoreNotes(params: EngineRunnerParams & {
     getOptions,
     signal,
   }
-  const pipeline = setupPipeline(pipelineParams)
-  yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
 }
 
-/**
- * Sets up a new practice event pipeline for the current target note.
- *
- * @param params - Pipeline configuration.
- * @returns An async iterable of low-level practice events.
- * @internal
- */
-function setupPipeline(params: {
+interface SetupPipelineParams {
   exercise: Exercise
   noteIndex: number
   startTime: number
   stream: AsyncIterable<RawPitchEvent>
   getOptions: () => NoteStreamOptions
   signal: AbortSignal
-}) {
-  const { exercise, noteIndex, startTime, stream, getOptions, signal } = params
-  const targetNote = exercise.notes[noteIndex] as TargetNote
-  const context = {
-    targetNote,
-    currentIndex: noteIndex,
-    sessionStartTime: startTime,
-  }
+}
+
+function setupPipeline(params: SetupPipelineParams) {
+  const { stream, getOptions, signal } = params
+  const context = getPipelineContext(params)
+
   return createPracticeEventPipeline({
     rawPitchStream: stream,
     context,
     options: getOptions,
     signal,
   })
+}
+
+function getPipelineContext(params: { exercise: Exercise; noteIndex: number; startTime: number }) {
+  const { exercise, noteIndex, startTime } = params
+  const targetNote = exercise.notes[noteIndex] as TargetNote
+
+  return {
+    targetNote,
+    currentIndex: noteIndex,
+    sessionStartTime: startTime,
+  }
 }
 
 /**
@@ -291,8 +312,10 @@ async function* handlePipelineEvent(params: {
 }): AsyncGenerator<PracticeEngineEvent> {
   const { event, getState, noteIndex, updateState, signal } = params
   const engineEvent = mapPipelineEventToEngineEvent(event)
-  if (engineEvent && !signal.aborted) {
-    yield* handleEngineEvent({ event: engineEvent, getState, noteIndex, updateState })
+  const isEligible = engineEvent && !signal.aborted
+
+  if (isEligible) {
+    yield* handleEngineEvent({ event: engineEvent!, getState, noteIndex, updateState })
   }
 }
 
@@ -324,12 +347,16 @@ function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEven
     return mapMatchedEvent(event.payload)
   }
   const isNoNote = event.type === 'NO_NOTE_DETECTED'
-  const result = isNoNote ? ({ type: 'NO_NOTE' } as PracticeEngineEvent) : undefined
+  const result = isNoNote ? { type: 'NO_NOTE' as const } : undefined
 
   return result
 }
 
-function mapMatchedEvent(payload: { technique: any; observations?: any[]; isPerfect?: boolean }): PracticeEngineEvent {
+function mapMatchedEvent(payload: {
+  technique?: NoteTechnique
+  observations?: Observation[]
+  isPerfect?: boolean
+}): PracticeEngineEvent {
   const technique = payload.technique
   const observations = payload.observations ?? []
   const isPerfect = payload.isPerfect ?? false
@@ -354,7 +381,8 @@ function shouldTerminatePipeline(params: {
 }): boolean {
   const { event, state, noteIndex } = params
   const isComplete = isTerminalEvent(event, state)
-  const isNewNote = event.type === 'NOTE_MATCHED' && state.currentNoteIndex !== noteIndex
+  const isMatched = event.type === 'NOTE_MATCHED'
+  const isNewNote = isMatched && state.currentNoteIndex !== noteIndex
 
   return isComplete || isNewNote
 }
