@@ -4,7 +4,7 @@ import { PracticeEngineEvent } from '../practice-engine/engine.types'
 import { engineReducer } from '../practice-engine/engine.reducer'
 import { handlePracticeEvent } from './practice-event-sink'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
-import type { Exercise } from '@/lib/exercises/types'
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 import { NoteTechnique, Observation } from '../technique-types'
 
 /**
@@ -100,36 +100,42 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   private environment: SessionRunnerDependencies
 
   constructor(environment: SessionRunnerDependencies) {
-    const hasEnvironment = !!environment
+    const dependencies = environment
+    const hasEnvironment = !!dependencies
     if (!hasEnvironment) {
       throw new Error('Environment is required')
     }
-    this.environment = environment
+
+    this.environment = dependencies
   }
 
   async run(externalSignal: AbortSignal): Promise<SessionResult> {
     this.cancel()
-    this.abortController = new AbortController()
+    const controller = new AbortController()
+    this.abortController = controller
 
     const onAbort = () => this.cancel()
     externalSignal.addEventListener('abort', onAbort)
 
     try {
-      await this.executeLoop(this.abortController.signal)
-      return this.determineResult(externalSignal)
+      await this.executeLoop(controller.signal)
+      const result = this.determineResult(externalSignal)
+      return result
     } catch (error) {
-      return this.handleRunError(error)
+      const errorResult = this.handleRunError(error)
+      return errorResult
     } finally {
       externalSignal.removeEventListener('abort', onAbort)
     }
   }
 
   cancel(): void {
-    const controller = this.abortController
-    const hasController = !!controller
+    const activeController = this.abortController
+    const hasController = !!activeController
+    const isAborted = activeController?.signal.aborted
 
-    if (hasController) {
-      controller.abort()
+    if (hasController && !isAborted) {
+      activeController.abort()
     }
   }
 
@@ -158,15 +164,17 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private async executeLoop(signal: AbortSignal): Promise<void> {
+    const context = this.environment
     const engine = createPracticeEngine({
-      audio: this.environment.audioLoop,
-      pitch: this.environment.detector,
-      exercise: this.environment.exercise,
+      audio: context.audioLoop,
+      pitch: context.detector,
+      exercise: context.exercise,
       reducer: engineReducer,
     })
 
     for await (const event of engine.start(signal)) {
-      if (signal.aborted) break
+      const isTerminated = signal.aborted
+      if (isTerminated) break
       this.processEngineEvent(event, signal)
     }
   }
@@ -179,40 +187,45 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private mapToLegacyEvent(event: PracticeEngineEvent): PracticeEvent {
-    if (event.type === 'NOTE_DETECTED') {
+    const type = event.type
+    if (type === 'NOTE_DETECTED') {
       return { type: 'NOTE_DETECTED', payload: event.payload }
     }
-    if (event.type === 'HOLDING_NOTE') {
+    if (type === 'HOLDING_NOTE') {
       return { type: 'HOLDING_NOTE', payload: event.payload }
     }
-    if (event.type === 'NOTE_MATCHED') {
+    if (type === 'NOTE_MATCHED') {
       return { type: 'NOTE_MATCHED', payload: event.payload }
     }
-    return { type: 'NO_NOTE_DETECTED' }
+
+    const fallback: PracticeEvent = { type: 'NO_NOTE_DETECTED' }
+    return fallback
   }
 
   private dispatchInternalEvent(event: PracticeEvent, signal: AbortSignal): void {
     const state = this.environment.store.getState().practiceState
-    const isReady = !!event.type && !!state
+    const hasEvent = !!event.type
+    const isReady = hasEvent && !!state
 
-    if (!isReady) return
+    if (!isReady || !state) return
 
     this.synchronizeFeedback(event)
     if (signal.aborted) return
 
-    this.handleEventCompletion(event, state!)
+    this.handleEventCompletion(event, state)
     this.propagateToEventSink(event)
   }
 
   private synchronizeFeedback(event: PracticeEvent): void {
+    const updatePitch = this.environment.updatePitch
     const isDetected = event.type === 'NOTE_DETECTED'
     const isNotDetected = event.type === 'NO_NOTE_DETECTED'
 
     if (isDetected) {
-      this.environment.updatePitch?.(event.payload.pitchHz, event.payload.confidence)
+      updatePitch?.(event.payload.pitchHz, event.payload.confidence)
       this.logTelemetry(event.payload)
     } else if (isNotDetected) {
-      this.environment.updatePitch?.(0, 0)
+      updatePitch?.(0, 0)
     }
   }
 
@@ -226,11 +239,12 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private propagateToEventSink(event: PracticeEvent): void {
+    const dependencies = this.environment
     const sinkParams = {
       event,
-      store: this.environment.store,
-      onCompleted: () => void this.environment.store.stop(),
-      analytics: this.environment.analytics,
+      store: dependencies.store,
+      onCompleted: () => void dependencies.store.stop(),
+      analytics: dependencies.analytics,
     }
 
     handlePracticeEvent(sinkParams)
@@ -249,7 +263,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       timestamp: payload.timestamp,
     }
 
-    console.log('[TELEMETRY] Pitch Accuracy:', telemetryData)
+    const logPrefix = '[TELEMETRY] Pitch Accuracy:'
+    console.log(logPrefix, telemetryData)
   }
 
   private recordNoteMilestone(
@@ -258,24 +273,28 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   ): void {
     const index = state.currentIndex
     const note = state.exercise.notes[index]
+    const isNewNote = index !== this.sessionStats.lastProcessedIndex
 
-    if (!note || index === this.sessionStats.lastProcessedIndex) return
-
-    const duration = Date.now() - this.sessionStats.noteStartTime
-    this.emitAnalytics({ index, note, duration, technique: event.payload?.technique })
-    this.updateRunnerStats(index)
+    if (note && isNewNote) {
+      const duration = Date.now() - this.sessionStats.noteStartTime
+      const technique = event.payload?.technique
+      this.emitAnalytics({ index, note, duration, technique })
+      this.updateRunnerStats(index)
+    }
   }
 
   private emitAnalytics(params: {
     index: number
-    note: any
+    note: TargetNote
     duration: number
-    technique: any
+    technique: NoteTechnique | undefined
   }): void {
     const { index, note, duration, technique } = params
     const pitch = formatPitchName(note.pitch)
-    this.environment.analytics.recordNoteAttempt(index, pitch, 0, true)
-    this.environment.analytics.recordNoteCompletion(index, duration, technique)
+    const analytics = this.environment.analytics
+
+    analytics.recordNoteAttempt(index, pitch, 0, true)
+    analytics.recordNoteCompletion(index, duration, technique)
   }
 
   private updateRunnerStats(index: number): void {
