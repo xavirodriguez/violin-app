@@ -68,8 +68,18 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="bg-background/95 fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
       <Card className="border-primary/20 w-full max-w-2xl p-8 shadow-2xl">
-        {/* Progress indicator */}
+        {/* Skip button and Progress indicator */}
         <div className="mb-8">
+          <div className="flex justify-end mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onComplete}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Skip setup
+            </Button>
+          </div>
           <div className="mb-2 flex items-center justify-between">
             {ONBOARDING_STEPS.map((step, index) => (
               <div
