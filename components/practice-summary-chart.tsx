@@ -19,7 +19,12 @@ interface PracticeSummaryChartProps {
  * Visual summary of exercise performance with accuracy heatmap.
  */
 export function PracticeSummaryChart({ noteAttempts }: PracticeSummaryChartProps) {
-  if (noteAttempts.length === 0) return null
+  const hasNoAttempts = noteAttempts.length === 0
+  if (hasNoAttempts) {
+    const emptyFragment = <></>
+    return emptyFragment
+  }
+
   const bestNote = [...noteAttempts].sort((a, b) => b.accuracy - a.accuracy)[0]
   const worstNote = [...noteAttempts].sort((a, b) => a.accuracy - b.accuracy)[0]
   return (

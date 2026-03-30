@@ -1,235 +1,63 @@
 /**
  * AnalyticsDashboard
- * Provides a comprehensive view of the user's practice history, skill levels, and achievements.
  */
 
 'use client'
 
-import { useAnalyticsStore, PracticeSession, Achievement } from '@/stores/analytics-store'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { PracticeSummaryChart } from './practice-summary-chart'
-import { useFeatureFlag } from '@/lib/feature-flags'
+import { useAnalyticsStore } from '@/stores/analytics-store'
+import { getLast7DaysData, getHeatmapData } from './analytics/utils'
+import { MetricsSection } from './analytics/MetricsSection'
+import { SkillSection } from './analytics/SkillSection'
+import { PracticeTimeSection } from './analytics/PracticeTimeSection'
+import { HeatmapSection } from './analytics/HeatmapSection'
+import { AchievementsSection } from './analytics/AchievementsSection'
 
 /**
- * Main dashboard component that aggregates various analytics visualizations.
- *
- * @returns A JSX element with key metrics, skill bars, a practice time chart, and achievements.
- *
- * @remarks
- * Data Flow:
- * - Subscribes to `useAnalyticsStore` for the user's progress data.
- * - Uses internal utility functions to format data for the `recharts` components.
+ * Refactored for Senior Software Craftsmanship:
+ * - Delegates specialized rendering to sub-components in `components/analytics/`.
+ * - Uses utility functions from `components/analytics/utils.ts`.
+ * - Intonation Heatmap is now a permanent feature (unconditional rendering).
  */
 export function AnalyticsDashboard() {
   const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
-  const isHeatmapEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
   const recentSessions = getSessionHistory(7)
   const lastSession = recentSessions[0]
 
-  // Prepare chart data
   const practiceTimeData = getLast7DaysData(recentSessions)
-
-  // Map last session data for heatmap if available
-  const heatmapData = lastSession?.noteResults?.map((r) => ({
-    noteIndex: r.noteIndex,
-    targetPitch: r.targetPitch,
-    accuracy: r.wasInTune ? 100 : Math.max(0, 100 - Math.abs(r.averageCents)),
-    cents: r.averageCents,
-  }))
+  const heatmapData = getHeatmapData(lastSession)
+  const totalCompleted = progress.exercisesCompleted?.length ?? 0
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="mb-6 text-2xl font-bold">📊 Your Progress</h1>
 
-      {/* Key Metrics */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-        <MetricCard icon="🔥" value={streakInfo.current} label="Day Streak" />
-        <MetricCard icon="⏱️" value={formatTime(todayStats.duration)} label="Today" />
-        <MetricCard icon="✓" value={progress.totalPracticeSessions} label="Sessions" />
-        <MetricCard
-          icon="📚"
-          value={progress.exercisesCompleted?.length ?? 0}
-          label="Exercises Completed"
-        />
-      </div>
+      <MetricsSection
+        streak={streakInfo.current}
+        todayDuration={todayStats.duration}
+        totalSessions={progress.totalPracticeSessions}
+        completedExercises={totalCompleted}
+      />
 
-      {/* Skill Levels */}
-      <div className="bg-card border-border mb-6 rounded-lg border p-4">
-        <h2 className="mb-4 text-xl font-bold">Skill Levels</h2>
-        <SkillBar label="Intonation" value={progress.intonationSkill} />
-        <SkillBar label="Rhythm" value={progress.rhythmSkill} />
-        <SkillBar label="Overall" value={progress.overallSkill} />
-      </div>
+      <SkillSection
+        intonation={progress.intonationSkill}
+        rhythm={progress.rhythmSkill}
+        overall={overallProgress(progress)}
+      />
 
-      {/* Practice Time Chart */}
-      <div className="bg-card border-border mb-6 rounded-lg border p-4">
-        <h2 className="mb-4 text-xl font-bold">Practice Time (Last 7 Days)</h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={practiceTimeData}>
-            <XAxis dataKey="day" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="minutes" fill="#4ADE80" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <PracticeTimeSection data={practiceTimeData} />
 
-      {/* Intonation Heatmap (Beta) */}
-      {isHeatmapEnabled && heatmapData && heatmapData.length > 0 && (
-        <div className="bg-card border-border mb-6 rounded-lg border p-6">
-          <h2 className="mb-4 text-xl font-bold">Last Session Intonation Heatmap</h2>
-          <PracticeSummaryChart noteAttempts={heatmapData} />
-        </div>
-      )}
+      <HeatmapSection data={heatmapData} />
 
-      {/* Recent Achievements */}
-      <div className="bg-card border-border rounded-lg border p-4">
-        <h2 className="mb-4 text-xl font-bold">Recent Achievements 🏆</h2>
-        {progress.achievements.length === 0 ? (
-          <p className="text-muted-foreground">No achievements yet. Keep practicing!</p>
-        ) : (
-          progress.achievements
-            .slice(-3)
-            .reverse()
-            .map((achievement) => (
-              <AchievementCard key={achievement.id} achievement={achievement} />
-            ))
-        )}
-      </div>
+      <AchievementsSection achievements={progress.achievements} />
     </div>
   )
 }
 
-/**
- * Internal component for rendering a high-level metric card.
- * @internal
- */
-function MetricCard({
-  icon,
-  value,
-  label,
-}: {
-  icon: string
-  value: string | number
-  label: string
-}) {
-  return (
-    <div className="bg-card border-border flex flex-col items-center justify-center rounded-lg border p-4 text-center">
-      <div className="mb-2 text-4xl">{icon}</div>
-      <div className="text-3xl font-bold">{value}</div>
-      <div className="text-muted-foreground">{label}</div>
-    </div>
-  )
-}
-
-/**
- * Internal component for rendering a progress bar for a specific skill.
- * @internal
- */
-function SkillBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="mb-2 flex items-center gap-4">
-      <div className="text-muted-foreground w-24">{label}:</div>
-      <div className="bg-muted h-4 flex-1 overflow-hidden rounded-full">
-        <div className="bg-primary h-full" style={{ width: `${value}%` }} />
-      </div>
-      <div className="font-bold">{Math.round(value)}%</div>
-    </div>
-  )
-}
-
-/**
- * Internal component for rendering an achievement badge.
- * @internal
- */
-function AchievementCard({ achievement }: { achievement: Achievement }) {
-  return (
-    <div className="hover:bg-accent flex items-center gap-4 rounded-lg p-2">
-      <div className="text-2xl">{achievement.icon}</div>
-      <div>
-        <div className="font-bold">{achievement.name}</div>
-        <div className="text-muted-foreground text-sm">{achievement.description}</div>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Formats seconds into a human-readable duration string.
- * @internal
- */
-function formatTime(seconds: number): string {
-  const totalSeconds = seconds
-  const isLessOneMinute = totalSeconds < 60
-
-  if (isLessOneMinute) {
-    return `${totalSeconds}s`
-  }
-
-  const minutes = Math.floor(totalSeconds / 60)
-  const result = `${minutes}m`
+function overallProgress(progress: any) {
+  const value = progress.overallSkill
+  const result = value
 
   return result
-}
-
-/**
- * Processes raw session data into a format suitable for the 7-day bar chart.
- * @internal
- */
-function getLast7DaysData(sessions: PracticeSession[]) {
-  const dayIndices = [6, 5, 4, 3, 2, 1, 0]
-  const result = dayIndices.map((offset) => {
-    return getDailyStats({ sessions, dayOffset: offset })
-  })
-
-  return result
-}
-
-interface DailyStatsParams {
-  sessions: PracticeSession[]
-  dayOffset: number
-}
-
-function getDailyStats(params: DailyStatsParams) {
-  const { sessions, dayOffset } = params
-  const targetDate = new Date()
-  targetDate.setDate(targetDate.getDate() - dayOffset)
-
-  const dayName = getDayName(targetDate)
-  const daySessions = filterSessionsByDate(sessions, targetDate)
-  const totalMinutes = calculateTotalMinutes(daySessions)
-
-  return {
-    day: dayName,
-    minutes: Math.round(totalMinutes),
-  }
-}
-
-function getDayName(date: Date): string {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const index = date.getDay()
-  const name = days[index]
-
-  return name
-}
-
-function filterSessionsByDate(sessions: PracticeSession[], date: Date) {
-  const targetDateStr = date.toDateString()
-  const filtered = sessions.filter((s) => {
-    const sessionDate = new Date(s.endTimeMs)
-    return sessionDate.toDateString() === targetDateStr
-  })
-
-  return filtered
-}
-
-function calculateTotalMinutes(sessions: PracticeSession[]): number {
-  const MS_PER_MINUTE = 60000
-  const total = sessions.reduce((sum, s) => {
-    return sum + s.durationMs / MS_PER_MINUTE
-  }, 0)
-
-  return total
 }
