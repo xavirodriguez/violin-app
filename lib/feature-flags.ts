@@ -64,16 +64,6 @@ export const FEATURE_FLAGS_METADATA = {
     ],
     rollbackStrategy: 'Fallback to main-thread audio processing.',
   },
-  FEATURE_UI_INTONATION_HEATMAPS: {
-    name: 'FEATURE_UI_INTONATION_HEATMAPS',
-    key: 'uiIntonationHeatmaps',
-    type: 'BETA',
-    description: 'Show intonation heatmaps in the analytics dashboard.',
-    defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/analytics-dashboard.tsx'],
-    rollbackStrategy: 'Disable the heatmap visualization.',
-  },
   FEATURE_SOCIAL_PRACTICE_ROOMS: {
     name: 'FEATURE_SOCIAL_PRACTICE_ROOMS',
     key: 'socialPracticeRooms',
@@ -115,9 +105,6 @@ class FeatureFlagsManager {
     const clientMapping: Record<string, string | undefined> = {
       FEATURE_AUDIO_WEB_WORKER:
         process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER,
-      FEATURE_UI_INTONATION_HEATMAPS:
-        process.env.FEATURE_UI_INTONATION_HEATMAPS ??
-        process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS,
       FEATURE_SOCIAL_PRACTICE_ROOMS:
         process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
         process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
