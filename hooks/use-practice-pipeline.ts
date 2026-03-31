@@ -10,6 +10,7 @@ import {
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import type { PracticeState, PracticeEvent } from '@/lib/practice-core'
 import type { Exercise } from '@/lib/exercises/types'
+import { useProgressStore } from '@/stores/progress.store'
 
 interface PipelineDependencies {
   state: PracticeState
@@ -27,14 +28,18 @@ function getPipelineContext(state: PracticeState): PipelineContext {
 }
 
 function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercise: Exercise } {
-  return {
+  const skill = useProgressStore.getState().intonationSkill
+  const tolerance = 35 - (skill / 100) * 25
+  const options = {
     minRms: 0.015,
     minConfidence: 0.85,
-    centsTolerance: 20,
+    centsTolerance: Math.round(tolerance),
     requiredHoldTime: 500,
     exercise: state.exercise,
     bpm: 60,
   }
+
+  return options
 }
 
 async function startPipeline(
