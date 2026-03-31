@@ -52,7 +52,7 @@ interface SheetMusicAnnotationsProps {
    * The active OpenSheetMusicDisplay (OSMD) instance.
    * Required to calculate the precise SVG coordinates for each note.
    */
-  osmd: OpenSheetMusicDisplay | null
+  osmd: OpenSheetMusicDisplay | undefined
 
   /**
    * Reference to the container element holding the rendered SVG staff.
@@ -151,7 +151,7 @@ export function SheetMusicAnnotations({
       {Object.entries(annotations).map(([indexStr, annotation]) => {
         const index = parseInt(indexStr)
         const pos = coords[index]
-        if (!pos) return null
+        if (!pos) return <React.Fragment key={indexStr} />
 
         return (
           <div
