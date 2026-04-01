@@ -14,6 +14,8 @@ import { SkillSection } from './analytics/SkillSection'
 import { PracticeTimeSection } from './analytics/PracticeTimeSection'
 import { HeatmapSection } from './analytics/HeatmapSection'
 import { AchievementsSection } from './analytics/AchievementsSection'
+import { Button } from '@/components/ui/button'
+import { exportSessionsToCSV, downloadCSV } from '@/lib/export/progress-exporter'
 
 /**
  * Refactored for Senior Software Craftsmanship:
@@ -70,7 +72,5 @@ export function AnalyticsDashboard() {
 
 function overallProgress(progress: UserProgress) {
   const value = progress.overallSkill
-  const result = value
-
-  return result
+  return value
 }

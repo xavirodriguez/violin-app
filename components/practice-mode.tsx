@@ -232,6 +232,8 @@ export function PracticeMode() {
             isZen={zenMode}
           />
         )}
+
+        <KeyboardShortcutsDialog />
       </div>
     </div>
   )

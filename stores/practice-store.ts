@@ -297,6 +297,10 @@ function getCleanedResourcesState() {
 
 /**
  * Creates the audio adapters required for the practice pipeline.
+ *
+ * @param resources - Audio context and analyser node.
+ * @param difficulty - Optional difficulty level for frequency range configuration.
+ * @returns The detector and audio loop adapters.
  */
 function createAudioAdapters(params: {
   resources: { context: { sampleRate: number }; analyser: AnalyserNode }

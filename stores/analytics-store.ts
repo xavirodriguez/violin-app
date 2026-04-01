@@ -485,6 +485,19 @@ function updateExerciseStats(
   return { ...exerciseStats, [exerciseId]: updated }
 }
 
+/**
+ * Updates the user's practice streak based on session history.
+ *
+ * @param progress - The mutable progress object to update.
+ * @param sessions - The PREVIOUS session history (before the current session was added).
+ *
+ * @remarks
+ * Separates "first session ever" from "continuing yesterday's streak":
+ * - First session ever (`sessions.length === 0`): sets streak to 1.
+ * - Last session was yesterday: increments streak.
+ * - Last session was today: no change (already counted).
+ * - Last session was older than yesterday: resets streak to 1.
+ */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
   // sessions[0] is the current session being ended
@@ -561,6 +574,31 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
   const maeScore = Math.max(0, 100 - mae / 4)
   const score = (maeScore + percentInWindow) / 2
   return Math.round(score)
+}
+
+/**
+ * Checks localStorage usage and warns the user via toast if capacity is high.
+ *
+ * @remarks
+ * - Above 80%: warning toast suggesting data export.
+ * - Above 95%: error toast suggesting cleanup of old sessions.
+ */
+function checkStorageCapacity(): void {
+  try {
+    const usage = estimateLocalStorageUsagePercent()
+    if (usage >= 95) {
+      toast.error(
+        'Your practice history is almost full. Consider exporting your data and cleaning old sessions.',
+        { duration: 10_000 },
+      )
+    } else if (usage >= 80) {
+      toast.warning('Your practice history is almost full. Consider exporting your data.', {
+        duration: 8_000,
+      })
+    }
+  } catch {
+    // localStorage may not be available in some environments
+  }
 }
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {

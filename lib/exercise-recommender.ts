@@ -46,15 +46,19 @@ export function getRecommendedExercise(params: {
   lastPlayedId?: string
   difficultyFilter?: string
 }): Exercise | undefined {
-  const { exercises } = params
-  if (exercises.length === 0) return undefined
+  const filtered = params.difficultyFilter
+    ? params.exercises.filter((ex) => ex.difficulty === params.difficultyFilter)
+    : params.exercises
+  if (filtered.length === 0) return undefined
+
+  const filteredParams = { ...params, exercises: filtered }
 
   return (
-    getPersistenceRecommendation(params) ||
-    getReviewRecommendation(params) ||
-    getProgressionDiscoveryRecommendation(params) ||
-    getSpacedRepetitionRecommendation(params) ||
-    exercises[0]
+    getPersistenceRecommendation(filteredParams) ||
+    getReviewRecommendation(filteredParams) ||
+    getProgressionDiscoveryRecommendation(filteredParams) ||
+    getSpacedRepetitionRecommendation(filteredParams) ||
+    filtered[0]
   )
 }
 
