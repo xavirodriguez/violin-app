@@ -35,8 +35,10 @@ export function AnalyticsDashboard() {
   const totalCompleted = progress.exercisesCompleted?.length ?? 0
 
   const handleExport = () => {
-    const csv = exportSessionsToCSV(recentSessions)
+    const allSessions = getSessionHistory(365)
+    const csv = exportSessionsToCSV(allSessions)
     downloadCSV(csv, `violin-progress-${new Date().toISOString().split('T')[0]}.csv`)
+  }
   }
 
   return (
