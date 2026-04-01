@@ -18,7 +18,7 @@ import {
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
-import { PitchDetector, createPitchDetectorForDifficulty } from '@/lib/pitch-detector'
+import { createPitchDetectorForDifficulty } from '@/lib/pitch-detector'
 import {
   WebAudioFrameAdapter,
   WebAudioLoopAdapter,
@@ -302,18 +302,13 @@ function getCleanedResourcesState() {
  * @param difficulty - Optional difficulty level for frequency range configuration.
  * @returns The detector and audio loop adapters.
  */
-function createAudioAdapters(
-  resources: {
-    context: { sampleRate: number }
-    analyser: AnalyserNode
-  },
-  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced',
-) {
+function createAudioAdapters(params: {
+  resources: { context: { sampleRate: number }; analyser: AnalyserNode }
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'
+}) {
+  const { resources, difficulty = 'Beginner' } = params
   const sampleRate = resources.context.sampleRate
-  const pitchDetector = difficulty
-    ? createPitchDetectorForDifficulty(difficulty, sampleRate)
-    : new PitchDetector(sampleRate)
-  const detector = new PitchDetectorAdapter(pitchDetector)
+  const detector = new PitchDetectorAdapter(createPitchDetectorForDifficulty(difficulty, sampleRate))
   const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
   const audioLoop = new WebAudioLoopAdapter(frameAdapter)
 
@@ -536,14 +531,15 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
 
     initializeAudio: async () => {
-      const canInit = shouldInitialize(get().state, get().isInitializing)
+      const current = get()
+      const canInit = shouldInitialize(current.state, current.isInitializing)
       if (!canInit) return
 
       beginAudioInitialization(set)
       try {
         const resources = await acquireAudioResources()
-        const exerciseDifficulty = get().state.exercise?.difficulty
-        const adapters = createAudioAdapters(resources, exerciseDifficulty)
+        const difficulty = get().state.exercise?.difficulty
+        const adapters = createAudioAdapters({ resources, difficulty })
         set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
       } catch (err) {
         set((currentState) => getFailureInitUpdates(get(), err))

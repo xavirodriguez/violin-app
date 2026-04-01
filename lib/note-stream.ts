@@ -22,6 +22,7 @@ import {
   TimestampMs,
   Hz,
   Cents,
+  NoteTechnique,
 } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'

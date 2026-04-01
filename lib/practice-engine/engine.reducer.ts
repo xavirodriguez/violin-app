@@ -1,5 +1,5 @@
 import { EngineState } from './engine.state'
-import { PracticeEngineEvent } from './engine.types'
+import { PracticeEngineEvent, EngineStatus } from './engine.types'
 
 /**
  * Pure reducer function for the {@link PracticeEngine} state.
@@ -17,14 +17,14 @@ const HANDLERS: Record<
   (state: EngineState, event: PracticeEngineEvent) => EngineState
 > = {
   NOTE_DETECTED: (state) => {
-    const activeStatus = 'active'
+    const activeStatus: EngineStatus = 'active'
     const nextState = { ...state, status: activeStatus }
     const result = nextState
 
     return result
   },
   HOLDING_NOTE: (state) => {
-    const activeStatus = 'active'
+    const activeStatus: EngineStatus = 'active'
     const nextState = { ...state, status: activeStatus }
     const result = nextState
 
@@ -45,7 +45,7 @@ const HANDLERS: Record<
     }
   },
   SESSION_COMPLETED: (state) => {
-    const completedStatus = 'completed'
+    const completedStatus: EngineStatus = 'completed'
     const nextState = { ...state, status: completedStatus }
     const result = nextState
 

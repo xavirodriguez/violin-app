@@ -44,7 +44,7 @@ export function getRecommendedExercise(params: {
   exercises: Exercise[]
   userProgress: UserProgress
   lastPlayedId?: string
-  difficultyFilter?: Difficulty
+  difficultyFilter?: string
 }): Exercise | undefined {
   const filtered = params.difficultyFilter
     ? params.exercises.filter((ex) => ex.difficulty === params.difficultyFilter)
@@ -66,7 +66,7 @@ interface RecommendationParams {
   exercises: Exercise[]
   userProgress: UserProgress
   lastPlayedId?: string
-  difficultyFilter?: Difficulty
+  difficultyFilter?: string
 }
 
 function getPersistenceRecommendation(params: RecommendationParams): Exercise | undefined {
@@ -99,7 +99,16 @@ function getReviewRecommendation(params: RecommendationParams): Exercise | undef
 }
 
 function getProgressionDiscoveryRecommendation(params: RecommendationParams): Exercise | undefined {
-  const { exercises, userProgress } = params
+  const { exercises, userProgress, difficultyFilter } = params
+
+  if (difficultyFilter && difficultyFilter !== 'all') {
+    return exercises.find(
+      (ex) =>
+        ex.difficulty.toLowerCase() === difficultyFilter.toLowerCase() &&
+        (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
+    )
+  }
+
   const currentDifficulty = determineTargetDifficulty(exercises, userProgress)
 
   return exercises.find(

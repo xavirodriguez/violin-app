@@ -11,6 +11,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    allowedRevalidateHeaderKeys: ['host'],
+  },
+  serverExternalPackages: [],
 }
 
 export default nextConfig

@@ -109,6 +109,10 @@ class FeatureFlagsManager {
    * 3. Generating the mapping dynamically from `FEATURE_FLAGS_METADATA` eliminates
    *    the risk of forgetting to add a new flag to a manual switch-case.
    *
+   * **CRITICAL**: Do NOT use dynamic lookups like `process.env[name]` here, as
+   * they will not be inlined by the Next.js compiler and will remain undefined
+   * on the client side.
+   *
    * @internal
    */
   private getClientValue(flagName: string): string | undefined {

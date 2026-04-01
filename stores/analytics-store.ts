@@ -5,8 +5,8 @@ import type { Exercise } from '@/lib/domain/musical-types'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { analytics } from '@/lib/analytics-tracker'
-import { toast } from 'sonner'
 import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
+import { toast } from 'sonner'
 
 /**
  * Data model for a completed practice session.
@@ -95,6 +95,7 @@ export interface RecordCompletionParams {
  */
 export interface AnalyticsStore {
   currentSession: PracticeSession | undefined
+  cleanOldSessions: (count?: number) => void
   sessions: PracticeSession[]
   progress: UserProgress
   onAchievementUnlocked?: (achievement: Achievement) => void
@@ -191,7 +192,21 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           progress: newProgress,
         })
 
-        checkStorageCapacity()
+        // FEAT-4: Storage Usage Alert
+        const usage = estimateLocalStorageUsagePercent()
+        if (usage > 95) {
+          toast.warning('Storage almost full!', {
+            description: 'Please clean up your practice history to avoid data loss.',
+            action: {
+              label: 'Clean old sessions',
+              onClick: () => get().cleanOldSessions(50),
+            },
+          })
+        } else if (usage > 80) {
+          toast('Storage usage high', {
+            description: 'Consider exporting your data soon.',
+          })
+        }
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
@@ -291,6 +306,15 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       getStreakInfo: () => {
         const { currentStreak, longestStreak } = get().progress
         return { current: currentStreak, longest: longestStreak }
+      },
+
+      cleanOldSessions: (count = 50) => {
+        set((state) => ({
+          sessions: state.sessions.slice(0, Math.max(0, state.sessions.length - count)),
+        }))
+        toast.success('History cleaned', {
+          description: `Removed oldest ${count} sessions.`,
+        })
       },
     }),
     {
@@ -476,31 +500,25 @@ function updateExerciseStats(
  */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
+  // sessions[0] is the current session being ended
+  const lastSession = sessions[1] // Previous session
+  const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
   const yesterday = today - DAY_MS
 
-  if (sessions.length === 0) {
-    // First session ever — start the streak at 1
+  if (!lastSession) {
+    // First session ever
     progress.currentStreak = 1
-    progress.longestStreak = Math.max(progress.longestStreak, 1)
-    return
-  }
-
-  const lastSession = sessions[0]
-  const lastSessionDay = startOfDayMs(lastSession.endTimeMs)
-
-  if (lastSessionDay === today) {
-    // Already practiced today — streak doesn't change
-    return
-  }
-
-  if (lastSessionDay === yesterday) {
-    // Consecutive day — increment streak
+  } else if (lastSessionDay === yesterday) {
+    // Continuing streak from yesterday
     progress.currentStreak += 1
-    progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
-  } else {
-    // Missed one or more days — reset streak
+  } else if (lastSessionDay < yesterday) {
+    // Streak broken, start anew
     progress.currentStreak = 1
+  } else if (lastSessionDay === today) {
+    // Already practiced today, keep current streak
   }
+
+  progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
 }
 
 function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
