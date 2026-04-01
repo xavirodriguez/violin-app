@@ -41,7 +41,7 @@ export class PitchDetector {
    * For violin, the highest note is E7 at ~2637 Hz.
    * We set this to 2637 Hz to cover the full standard violin range.
    */
-  private MAX_FREQUENCY = 2637
+  private MAX_FREQUENCY = 1400
 
   /**
    * The threshold for the YIN algorithm.

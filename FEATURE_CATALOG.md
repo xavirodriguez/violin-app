@@ -61,13 +61,13 @@ These features were previously behind flags but are now a permanent part of the 
 
 - **ID**: `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` (Promoted)
 - **Description**: Automatically adjusts intonation thresholds and exercise complexity based on user performance.
-- **Status**: Permanent. Integrated into the Practice Engine.
+- **Status**: ACTIVE.
 
 ### Intonation Heatmaps
 
 - **ID**: `FEATURE_UI_INTONATION_HEATMAPS` (Promoted)
 - **Description**: Visualizes pitch accuracy patterns from the last session in the Analytics Dashboard.
-- **Status**: Stable. Promoted in Cycle #5.
+- **Status**: ACTIVE.
 
 ---
 
@@ -76,7 +76,8 @@ These features were previously behind flags but are now a permanent part of the 
 | Flag                             | Category     | Status  | Risk |
 | :------------------------------- | :----------- | :------ | :--- |
 | `FEATURE_AUDIO_WEB_WORKER`       | PERFORMANCE  | DEFINED | HIGH |
-| `FEATURE_UI_INTONATION_HEATMAPS` | UI_UX        | STABLE  | LOW  |
+| `FEATURE_UI_INTONATION_HEATMAPS` | UI_UX        | ACTIVE  | LOW  |
+| `FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY` | STABLE | ACTIVE  | LOW  |
 | `FEATURE_SOCIAL_PRACTICE_ROOMS`  | EXPERIMENTAL | PLANNED | HIGH |
 
 ---
