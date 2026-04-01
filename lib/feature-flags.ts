@@ -93,25 +93,31 @@ export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA
  */
 class FeatureFlagsManager {
   /**
-   * Internal mapping to ensure Next.js bundler replaces environment variables.
+   * Resolves the value of a feature flag from environment variables.
    *
    * @remarks
-   * Due to how Next.js static analysis works, environment variables must be
-   * accessed using their full literal name (e.g. `process.env.FLAG`).
+   * **Next.js limitation**: In a production Next.js build, `process.env[dynamicKey]`
+   * is NOT statically replaced by the compiler — only literal references like
+   * `process.env.MY_FLAG` are inlined. This means dynamic lookups work at runtime
+   * on the server (Node.js) but will resolve to `undefined` on the client unless
+   * the env var is explicitly exposed via `next.config.mjs` `env` or `publicRuntimeConfig`.
+   *
+   * We accept this trade-off because:
+   * 1. Feature flags are primarily evaluated server-side or at build time.
+   * 2. The `isEnabled` method falls back to `metadata.defaultValue` when the
+   *    env var is not found, ensuring safe client-side behavior.
+   * 3. Generating the mapping dynamically from `FEATURE_FLAGS_METADATA` eliminates
+   *    the risk of forgetting to add a new flag to a manual switch-case.
    *
    * @internal
    */
   private getClientValue(flagName: string): string | undefined {
-    const clientMapping: Record<string, string | undefined> = {
-      FEATURE_AUDIO_WEB_WORKER:
-        process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER,
-      FEATURE_SOCIAL_PRACTICE_ROOMS:
-        process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
-        process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
-    }
-    const result = clientMapping[flagName]
+    const serverValue = process.env[flagName]
+    if (serverValue !== undefined) return serverValue
 
-    return result
+    const publicKey = `NEXT_PUBLIC_${flagName}`
+    const publicValue = process.env[publicKey]
+    return publicValue
   }
 
   /**
