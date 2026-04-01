@@ -46,20 +46,37 @@ export function getRecommendedExercise(params: {
   lastPlayedId?: string
   difficultyFilter?: string
 }): Exercise | undefined {
-  const filtered = params.difficultyFilter
-    ? params.exercises.filter((ex) => ex.difficulty === params.difficultyFilter)
-    : params.exercises
-  if (filtered.length === 0) return undefined
+  const filtered = filterExercisesByDifficulty(params)
+  const hasExercises = filtered.length > 0
+  if (!hasExercises) return undefined
 
   const filteredParams = { ...params, exercises: filtered }
+  const recommendation = findFirstValidRecommendation(filteredParams)
+  const finalRecommendation = recommendation || filtered[0]
 
-  return (
-    getPersistenceRecommendation(filteredParams) ||
-    getReviewRecommendation(filteredParams) ||
-    getProgressionDiscoveryRecommendation(filteredParams) ||
-    getSpacedRepetitionRecommendation(filteredParams) ||
-    filtered[0]
-  )
+  return finalRecommendation
+}
+
+function filterExercisesByDifficulty(params: {
+  exercises: Exercise[]
+  difficultyFilter?: string
+}): Exercise[] {
+  const { exercises, difficultyFilter } = params
+  const hasFilter = !!difficultyFilter
+  if (!hasFilter) return exercises
+
+  const filtered = exercises.filter((ex) => ex.difficulty === difficultyFilter)
+  return filtered
+}
+
+function findFirstValidRecommendation(params: RecommendationParams): Exercise | undefined {
+  const recommendation =
+    getPersistenceRecommendation(params) ||
+    getReviewRecommendation(params) ||
+    getProgressionDiscoveryRecommendation(params) ||
+    getSpacedRepetitionRecommendation(params)
+
+  return recommendation
 }
 
 interface RecommendationParams {
@@ -100,39 +117,60 @@ function getReviewRecommendation(params: RecommendationParams): Exercise | undef
 
 function getProgressionDiscoveryRecommendation(params: RecommendationParams): Exercise | undefined {
   const { exercises, userProgress, difficultyFilter } = params
+  const hasSpecificFilter = difficultyFilter && difficultyFilter !== 'all'
 
-  if (difficultyFilter && difficultyFilter !== 'all') {
-    return exercises.find(
-      (ex) =>
-        ex.difficulty.toLowerCase() === difficultyFilter.toLowerCase() &&
-        (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
-    )
+  if (hasSpecificFilter) {
+    return findFirstUnplayedByDifficulty(exercises, userProgress, difficultyFilter!)
   }
 
   const currentDifficulty = determineTargetDifficulty(exercises, userProgress)
+  const recommendation = findFirstUnplayedByDifficulty(exercises, userProgress, currentDifficulty)
 
-  return exercises.find(
-    (ex) =>
-      ex.difficulty === currentDifficulty &&
-      (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) === 0,
-  )
+  return recommendation
+}
+
+function findFirstUnplayedByDifficulty(
+  exercises: Exercise[],
+  userProgress: UserProgress,
+  difficulty: string,
+): Exercise | undefined {
+  const diffLower = difficulty.toLowerCase()
+  const match = exercises.find((ex) => {
+    const isSameDiff = ex.difficulty.toLowerCase() === diffLower
+    const stats = userProgress.exerciseStats[ex.id]
+    const isUnplayed = (stats?.timesCompleted ?? 0) === 0
+    return isSameDiff && isUnplayed
+  })
+
+  return match
 }
 
 function determineTargetDifficulty(exercises: Exercise[], userProgress: UserProgress): Difficulty {
   const difficulties: Difficulty[] = ['Beginner', 'Intermediate', 'Advanced']
-  let target: Difficulty = 'Beginner'
+  const found = difficulties.find((diff) => {
+    const isCompleted = isDifficultyCompleted(exercises, userProgress, diff)
+    return !isCompleted
+  })
 
-  for (const diff of difficulties) {
-    const exercisesInDiff = exercises.filter((ex) => ex.difficulty === diff)
-    const allCompleted =
-      exercisesInDiff.length > 0 &&
-      exercisesInDiff.every((ex) => (userProgress.exerciseStats[ex.id]?.timesCompleted ?? 0) > 0)
-
-    if (!allCompleted) return diff
-    target = diff
-  }
-
+  const target = found || 'Advanced'
   return target
+}
+
+function isDifficultyCompleted(
+  exercises: Exercise[],
+  userProgress: UserProgress,
+  difficulty: Difficulty,
+): boolean {
+  const inDiff = exercises.filter((ex) => ex.difficulty === difficulty)
+  const hasExercises = inDiff.length > 0
+  if (!hasExercises) return false
+
+  const allDone = inDiff.every((ex) => {
+    const stats = userProgress.exerciseStats[ex.id]
+    return (stats?.timesCompleted ?? 0) > 0
+  })
+
+  return allDone
 }
 
 function getSpacedRepetitionRecommendation(params: RecommendationParams): Exercise | undefined {
