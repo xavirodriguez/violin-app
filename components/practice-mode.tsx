@@ -47,6 +47,7 @@ export function PracticeMode() {
     state,
     practiceState,
     loadExercise,
+    autoStartEnabled,
     setAutoStart,
     start,
     stop,
@@ -65,7 +66,6 @@ export function PracticeMode() {
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
   const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
-  const [isAutoStartEnabled, setAutoStartEnabled] = useState(false)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
@@ -116,8 +116,8 @@ export function PracticeMode() {
           <div className="space-y-6">
             {!isZenModeEnabled && (
               <PracticeSettings
-                autoStartEnabled={isAutoStartEnabled}
-                onAutoStartChange={setAutoStartEnabled}
+                autoStartEnabled={autoStartEnabled}
+                onAutoStartChange={setAutoStart}
               />
             )}
             <ExerciseLibrary

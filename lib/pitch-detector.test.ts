@@ -27,8 +27,8 @@ describe('PitchDetector', () => {
     const lowBuffer = createSineWave(100, 0.1)
     expect(detector.detectPitch(lowBuffer).pitchHz).toBe(0)
 
-    // 1000 Hz is above default MAX_FREQUENCY (700)
-    const highBuffer = createSineWave(1000, 0.1)
+    // 1500 Hz is above default MAX_FREQUENCY (1400)
+    const highBuffer = createSineWave(1500, 0.1)
     expect(detector.detectPitch(highBuffer).pitchHz).toBe(0)
   })
 

@@ -70,7 +70,9 @@ export const useAnalyticsStore = Object.assign(
           exercisesCompleted: latestProgress.exercisesCompleted,
           totalPracticeTimeMs: latestProgress.totalPracticeTime * 1000,
           averageAccuracy: latestProgress.overallSkill,
-          totalNotesCompleted: 0,
+          totalNotesCompleted:
+            useSessionHistoryStore.getState().sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
+            (latestSession.current?.notesCompleted || 0),
         }
         useAchievementsStore.getState().check(stats)
       },
@@ -91,7 +93,9 @@ export const useAnalyticsStore = Object.assign(
           exercisesCompleted: progress.exercisesCompleted,
           totalPracticeTimeMs: progress.totalPracticeTime * 1000,
           averageAccuracy: progress.overallSkill,
-          totalNotesCompleted: 0,
+          totalNotesCompleted:
+            useSessionHistoryStore.getState().sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
+            (session.current?.notesCompleted || 0),
         }
         return achievements.check(stats)
       },
