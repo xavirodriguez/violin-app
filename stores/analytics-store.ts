@@ -5,6 +5,8 @@ import type { Exercise } from '@/lib/domain/musical-types'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { analytics } from '@/lib/analytics-tracker'
+import { toast } from 'sonner'
+import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
 
 /**
  * Data model for a completed practice session.
@@ -188,6 +190,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
           sessions: newSessions.slice(0, 100),
           progress: newProgress,
         })
+
+        checkStorageCapacity()
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
@@ -457,16 +461,44 @@ function updateExerciseStats(
   return { ...exerciseStats, [exerciseId]: updated }
 }
 
+/**
+ * Updates the user's practice streak based on session history.
+ *
+ * @param progress - The mutable progress object to update.
+ * @param sessions - The PREVIOUS session history (before the current session was added).
+ *
+ * @remarks
+ * Separates "first session ever" from "continuing yesterday's streak":
+ * - First session ever (`sessions.length === 0`): sets streak to 1.
+ * - Last session was yesterday: increments streak.
+ * - Last session was today: no change (already counted).
+ * - Last session was older than yesterday: resets streak to 1.
+ */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
-  const lastSession = sessions[0]
-  const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
   const yesterday = today - DAY_MS
 
-  if (sessions.length === 0 || lastSessionDay === yesterday) {
+  if (sessions.length === 0) {
+    // First session ever — start the streak at 1
+    progress.currentStreak = 1
+    progress.longestStreak = Math.max(progress.longestStreak, 1)
+    return
+  }
+
+  const lastSession = sessions[0]
+  const lastSessionDay = startOfDayMs(lastSession.endTimeMs)
+
+  if (lastSessionDay === today) {
+    // Already practiced today — streak doesn't change
+    return
+  }
+
+  if (lastSessionDay === yesterday) {
+    // Consecutive day — increment streak
     progress.currentStreak += 1
     progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
-  } else if (lastSessionDay < yesterday) {
+  } else {
+    // Missed one or more days — reset streak
     progress.currentStreak = 1
   }
 }
@@ -524,6 +556,31 @@ function calculateRhythmSkill(sessions: PracticeSession[]): number {
   const maeScore = Math.max(0, 100 - mae / 4)
   const score = (maeScore + percentInWindow) / 2
   return Math.round(score)
+}
+
+/**
+ * Checks localStorage usage and warns the user via toast if capacity is high.
+ *
+ * @remarks
+ * - Above 80%: warning toast suggesting data export.
+ * - Above 95%: error toast suggesting cleanup of old sessions.
+ */
+function checkStorageCapacity(): void {
+  try {
+    const usage = estimateLocalStorageUsagePercent()
+    if (usage >= 95) {
+      toast.error(
+        'Your practice history is almost full. Consider exporting your data and cleaning old sessions.',
+        { duration: 10_000 },
+      )
+    } else if (usage >= 80) {
+      toast.warning('Your practice history is almost full. Consider exporting your data.', {
+        duration: 8_000,
+      })
+    }
+  } catch {
+    // localStorage may not be available in some environments
+  }
 }
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {

@@ -4,13 +4,16 @@
 
 'use client'
 
-import { useAnalyticsStore } from '@/stores/analytics-store'
+import { Download } from 'lucide-react'
+import { useAnalyticsStore, type UserProgress } from '@/stores/analytics-store'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
 import { MetricsSection } from './analytics/MetricsSection'
 import { SkillSection } from './analytics/SkillSection'
 import { PracticeTimeSection } from './analytics/PracticeTimeSection'
 import { HeatmapSection } from './analytics/HeatmapSection'
 import { AchievementsSection } from './analytics/AchievementsSection'
+import { Button } from '@/components/ui/button'
+import { exportSessionsToCSV, downloadCSV } from '@/lib/export/progress-exporter'
 
 /**
  * Refactored for Senior Software Craftsmanship:
@@ -29,9 +32,21 @@ export function AnalyticsDashboard() {
   const heatmapData = getHeatmapData(lastSession)
   const totalCompleted = progress.exercisesCompleted?.length ?? 0
 
+  const handleExportCSV = () => {
+    const allSessions = getSessionHistory(365)
+    const csv = exportSessionsToCSV(allSessions)
+    downloadCSV(csv, `violin-progress-${new Date().toISOString().split('T')[0]}.csv`)
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="mb-6 text-2xl font-bold">📊 Your Progress</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">📊 Your Progress</h1>
+        <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
 
       <MetricsSection
         streak={streakInfo.current}
@@ -55,9 +70,13 @@ export function AnalyticsDashboard() {
   )
 }
 
-function overallProgress(progress: any) {
+/**
+ * Extracts the overall skill value from user progress.
+ *
+ * @param progress - The user's progress data.
+ * @returns The overall skill percentage (0-100).
+ */
+function overallProgress(progress: UserProgress): number {
   const value = progress.overallSkill
-  const result = value
-
-  return result
+  return value
 }
