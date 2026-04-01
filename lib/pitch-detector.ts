@@ -62,13 +62,17 @@ export class PitchDetector {
    * Constructs a new PitchDetector instance.
    *
    * @param sampleRate - The sample rate of the audio context in which the detector will be used.
+   * @param maxFrequency - Optional maximum frequency in Hz. Defaults to 2637 Hz (E7, full violin range).
    * @throws Will throw an error if the sample rate is not a positive number.
    */
-  constructor(sampleRate: number) {
+  constructor(sampleRate: number, maxFrequency?: number) {
     if (sampleRate <= 0) {
       throw new Error(`Invalid sample rate: ${sampleRate}. Must be > 0`)
     }
     this.sampleRate = sampleRate
+    if (maxFrequency !== undefined) {
+      this.setMaxFrequency(maxFrequency)
+    }
   }
 
   /**
@@ -365,4 +369,35 @@ export function createPitchDetectorFromContext(audioContext: AudioContext): Pitc
   }
 
   return detector
+}
+
+/** Difficulty level type for the factory function. */
+type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
+
+/** Max frequency mapping per difficulty level in Hz. */
+const DIFFICULTY_MAX_FREQUENCY: Record<Difficulty, number> = {
+  Beginner: 700,
+  Intermediate: 1400,
+  Advanced: 2637,
+}
+
+/**
+ * Factory function to create a PitchDetector configured for a specific difficulty level.
+ *
+ * @param difficulty - The difficulty level of the current exercise.
+ * @param sampleRate - The sample rate of the audio context.
+ * @returns A new PitchDetector with MAX_FREQUENCY set for the given difficulty.
+ *
+ * @remarks
+ * Frequency ranges per difficulty:
+ * - Beginner: 700 Hz (~E5, first few positions)
+ * - Intermediate: 1400 Hz (~F6, higher positions)
+ * - Advanced: 2637 Hz (E7, full violin range)
+ */
+export function createPitchDetectorForDifficulty(
+  difficulty: Difficulty,
+  sampleRate: number,
+): PitchDetector {
+  const maxFrequency = DIFFICULTY_MAX_FREQUENCY[difficulty] ?? DIFFICULTY_MAX_FREQUENCY.Advanced
+  return new PitchDetector(sampleRate, maxFrequency)
 }
