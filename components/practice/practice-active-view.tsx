@@ -20,6 +20,7 @@ export function PracticeActiveView({
   holdDuration,
   perfectNoteStreak,
   zenMode,
+  centsTolerance = DEFAULT_CENTS_TOLERANCE,
 }: {
   status: string
   targetNote: TargetNote | undefined
@@ -29,6 +30,7 @@ export function PracticeActiveView({
   holdDuration?: number
   perfectNoteStreak?: number
   zenMode: boolean
+  centsTolerance?: number
 }) {
   const isActive = status === 'listening' || status === 'validating' || status === 'correct'
   if (!isActive || !targetNote || !targetPitchName) return <></>
@@ -53,7 +55,7 @@ export function PracticeActiveView({
             targetNote={targetPitchName}
             detectedPitchName={lastDetectedNote?.pitch}
             centsDeviation={lastDetectedNote?.cents}
-            centsTolerance={DEFAULT_CENTS_TOLERANCE}
+            centsTolerance={centsTolerance}
           />
         </Card>
       )}

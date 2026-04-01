@@ -86,6 +86,7 @@ export interface SessionRunnerDependencies {
   store: RunnerStore
   analytics: RunnerAnalytics
   updatePitch?: (pitch: number, confidence: number) => void
+  centsTolerance?: number
 }
 
 /**
@@ -170,6 +171,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       pitch: context.detector,
       exercise: context.exercise,
       reducer: engineReducer,
+      centsTolerance: context.centsTolerance ?? 25,
     })
 
     for await (const event of engine.start(signal)) {

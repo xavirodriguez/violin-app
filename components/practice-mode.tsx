@@ -23,8 +23,9 @@ import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
 import { PracticeCompletion } from '@/components/practice-completion'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
-import { usePracticePipeline } from '@/hooks/use-practice-pipeline'
 import { usePracticeUIEffects } from '@/hooks/use-practice-ui-effects'
+import { useProgressStore } from '@/stores/progress.store'
+import { featureFlags } from '@/lib/feature-flags'
 import { ExerciseLibrary } from './practice/exercise-library'
 import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
@@ -52,14 +53,12 @@ export function PracticeMode() {
   const {
     state,
     practiceState,
-    audioLoop,
-    detector,
     loadExercise,
+    autoStartEnabled,
     setAutoStart,
     start,
     stop,
     reset,
-    consumePipelineEvents,
     liveObservations,
   } = usePracticeStore()
 
@@ -67,17 +66,25 @@ export function PracticeMode() {
   const { status, currentNoteIndex, targetNote, totalNotes, progress } =
     derivePracticeState(practiceState)
 
+  const { intonationSkill } = useProgressStore()
+  const isAdaptive = featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')
+  const centsTolerance = isAdaptive ? Math.round(35 - (intonationSkill / 100) * 25) : 25
+
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
-  const [zenMode, setZenMode] = useState(false)
-  const [autoStartEnabled] = useState(false)
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
+  const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
 
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
-  usePracticePipeline({ practiceState, audioLoop, detector, consumePipelineEvents })
-  usePracticeUIEffects({ status, currentNoteIndex, start, stop, setZenMode, osmdHook })
+  usePracticeUIEffects({
+    status,
+    currentNoteIndex,
+    start,
+    stop,
+    setZenMode: setIsZenModeEnabled,
+    osmdHook,
+  })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,7 +116,7 @@ export function PracticeMode() {
           <Card className="p-12 text-center">Initializing Audio...</Card>
         )}
 
-        {!zenMode && (state.status !== 'idle' || state.exercise) && (
+        {!isZenModeEnabled && (state.status !== 'idle' || state.exercise) && (
           <PracticeControls
             status={status}
             hasExercise={!!practiceState}
@@ -124,7 +131,7 @@ export function PracticeMode() {
 
         {state.status === 'idle' && (
           <div className="space-y-6">
-            {!zenMode && (
+            {!isZenModeEnabled && (
               <PracticeSettings
                 autoStartEnabled={autoStartEnabled}
                 onAutoStartChange={setAutoStart}
@@ -181,7 +188,8 @@ export function PracticeMode() {
           liveObservations={liveObservations}
           holdDuration={practiceState?.holdDuration}
           perfectNoteStreak={practiceState?.perfectNoteStreak}
-          zenMode={zenMode}
+          zenMode={isZenModeEnabled}
+          centsTolerance={centsTolerance}
         />
 
         {status === 'completed' && (
@@ -228,8 +236,8 @@ export function PracticeMode() {
             onRepeatMeasure={() => {}}
             onContinue={() => {}}
             onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={() => setZenMode((v) => !v)}
-            isZen={zenMode}
+            onToggleZen={() => setIsZenModeEnabled((v) => !v)}
+            isZen={isZenModeEnabled}
           />
         )}
 
@@ -329,7 +337,7 @@ function SheetMusicContainer(params: {
               {} as Record<number, any>,
             )}
             currentNoteIndex={currentNoteIndex}
-            osmd={osmdHook.osmd}
+            osmd={osmdHook.osmd || undefined}
             containerRef={osmdHook.containerRef}
           />
         )}

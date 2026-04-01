@@ -27,6 +27,7 @@ import {
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
+import { featureFlags } from '@/lib/feature-flags'
 import {
   PracticeSessionRunnerImpl,
   SessionRunnerDependencies,
@@ -160,6 +161,9 @@ function createRunnerDeps(params: {
   storeState: ReadyState
 }): SessionRunnerDependencies {
   const { get, safeSet, storeState } = params
+  const { intonationSkill } = useProgressStore.getState()
+  const isAdaptive = featureFlags.isEnabled("FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY")
+  const centsTolerance = isAdaptive ? Math.round(35 - (intonationSkill / 100) * 25) : 25
   const deps: SessionRunnerDependencies = {
     audioLoop: storeState.audioLoop,
     detector: storeState.detector,
@@ -170,6 +174,7 @@ function createRunnerDeps(params: {
     updatePitch: (pitch, confidence) => {
       useTunerStore.getState().updatePitch(pitch, confidence)
     },
+    centsTolerance,
   }
 
   return deps

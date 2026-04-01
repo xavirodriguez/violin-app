@@ -26,6 +26,8 @@ export interface PracticeEngineContext {
   exercise: Exercise
   /** Optional custom reducer for state transitions. Defaults to {@link engineReducer}. */
   reducer?: PracticeReducer
+  /** Optional cents tolerance override. */
+  centsTolerance?: number
 }
 
 /**
@@ -110,7 +112,7 @@ function createEngineCore(ctx: PracticeEngineContext) {
   return {
     getState: () => state,
     updateState: (e: PracticeEngineEvent) => (state = reducer(state, e)),
-    getOptions: () => getEngineOptions(ctx.exercise, state.perfectNoteStreak),
+    getOptions: () => getEngineOptions(ctx),
     isRunning: () => isRunning,
     setRunning: (val: boolean) => (isRunning = val),
   }
@@ -167,12 +169,12 @@ function getInitialEngineState(exercise: Exercise): EngineState {
  * Builds the pipeline options for the engine iteration.
  * @internal
  */
-function getEngineOptions(exercise: Exercise, perfectNoteStreak: number): NoteStreamOptions {
-  const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(perfectNoteStreak)
+function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
+  const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(0)
   const options = {
-    exercise,
+    exercise: ctx.exercise,
     bpm: 60,
-    centsTolerance,
+    centsTolerance: ctx.centsTolerance ?? centsTolerance,
     requiredHoldTime,
     minRms: 0.01,
     minConfidence: 0.85,
