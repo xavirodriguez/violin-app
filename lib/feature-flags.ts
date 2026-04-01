@@ -7,8 +7,6 @@
 
 /**
  * Categories of feature flags to define their maturity and lifecycle stage.
- *
- * @public
  */
 export type FeatureFlagType =
   | 'EXPERIMENTAL'
@@ -22,30 +20,16 @@ export type FeatureFlagType =
 
 /**
  * Detailed metadata for a feature flag.
- *
- * @remarks
- * This metadata is used for automated audits and risk assessment.
- *
- * @public
  */
 export interface FeatureFlagMetadata {
-  /** Technical name of the flag (usually uppercase with underscores). */
   name: string
-  /** Human-readable key for use in configuration files or UIs. */
   key: string
-  /** The maturity type of the feature. */
   type: FeatureFlagType
-  /** Purpose and impact of the feature. */
   description: string
-  /** Fallback value if the environment variable is not defined. */
   defaultValue: boolean
-  /** List of files primarily affected by this feature. */
   affectedFiles?: string[]
-  /** Perceived impact on system stability. */
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
-  /** Plan for disabling the feature if it causes production issues. */
   rollbackStrategy?: string
-  /** Other flags that must be enabled for this one to function. */
   dependencies?: string[]
 }
 
@@ -74,96 +58,47 @@ export const FEATURE_FLAGS_METADATA = {
     affectedFiles: [],
     rollbackStrategy: 'Disable real-time synchronization features.',
   },
-  FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
-    name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
-    key: 'adaptiveDifficulty',
-    type: 'STABLE',
-    description: 'Automatically adjusts intonation thresholds based on performance.',
+  FEATURE_TELEMETRY_ACCURACY: {
+    name: 'FEATURE_TELEMETRY_ACCURACY',
+    key: 'telemetryAccuracy',
+    type: 'INTEGRATION',
+    description: 'Collect anonymous pitch detection accuracy data for optimization.',
     defaultValue: true,
     riskLevel: 'LOW',
-    affectedFiles: ['lib/practice/session-runner.ts', 'stores/practice-store.ts'],
-    rollbackStrategy: 'Fallback to 25 cents default tolerance.',
-  },
-  FEATURE_UI_INTONATION_HEATMAPS: {
-    name: 'FEATURE_UI_INTONATION_HEATMAPS',
-    key: 'intonationHeatmaps',
-    type: 'UI_UX',
-    description: 'Visualizes pitch accuracy patterns in the Analytics Dashboard.',
-    defaultValue: true,
-    riskLevel: 'LOW',
-    affectedFiles: ['components/analytics-dashboard.tsx'],
-    rollbackStrategy: 'Hide heatmap section in dashboard.',
+    affectedFiles: ['lib/practice/session-runner.ts'],
+    rollbackStrategy: 'Disable telemetry logging.',
   },
 } as const satisfies Record<string, FeatureFlagMetadata>
 
-/**
- * Type representing all valid feature flag names.
- */
 export type FeatureFlagName = keyof typeof FEATURE_FLAGS_METADATA
 
 /**
- * Service for querying and validating feature flags across the application.
- *
- * @remarks
- * This manager provides a unified API for both server-side and client-side
- * feature gating. It handles the complexity of Next.js environment variable
- * prefixing (`NEXT_PUBLIC_`).
- *
- * @internal
+ * Service for querying and validating feature flags.
+ * Exported to support dynamic testing and isolation.
  */
-class FeatureFlagsManager {
+export class FeatureFlagsManager {
   /**
    * Resolves the value of a feature flag from environment variables.
-   *
-   * @remarks
-   * **Next.js limitation**: In a production Next.js build, `process.env[dynamicKey]`
-   * is NOT statically replaced by the compiler — only literal references like
-   * `process.env.MY_FLAG` are inlined. This means dynamic lookups work at runtime
-   * on the server (Node.js) but will resolve to `undefined` on the client unless
-   * the env var is explicitly exposed via `next.config.mjs` `env` or `publicRuntimeConfig`.
-   *
-   * We accept this trade-off because:
-   * 1. Feature flags are primarily evaluated server-side or at build time.
-   * 2. The `isEnabled` method falls back to `metadata.defaultValue` when the
-   *    env var is not found, ensuring safe client-side behavior.
-   * 3. Generating the mapping dynamically from `FEATURE_FLAGS_METADATA` eliminates
-   *    the risk of forgetting to add a new flag to a manual switch-case.
-   *
-   * **CRITICAL**: Do NOT use dynamic lookups like `process.env[name]` here, as
-   * they will not be inlined by the Next.js compiler and will remain undefined
-   * on the client side.
-   *
-   * @internal
+   * Uses manual switch-case to ensure static inlining by Next.js compiler.
    */
   private getClientValue(flagName: string): string | undefined {
-    const clientMapping: Record<string, string | undefined> = {
-      FEATURE_AUDIO_WEB_WORKER:
-        process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER,
-      FEATURE_SOCIAL_PRACTICE_ROOMS:
-        process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
-        process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
-      FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY:
-        process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ??
-        process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY,
-      FEATURE_UI_INTONATION_HEATMAPS:
-        process.env.FEATURE_UI_INTONATION_HEATMAPS ??
-        process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS,
+    switch (flagName) {
+      case 'FEATURE_AUDIO_WEB_WORKER':
+        return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
+      case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
+        return (
+          process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
+          process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
+        )
+      case 'FEATURE_TELEMETRY_ACCURACY':
+        return (
+          process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
+        )
+      default:
+        return process.env[flagName] ?? process.env[`NEXT_PUBLIC_${flagName}`]
     }
-    const result = clientMapping[flagName]
-
-    const publicKey = `NEXT_PUBLIC_${flagName}`
-    const publicValue = process.env[publicKey]
-    return publicValue
   }
 
-  /**
-   * Checks if a feature flag is enabled.
-   *
-   * @remarks
-   * In Next.js, to access environment variables on the client,
-   * they must be prefixed with NEXT_PUBLIC_. This manager checks both
-   * the provided name and its NEXT_PUBLIC_ prefixed version.
-   */
   isEnabled(flagName: FeatureFlagName): boolean {
     const metadata = FEATURE_FLAGS_METADATA[flagName]
     if (!metadata) {
@@ -171,74 +106,58 @@ class FeatureFlagsManager {
       return false
     }
 
-    // Check direct env var (works on server)
-    // or prefixed version (works on client if explicitly mapped)
-    const val =
-      process.env[flagName] ??
-      this.getClientValue(flagName) ??
-      process.env[`NEXT_PUBLIC_${flagName}`]
+    const val = this.getClientValue(flagName)
+    const result = val === undefined ? metadata.defaultValue : val === 'true'
 
-    if (val === undefined) {
-      return metadata.defaultValue
-    }
-
-    return val === 'true'
+    return result
   }
 
   get<T = unknown>(flagName: FeatureFlagName, defaultValue?: T): T | string | boolean | undefined {
-    const val =
-      process.env[flagName] ??
-      this.getClientValue(flagName) ??
-      process.env[`NEXT_PUBLIC_${flagName}`]
+    const val = this.getClientValue(flagName)
     if (val !== undefined) return val
 
     const metadata = FEATURE_FLAGS_METADATA[flagName]
-    if (!metadata) {
-      return defaultValue
-    }
-    return defaultValue !== undefined ? defaultValue : (metadata.defaultValue as unknown as T)
+    if (!metadata) return defaultValue
+
+    const result = defaultValue !== undefined ? defaultValue : (metadata.defaultValue as unknown as T)
+    return result
   }
 
   getAll(): Record<string, boolean> {
     const allFlags: Record<string, boolean> = {}
-    for (const flagName in FEATURE_FLAGS_METADATA) {
-      const name = flagName as FeatureFlagName
+    const flagNames = Object.keys(FEATURE_FLAGS_METADATA) as FeatureFlagName[]
+
+    for (const name of flagNames) {
       allFlags[name] = this.isEnabled(name)
     }
+
     return allFlags
   }
 
   validateFlags(): { valid: boolean; errors: string[] } {
     const errors: string[] = []
-    this.checkFlagDependencies(errors)
-
-    const isValid = errors.length === 0
-    const result = { valid: isValid, errors }
-
-    return result
-  }
-
-  private checkFlagDependencies(errors: string[]): void {
     const flagNames = Object.keys(FEATURE_FLAGS_METADATA) as FeatureFlagName[]
+
     for (const name of flagNames) {
       const metadata = FEATURE_FLAGS_METADATA[name]
-      this.validateSingleFlagDependencies({ name, metadata, errors })
+      this.checkDependencies(name, metadata, errors)
     }
+
+    return { valid: errors.length === 0, errors }
   }
 
-  private validateSingleFlagDependencies(params: {
-    name: FeatureFlagName
-    metadata: FeatureFlagMetadata
-    errors: string[]
-  }): void {
-    const { name, metadata, errors } = params
+  private checkDependencies(
+    name: FeatureFlagName,
+    metadata: FeatureFlagMetadata,
+    errors: string[],
+  ): void {
     const isEnabled = this.isEnabled(name)
     const dependencies = metadata.dependencies
 
     if (isEnabled && dependencies) {
       dependencies.forEach((dep) => {
         if (!this.isEnabled(dep as FeatureFlagName)) {
-          errors.push(`Flag "${name}" is enabled but its dependency "${dep}" is disabled.`)
+          errors.push(`Flag "${name}" is enabled but dependency "${dep}" is disabled.`)
         }
       })
     }
@@ -247,28 +166,15 @@ class FeatureFlagsManager {
 
 export const featureFlags = new FeatureFlagsManager()
 
-/**
- * Hook to use a feature flag in a React component.
- */
 export function useFeatureFlag(flagName: FeatureFlagName): boolean {
-  const manager = featureFlags
-  const targetFlag = flagName
-  const isEnabled = manager.isEnabled(targetFlag)
-  const result = isEnabled
-
-  return result
+  return featureFlags.isEnabled(flagName)
 }
 
-/**
- * Hook to use multiple feature flags in a React component.
- */
 export function useFeatureFlags(flagNames: FeatureFlagName[]): Record<string, boolean> {
   const result: Record<string, boolean> = {}
-  const manager = featureFlags
 
   flagNames.forEach((name) => {
-    const isEnabled = manager.isEnabled(name)
-    result[name] = isEnabled
+    result[name] = featureFlags.isEnabled(name)
   })
 
   return result

@@ -75,24 +75,19 @@ export function getAchievementDefinition(id: string): AchievementDefinition | un
  * @returns A number from 0 to 100 representing completion percentage.
  *
  * @remarks
- * Supports the following condition types based on the achievement definitions:
- * - `perfectNoteStreak`: based on current session streak
- * - `currentStreak`: based on daily practice streak
- * - `totalSessions`: based on total session count
- * - `exercisesCompleted.length`: based on unique exercises completed
- * - `totalNotesCompleted`: based on cumulative notes
- * - `durationMs`: based on session duration
- * - `accuracy`: based on current session accuracy
- * - `correctNotes`: based on current session correct notes
- *
- * Falls back to a boolean 0/100 if the condition type cannot be inferred.
+ * Supports various condition types based on the achievement definitions.
+ * Refactored to meet Senior Software Craftsmanship standards.
  */
 export function getAchievementProgress(
   definition: AchievementDefinition,
   stats: AchievementCheckStats,
 ): number {
-  const progress = inferProgressFromDefinition(definition, stats)
-  return Math.min(100, Math.max(0, Math.round(progress)))
+  const rawProgress = inferProgressFromDefinition(definition, stats)
+  const clampedProgress = Math.max(0, Math.min(100, rawProgress))
+  const roundedProgress = Math.round(clampedProgress)
+  const finalResult = roundedProgress
+
+  return finalResult
 }
 
 /**
@@ -103,48 +98,86 @@ function inferProgressFromDefinition(
   definition: AchievementDefinition,
   stats: AchievementCheckStats,
 ): number {
-  const id = definition.id
+  const { id, category } = definition
 
-  // Streak-based achievements (perfect note streaks)
+  if (category === 'streak') return calculateStreakProgress(id, stats)
+  if (category === 'practice') return calculatePracticeProgress(id, stats)
+  if (category === 'accuracy') return calculateAccuracyProgress(id, stats)
+  if (category === 'mastery') return calculateMasteryProgress(id, stats)
+  if (category === 'exploration') return calculateExplorationProgress(id, stats)
+
+  return definition.condition(stats) ? 100 : 0
+}
+
+function calculateStreakProgress(id: string, stats: AchievementCheckStats): number {
   if (id.startsWith('hot-streak-')) {
     const target = parseTargetFromId(id, 'hot-streak-')
-    if (target > 0) return (stats.currentSession.perfectNoteStreak / target) * 100
+    const current = stats.currentSession.perfectNoteStreak
+    return target > 0 ? (current / target) * 100 : 0
   }
 
-  // Daily streak achievements
-  if (id === 'daily-dedication') return (stats.currentStreak / 3) * 100
-  if (id === 'weekly-warrior') return (stats.currentStreak / 7) * 100
-  if (id === 'month-master') return (stats.currentStreak / 30) * 100
+  const dailyMapping: Record<string, number> = {
+    'daily-dedication': 3,
+    'weekly-warrior': 7,
+    'month-master': 30,
+  }
+  const target = dailyMapping[id]
+  const progress = target ? (stats.currentStreak / target) * 100 : 0
 
-  // Session milestones
+  return progress
+}
+
+function calculatePracticeProgress(id: string, stats: AchievementCheckStats): number {
   if (id === 'marathon-session') {
     const targetMs = 30 * 60 * 1000
-    return (stats.currentSession.durationMs / targetMs) * 100
+    const currentMs = stats.currentSession.durationMs
+    return (currentMs / targetMs) * 100
   }
-  if (id === 'first-hundred-sessions') return (stats.totalSessions / 100) * 100
 
-  // Accuracy-based
-  if (id === 'perfect-exercise') return stats.currentSession.accuracy
+  if (id === 'first-hundred-sessions') {
+    const total = stats.totalSessions
+    return (total / 100) * 100
+  }
+
+  return 0
+}
+
+function calculateAccuracyProgress(id: string, stats: AchievementCheckStats): number {
+  if (id === 'perfect-exercise') {
+    const accuracy = stats.currentSession.accuracy
+    return accuracy
+  }
   if (id === 'first-perfect-note') {
-    return stats.currentSession.correctNotes >= 1 ? 100 : 0
+    const hasCorrect = stats.currentSession.correctNotes >= 1
+    return hasCorrect ? 100 : 0
   }
+  return 0
+}
 
-  // Notes mastered
-  if (id === 'notes-mastered-100') return (stats.totalNotesCompleted / 100) * 100
+function calculateMasteryProgress(id: string, stats: AchievementCheckStats): number {
+  if (id === 'notes-mastered-100') {
+    const total = stats.totalNotesCompleted
+    return (total / 100) * 100
+  }
+  return 0
+}
 
-  // Exploration
-  if (id === 'explorer') return (stats.exercisesCompleted.length / 5) * 100
-  if (id === 'completionist') return (stats.exercisesCompleted.length / 10) * 100
+function calculateExplorationProgress(id: string, stats: AchievementCheckStats): number {
+  const mapping: Record<string, number> = { explorer: 5, completionist: 10 }
+  const target = mapping[id]
+  const completedCount = stats.exercisesCompleted.length
+  const progress = target ? (completedCount / target) * 100 : 0
 
-  // Fallback: boolean check
-  return definition.condition(stats) ? 100 : 0
+  return progress
 }
 
 /** Extracts a numeric target from an achievement ID suffix. */
 function parseTargetFromId(id: string, prefix: string): number {
   const suffix = id.replace(prefix, '')
   const num = parseInt(suffix, 10)
-  return Number.isFinite(num) ? num : 0
+  const result = Number.isFinite(num) ? num : 0
+
+  return result
 }
 
 /**
@@ -165,47 +198,4 @@ export function getAllAchievementsByCategory(): Record<string, AchievementDefini
   }
 
   return grouped
-}
-
-/**
- * Calculates the completion percentage (0-100) for an achievement definition.
- *
- * @param definition - The achievement definition to evaluate.
- * @param stats - Current user statistics.
- * @returns Progress percentage as a number between 0 and 100.
- */
-export function getAchievementProgress(
-  definition: AchievementDefinition,
-  stats: AchievementCheckStats,
-): number {
-  if (definition.condition(stats)) return 100
-
-  switch (definition.id) {
-    case 'hot-streak-5':
-      return Math.min(100, (stats.currentSession.perfectNoteStreak / 5) * 100)
-    case 'hot-streak-10':
-      return Math.min(100, (stats.currentSession.perfectNoteStreak / 10) * 100)
-    case 'hot-streak-20':
-      return Math.min(100, (stats.currentSession.perfectNoteStreak / 20) * 100)
-    case 'daily-dedication':
-      return Math.min(100, (stats.currentStreak / 3) * 100)
-    case 'weekly-warrior':
-      return Math.min(100, (stats.currentStreak / 7) * 100)
-    case 'month-master':
-      return Math.min(100, (stats.currentStreak / 30) * 100)
-    case 'marathon-session':
-      return Math.min(100, (stats.currentSession.durationMs / (30 * 60 * 1000)) * 100)
-    case 'perfect-exercise':
-      return Math.min(100, stats.currentSession.accuracy)
-    case 'first-hundred-sessions':
-      return Math.min(100, (stats.totalSessions / 100) * 100)
-    case 'notes-mastered-100':
-      return Math.min(100, (stats.totalNotesCompleted / 100) * 100)
-    case 'explorer':
-      return Math.min(100, (stats.exercisesCompleted.length / 5) * 100)
-    case 'completionist':
-      return Math.min(100, (stats.exercisesCompleted.length / 10) * 100)
-    default:
-      return 0
-  }
 }

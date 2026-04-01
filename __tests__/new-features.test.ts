@@ -122,7 +122,7 @@ describe('FEAT-2 · getAchievementProgress', () => {
 describe('FEAT-3 · exportSessionsToCSV', () => {
   it('should produce correct CSV headers', () => {
     const csv = exportSessionsToCSV([])
-    expect(csv).toBe('date,exerciseName,durationMin,accuracy,notesCompleted,notesAttempted')
+    expect(csv).toBe('Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted')
   })
 
   it('should produce one data row per session', () => {

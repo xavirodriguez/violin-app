@@ -6,6 +6,7 @@ import { handlePracticeEvent } from './practice-event-sink'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
 import { NoteTechnique, Observation } from '../technique-types'
+import { featureFlags } from '../feature-flags'
 
 /**
  * Result of a completed or cancelled practice session runner execution.
@@ -258,13 +259,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     confidence: number
     timestamp: number
   }): void {
-    const telemetryData = {
-      pitch: payload.pitch,
-      cents: payload.cents,
-      confidence: payload.confidence,
-      timestamp: payload.timestamp,
-    }
+    const isEnabled = featureFlags.isEnabled('FEATURE_TELEMETRY_ACCURACY')
+    if (!isEnabled) return
 
+    const telemetryData = { ...payload }
     const logPrefix = '[TELEMETRY] Pitch Accuracy:'
     console.log(logPrefix, telemetryData)
   }
