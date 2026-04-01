@@ -488,7 +488,7 @@ function updateExerciseStats(
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
   // sessions[0] is the current session being ended
-  const lastSession = sessions[0] // Previous session
+  const lastSession = sessions[1] // Previous session
   const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
   const yesterday = today - DAY_MS
 
