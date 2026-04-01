@@ -18,9 +18,10 @@ import { formatPitchName } from '@/lib/practice-core'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Maximize2, Minimize2, HelpCircle } from 'lucide-react'
+import { Maximize2, Minimize2 } from 'lucide-react'
 import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
 import { PracticeCompletion } from '@/components/practice-completion'
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { usePracticePipeline } from '@/hooks/use-practice-pipeline'
@@ -71,23 +72,11 @@ export function PracticeMode() {
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
   const [zenMode, setZenMode] = useState(false)
   const [autoStartEnabled] = useState(false)
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
-
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 
   usePracticePipeline({ practiceState, audioLoop, detector, consumePipelineEvents })
   usePracticeUIEffects({ status, currentNoteIndex, start, stop, setZenMode, osmdHook })
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
-        setIsShortcutsOpen(true)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   useEffect(() => {
     if (!loadedRef.current && !practiceState && allExercises.length > 0) {
@@ -195,32 +184,6 @@ export function PracticeMode() {
           />
         )}
 
-        <Dialog open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg"
-              aria-label="Keyboard Shortcuts"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Keyboard Shortcuts</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <ShortcutRow keys={['Z']} description="Zen Mode" />
-              <ShortcutRow keys={['Meta', 'K']} description="Practice Assistant" />
-              <ShortcutRow keys={['Ctrl', 'K']} description="Practice Assistant" />
-              <ShortcutRow keys={['Space']} description="Start / Stop" />
-              <ShortcutRow keys={['Esc']} description="Reset" />
-              <ShortcutRow keys={['?']} description="Show Shortcuts" />
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {status !== 'idle' && (
           <PracticeQuickActions
             status={status}
@@ -242,24 +205,6 @@ export function PracticeMode() {
 /**
  * Derives calculated UI state from the raw practice domain state.
  */
-function ShortcutRow({ keys, description }: { keys: string[]; description: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground text-sm">{description}</span>
-      <div className="flex gap-1">
-        {keys.map((key) => (
-          <kbd
-            key={key}
-            className="bg-muted border-border flex h-6 min-w-6 items-center justify-center rounded border px-1.5 font-sans text-[10px] font-medium"
-          >
-            {key === 'Meta' ? '⌘' : key === 'Ctrl' ? '⌃' : key}
-          </kbd>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function derivePracticeState(
   practiceState: import('@/lib/practice-core').PracticeState | undefined,
 ) {
