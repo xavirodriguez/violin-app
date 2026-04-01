@@ -538,7 +538,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       beginAudioInitialization(set)
       try {
         const resources = await acquireAudioResources()
-        const difficulty = current.state.exercise?.difficulty
+        const difficulty = get().state.exercise?.difficulty
         const adapters = createAudioAdapters({ resources, difficulty })
         set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
       } catch (err) {
