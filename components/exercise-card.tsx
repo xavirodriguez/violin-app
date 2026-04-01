@@ -8,6 +8,25 @@ import { Star, Clock, Zap } from 'lucide-react'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { cn } from '@/lib/utils'
 
+/**
+ * Returns Tailwind classes for difficulty badge coloring.
+ *
+ * @param difficulty - The exercise difficulty level.
+ * @returns CSS class string for the badge.
+ */
+function getDifficultyBadgeClass(difficulty: string): string {
+  switch (difficulty) {
+    case 'Beginner':
+      return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+    case 'Intermediate':
+      return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+    case 'Advanced':
+      return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+    default:
+      return ''
+  }
+}
+
 interface ExerciseCardProps {
   exercise: Exercise
   isRecommended?: boolean
@@ -93,8 +112,26 @@ export function ExerciseCard({
           <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{exercise.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="gap-1">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          <Badge
+            className={cn(
+              'gap-1',
+              exercise.difficulty === 'Beginner'
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : exercise.difficulty === 'Intermediate'
+                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                  : 'bg-red-100 text-red-700 hover:bg-red-200',
+            )}
+          >
+            <Star
+              className={cn(
+                'h-3 w-3',
+                exercise.difficulty === 'Beginner'
+                  ? 'fill-green-500 text-green-500'
+                  : exercise.difficulty === 'Intermediate'
+                    ? 'fill-yellow-500 text-yellow-500'
+                    : 'fill-red-500 text-red-500',
+              )}
+            />
             {exercise.difficulty}
           </Badge>
           <Badge variant="outline" className="gap-1">

@@ -52,7 +52,7 @@ interface SheetMusicAnnotationsProps {
    * The active OpenSheetMusicDisplay (OSMD) instance.
    * Required to calculate the precise SVG coordinates for each note.
    */
-  osmd: OpenSheetMusicDisplay | undefined
+  osmd: OpenSheetMusicDisplay | null | undefined
 
   /**
    * Reference to the container element holding the rendered SVG staff.
