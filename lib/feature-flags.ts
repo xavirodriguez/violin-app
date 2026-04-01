@@ -74,6 +74,26 @@ export const FEATURE_FLAGS_METADATA = {
     affectedFiles: [],
     rollbackStrategy: 'Disable real-time synchronization features.',
   },
+  FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY: {
+    name: 'FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY',
+    key: 'adaptiveDifficulty',
+    type: 'STABLE',
+    description: 'Automatically adjusts intonation thresholds based on performance.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['lib/practice/session-runner.ts', 'stores/practice-store.ts'],
+    rollbackStrategy: 'Fallback to 25 cents default tolerance.',
+  },
+  FEATURE_UI_INTONATION_HEATMAPS: {
+    name: 'FEATURE_UI_INTONATION_HEATMAPS',
+    key: 'intonationHeatmaps',
+    type: 'UI_UX',
+    description: 'Visualizes pitch accuracy patterns in the Analytics Dashboard.',
+    defaultValue: true,
+    riskLevel: 'LOW',
+    affectedFiles: ['components/analytics-dashboard.tsx'],
+    rollbackStrategy: 'Hide heatmap section in dashboard.',
+  },
 } as const satisfies Record<string, FeatureFlagMetadata>
 
 /**
@@ -108,6 +128,12 @@ class FeatureFlagsManager {
       FEATURE_SOCIAL_PRACTICE_ROOMS:
         process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
         process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
+      FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY:
+        process.env.FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY ??
+        process.env.NEXT_PUBLIC_FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY,
+      FEATURE_UI_INTONATION_HEATMAPS:
+        process.env.FEATURE_UI_INTONATION_HEATMAPS ??
+        process.env.NEXT_PUBLIC_FEATURE_UI_INTONATION_HEATMAPS,
     }
     const result = clientMapping[flagName]
 

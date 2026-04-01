@@ -357,7 +357,7 @@ function mapMatchedEvent(payload: {
   observations?: Observation[]
   isPerfect?: boolean
 }): PracticeEngineEvent {
-  const technique = payload.technique
+  const technique = payload.technique!
   const observations = payload.observations ?? []
   const isPerfect = payload.isPerfect ?? false
 

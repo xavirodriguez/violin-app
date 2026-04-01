@@ -70,6 +70,7 @@ export const useAnalyticsStore = Object.assign(
           exercisesCompleted: latestProgress.exercisesCompleted,
           totalPracticeTimeMs: latestProgress.totalPracticeTime * 1000,
           averageAccuracy: latestProgress.overallSkill,
+          totalNotesCompleted: 0,
         }
         useAchievementsStore.getState().check(stats)
       },
@@ -90,6 +91,7 @@ export const useAnalyticsStore = Object.assign(
           exercisesCompleted: progress.exercisesCompleted,
           totalPracticeTimeMs: progress.totalPracticeTime * 1000,
           averageAccuracy: progress.overallSkill,
+          totalNotesCompleted: 0,
         }
         return achievements.check(stats)
       },
