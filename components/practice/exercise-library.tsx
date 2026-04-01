@@ -62,10 +62,11 @@ function LibraryHeader({
         <List className="h-5 w-5" /> Exercise Library
       </h3>
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full md:w-auto">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto">
+        <TabsList className="grid w-full grid-cols-5 md:w-auto">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="beginner">Beginner</TabsTrigger>
           <TabsTrigger value="intermediate">Int.</TabsTrigger>
+          <TabsTrigger value="advanced">Adv.</TabsTrigger>
           <TabsTrigger value="inProgress">In Progress</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -102,11 +103,24 @@ function ExerciseGrid({ exercises, selectedId, recommendedId, onSelect, stats }:
   )
 }
 
-function filterExercises(exercises: Exercise[], tab: string, stats: any) {
+/**
+ * Filters exercises by the active tab selection.
+ *
+ * @param exercises - All available exercises.
+ * @param tab - The active filter tab.
+ * @param stats - Exercise stats for progress-based filtering.
+ * @returns Filtered array of exercises matching the tab criteria.
+ */
+function filterExercises(
+  exercises: Exercise[],
+  tab: string,
+  stats: Record<string, { timesCompleted: number; bestAccuracy: number }>,
+) {
   return exercises.filter((ex) => {
     if (tab === 'all') return true
     if (tab === 'beginner') return ex.difficulty === 'Beginner'
     if (tab === 'intermediate') return ex.difficulty === 'Intermediate'
+    if (tab === 'advanced') return ex.difficulty === 'Advanced'
     if (tab === 'inProgress')
       return stats[ex.id]?.timesCompleted > 0 && stats[ex.id]?.bestAccuracy < 100
     return true
