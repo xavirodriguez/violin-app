@@ -31,6 +31,7 @@ import { PracticeControls } from './practice/practice-controls'
 import { PracticeActiveView } from './practice/practice-active-view'
 import { SheetMusicView } from './practice/sheet-music-view'
 import { PracticeSettings } from './practice/practice-settings'
+import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog'
 
 /**
  * Main component for the Interactive Practice Mode.
@@ -188,6 +189,8 @@ export function PracticeMode() {
             isZen={zenMode}
           />
         )}
+
+        <KeyboardShortcutsDialog />
       </div>
     </div>
   )
