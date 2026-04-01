@@ -99,6 +99,10 @@ class FeatureFlagsManager {
    * Due to how Next.js static analysis works, environment variables must be
    * accessed using their full literal name (e.g. `process.env.FLAG`).
    *
+   * **CRITICAL**: Do NOT use dynamic lookups like `process.env[name]` here, as
+   * they will not be inlined by the Next.js compiler and will remain undefined
+   * on the client side.
+   *
    * @internal
    */
   private getClientValue(flagName: string): string | undefined {

@@ -86,3 +86,46 @@ export function getAllAchievementsByCategory(): Record<string, AchievementDefini
 
   return grouped
 }
+
+/**
+ * Calculates the completion percentage (0-100) for an achievement definition.
+ *
+ * @param definition - The achievement definition to evaluate.
+ * @param stats - Current user statistics.
+ * @returns Progress percentage as a number between 0 and 100.
+ */
+export function getAchievementProgress(
+  definition: AchievementDefinition,
+  stats: AchievementCheckStats,
+): number {
+  if (definition.condition(stats)) return 100
+
+  switch (definition.id) {
+    case 'hot-streak-5':
+      return Math.min(100, (stats.currentSession.perfectNoteStreak / 5) * 100)
+    case 'hot-streak-10':
+      return Math.min(100, (stats.currentSession.perfectNoteStreak / 10) * 100)
+    case 'hot-streak-20':
+      return Math.min(100, (stats.currentSession.perfectNoteStreak / 20) * 100)
+    case 'daily-dedication':
+      return Math.min(100, (stats.currentStreak / 3) * 100)
+    case 'weekly-warrior':
+      return Math.min(100, (stats.currentStreak / 7) * 100)
+    case 'month-master':
+      return Math.min(100, (stats.currentStreak / 30) * 100)
+    case 'marathon-session':
+      return Math.min(100, (stats.currentSession.durationMs / (30 * 60 * 1000)) * 100)
+    case 'perfect-exercise':
+      return Math.min(100, stats.currentSession.accuracy)
+    case 'first-hundred-sessions':
+      return Math.min(100, (stats.totalSessions / 100) * 100)
+    case 'notes-mastered-100':
+      return Math.min(100, (stats.totalNotesCompleted / 100) * 100)
+    case 'explorer':
+      return Math.min(100, (stats.exercisesCompleted.length / 5) * 100)
+    case 'completionist':
+      return Math.min(100, (stats.exercisesCompleted.length / 10) * 100)
+    default:
+      return 0
+  }
+}

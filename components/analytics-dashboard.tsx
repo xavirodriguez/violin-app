@@ -4,8 +4,11 @@
 
 'use client'
 
-import { useAnalyticsStore } from '@/stores/analytics-store'
+import { useAnalyticsStore, UserProgress } from '@/stores/analytics-store'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
+import { Button } from '@/components/ui/button'
+import { Download } from 'lucide-react'
+import { exportSessionsToCSV, downloadCSV } from '@/lib/export/progress-exporter'
 import { MetricsSection } from './analytics/MetricsSection'
 import { SkillSection } from './analytics/SkillSection'
 import { PracticeTimeSection } from './analytics/PracticeTimeSection'
@@ -29,9 +32,19 @@ export function AnalyticsDashboard() {
   const heatmapData = getHeatmapData(lastSession)
   const totalCompleted = progress.exercisesCompleted?.length ?? 0
 
+  const handleExport = () => {
+    const csv = exportSessionsToCSV(recentSessions)
+    downloadCSV(csv, `violin-progress-${new Date().toISOString().split('T')[0]}.csv`)
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="mb-6 text-2xl font-bold">📊 Your Progress</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">📊 Your Progress</h1>
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
+      </div>
 
       <MetricsSection
         streak={streakInfo.current}
@@ -55,7 +68,7 @@ export function AnalyticsDashboard() {
   )
 }
 
-function overallProgress(progress: any) {
+function overallProgress(progress: UserProgress) {
   const value = progress.overallSkill
   const result = value
 

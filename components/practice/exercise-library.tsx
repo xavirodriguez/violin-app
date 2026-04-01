@@ -1,12 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { List } from 'lucide-react'
+import { List, Filter } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ExerciseCard } from '@/components/exercise-card'
 import { allExercises } from '@/lib/exercises'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
+import { filterExercises } from '@/lib/exercises/utils'
 import type { Exercise } from '@/lib/domain/musical-types'
 
 /**
@@ -21,23 +23,34 @@ export function ExerciseLibrary({
   disabled: boolean
 }) {
   const [activeTab, setActiveTab] = useState('all')
+  const [difficultyFilter, setDifficultyFilter] = useState('all')
   const { progress, sessions } = useAnalyticsStore()
+
+  const filtered = useMemo(() => {
+    return filterExercises(
+      allExercises,
+      { activeTab, difficulty: difficultyFilter },
+      progress.exerciseStats,
+    )
+  }, [activeTab, difficultyFilter, progress.exerciseStats])
 
   const recommended = useMemo(() => {
     return getRecommendedExercise({
-      exercises: allExercises,
+      exercises: filtered,
       userProgress: progress,
       lastPlayedId: sessions[0]?.exerciseId,
+      difficultyFilter,
     })
-  }, [progress, sessions])
-
-  const filtered = useMemo(() => {
-    return filterExercises(allExercises, activeTab, progress.exerciseStats)
-  }, [activeTab, progress.exerciseStats])
+  }, [filtered, progress, sessions, difficultyFilter])
 
   return (
     <div className="space-y-6">
-      <LibraryHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      <LibraryHeader
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        difficulty={difficultyFilter}
+        onDifficultyChange={setDifficultyFilter}
+      />
       <ExerciseGrid
         exercises={filtered}
         selectedId={selectedId}
@@ -52,23 +65,48 @@ export function ExerciseLibrary({
 function LibraryHeader({
   activeTab,
   onTabChange,
+  difficulty,
+  onDifficultyChange,
 }: {
   activeTab: string
   onTabChange: (v: string) => void
+  difficulty: string
+  onDifficultyChange: (v: string) => void
 }) {
   return (
-    <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-      <h3 className="flex items-center gap-2 text-xl font-bold">
-        <List className="h-5 w-5" /> Exercise Library
-      </h3>
-      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full md:w-auto">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="beginner">Beginner</TabsTrigger>
-          <TabsTrigger value="intermediate">Int.</TabsTrigger>
-          <TabsTrigger value="inProgress">In Progress</TabsTrigger>
-        </TabsList>
-      </Tabs>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <h3 className="flex items-center gap-2 text-xl font-bold">
+          <List className="h-5 w-5" /> Exercise Library
+        </h3>
+        <Tabs value={activeTab} onValueChange={onTabChange} className="w-full md:w-auto">
+          <TabsList className="grid w-full grid-cols-5 md:w-auto">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="beginner">Beg.</TabsTrigger>
+            <TabsTrigger value="intermediate">Int.</TabsTrigger>
+            <TabsTrigger value="advanced">Adv.</TabsTrigger>
+            <TabsTrigger value="inProgress">Progress</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="bg-muted/30 flex flex-wrap items-center gap-4 rounded-lg p-3">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+          <Filter className="h-4 w-4" /> Filter Difficulty:
+        </div>
+        <ToggleGroup
+          type="single"
+          value={difficulty}
+          onValueChange={(v) => v && onDifficultyChange(v)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="all">All</ToggleGroupItem>
+          <ToggleGroupItem value="beginner">Beginner</ToggleGroupItem>
+          <ToggleGroupItem value="intermediate">Intermediate</ToggleGroupItem>
+          <ToggleGroupItem value="advanced">Advanced</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
     </div>
   )
 }
@@ -102,13 +140,3 @@ function ExerciseGrid({ exercises, selectedId, recommendedId, onSelect, stats }:
   )
 }
 
-function filterExercises(exercises: Exercise[], tab: string, stats: any) {
-  return exercises.filter((ex) => {
-    if (tab === 'all') return true
-    if (tab === 'beginner') return ex.difficulty === 'Beginner'
-    if (tab === 'intermediate') return ex.difficulty === 'Intermediate'
-    if (tab === 'inProgress')
-      return stats[ex.id]?.timesCompleted > 0 && stats[ex.id]?.bestAccuracy < 100
-    return true
-  })
-}

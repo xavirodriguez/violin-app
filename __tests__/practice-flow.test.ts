@@ -14,16 +14,15 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
 }))
 
 vi.mock('@/lib/pitch-detector', () => {
+  const mockDetector = {
+    setMaxFrequency: vi.fn(),
+    detectPitch: vi.fn(() => ({ pitchHz: 0, confidence: 0 })),
+    calculateRMS: vi.fn(() => 0),
+    getFrequencyRange: vi.fn(() => ({ min: 180, max: 700 })),
+  }
   return {
-    PitchDetector: vi.fn().mockImplementation(function (this: {
-      setMaxFrequency: Mock
-      detectPitch: Mock
-      calculateRMS: Mock
-    }) {
-      this.setMaxFrequency = vi.fn()
-      this.detectPitch = vi.fn(() => ({ pitchHz: 0, confidence: 0 }))
-      this.calculateRMS = vi.fn(() => 0)
-    }),
+    PitchDetector: vi.fn().mockImplementation(() => mockDetector),
+    createPitchDetectorForDifficulty: vi.fn().mockImplementation(() => mockDetector),
   }
 })
 

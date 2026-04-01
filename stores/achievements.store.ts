@@ -115,7 +115,7 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
 
       check: (stats) => {
         const unlockedIds = get().unlocked.map((a) => a.id)
-        const newAchievements = checkAchievements(stats, unlockedIds)
+        const newAchievements = checkAchievements({ stats, unlockedAchievementIds: unlockedIds })
 
         if (newAchievements.length > 0) {
           set((state) => ({

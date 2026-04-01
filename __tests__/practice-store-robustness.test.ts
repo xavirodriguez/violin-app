@@ -33,14 +33,17 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
   },
 }))
 
-vi.mock('@/lib/pitch-detector', () => ({
-  PitchDetector: vi.fn().mockImplementation(function () {
-    return {
-      detectPitch: vi.fn(() => ({ pitchHz: 440, confidence: 0.9 })),
-      calculateRMS: vi.fn(() => 0.1),
-    }
-  }),
-}))
+vi.mock('@/lib/pitch-detector', () => {
+  const mockDetector = {
+    detectPitch: vi.fn(() => ({ pitchHz: 440, confidence: 0.9 })),
+    calculateRMS: vi.fn(() => 0.1),
+    setMaxFrequency: vi.fn(),
+  }
+  return {
+    PitchDetector: vi.fn().mockImplementation(() => mockDetector),
+    createPitchDetectorForDifficulty: vi.fn().mockImplementation(() => mockDetector),
+  }
+})
 
 vi.mock('@/stores/tuner-store', () => ({
   useTunerStore: {
