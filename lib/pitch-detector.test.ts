@@ -23,13 +23,14 @@ describe('PitchDetector', () => {
   })
 
   it('should respect frequency range constraints', () => {
+    const defaultDetector = new PitchDetector(sampleRate, 1400)
     // 100 Hz is below MIN_FREQUENCY (180)
     const lowBuffer = createSineWave(100, 0.1)
-    expect(detector.detectPitch(lowBuffer).pitchHz).toBe(0)
+    expect(defaultDetector.detectPitch(lowBuffer).pitchHz).toBe(0)
 
-    // 1500 Hz is above default MAX_FREQUENCY (1400)
+    // 1500 Hz is above provided maxFrequency (1400)
     const highBuffer = createSineWave(1500, 0.1)
-    expect(detector.detectPitch(highBuffer).pitchHz).toBe(0)
+    expect(defaultDetector.detectPitch(highBuffer).pitchHz).toBe(0)
   })
 
   it('should calculate RMS correctly', () => {

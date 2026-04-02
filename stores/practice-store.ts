@@ -86,6 +86,118 @@ interface ResolveUpdateParams {
   partial: SafePartial
 }
 
+export const usePracticeStore = create<PracticeStore>((set, get) => {
+  const commenceSession = async (ready: ReadyState) => {
+    const token = crypto.randomUUID()
+    const safeSet = createSafeSet({ set, get, currentToken: token })
+    const deps = createRunnerDeps({ get, safeSet, storeState: ready })
+    const runner = new PracticeSessionRunnerImpl(deps)
+    const abort = new AbortController()
+
+    initializeSessionState({ ready, runner, abort, token })
+    runner
+      .run(abort.signal)
+      .catch((err) => handleRunnerFailure({ set, get, err, exercise: ready.exercise }))
+  }
+
+  const initializeSessionState = (params: {
+    ready: ReadyState
+    runner: PracticeSessionRunnerImpl
+    abort: AbortController
+    token: string
+  }) => {
+    const { ready, runner, abort, token } = params
+    const nextSessionId = get().sessionId + 1
+    startAnalyticsSession(ready.exercise)
+    set((currentState) => {
+      const updates = getStartStateUpdates({ currentState, storeState: ready, runner, abort, token })
+      return { ...updates, sessionId: nextSessionId }
+    })
+    syncWithTuner(token, ready.detector)
+  }
+
+  return {
+    state: { status: 'idle', exercise: undefined, error: undefined },
+    practiceState: undefined,
+    error: undefined,
+    liveObservations: [],
+    autoStartEnabled: false,
+    isStarting: false,
+    isInitializing: false,
+    sessionToken: undefined,
+    sessionId: 0,
+    analyser: undefined,
+    audioLoop: undefined,
+    detector: undefined,
+
+    loadExercise: async (exercise) => {
+      await get().stop()
+      const updates = getExerciseLoadUpdates(exercise)
+      set((currentState) => ({ ...currentState, ...updates }))
+    },
+
+    setAutoStart: (enabled) => {
+      const nextValue = enabled
+      const updates = { autoStartEnabled: nextValue }
+      set((currentState) => ({ ...currentState, ...updates }))
+    },
+
+    setNoteIndex: (index) => {
+      const state = get().practiceState
+      if (!state) return
+      const updates = getResetStateForIndex(state, index)
+      set((currentState) => ({ ...currentState, practiceState: updates }))
+    },
+
+    initializeAudio: async () => {
+      const current = get()
+      const canInit = shouldInitialize(current.state, current.isInitializing)
+      if (!canInit) return
+
+      beginAudioInitialization(set)
+      await performAudioInitialization(set, get)
+    },
+
+    start: async () => {
+      set({ isStarting: true, error: undefined })
+      try {
+        const readyParams = { getState: get, initializeAudio: get().initializeAudio }
+        const ready = await ensureReadyState(readyParams)
+        await attemptToStart(ready, commenceSession, set)
+      } catch (error) {
+        set((currentState) => getStartFailureUpdates(currentState, error))
+      }
+    },
+
+    stop: async () => {
+      const activeState = get().state
+      cancelActiveRunner(activeState)
+      await audioManager.cleanup()
+
+      finalizeAnalyticsSession()
+      const updates = getStopStateUpdates(get())
+      set((currentState) => ({ ...currentState, ...updates }))
+    },
+
+    reset: async () => {
+      const current = get()
+      await current.stop()
+      set((currentState) => ({ ...currentState, ...getResetUpdates() }))
+    },
+
+    consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
+      const currentToken = get().sessionToken
+      for await (const event of pipeline) {
+        const isStillValid = get().sessionToken === currentToken
+        if (!isStillValid) break
+        if (event?.type) {
+          updateStateFromEvent({ set, event, token: currentToken })
+        }
+      }
+    },
+  }
+})
+
 /**
  * Creates a safe state update function for the practice session.
  */
@@ -473,131 +585,6 @@ function getStartStateUpdates(params: {
   }
 }
 
-export const usePracticeStore = create<PracticeStore>((set, get) => {
-  const commenceSession = async (ready: ReadyState) => {
-    const token = crypto.randomUUID()
-    const safeSet = createSafeSet({ set, get, currentToken: token })
-    const deps = createRunnerDeps({ get, safeSet, storeState: ready })
-    const runner = new PracticeSessionRunnerImpl(deps)
-    const abort = new AbortController()
-
-    initializeSessionState({ ready, runner, abort, token })
-    runner
-      .run(abort.signal)
-      .catch((err) => handleRunnerFailure({ set, get, err, exercise: ready.exercise }))
-  }
-
-  const initializeSessionState = (params: {
-    ready: ReadyState
-    runner: PracticeSessionRunnerImpl
-    abort: AbortController
-    token: string
-  }) => {
-    const { ready, runner, abort, token } = params
-    const nextSessionId = get().sessionId + 1
-    startAnalyticsSession(ready.exercise)
-    set((currentState) => {
-      const updates = getStartStateUpdates({ currentState, storeState: ready, runner, abort, token })
-      return { ...updates, sessionId: nextSessionId }
-    })
-    syncWithTuner(token, ready.detector)
-  }
-
-  return {
-    state: { status: 'idle', exercise: undefined, error: undefined },
-    practiceState: undefined,
-    error: undefined,
-    liveObservations: [],
-    autoStartEnabled: false,
-    isStarting: false,
-    isInitializing: false,
-    sessionToken: undefined,
-    sessionId: 0,
-    analyser: undefined,
-    audioLoop: undefined,
-    detector: undefined,
-
-    loadExercise: async (exercise) => {
-      await get().stop()
-      set((currentState) => ({
-        ...currentState,
-        practiceState: getInitialPracticeState(exercise),
-        state: { status: 'idle', exercise, error: undefined },
-        error: undefined,
-        liveObservations: [],
-        sessionToken: undefined,
-      }))
-    },
-
-    setAutoStart: (enabled) => {
-      const nextValue = enabled
-      const updates = { autoStartEnabled: nextValue }
-      set((currentState) => ({ ...currentState, ...updates }))
-    },
-
-    setNoteIndex: (index) => {
-      const state = get().practiceState
-      if (!state) return
-      const updates = getResetStateForIndex(state, index)
-      set((currentState) => ({ ...currentState, practiceState: updates }))
-    },
-
-    initializeAudio: async () => {
-      const current = get()
-      const canInit = shouldInitialize(current.state, current.isInitializing)
-      if (!canInit) return
-
-      beginAudioInitialization(set)
-      try {
-        const resources = await acquireAudioResources()
-        const difficulty = get().state.exercise?.difficulty
-        const adapters = createAudioAdapters({ resources, difficulty })
-        set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
-      } catch (err) {
-        set((currentState) => getFailureInitUpdates(get(), err))
-      }
-    },
-
-    start: async () => {
-      set({ isStarting: true, error: undefined })
-      try {
-        const readyParams = { getState: get, initializeAudio: get().initializeAudio }
-        const ready = await ensureReadyState(readyParams)
-        await attemptToStart(ready, commenceSession, set)
-      } catch (error) {
-        set((currentState) => ({ ...currentState, error: toAppError(error), isStarting: false }))
-      }
-    },
-
-    stop: async () => {
-      const activeState = get().state
-      cancelActiveRunner(activeState)
-      await audioManager.cleanup()
-
-      finalizeAnalyticsSession()
-      const updates = getStopStateUpdates(get())
-      set((currentState) => ({ ...currentState, ...updates }))
-    },
-
-    reset: async () => {
-      const current = get()
-      await current.stop()
-      set((currentState) => ({ ...currentState, ...getResetUpdates() }))
-    },
-
-    consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
-      const currentToken = get().sessionToken
-      for await (const event of pipeline) {
-        const isStillValid = get().sessionToken === currentToken
-        if (!isStillValid) break
-        if (event?.type) {
-          updateStateFromEvent({ set, event, token: currentToken })
-        }
-      }
-    },
-  }
-})
-
 function getResetStateForIndex(state: PracticeState, index: number): PracticeState {
   const total = state.exercise.notes.length
   const clamped = Math.max(0, Math.min(index, total - 1))
@@ -613,6 +600,43 @@ function getResetStateForIndex(state: PracticeState, index: number): PracticeSta
   }
 
   return result
+}
+
+function getExerciseLoadUpdates(exercise: Exercise) {
+  const resetUpdates = {
+    practiceState: getInitialPracticeState(exercise),
+    state: { status: 'idle' as const, exercise, error: undefined },
+    error: undefined,
+    liveObservations: [],
+    sessionToken: undefined,
+  }
+
+  return resetUpdates
+}
+
+async function performAudioInitialization(
+  set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void,
+  get: () => PracticeStore,
+) {
+  try {
+    const resources = await acquireAudioResources()
+    const difficulty = get().state.exercise?.difficulty
+    const adapters = createAudioAdapters({ resources, difficulty })
+    set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
+  } catch (err) {
+    set((currentState) => getFailureInitUpdates(get(), err))
+  }
+}
+
+function getStartFailureUpdates(currentState: PracticeStore, error: unknown): Partial<PracticeStore> {
+  const appError = toAppError(error)
+  const updates = {
+    ...currentState,
+    error: appError,
+    isStarting: false,
+  }
+
+  return updates
 }
 
 function getResetUpdates() {

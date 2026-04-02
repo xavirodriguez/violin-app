@@ -8,7 +8,7 @@ describe('Range Validation', () => {
   describe('clamp', () => {
     it('should throw if min > max', () => {
       try {
-        clamp(5, 10, 0)
+        clamp({ value: 5, min: 10, max: 0 })
         expect.fail('Should have thrown')
       } catch (err) {
         const error = err as { code: string }
@@ -17,9 +17,9 @@ describe('Range Validation', () => {
     })
 
     it('should work for valid ranges', () => {
-      expect(clamp(5, 0, 10)).toBe(5)
-      expect(clamp(-5, 0, 10)).toBe(0)
-      expect(clamp(15, 0, 10)).toBe(10)
+      expect(clamp({ value: 5, min: 0, max: 10 })).toBe(5)
+      expect(clamp({ value: -5, min: 0, max: 10 })).toBe(0)
+      expect(clamp({ value: 15, min: 0, max: 10 })).toBe(10)
     })
   })
 
