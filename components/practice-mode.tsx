@@ -73,8 +73,7 @@ export function PracticeMode() {
 
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
-  const [zenMode, setZenMode] = useState(false)
-  const [autoStartEnabled] = useState(false)
+  const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
   const loadedRef = useRef(false)
   const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
 

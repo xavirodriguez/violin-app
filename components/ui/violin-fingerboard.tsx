@@ -320,8 +320,8 @@ function drawDetectedPosition(
   const baseX = nutX + position.fretDistance
 
   // Apply visual displacement based on cents deviation
-  const xOffset = clamp(centsDeviation * 0.3, -maxOffsetPx, maxOffsetPx)
-  const finalX = clamp(baseX + xOffset, nutX + 12, bridgeX - 12) // +12 to keep circle within bounds
+  const xOffset = clamp({ value: centsDeviation * 0.3, min: -maxOffsetPx, max: maxOffsetPx })
+  const finalX = clamp({ value: baseX + xOffset, min: nutX + 12, max: bridgeX - 12 }) // +12 to keep circle within bounds
 
   ctx.fillStyle = isInTune ? '#4ADE80' : '#F87171'
   ctx.strokeStyle = isInTune ? '#16A34A' : '#DC2626'

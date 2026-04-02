@@ -184,53 +184,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         const newSessions = [completedSession, ...sessions]
         const newProgress = getUpdatedProgress(progress, completedSession, sessions)
 
-        trackCompletionAnalytics(completedSession)
-
-        set({
-          currentSession: undefined,
-          sessions: newSessions.slice(0, 100),
-          progress: newProgress,
-        })
-
-        // FEAT-4: Storage Usage Alert
-        const usage = estimateLocalStorageUsagePercent()
-        if (usage > 95) {
-          toast.warning('Storage almost full!', {
-            description: 'Please clean up your practice history to avoid data loss.',
-            action: {
-              label: 'Clean old sessions',
-              onClick: () => get().cleanOldSessions(50),
-            },
-          })
-        } else if (usage > 80) {
-          toast('Storage usage high', {
-            description: 'Consider exporting your data soon.',
-          })
-        }
+        handleSessionCompletion({ completedSession, sessions: newSessions, progress: newProgress })
+        checkStorageThresholds()
       },
 
       recordNoteAttempt: (noteIndex, targetPitch, cents, wasInTune) => {
-        set((state) => {
-          const prevSession = state.currentSession
-          if (prevSession === undefined) return state
-
-          const params = { noteIndex, targetPitch, cents, wasInTune }
-          const nextNoteResults = updateNoteResults({
-            noteResults: prevSession.noteResults,
-            ...params,
-          })
-
-          const summary = calculateSessionSummary(nextNoteResults)
-
-          return {
-            currentSession: {
-              ...prevSession,
-              notesAttempted: prevSession.notesAttempted + 1,
-              noteResults: nextNoteResults,
-              ...summary,
-            },
-          }
-        })
+        const params = { noteIndex, targetPitch, cents, wasInTune }
+        set((state) => handleAttemptRecording({ state, params }))
       },
 
       recordNoteCompletion: (noteIndex, timeToCompleteMs, technique) => {
@@ -539,17 +499,41 @@ function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResu
   const { noteResults, noteIndex, targetPitch, cents, wasInTune } = params
   const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
   if (existing) {
-    return noteResults.map((nr) => {
-      if (nr.noteIndex !== noteIndex) return nr
-      const nextAttempts = nr.attempts + 1
-      const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
-      return { ...nr, targetPitch, attempts: nextAttempts, averageCents: nextAverageCents, wasInTune }
-    })
+    return applyAttemptToExisting(noteResults, params)
   }
-  return [
-    ...noteResults,
-    { noteIndex, targetPitch, attempts: 1, timeToCompleteMs: 0, averageCents: cents, wasInTune },
-  ]
+  return [...noteResults, createInitialNoteResult(params)]
+}
+
+function applyAttemptToExisting(
+  results: NoteResult[],
+  params: RecordAttemptParams,
+): NoteResult[] {
+  const { noteIndex, targetPitch, cents, wasInTune } = params
+  return results.map((nr) => {
+    if (nr.noteIndex !== noteIndex) return nr
+    const nextAttempts = nr.attempts + 1
+    const nextAverageCents = (nr.averageCents * nr.attempts + cents) / nextAttempts
+    const updated = {
+      ...nr,
+      targetPitch,
+      attempts: nextAttempts,
+      averageCents: nextAverageCents,
+      wasInTune,
+    }
+    return updated
+  })
+}
+
+function createInitialNoteResult(params: RecordAttemptParams): NoteResult {
+  const { noteIndex, targetPitch, cents, wasInTune } = params
+  return {
+    noteIndex,
+    targetPitch,
+    attempts: 1,
+    timeToCompleteMs: 0,
+    averageCents: cents,
+    wasInTune,
+  }
 }
 
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
@@ -649,32 +633,95 @@ function migratePersistence(persisted: unknown, version: number): AnalyticsStore
 
 function migrateV1V2(data: Record<string, unknown>): void {
   if (Array.isArray(data.sessions)) {
-    data.sessions = data.sessions.map((s: unknown) => {
-      const session = s as Record<string, unknown>
-      const { duration, ...rest } = session || {}
-      return {
-        ...rest,
-        durationMs: ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000,
-        noteResults: Array.isArray(session.noteResults)
-          ? session.noteResults.map((nr: unknown) => {
-              const noteResult = nr as Record<string, unknown>
-              const { timeToComplete, ...nrRest } = noteResult || {}
-              return {
-                ...nrRest,
-                timeToCompleteMs: (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0,
-              }
-            })
-          : [],
-      }
-    })
+    data.sessions = data.sessions.map(migrateSessionV1V2)
   }
   const progress = data.progress as Record<string, unknown> | undefined
   if (progress?.exerciseStats) {
-    Object.values(progress.exerciseStats as Record<string, Record<string, unknown>>).forEach((stats) => {
-      if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
-        stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
-        delete stats.fastestCompletion
-      }
-    })
+    const stats = progress.exerciseStats as Record<string, Record<string, unknown>>
+    Object.values(stats).forEach(migrateExerciseStatsV1V2)
   }
+}
+
+function migrateSessionV1V2(s: unknown): Record<string, unknown> {
+  const session = s as Record<string, unknown>
+  const { duration, ...rest } = session || {}
+  const durationMs = ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000
+  const noteResults = Array.isArray(session.noteResults)
+    ? session.noteResults.map(migrateNoteResultV1V2)
+    : []
+
+  return { ...rest, durationMs, noteResults }
+}
+
+function migrateNoteResultV1V2(nr: unknown): Record<string, unknown> {
+  const noteResult = nr as Record<string, unknown>
+  const { timeToComplete, ...nrRest } = noteResult || {}
+  const ms = (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0
+
+  return { ...nrRest, timeToCompleteMs: ms }
+}
+
+function migrateExerciseStatsV1V2(stats: Record<string, unknown>): void {
+  if (stats.fastestCompletion !== undefined && stats.fastestCompletionMs === undefined) {
+    stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
+    delete stats.fastestCompletion
+  }
+}
+
+function handleSessionCompletion(params: {
+  completedSession: PracticeSession
+  sessions: PracticeSession[]
+  progress: UserProgress
+}): void {
+  const { completedSession, sessions, progress } = params
+  trackCompletionAnalytics(completedSession)
+
+  useAnalyticsStore.setState({
+    currentSession: undefined,
+    sessions: sessions.slice(0, 100),
+    progress,
+  })
+}
+
+function checkStorageThresholds(): void {
+  const usage = estimateLocalStorageUsagePercent()
+  if (usage > 95) {
+    emitStorageFullToast()
+  } else if (usage > 80) {
+    toast('Storage usage high', { description: 'Consider exporting your data soon.' })
+  }
+}
+
+function emitStorageFullToast(): void {
+  toast.warning('Storage almost full!', {
+    description: 'Please clean up your practice history to avoid data loss.',
+    action: {
+      label: 'Clean old sessions',
+      onClick: () => useAnalyticsStore.getState().cleanOldSessions(50),
+    },
+  })
+}
+
+function handleAttemptRecording(params: {
+  state: AnalyticsStore
+  params: RecordAttemptParams
+}): Partial<AnalyticsStore> {
+  const { state, params: attemptParams } = params
+  const prevSession = state.currentSession
+  if (prevSession === undefined) return state
+
+  const nextNoteResults = updateNoteResults({
+    noteResults: prevSession.noteResults,
+    ...attemptParams,
+  })
+
+  const summary = calculateSessionSummary(nextNoteResults)
+  const currentSession = {
+    ...prevSession,
+    notesAttempted: prevSession.notesAttempted + 1,
+    noteResults: nextNoteResults,
+    ...summary,
+  }
+
+  return { currentSession }
 }
