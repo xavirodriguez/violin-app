@@ -31,7 +31,9 @@ function handleValidationError(name: string, error: unknown): void {
   const prefix = `[Persist] ❌ Validation failed for ${name}.`
   const suffix = 'Falling back to default state.'
   const message = `${prefix} ${suffix}`
-  console.error(message, error)
+  const errorObj = error
+
+  console.error(message, errorObj)
 }
 
 function mergeState<T>(validated: T, current: T, mergeFn?: (p: T, c: T) => T): T {
@@ -62,6 +64,16 @@ export function validateAndMerge<T>(
     return currentState
   }
 
+  return executeValidationAndMerge({ schema, persistedState, currentState, options })
+}
+
+function executeValidationAndMerge<T>(params: {
+  schema: z.ZodType<T>
+  persistedState: unknown
+  currentState: T
+  options: { name: string; merge?: (p: T, c: T) => T }
+}): T {
+  const { schema, persistedState, currentState, options } = params
   try {
     const validated = schema.parse(persistedState)
     const logMsg = `[Persist] ✅ State validated for ${options.name}`

@@ -89,34 +89,48 @@ export const G_MAJOR_SCALE_EXERCISE: LegacyExercise = {
  * Adapts a legacy exercise into the modern Exercise format.
  */
 export function adaptLegacyExercise(legacy: LegacyExercise): Exercise {
+  const MODERN_CLEF = 'G'
+  const MODERN_BEATS = 4
+  const MODERN_BEAT_TYPE = 4
+
+  const MODERN_METADATA = {
+    clef: MODERN_CLEF as 'G',
+    timeSignature: { beats: MODERN_BEATS, beatType: MODERN_BEAT_TYPE },
+    keySignature: 0,
+  }
+
+  const modernNotes = legacy.notes.map((n) => ({
+    pitch: parsePitch(n.pitch),
+    duration: mapLegacyDuration(n.duration),
+  }))
+
   return {
     id: legacy.id,
     name: legacy.name,
     description: 'Legacy exercise',
-    category: 'Scales', // Default category for legacy
+    category: 'Scales',
     difficulty: 'Beginner',
-    scoreMetadata: {
-      clef: 'G',
-      timeSignature: { beats: 4, beatType: 4 },
-      keySignature: 0,
-    },
+    scoreMetadata: MODERN_METADATA,
     technicalGoals: [],
     estimatedDuration: '1 min',
     technicalTechnique: 'General',
-    notes: legacy.notes.map((n) => {
-      let duration: NoteDuration = 4
-      if (n.duration === 'whole') duration = 1
-      else if (n.duration === 'half') duration = 2
-      else if (n.duration === 'quarter') duration = 4
-      else if (n.duration === 'eighth') duration = 8
-      else if (n.duration === 'sixteenth') duration = 16
-      else if (n.duration === 'thirty-second') duration = 32
-
-      return {
-        pitch: parsePitch(n.pitch),
-        duration,
-      }
-    }),
+    notes: modernNotes,
     musicXML: legacy.musicXML,
   }
+}
+
+function mapLegacyDuration(legacyDuration: string): NoteDuration {
+  const durationMap: Record<string, NoteDuration> = {
+    whole: 1,
+    half: 2,
+    quarter: 4,
+    eighth: 8,
+    sixteenth: 16,
+    'thirty-second': 32,
+  }
+
+  const result = durationMap[legacyDuration]
+  const finalDuration = result ?? 4
+
+  return finalDuration
 }

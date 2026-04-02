@@ -192,17 +192,24 @@ export class AudioManager {
   }
 
   private stopMediaTracks(): void {
-    const stream = this.stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop())
+    const activeStream = this.stream
+    const hasStream = !!activeStream
+    if (hasStream) {
+      const tracks = activeStream.getTracks()
+      tracks.forEach((track) => track.stop())
       this.stream = undefined
     }
   }
 
   private disconnectAudioNodes(): void {
-    this.source?.disconnect()
-    this.gainNode?.disconnect()
-    this.analyser?.disconnect()
+    const sourceNode = this.source
+    const gainNode = this.gainNode
+    const analyserNode = this.analyser
+
+    sourceNode?.disconnect()
+    gainNode?.disconnect()
+    analyserNode?.disconnect()
+
     this.source = undefined
     this.gainNode = undefined
     this.analyser = undefined
@@ -222,11 +229,12 @@ export class AudioManager {
   }
 
   private resetResourceReferences(): void {
-    this.stream = undefined
-    this.source = undefined
-    this.gainNode = undefined
-    this.analyser = undefined
-    this.context = undefined
+    const clearValue = undefined
+    this.stream = clearValue
+    this.source = clearValue
+    this.gainNode = clearValue
+    this.analyser = clearValue
+    this.context = clearValue
   }
 }
 

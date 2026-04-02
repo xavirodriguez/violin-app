@@ -63,7 +63,8 @@ function validateRmsOptions(options: SegmenterOptions): void {
   const isInvalid = minRmsValue <= silenceThreshold
 
   if (isInvalid) {
-    throw new Error('minRms must be greater than maxRmsSilence')
+    const msg = 'minRms must be greater than maxRmsSilence'
+    throw new Error(msg)
   }
 }
 
@@ -74,7 +75,8 @@ function validateConfidence(minConfidence: number): void {
   const isInvalid = isBelowZero || isAboveOne
 
   if (isInvalid) {
-    throw new Error('minConfidence must be between 0 and 1')
+    const msg = 'minConfidence must be between 0 and 1'
+    throw new Error(msg)
   }
 }
 
@@ -89,7 +91,8 @@ function validateDurations(options: SegmenterOptions): void {
   const hasNegative = durations.some((d) => d < 0)
 
   if (hasNegative) {
-    throw new Error('All duration options must be non-negative')
+    const msg = 'All duration options must be non-negative'
+    throw new Error(msg)
   }
 }
 
@@ -99,7 +102,8 @@ function validateBuffers(options: SegmenterOptions): void {
   const isInvalid = gapLimit <= 0 || noteLimit <= 0
 
   if (isInvalid) {
-    throw new Error('Buffer limits must be positive')
+    const msg = 'Buffer limits must be positive'
+    throw new Error(msg)
   }
 }
 
@@ -155,6 +159,7 @@ export class NoteSegmenter {
     this.options = mergedOptions
     const finalOptions = this.options
     validateOptions(finalOptions)
+    this.segmentCount = 0
   }
 
   processFrame(frame: TechniqueFrame): SegmenterEvent | undefined {
@@ -163,7 +168,8 @@ export class NoteSegmenter {
     const now = frame.timestamp
     const context = { frame, isSignalPresent, isSilence, now }
 
-    if (this.state.kind === 'SILENCE') {
+    const isSilentState = this.state.kind === 'SILENCE'
+    if (isSilentState) {
       return this.handleSilenceState(context)
     }
 
@@ -217,8 +223,9 @@ export class NoteSegmenter {
     const { frame, now } = params
     this.lastSignalTime = now
     const silenceState = this.state as SilenceState
+    const event = this.evaluateOnsetEligibility({ silenceState, frame, now })
 
-    return this.evaluateOnsetEligibility({ silenceState, frame, now })
+    return event
   }
 
   private evaluateOnsetEligibility(params: {
@@ -342,11 +349,15 @@ export class NoteSegmenter {
     noteState: NoteState
   }): SegmenterEvent | undefined {
     const { now, noteState } = params
-    if (noteState.lastBelowThresholdTime === undefined) {
+    const lastBelow = noteState.lastBelowThresholdTime
+    if (lastBelow === undefined) {
       noteState.lastBelowThresholdTime = now
       return undefined
     }
-    if (now - noteState.lastBelowThresholdTime >= this.options.offsetDebounceMs) {
+
+    const elapsed = now - lastBelow
+    const threshold = this.options.offsetDebounceMs
+    if (elapsed >= threshold) {
       return this.triggerOffset({ noteName: noteState.currentNoteName, now })
     }
     return undefined
@@ -412,13 +423,15 @@ export class NoteSegmenter {
     noteState: NoteState
   }): SegmenterEvent | undefined {
     const { frame, now, noteState } = params
-    if (noteState.pendingNoteName !== frame.noteName) {
+    const isNewPending = noteState.pendingNoteName !== frame.noteName
+    if (isNewPending) {
       noteState.pendingNoteName = frame.noteName
       noteState.pendingSince = now
       return undefined
     }
 
-    return this.evaluateNoteChangeEligibility({ frame, now, noteState })
+    const event = this.evaluateNoteChangeEligibility({ frame, now, noteState })
+    return event
   }
 
   private evaluateNoteChangeEligibility(params: {
