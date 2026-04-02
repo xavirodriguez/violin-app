@@ -19,7 +19,11 @@ const DURATION_BEATS: Record<NoteDuration, number> = {
  */
 export const getDurationMs = (duration: NoteDuration, bpm: number = 60): number => {
   const beats = DURATION_BEATS[duration]
-  return (beats * 60 * 1000) / bpm
+  const msInMinute = 60 * 1000
+  const totalMs = beats * msInMinute
+  const result = totalMs / bpm
+
+  return result
 }
 
 /**
@@ -28,7 +32,8 @@ export const getDurationMs = (duration: NoteDuration, bpm: number = 60): number 
 export const parsePitch = (pitchString: string): Pitch => {
   const match = pitchString.match(/^([A-G])([#b]?)(\d)$/)
   if (!match) {
-    throw new Error(`Invalid pitch format: "${pitchString}". Expected format like "G#4" or "C5".`)
+    const errorMsg = `Invalid pitch format: "${pitchString}". Expected format like "G#4" or "C5".`
+    throw new Error(errorMsg)
   }
 
   const [, step, alter, octave] = match
@@ -41,48 +46,59 @@ export const parsePitch = (pitchString: string): Pitch => {
 }
 
 /**
- * Filter criteria for exercise lists.
+ * Parameters for filtering exercises.
  */
-export interface ExerciseFilter {
-  activeTab: string
-  difficulty?: string
+export interface ExerciseFilterParams {
+  exercises: Exercise[]
+  filter: {
+    activeTab: string
+    difficulty?: string
+  }
+  stats: Record<string, any>
 }
 
 /**
  * Pure function to filter exercises based on tab and difficulty.
- *
- * @param exercises - List of exercises to filter.
- * @param filter - Filter criteria including active tab and optional difficulty.
- * @param stats - User exercise statistics from the store.
- * @returns Filtered list of exercises.
  */
-export function filterExercises(
-  exercises: Exercise[],
-  filter: ExerciseFilter,
-  stats: Record<string, any>,
-): Exercise[] {
-  const { activeTab, difficulty } = filter
+export function filterExercises(params: ExerciseFilterParams): Exercise[] {
+  const { exercises, filter, stats } = params
 
-  return exercises.filter((ex) => {
-    // 1. Filter by Difficulty if provided
-    if (
-      difficulty &&
-      difficulty !== 'all' &&
-      ex.difficulty.toLowerCase() !== difficulty.toLowerCase()
-    ) {
-      return false
-    }
+  const filtered = exercises.filter((ex) => {
+    const matchesDiff = isDifficultyMatch(ex.difficulty, filter.difficulty)
+    const matchesTab = isTabMatch(ex, filter.activeTab, stats)
+    const result = matchesDiff && matchesTab
 
-    // 2. Filter by Tab
-    if (activeTab === 'all') return true
-    if (activeTab === 'beginner') return ex.difficulty === 'Beginner'
-    if (activeTab === 'intermediate') return ex.difficulty === 'Intermediate'
-    if (activeTab === 'advanced') return ex.difficulty === 'Advanced'
-    if (activeTab === 'inProgress') {
-      const s = stats[ex.id]
-      return s && s.timesCompleted > 0 && s.bestAccuracy < 100
-    }
-
-    return true
+    return result
   })
+
+  return filtered
+}
+
+function isDifficultyMatch(exDiff: string, filterDiff?: string): boolean {
+  const isAll = !filterDiff || filterDiff === 'all'
+  if (isAll) {
+    return true
+  }
+
+  const exLower = exDiff.toLowerCase()
+  const filterLower = filterDiff.toLowerCase()
+  const isMatch = exLower === filterLower
+
+  return isMatch
+}
+
+function isTabMatch(ex: Exercise, activeTab: string, stats: Record<string, any>): boolean {
+  const statsEntry = stats[ex.id]
+  const isStarted = statsEntry && statsEntry.timesCompleted > 0
+  const isNotMastered = statsEntry && statsEntry.bestAccuracy < 100
+
+  if (activeTab === 'all') return true
+  if (activeTab === 'beginner') return ex.difficulty === 'Beginner'
+  if (activeTab === 'intermediate') return ex.difficulty === 'Intermediate'
+  if (activeTab === 'advanced') return ex.difficulty === 'Advanced'
+  if (activeTab === 'inProgress') {
+    return isStarted && isNotMastered
+  }
+
+  return true
 }

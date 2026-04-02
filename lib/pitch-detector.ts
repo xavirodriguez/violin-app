@@ -87,14 +87,20 @@ export class PitchDetector {
    * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
    */
   detectPitch(buffer: Float32Array): PitchDetectionResult {
-    if (buffer.length < 4) return { pitchHz: 0, confidence: 0 }
+    const isTooSmall = buffer.length < 4
+    if (isTooSmall) {
+      return { pitchHz: 0, confidence: 0 }
+    }
 
     const searchSize = this.calculateSearchSize(buffer.length)
     const yinBuffer = this.difference(buffer, searchSize)
     this.cumulativeMeanNormalizedDifference(yinBuffer)
 
     const tauEstimate = this.absoluteThreshold(yinBuffer)
-    if (tauEstimate <= 0) return { pitchHz: 0, confidence: 0 }
+    const isValidTau = tauEstimate > 0
+    if (!isValidTau) {
+      return { pitchHz: 0, confidence: 0 }
+    }
 
     return this.refineAndValidatePitch(yinBuffer, tauEstimate)
   }
@@ -288,7 +294,8 @@ export class PitchDetector {
     const foundBelowThreshold = thresholdTau !== -1
 
     if (foundBelowThreshold) {
-      return thresholdTau
+      const result = thresholdTau
+      return result
     }
 
     const globalMinimumTau = this.findGlobalMinimum(yinBuffer)
@@ -297,7 +304,10 @@ export class PitchDetector {
 
   private findFirstBelowThreshold(yinBuffer: Float32Array): number {
     for (let tau = 2; tau < yinBuffer.length; tau++) {
-      const isBelowThreshold = yinBuffer[tau] < this.YIN_THRESHOLD
+      const currentVal = yinBuffer[tau]
+      const threshold = this.YIN_THRESHOLD
+      const isBelowThreshold = currentVal < threshold
+
       if (isBelowThreshold) {
         const localMin = this.localMinimum(yinBuffer, tau)
         return localMin
@@ -335,15 +345,20 @@ export class PitchDetector {
 
   /** Step 4: Parabolic interpolation */
   private parabolicInterpolation(yinBuffer: Float32Array, tau: number): number {
-    if (tau <= 0 || tau >= yinBuffer.length - 1) return tau
+    const isAtEdge = tau <= 0 || tau >= yinBuffer.length - 1
+    if (isAtEdge) {
+      return tau
+    }
 
     const s0 = yinBuffer[tau - 1]
     const s1 = yinBuffer[tau]
     const s2 = yinBuffer[tau + 1]
 
     const denominator = 2 * (2 * s1 - s2 - s0)
-    if (Math.abs(denominator) > 1e-10) {
-      return tau + (s2 - s0) / denominator
+    const isDivisible = Math.abs(denominator) > 1e-10
+    if (isDivisible) {
+      const correction = (s2 - s0) / denominator
+      return tau + correction
     }
     return tau
   }

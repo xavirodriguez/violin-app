@@ -78,16 +78,19 @@ const ACCIDENTAL_MAP: Record<string, CanonicalAccidental> = {
  * @public
  */
 export function normalizeAccidental(input: number | string | undefined): CanonicalAccidental {
-  if (input === undefined) {
-    return 0
+  const isUndefined = input === undefined
+  if (isUndefined) {
+    const defaultAccidental = 0
+    return defaultAccidental as CanonicalAccidental
   }
 
-  const key = String(input)
-  const mapping = ACCIDENTAL_MAP
-  const result = mapping[key]
+  const mappingKey = String(input)
+  const mappingTable = ACCIDENTAL_MAP
+  const mappedValue = mappingTable[mappingKey]
 
-  if (result !== undefined) {
-    return result
+  const hasMapping = mappedValue !== undefined
+  if (hasMapping) {
+    return mappedValue!
   }
 
   throw new AppError({
