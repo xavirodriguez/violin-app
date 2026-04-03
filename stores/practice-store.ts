@@ -27,7 +27,6 @@ import {
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
-import { featureFlags } from '@/lib/feature-flags'
 import {
   PracticeSessionRunnerImpl,
   SessionRunnerDependencies,
@@ -185,7 +184,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       set((currentState) => ({ ...currentState, ...getResetUpdates() }))
     },
 
-    consumePipelineEvents: async (pipeline: AsyncIterable<PracticeEvent>) => {
+    consumePipelineEvents: async (pipeline: PracticeEventPipeline) => {
       const currentToken = get().sessionToken
       for await (const event of pipeline) {
         const isStillValid = get().sessionToken === currentToken
@@ -197,6 +196,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
   }
 })
+
+type PracticeEventPipeline = AsyncIterable<PracticeEvent>
 
 /**
  * Creates a safe state update function for the practice session.
@@ -290,13 +291,12 @@ function createRunnerDeps(params: {
 
 function calculateCentsTolerance(): number {
   const { intonationSkill } = useProgressStore.getState()
-  const isAdaptive = featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')
   const baseTolerance = 35
   const skillBonus = (intonationSkill / 100) * 25
   const adaptiveTolerance = Math.round(baseTolerance - skillBonus)
-  const tolerance = isAdaptive ? adaptiveTolerance : 25
+  const result = adaptiveTolerance
 
-  return tolerance
+  return result
 }
 
 function buildRunnerStoreInterface(
