@@ -26,7 +26,6 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { usePracticeUIEffects } from '@/hooks/use-practice-ui-effects'
 import { useProgressStore } from '@/stores/progress.store'
-import { featureFlags } from '@/lib/feature-flags'
 import { ExerciseLibrary } from './practice/exercise-library'
 import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
@@ -68,8 +67,7 @@ export function PracticeMode() {
     derivePracticeState(practiceState)
 
   const { intonationSkill } = useProgressStore()
-  const isAdaptive = featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')
-  const centsTolerance = isAdaptive ? Math.round(35 - (intonationSkill / 100) * 25) : 25
+  const centsTolerance = Math.round(35 - (intonationSkill / 100) * 25)
 
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')

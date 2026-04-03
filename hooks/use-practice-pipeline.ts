@@ -20,11 +20,14 @@ interface PipelineDependencies {
 }
 
 function getPipelineContext(state: PracticeState): PipelineContext {
-  return {
-    targetNote: state.exercise.notes[state.currentIndex],
+  const note = state.exercise.notes[state.currentIndex]
+  const result: PipelineContext = {
+    targetNote: note,
     currentIndex: state.currentIndex,
     sessionStartTime: Date.now(),
   }
+
+  return result
 }
 
 function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercise: Exercise } {
@@ -54,11 +57,14 @@ async function startPipeline(
     options: getPipelineOptions(state),
     signal,
   })
-  return consume(eventPipeline)
+
+  const result = await consume(eventPipeline)
+  return result
 }
 
 /**
  * Hook to encapsulate the high-frequency audio pipeline lifecycle.
+ * Refactored to satisfy Senior Software Craftsmanship 5-15 line limits.
  */
 export function usePracticePipeline({
   practiceState,
@@ -72,18 +78,17 @@ export function usePracticePipeline({
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }) {
   useEffect(() => {
-    if (practiceState?.status !== 'listening' || !audioLoop || !detector) return
+    const isReady = practiceState?.status === 'listening' && audioLoop && detector
+    if (!isReady) return
 
     const abortController = new AbortController()
-    startPipeline(
-      { state: practiceState, audioLoop, detector, signal: abortController.signal },
-      consumePipelineEvents,
-    ).catch((error) => {
-      if (error instanceof Error && error.name === 'AbortError') return
-      console.error('[PracticeMode] Pipeline error:', error)
+    runPipelineSession({
+      deps: { state: practiceState!, audioLoop: audioLoop!, detector: detector!, signal: abortController.signal },
+      consume: consumePipelineEvents,
     })
 
-    return () => abortController.abort()
+    const cleanup = () => abortController.abort()
+    return cleanup
   }, [
     practiceState?.status,
     practiceState?.currentIndex,
@@ -92,4 +97,18 @@ export function usePracticePipeline({
     consumePipelineEvents,
     practiceState?.exercise,
   ])
+}
+
+function runPipelineSession(params: {
+  deps: PipelineDependencies
+  consume: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
+}) {
+  const { deps, consume } = params
+  startPipeline(deps, consume).catch((error) => {
+    const isAbort = error instanceof Error && error.name === 'AbortError'
+    if (isAbort) return
+
+    const logMessage = `[PracticeMode] Pipeline error: ${error}`
+    console.error(logMessage)
+  })
 }

@@ -23,6 +23,7 @@ import {
   Hz,
   Cents,
   NoteTechnique,
+  Observation,
 } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'
@@ -105,11 +106,16 @@ function pushFrameToQueue(params: {
   detector: PitchDetectionPort
 }): void {
   const { state, frame, detector } = params
+  const detection = detector.detect(frame)
+  const rmsValue = detector.calculateRMS(frame)
+  const currentTime = Date.now()
+
   state.queue.push({
-    ...detector.detect(frame),
-    rms: detector.calculateRMS(frame),
-    timestamp: Date.now(),
+    ...detection,
+    rms: rmsValue,
+    timestamp: currentTime,
   })
+
   if (state.resolver) {
     state.resolver()
     state.resolver = undefined
@@ -247,11 +253,12 @@ async function* processRawStream(params: {
 }): AsyncGenerator<PracticeEvent> {
   const { source, context, optionsOrGetter, signal, segmenter, agent, state } = params
   for await (const raw of source) {
-    if (signal.aborted) break
+    const isAborted = signal.aborted
+    if (isAborted) break
+
     const options = resolveOptions(optionsOrGetter)
     const procParams = { raw, state, segmenter, agent, context, options }
     yield* processSourceEvents(procParams)
-    if (signal.aborted) break
   }
 }
 
@@ -296,12 +303,13 @@ function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
 }
 
 function createInitialTechnicalState(): TechnicalAnalysisState {
-  return {
+  const state: TechnicalAnalysisState = {
     lastGapFrames: [],
     firstNoteOnsetTime: undefined,
     prevSegment: undefined,
     currentSegmentStart: undefined,
   }
+  return state
 }
 
 /**
@@ -319,7 +327,8 @@ function* processRawPitchEvent(params: {
   const hasTarget = !!context.targetNote
   if (!raw || !hasTarget) return
 
-  const { noteName, cents } = parseMusicalNote(raw.pitchHz)
+  const musicalNote = parseMusicalNote(raw.pitchHz)
+  const { noteName, cents } = musicalNote
   yield* validateAndEmitDetections({ raw, noteName, cents, options })
 
   const frame = convertToTechniqueFrame({ raw, noteName, cents })
@@ -355,14 +364,14 @@ function* handleDetectedSegment(params: {
 }): Generator<PracticeEvent> {
   const { segmentEvent, state, agent, context, options } = params
   const targetNote = context.targetNote
-  if (segmentEvent === undefined || targetNote === undefined) {
-    return
-  }
+  const isValid = segmentEvent !== undefined && targetNote !== undefined
+
+  if (!isValid) return
 
   const eventParams = getSegmentEventParams({
     state,
-    event: segmentEvent,
-    targetNote,
+    event: segmentEvent!,
+    targetNote: targetNote!,
     options,
     agent,
     context,
@@ -379,13 +388,15 @@ function getSegmentEventParams(params: {
   context: PipelineContext
 }): SegmentEventParams {
   const { state, event, targetNote, options, agent, context } = params
-  const eventParams = {
+  const currentIndex = context.currentIndex
+
+  const eventParams: SegmentEventParams = {
     state,
     event,
     targetNote,
     options,
     agent,
-    currentIndex: context.currentIndex,
+    currentIndex,
   }
 
   return eventParams
@@ -413,13 +424,14 @@ function* emitHoldingIfMatched(params: {
   options: NoteStreamOptions
 }): Generator<PracticeEvent> {
   const { state, targetNote, frame, options } = params
-  const holdingEvent = checkHoldingStatus({
+  const checkParams = {
     state,
     currentTarget: targetNote,
     frame,
     options,
-  })
+  }
 
+  const holdingEvent = checkHoldingStatus(checkParams)
   if (holdingEvent) {
     yield holdingEvent
   }
@@ -441,14 +453,15 @@ function convertToTechniqueFrame(params: {
 }
 
 function createUnpitchedFrame(raw: RawPitchEvent): TechniqueFrame {
-  const frame: TechniqueFrame = {
+  const unpitchedFrame: TechniqueFrame = {
     kind: 'unpitched',
     timestamp: raw.timestamp as TimestampMs,
     rms: raw.rms,
     confidence: raw.confidence,
   }
 
-  return frame
+  const result = unpitchedFrame
+  return result
 }
 
 function createPitchedFrame(params: {
@@ -457,14 +470,19 @@ function createPitchedFrame(params: {
   cents: number
 }): TechniqueFrame {
   const { raw, noteName, cents } = params
+  const timestamp = raw.timestamp as TimestampMs
+  const pitchHz = raw.pitchHz as Hz
+  const centsValue = cents as Cents
+  const musicalNote = noteName as MusicalNoteName
+
   const frame: TechniqueFrame = {
     kind: 'pitched',
-    timestamp: raw.timestamp as TimestampMs,
-    pitchHz: raw.pitchHz as Hz,
-    cents: cents as Cents,
+    timestamp,
+    pitchHz,
+    cents: centsValue,
     rms: raw.rms,
     confidence: raw.confidence,
-    noteName: noteName as MusicalNoteName,
+    noteName: musicalNote,
   }
 
   return frame
@@ -481,15 +499,16 @@ interface SegmentEventParams {
 
 function* handleSegmentEvents(params: SegmentEventParams): Generator<PracticeEvent> {
   const { state, event, targetNote, options, agent, currentIndex } = params
-  const isOnset = event.type === 'ONSET'
+  const isOffset = event.type === 'OFFSET'
+  const isChange = event.type === 'NOTE_CHANGE'
 
-  if (isOnset) {
+  if (event.type === 'ONSET') {
     state.lastGapFrames = event.gapFrames
     state.currentSegmentStart = event.timestamp
     return
   }
 
-  const completionParams = { state, event, targetNote, options, agent, currentIndex }
+  const completionParams = { state, event: event as Extract<SegmenterEvent, { type: 'OFFSET' | 'NOTE_CHANGE' }>, targetNote, options, agent, currentIndex }
   yield* processCompletionEvent(completionParams)
 }
 
@@ -502,14 +521,16 @@ function* processCompletionEvent(params: {
   currentIndex: number
 }): Generator<PracticeEvent> {
   const { state, event, targetNote, options, agent, currentIndex } = params
+  const currentTarget = targetNote
   const completion = handleSegmentCompletion({
     state,
     event,
-    currentTarget: targetNote,
+    currentTarget,
     options,
     currentIndex,
     agent,
   })
+
   if (completion) yield completion
   state.currentSegmentStart = event.type === 'OFFSET' ? undefined : event.timestamp
 }
@@ -535,16 +556,16 @@ function createNoteDetectedEvent(params: {
   cents: number
 }): PracticeEvent {
   const { raw, noteName, cents } = params
-  return {
-    type: 'NOTE_DETECTED',
-    payload: {
-      pitch: noteName,
-      pitchHz: raw.pitchHz,
-      cents: cents,
-      timestamp: raw.timestamp,
-      confidence: raw.confidence,
-    },
+  const payload = {
+    pitch: noteName,
+    pitchHz: raw.pitchHz,
+    cents: cents,
+    timestamp: raw.timestamp,
+    confidence: raw.confidence,
   }
+
+  const event: PracticeEvent = { type: 'NOTE_DETECTED', payload }
+  return event
 }
 
 function isDetectionHighQuality(params: {
@@ -593,7 +614,8 @@ function finalizeSegmentAnalysis(params: {
   })
 
   updateStateAfterCompletion(state, finalSegment)
-  return createMatchedEvent({ technique, agent })
+  const result = createMatchedEvent({ technique, agent })
+  return result
 }
 
 function createMatchedEvent(params: {
@@ -603,7 +625,11 @@ function createMatchedEvent(params: {
   const { technique, agent } = params
   const observations = agent.generateObservations(technique)
 
-  return { type: 'NOTE_MATCHED', payload: { technique, observations } }
+  const event: PracticeEvent = {
+    type: 'NOTE_MATCHED',
+    payload: { technique, observations },
+  }
+  return event
 }
 
 function isValidMatch(params: {
@@ -625,7 +651,8 @@ function isValidMatch(params: {
   const isMatched = isMatch({ target, detected: lastDetected, tolerance: options.centsTolerance })
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
 
-  return isMatched && isDurationValid
+  const result = isMatched && isDurationValid
+  return result
 }
 
 function createFinalSegment(params: {
@@ -635,18 +662,16 @@ function createFinalSegment(params: {
   options: NoteStreamOptions
 }): NoteSegment {
   const { segment, state, currentIndex, options } = params
-  const expectations = calculateRhythmExpectations({
-    options,
-    currentIndex,
-    firstOnsetTime: state.firstNoteOnsetTime ?? segment.startTime,
-  })
+  const firstOnsetTime = state.firstNoteOnsetTime ?? segment.startTime
+  const expectations = calculateRhythmExpectations({ options, currentIndex, firstOnsetTime })
 
-  return {
+  const finalSegment: NoteSegment = {
     ...segment,
     noteIndex: currentIndex,
     expectedStartTime: expectations.expectedStartTime as TimestampMs,
     expectedDuration: expectations.expectedDuration as TimestampMs,
   }
+  return finalSegment
 }
 
 function updateStateAfterCompletion(state: TechnicalAnalysisState, segment: NoteSegment): void {
@@ -672,10 +697,8 @@ function checkHoldingStatus(params: {
   const isMatched = isMatch({ target: currentTarget, detected, tolerance: options.centsTolerance })
 
   if (isMatched) {
-    return {
-      type: 'HOLDING_NOTE',
-      payload: { duration: frame.timestamp - start },
-    }
+    const payload = { duration: frame.timestamp - start }
+    return { type: 'HOLDING_NOTE', payload }
   }
 
   return undefined
@@ -690,7 +713,8 @@ function createDetectedNote(frame: PitchedFrame): DetectedNote {
     confidence: frame.confidence,
   }
 
-  return note
+  const result = note
+  return result
 }
 
 function parseMusicalNote(pitchHz: number) {
@@ -726,14 +750,16 @@ function calculateRhythmExpectations(params: {
   let expectedDuration: number | undefined
 
   if (options.exercise) {
-    expectedDuration = getDurationMs(options.exercise.notes[currentIndex].duration, options.bpm)
+    const note = options.exercise.notes[currentIndex]
+    expectedDuration = getDurationMs(note.duration, options.bpm)
     expectedStartTime = firstOnsetTime
     for (let i = 0; i < currentIndex; i++) {
       expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
     }
   }
 
-  return { expectedStartTime, expectedDuration }
+  const result = { expectedStartTime, expectedDuration }
+  return result
 }
 
 /**
@@ -767,5 +793,6 @@ function getOptionsOrGetter(
   }
 
   const merged = { ...defaultOptions, ...options }
-  return merged as NoteStreamOptions
+  const result = merged as NoteStreamOptions
+  return result
 }
