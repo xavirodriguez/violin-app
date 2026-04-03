@@ -290,11 +290,10 @@ function createRunnerDeps(params: {
 
 function calculateCentsTolerance(): number {
   const { intonationSkill } = useProgressStore.getState()
-  const isAdaptive = featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')
   const baseTolerance = 35
   const skillBonus = (intonationSkill / 100) * 25
   const adaptiveTolerance = Math.round(baseTolerance - skillBonus)
-  const tolerance = isAdaptive ? adaptiveTolerance : 25
+  const tolerance = adaptiveTolerance
 
   return tolerance
 }

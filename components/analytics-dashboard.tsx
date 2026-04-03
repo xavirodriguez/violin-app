@@ -5,7 +5,6 @@
 'use client'
 
 import { useAnalyticsStore, type ExerciseStats } from '@/stores/analytics-store'
-import { useFeatureFlag } from '@/lib/feature-flags'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
@@ -24,7 +23,6 @@ import { AchievementsSection } from './analytics/AchievementsSection'
  */
 export function AnalyticsDashboard() {
   const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
-  const isHeatmapEnabled = useFeatureFlag('FEATURE_UI_INTONATION_HEATMAPS')
 
   const todayStats = getTodayStats()
   const streakInfo = getStreakInfo()
@@ -68,9 +66,7 @@ export function AnalyticsDashboard() {
 
       <HeatmapSection data={heatmapData} />
 
-      {isHeatmapEnabled && (
-        <IntonationHeatmap exerciseStats={progress.exerciseStats} />
-      )}
+      <IntonationHeatmap exerciseStats={progress.exerciseStats} />
 
       <AchievementsSection achievements={progress.achievements} />
     </div>

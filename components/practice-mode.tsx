@@ -68,8 +68,7 @@ export function PracticeMode() {
     derivePracticeState(practiceState)
 
   const { intonationSkill } = useProgressStore()
-  const isAdaptive = featureFlags.isEnabled('FEATURE_PRACTICE_ADAPTIVE_DIFFICULTY')
-  const centsTolerance = isAdaptive ? Math.round(35 - (intonationSkill / 100) * 25) : 25
+  const centsTolerance = Math.round(35 - (intonationSkill / 100) * 25)
 
   const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
   const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
