@@ -296,7 +296,7 @@ function calculateCentsTolerance(): number {
   const adaptiveTolerance = Math.round(baseTolerance - skillBonus)
   const tolerance = adaptiveTolerance
 
-  return result
+  return tolerance
 }
 
 function buildRunnerStoreInterface(
