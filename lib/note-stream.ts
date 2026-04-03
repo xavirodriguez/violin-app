@@ -364,22 +364,21 @@ function* handleDetectedSegment(params: {
 }): Generator<PracticeEvent> {
   const { segmentEvent, state, agent, context, options } = params
   const targetNote = context.targetNote
-  const isValid = segmentEvent !== undefined && targetNote !== undefined
+  if (!segmentEvent || !targetNote) return
 
-  if (!isValid) return
-
-  const eventParams = getSegmentEventParams({
+  const eventParams = prepareSegmentEventParams({
     state,
-    event: segmentEvent!,
-    targetNote: targetNote!,
+    event: segmentEvent,
+    targetNote,
     options,
     agent,
     context,
   })
+
   yield* handleSegmentEvents(eventParams)
 }
 
-function getSegmentEventParams(params: {
+function prepareSegmentEventParams(params: {
   state: TechnicalAnalysisState
   event: SegmenterEvent
   targetNote: TargetNote
@@ -388,19 +387,16 @@ function getSegmentEventParams(params: {
   context: PipelineContext
 }): SegmentEventParams {
   const { state, event, targetNote, options, agent, context } = params
-  const currentIndex = context.currentIndex
-
-  const eventParams: SegmentEventParams = {
+  return {
     state,
     event,
     targetNote,
     options,
     agent,
-    currentIndex,
+    currentIndex: context.currentIndex,
   }
-
-  return eventParams
 }
+
 
 function* maybeEmitHoldingEvent(params: {
   frame: TechniqueFrame
@@ -746,20 +742,33 @@ function calculateRhythmExpectations(params: {
   firstOnsetTime: number
 }) {
   const { options, currentIndex, firstOnsetTime } = params
-  let expectedStartTime: number | undefined
-  let expectedDuration: number | undefined
-
-  if (options.exercise) {
-    const note = options.exercise.notes[currentIndex]
-    expectedDuration = getDurationMs(note.duration, options.bpm)
-    expectedStartTime = firstOnsetTime
-    for (let i = 0; i < currentIndex; i++) {
-      expectedStartTime += getDurationMs(options.exercise.notes[i].duration, options.bpm)
-    }
+  if (!options.exercise) {
+    return { expectedStartTime: undefined, expectedDuration: undefined }
   }
 
-  const result = { expectedStartTime, expectedDuration }
-  return result
+  const expectedDuration = calculateExpectedDuration(options, currentIndex)
+  const expectedStartTime = calculateExpectedStartTime(options, currentIndex, firstOnsetTime)
+
+  return { expectedStartTime, expectedDuration }
+}
+
+function calculateExpectedDuration(options: NoteStreamOptions, currentIndex: number): number {
+  const note = options.exercise!.notes[currentIndex]
+  const duration = getDurationMs(note.duration, options.bpm)
+  return duration
+}
+
+function calculateExpectedStartTime(
+  options: NoteStreamOptions,
+  currentIndex: number,
+  firstOnsetTime: number,
+): number {
+  let startTime = firstOnsetTime
+  for (let i = 0; i < currentIndex; i++) {
+    const note = options.exercise!.notes[i]
+    startTime += getDurationMs(note.duration, options.bpm)
+  }
+  return startTime
 }
 
 /**

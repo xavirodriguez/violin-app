@@ -313,21 +313,36 @@ function getUpdatedProgress(
     completedSession.endTimeMs,
   )
 
-  const newProgress: UserProgress = {
+  const newProgress = assembleUpdatedProgress({
+    progress,
+    completedSession,
+    nextExerciseStats,
+  })
+
+  updateStreak(newProgress, sessions)
+  calculateSkills(newProgress, [completedSession, ...sessions])
+
+  return newProgress
+}
+
+function assembleUpdatedProgress(params: {
+  progress: UserProgress
+  completedSession: PracticeSession
+  nextExerciseStats: Record<string, ExerciseStats>
+}): UserProgress {
+  const { progress, completedSession, nextExerciseStats } = params
+  const isNewId = !progress.exercisesCompleted.includes(completedSession.exerciseId)
+  const exercisesCompleted = isNewId
+    ? [...progress.exercisesCompleted, completedSession.exerciseId]
+    : progress.exercisesCompleted
+
+  return {
     ...progress,
     totalPracticeSessions: progress.totalPracticeSessions + 1,
     totalPracticeTime: progress.totalPracticeTime + Math.floor(completedSession.durationMs / 1000),
     exerciseStats: nextExerciseStats,
-    exercisesCompleted: progress.exercisesCompleted.includes(completedSession.exerciseId)
-      ? progress.exercisesCompleted
-      : [...progress.exercisesCompleted, completedSession.exerciseId],
+    exercisesCompleted,
   }
-
-  updateStreak(newProgress, sessions)
-  const allSessions = [completedSession, ...sessions]
-  calculateSkills(newProgress, allSessions)
-
-  return newProgress
 }
 
 function trackCompletionAnalytics(session: PracticeSession): void {
@@ -460,22 +475,17 @@ function updateExerciseStats(
  */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   const today = startOfDayMs(Date.now())
-  // sessions[0] is the current session being ended
-  const lastSession = sessions[1] // Previous session
+  const lastSession = sessions[1]
   const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
   const yesterday = today - DAY_MS
 
-  if (!lastSession) {
-    // First session ever
+  const shouldReset = !lastSession || lastSessionDay < yesterday
+  const shouldIncrement = lastSessionDay === yesterday
+
+  if (shouldReset) {
     progress.currentStreak = 1
-  } else if (lastSessionDay === yesterday) {
-    // Continuing streak from yesterday
+  } else if (shouldIncrement) {
     progress.currentStreak += 1
-  } else if (lastSessionDay < yesterday) {
-    // Streak broken, start anew
-    progress.currentStreak = 1
-  } else if (lastSessionDay === today) {
-    // Already practiced today, keep current streak
   }
 
   progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
@@ -539,25 +549,48 @@ function createInitialNoteResult(params: RecordAttemptParams): NoteResult {
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
+  const metrics = accumulateRhythmMetrics(recentSessions)
+
+  if (metrics.totalCount === 0) return 0
+  const score = calculateRhythmScore(metrics)
+
+  return Math.round(score)
+}
+
+interface RhythmMetrics {
+  totalError: number
+  inWindowCount: number
+  totalCount: number
+}
+
+function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   let totalError = 0
   let inWindowCount = 0
   let totalCount = 0
-  for (const session of recentSessions) {
+
+  for (const session of sessions) {
     for (const nr of session.noteResults) {
-      if (nr.technique?.rhythm.onsetErrorMs !== undefined) {
-        const error = Math.abs(nr.technique.rhythm.onsetErrorMs)
+      const onsetError = nr.technique?.rhythm.onsetErrorMs
+      if (onsetError !== undefined) {
+        const error = Math.abs(onsetError)
         totalError += error
         if (error <= 40) inWindowCount++
         totalCount++
       }
     }
   }
-  if (totalCount === 0) return 0
+
+  return { totalError, inWindowCount, totalCount }
+}
+
+function calculateRhythmScore(metrics: RhythmMetrics): number {
+  const { totalError, inWindowCount, totalCount } = metrics
   const mae = totalError / totalCount
   const percentInWindow = (inWindowCount / totalCount) * 100
   const maeScore = Math.max(0, 100 - mae / 4)
-  const score = (maeScore + percentInWindow) / 2
-  return Math.round(score)
+
+  const finalScore = (maeScore + percentInWindow) / 2
+  return finalScore
 }
 
 /**
@@ -591,44 +624,55 @@ function migratePersistence(persisted: unknown, version: number): AnalyticsStore
     migrateV1V2(persistedData)
   }
 
-  const sessions = Array.isArray(persistedData.sessions)
-    ? persistedData.sessions.map((s: unknown) => {
-        const session = s as Record<string, unknown>
-        const { startTime, endTime, ...rest } = session || {}
-        return {
-          ...rest,
-          startTimeMs: toMs(session?.startTimeMs ?? startTime),
-          endTimeMs: toMs(session?.endTimeMs ?? endTime),
-        }
-      })
-    : []
-
-  const progress = (persistedData.progress as Record<string, unknown>) || {}
-  const achievements = Array.isArray(progress.achievements)
-    ? progress.achievements.map((a: unknown) => {
-        const achievement = a as Record<string, unknown>
-        const { unlockedAt, ...rest } = achievement || {}
-        return {
-          ...rest,
-          unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
-        }
-      })
-    : []
-
-  const exerciseStats = (progress.exerciseStats as Record<string, Record<string, unknown>>) || {}
-  const migratedExerciseStats = Object.fromEntries(
-    Object.entries(exerciseStats).map(([k, v]) => {
-      const stats = v as Record<string, unknown>
-      const { lastPracticed, ...rest } = stats || {}
-      return [k, { ...rest, lastPracticedMs: toMs(stats?.lastPracticedMs ?? lastPracticed) }]
-    }),
-  )
+  const sessions = migrateSessions(persistedData.sessions)
+  const progressData = (persistedData.progress as Record<string, unknown>) || {}
+  const achievements = migrateAchievements(progressData.achievements)
+  const exerciseStats = migrateExerciseStats(progressData.exerciseStats)
 
   return {
     ...persistedData,
     sessions,
-    progress: { ...progress, achievements, exerciseStats: migratedExerciseStats },
+    progress: { ...progressData, achievements, exerciseStats },
   } as AnalyticsStore
+}
+
+function migrateSessions(sessions: unknown): PracticeSession[] {
+  if (!Array.isArray(sessions)) return []
+
+  return sessions.map((s: unknown) => {
+    const session = s as Record<string, unknown>
+    const { startTime, endTime, ...rest } = session || {}
+    return {
+      ...rest,
+      startTimeMs: toMs(session?.startTimeMs ?? startTime),
+      endTimeMs: toMs(session?.endTimeMs ?? endTime),
+    } as unknown as PracticeSession
+  })
+}
+
+function migrateAchievements(achievements: unknown): Achievement[] {
+  if (!Array.isArray(achievements)) return []
+
+  return achievements.map((a: unknown) => {
+    const achievement = a as Record<string, unknown>
+    const { unlockedAt, ...rest } = achievement || {}
+    return {
+      ...rest,
+      unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
+    } as unknown as Achievement
+  })
+}
+
+function migrateExerciseStats(stats: unknown): Record<string, ExerciseStats> {
+  const rawStats = (stats as Record<string, Record<string, unknown>>) || {}
+  const entries = Object.entries(rawStats).map(([k, v]) => {
+    const s = v as Record<string, unknown>
+    const { lastPracticed, ...rest } = s || {}
+    const lastPracticedMs = toMs(s?.lastPracticedMs ?? lastPracticed)
+    return [k, { ...rest, lastPracticedMs }]
+  })
+
+  return Object.fromEntries(entries) as Record<string, ExerciseStats>
 }
 
 function migrateV1V2(data: Record<string, unknown>): void {
