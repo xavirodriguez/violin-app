@@ -294,7 +294,7 @@ function calculateCentsTolerance(): number {
   const baseTolerance = 35
   const skillBonus = (intonationSkill / 100) * 25
   const adaptiveTolerance = Math.round(baseTolerance - skillBonus)
-  const result = adaptiveTolerance
+  const tolerance = adaptiveTolerance
 
   return result
 }

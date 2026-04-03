@@ -448,12 +448,12 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
 
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
-  const isEligible = canMatchNote(state.status)
-  if (!isEligible) return state
+  if (!canMatchNote(state.status)) {
+    return state
+  }
 
   const newStreak = calculateNewStreak(state, payload)
-  const totalNotes = state.exercise.notes.length
-  const isLastNote = state.currentIndex >= totalNotes - 1
+  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
   return isLastNote
     ? finalizePracticeSession({ state, payload, streak: newStreak })

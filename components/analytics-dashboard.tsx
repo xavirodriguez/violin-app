@@ -4,8 +4,7 @@
 
 'use client'
 
-import React from 'react'
-import { useAnalyticsStore, type UserProgress } from '@/stores/analytics-store'
+import { useAnalyticsStore, type ExerciseStats } from '@/stores/analytics-store'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
@@ -22,8 +21,23 @@ import { IntonationHeatmap } from './analytics/IntonationHeatmap'
  * Refactored for Senior Software Craftsmanship compliance.
  */
 export function AnalyticsDashboard() {
-  const data = useDashboardData()
-  const { streakInfo, todayStats, progress, practiceTimeData, heatmapData, totalCompleted } = data
+  const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
+
+  const todayStats = getTodayStats()
+  const streakInfo = getStreakInfo()
+  const recentSessions = getSessionHistory(7)
+  const lastSession = recentSessions[0]
+
+  const practiceTimeData = getLast7DaysData(recentSessions)
+  const heatmapData = getHeatmapData(lastSession)
+  const totalCompleted = progress.exercisesCompleted?.length ?? 0
+
+  const handleExport = () => {
+    const allSessions = getSessionHistory(365)
+    const csv = exportSessionsToCSV(allSessions)
+    const filename = `violin-progress-${new Date().toISOString().split('T')[0]}.csv`
+    downloadCSV(csv, filename)
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -41,7 +55,9 @@ export function AnalyticsDashboard() {
       />
       <PracticeTimeSection data={practiceTimeData} />
       <HeatmapSection data={heatmapData} />
+
       <IntonationHeatmap exerciseStats={progress.exerciseStats} />
+
       <AchievementsSection achievements={progress.achievements} />
     </div>
   )
