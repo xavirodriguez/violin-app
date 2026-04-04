@@ -92,17 +92,30 @@ export class PitchDetector {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    const searchSize = this.calculateSearchSize(buffer.length)
-    const yinBuffer = this.difference(buffer, searchSize)
-    this.cumulativeMeanNormalizedDifference(yinBuffer)
-
+    const yinBuffer = this.executeYinAnalysis(buffer)
     const tauEstimate = this.absoluteThreshold(yinBuffer)
-    const isValidTau = tauEstimate > 0
-    if (!isValidTau) {
-      return { pitchHz: 0, confidence: 0 }
+
+    return this.validateAndRefineYinResult(yinBuffer, tauEstimate)
+  }
+
+  private executeYinAnalysis(buffer: Float32Array): Float32Array {
+    const audioSamples = buffer
+    const searchSize = this.calculateSearchSize(audioSamples.length)
+    const yinBuffer = this.difference(audioSamples, searchSize)
+
+    this.cumulativeMeanNormalizedDifference(yinBuffer)
+    return yinBuffer
+  }
+
+  private validateAndRefineYinResult(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
+    const hasDetectedPitch = tau > 0
+    if (!hasDetectedPitch) {
+      const emptyResult = { pitchHz: 0, confidence: 0 }
+      return emptyResult
     }
 
-    return this.refineAndValidatePitch(yinBuffer, tauEstimate)
+    const refinedPitch = this.refineAndValidatePitch(yinBuffer, tau)
+    return refinedPitch
   }
 
   /**
@@ -345,22 +358,35 @@ export class PitchDetector {
 
   /** Step 4: Parabolic interpolation */
   private parabolicInterpolation(yinBuffer: Float32Array, tau: number): number {
-    const isAtEdge = tau <= 0 || tau >= yinBuffer.length - 1
+    const isAtEdge = this.isAtSearchEdge(yinBuffer, tau)
     if (isAtEdge) {
       return tau
     }
 
+    const offset = this.calculateParabolicCorrection(yinBuffer, tau)
+    const interpolatedTau = tau + offset
+
+    return interpolatedTau
+  }
+
+  private isAtSearchEdge(yinBuffer: Float32Array, tau: number): boolean {
+    const isAtStart = tau <= 0
+    const isAtEnd = tau >= yinBuffer.length - 1
+    const result = isAtStart || isAtEnd
+
+    return result
+  }
+
+  private calculateParabolicCorrection(yinBuffer: Float32Array, tau: number): number {
     const s0 = yinBuffer[tau - 1]
     const s1 = yinBuffer[tau]
     const s2 = yinBuffer[tau + 1]
 
     const denominator = 2 * (2 * s1 - s2 - s0)
     const isDivisible = Math.abs(denominator) > 1e-10
-    if (isDivisible) {
-      const correction = (s2 - s0) / denominator
-      return tau + correction
-    }
-    return tau
+    const correction = isDivisible ? (s2 - s0) / denominator : 0
+
+    return correction
   }
 }
 

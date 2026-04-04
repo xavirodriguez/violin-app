@@ -329,27 +329,34 @@ export function reducePracticeEvent(state: PracticeState, event: PracticeEvent):
   return resultState
 }
 
-function getEventHandler(type: string) {
-  const handlers: Record<string, (s: PracticeState, e: PracticeEvent) => PracticeState> = {
-    START: handleStart,
-    STOP: handleStopReset,
-    RESET: handleStopReset,
-    NOTE_DETECTED: (s, e) => {
-      const typedEvent = e as Extract<PracticeEvent, { type: 'NOTE_DETECTED' }>
-      return handleNoteDetected(s, typedEvent.payload)
-    },
-    HOLDING_NOTE: (s, e) => {
-      const typedEvent = e as Extract<PracticeEvent, { type: 'HOLDING_NOTE' }>
-      return handleHoldingNote(s, typedEvent.payload.duration)
-    },
-    NO_NOTE_DETECTED: (s, _e) => handleNoNoteDetected(s),
-    NOTE_MATCHED: (s, e) => {
-      const typedEvent = e as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>
-      return handleNoteMatched(s, typedEvent.payload)
-    },
-  }
+const PRACTICE_EVENT_HANDLERS: Record<
+  string,
+  (state: PracticeState, event: PracticeEvent) => PracticeState
+> = {
+  START: handleStart,
+  STOP: handleStopReset,
+  RESET: handleStopReset,
+  NOTE_DETECTED: (state, event) => {
+    const typed = event as Extract<PracticeEvent, { type: 'NOTE_DETECTED' }>
+    return handleNoteDetected(state, typed.payload)
+  },
+  HOLDING_NOTE: (state, event) => {
+    const typed = event as Extract<PracticeEvent, { type: 'HOLDING_NOTE' }>
+    return handleHoldingNote(state, typed.payload.duration)
+  },
+  NO_NOTE_DETECTED: (state, _event) => handleNoNoteDetected(state),
+  NOTE_MATCHED: (state, event) => {
+    const typed = event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>
+    return handleNoteMatched(state, typed.payload)
+  },
+}
 
-  return handlers[type]
+function getEventHandler(type: string) {
+  const handlerTable = PRACTICE_EVENT_HANDLERS
+  const eventHandler = handlerTable[type]
+  const finalHandler = eventHandler
+
+  return finalHandler
 }
 
 function handleStart(state: PracticeState): PracticeState {
