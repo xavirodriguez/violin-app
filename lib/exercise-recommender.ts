@@ -135,18 +135,23 @@ function getProgressionDiscoveryRecommendation(params: RecommendationParams): Ex
   const isSpecific = !!difficultyFilter && difficultyFilter !== 'all'
 
   if (isSpecific) {
-    return findFirstUnplayedByDifficulty(exercises, userProgress, difficultyFilter!)
+    return findFirstUnplayedByDifficulty({ exercises, userProgress, difficulty: difficultyFilter! })
   }
 
   const targetDifficulty = determineTargetDifficulty(exercises, userProgress)
-  return findFirstUnplayedByDifficulty(exercises, userProgress, targetDifficulty)
+  return findFirstUnplayedByDifficulty({
+    exercises,
+    userProgress,
+    difficulty: targetDifficulty,
+  })
 }
 
-function findFirstUnplayedByDifficulty(
-  exercises: Exercise[],
-  userProgress: UserProgress,
-  difficulty: string,
-): Exercise | undefined {
+function findFirstUnplayedByDifficulty(params: {
+  exercises: Exercise[]
+  userProgress: UserProgress
+  difficulty: string
+}): Exercise | undefined {
+  const { exercises, userProgress, difficulty } = params
   const diffLower = difficulty.toLowerCase()
   const match = exercises.find((ex) => {
     const isSameDiff = ex.difficulty.toLowerCase() === diffLower
@@ -161,7 +166,7 @@ function findFirstUnplayedByDifficulty(
 function determineTargetDifficulty(exercises: Exercise[], userProgress: UserProgress): Difficulty {
   const difficulties: Difficulty[] = ['Beginner', 'Intermediate', 'Advanced']
   const found = difficulties.find((diff) => {
-    const isCompleted = isDifficultyCompleted(exercises, userProgress, diff)
+    const isCompleted = isDifficultyCompleted({ exercises, userProgress, difficulty: diff })
     return !isCompleted
   })
 
@@ -169,11 +174,12 @@ function determineTargetDifficulty(exercises: Exercise[], userProgress: UserProg
   return target
 }
 
-function isDifficultyCompleted(
-  exercises: Exercise[],
-  userProgress: UserProgress,
-  difficulty: Difficulty,
-): boolean {
+function isDifficultyCompleted(params: {
+  exercises: Exercise[]
+  userProgress: UserProgress
+  difficulty: Difficulty
+}): boolean {
+  const { exercises, userProgress, difficulty } = params
   const diffEx = exercises.filter((ex) => ex.difficulty === difficulty)
   if (diffEx.length === 0) return false
 

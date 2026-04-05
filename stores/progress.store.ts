@@ -204,74 +204,8 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
       ...DEFAULT_PROGRESS,
 
       addSession: (session: PracticeSession) => {
-        const { exerciseStats, eventBuffer, eventCounter } = get()
-
-        // 1. Create ProgressEvent
-        const avgRhythmError =
-          session.noteResults.reduce((acc, nr) => {
-            return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
-          }, 0) / (session.noteResults.length || 1)
-
-        const newEvent: ProgressEvent = {
-          ts: session.endTimeMs,
-          exerciseId: session.exerciseId,
-          accuracy: session.accuracy,
-          rhythmErrorMs: avgRhythmError,
-        }
-
-        // 2. Manage Buffer (Circular N=1000)
-        const newBuffer = [newEvent, ...eventBuffer].slice(0, 1000)
-
-        // 3. Incremental Snapshots (Every 50 events)
-        const newEventCounter = eventCounter + 1
-        let newSnapshots = get().snapshots
-        if (newEventCounter % 50 === 0) {
-          const snapshot: ProgressSnapshot = {
-            userId: 'anonymous', // Default for now
-            window: 'all',
-            aggregates: {
-              intonation: get().intonationSkill,
-              rhythm: get().rhythmSkill,
-              overall: get().overallSkill,
-            },
-            lastSessionId: session.id,
-          }
-          newSnapshots = [snapshot, ...newSnapshots].slice(0, 10) // Keep last 10 snapshots
-        }
-
-        // 4. Pruning Logic (Time-based > 90 days)
-        const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
-        const prunedBuffer = newBuffer.filter((e) => e.ts > ninetyDaysAgo)
-
-        const existingStats = exerciseStats[session.exerciseId]
-        const nextExerciseStats: ExerciseStats = {
-          exerciseId: session.exerciseId,
-          timesCompleted: (existingStats?.timesCompleted || 0) + 1,
-          bestAccuracy: Math.max(existingStats?.bestAccuracy || 0, session.accuracy),
-          averageAccuracy: existingStats
-            ? (existingStats.averageAccuracy * existingStats.timesCompleted + session.accuracy) /
-              (existingStats.timesCompleted + 1)
-            : session.accuracy,
-          fastestCompletionMs: existingStats
-            ? Math.min(existingStats.fastestCompletionMs, session.durationMs)
-            : session.durationMs,
-          lastPracticedMs: session.endTimeMs,
-        }
-
-        set((state: ProgressState) => ({
-          totalPracticeSessions: state.totalPracticeSessions + 1,
-          totalPracticeTime: state.totalPracticeTime + Math.floor(session.durationMs / 1000),
-          exercisesCompleted: state.exercisesCompleted.includes(session.exerciseId)
-            ? state.exercisesCompleted
-            : [...state.exercisesCompleted, session.exerciseId],
-          exerciseStats: {
-            ...state.exerciseStats,
-            [session.exerciseId]: nextExerciseStats,
-          },
-          eventBuffer: prunedBuffer,
-          snapshots: newSnapshots,
-          eventCounter: newEventCounter,
-        }))
+        const updates = assembleSessionUpdates({ session, get })
+        set((state: ProgressState) => ({ ...state, ...updates }))
       },
 
       updateSkills: (sessions: PracticeSession[]) => {
@@ -337,25 +271,209 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
  * @internal
  */
 function calculateRhythmSkill(sessions: PracticeSession[]): number {
-  if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
-  let totalError = 0
-  let inWindowCount = 0
-  let totalCount = 0
-  for (const session of recentSessions) {
-    for (const nr of session.noteResults) {
-      if (nr.technique?.rhythm.onsetErrorMs !== undefined) {
-        const error = Math.abs(nr.technique.rhythm.onsetErrorMs)
-        totalError += error
-        if (error <= 40) inWindowCount++
-        totalCount++
-      }
+  const hasSessions = recentSessions.length > 0
+  if (!hasSessions) return 0
+
+  const metrics = accumulateRhythmMetrics(recentSessions)
+  const result = calculateRhythmScore(metrics)
+
+  return result
+}
+
+interface RhythmMetricsAccumulator {
+  totalError: number
+  inWindowCount: number
+  totalCount: number
+}
+
+function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetricsAccumulator {
+  let metrics: RhythmMetricsAccumulator = { totalError: 0, inWindowCount: 0, totalCount: 0 }
+
+  for (const session of sessions) {
+    metrics = processSessionRhythm(session, metrics)
+  }
+
+  return metrics
+}
+
+function processSessionRhythm(
+  session: PracticeSession,
+  acc: RhythmMetricsAccumulator,
+): RhythmMetricsAccumulator {
+  const result = { ...acc }
+  for (const nr of session.noteResults) {
+    const errorMs = nr.technique?.rhythm.onsetErrorMs
+    if (errorMs !== undefined) {
+      const error = Math.abs(errorMs)
+      result.totalError += error
+      if (error <= 40) result.inWindowCount++
+      result.totalCount++
     }
   }
+  return result
+}
+
+function calculateRhythmScore(metrics: RhythmMetricsAccumulator): number {
+  const { totalError, inWindowCount, totalCount } = metrics
   if (totalCount === 0) return 0
+
   const mae = totalError / totalCount
   const percentInWindow = (inWindowCount / totalCount) * 100
   const maeScore = Math.max(0, 100 - mae / 4)
   const score = (maeScore + percentInWindow) / 2
+
   return Math.round(score)
+}
+
+function calculateSessionRhythmError(session: PracticeSession): number {
+  const totalError = session.noteResults.reduce((acc, nr) => {
+    return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
+  }, 0)
+  const count = session.noteResults.length || 1
+  const avgError = totalError / count
+
+  return avgError
+}
+
+function assembleProgressEvent(session: PracticeSession): ProgressEvent {
+  const avgRhythmError = calculateSessionRhythmError(session)
+  const event: ProgressEvent = {
+    ts: session.endTimeMs,
+    exerciseId: session.exerciseId,
+    accuracy: session.accuracy,
+    rhythmErrorMs: avgRhythmError,
+  }
+
+  return event
+}
+
+function manageEventBuffer(params: {
+  event: ProgressEvent
+  currentBuffer: ProgressEvent[]
+}): ProgressEvent[] {
+  const { event, currentBuffer } = params
+  const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
+  const combined = [event, ...currentBuffer].slice(0, 1000)
+  const pruned = combined.filter((e) => e.ts > ninetyDaysAgo)
+
+  return pruned
+}
+
+function updateExerciseStatsMap(params: {
+  exerciseId: string
+  session: PracticeSession
+  statsMap: Record<string, ExerciseStats>
+}): Record<string, ExerciseStats> {
+  const { exerciseId, session, statsMap } = params
+  const existing = statsMap[exerciseId]
+  const nextStats = computeNextExerciseStats(existing, session)
+
+  return {
+    ...statsMap,
+    [exerciseId]: nextStats,
+  }
+}
+
+function computeNextExerciseStats(
+  existing: ExerciseStats | undefined,
+  session: PracticeSession,
+): ExerciseStats {
+  const timesCompleted = (existing?.timesCompleted || 0) + 1
+  const bestAccuracy = Math.max(existing?.bestAccuracy || 0, session.accuracy)
+  const averageAccuracy = calculateNewAverageAccuracy(existing, session, timesCompleted)
+  const fastestCompletionMs = calculateNewFastestCompletion(existing, session)
+
+  return {
+    exerciseId: session.exerciseId,
+    timesCompleted,
+    bestAccuracy,
+    averageAccuracy,
+    fastestCompletionMs,
+    lastPracticedMs: session.endTimeMs,
+  }
+}
+
+function calculateNewAverageAccuracy(
+  existing: ExerciseStats | undefined,
+  session: PracticeSession,
+  nextCount: number,
+): number {
+  if (!existing) {
+    return session.accuracy
+  }
+  const total = existing.averageAccuracy * existing.timesCompleted + session.accuracy
+  const average = total / nextCount
+  return average
+}
+
+function calculateNewFastestCompletion(
+  existing: ExerciseStats | undefined,
+  session: PracticeSession,
+): number {
+  const currentFastest = existing?.fastestCompletionMs ?? session.durationMs
+  const sessionDuration = session.durationMs
+  const result = Math.min(currentFastest, sessionDuration)
+
+  return result
+}
+
+function generateSnapshotIfDue(params: {
+  counter: number
+  session: PracticeSession
+  get: () => ProgressState
+}): ProgressSnapshot[] {
+  const { counter, session, get } = params
+  const snapshots = get().snapshots
+  const isDue = counter % 50 === 0
+
+  if (!isDue) {
+    return snapshots
+  }
+
+  const snapshot: ProgressSnapshot = assembleSnapshot(session, get)
+  return [snapshot, ...snapshots].slice(0, 10)
+}
+
+function assembleSnapshot(session: PracticeSession, get: () => ProgressState): ProgressSnapshot {
+  const snapshot: ProgressSnapshot = {
+    userId: 'anonymous',
+    window: 'all',
+    aggregates: {
+      intonation: get().intonationSkill,
+      rhythm: get().rhythmSkill,
+      overall: get().overallSkill,
+    },
+    lastSessionId: session.id,
+  }
+  return snapshot
+}
+
+function assembleSessionUpdates(params: {
+  session: PracticeSession
+  get: () => ProgressState
+}): Partial<ProgressState> {
+  const { session, get } = params
+  const { exerciseStats, eventBuffer, eventCounter, exercisesCompleted } = get()
+  const event = assembleProgressEvent(session)
+  const nextCounter = eventCounter + 1
+  const nextBuffer = manageEventBuffer({ event, currentBuffer: eventBuffer })
+  const nextSnapshots = generateSnapshotIfDue({ counter: nextCounter, session, get })
+  const nextStatsMap = updateExerciseStatsMap({
+    exerciseId: session.exerciseId,
+    session,
+    statsMap: exerciseStats,
+  })
+
+  return {
+    totalPracticeSessions: get().totalPracticeSessions + 1,
+    totalPracticeTime: get().totalPracticeTime + Math.floor(session.durationMs / 1000),
+    exercisesCompleted: exercisesCompleted.includes(session.exerciseId)
+      ? exercisesCompleted
+      : [...exercisesCompleted, session.exerciseId],
+    exerciseStats: nextStatsMap,
+    eventBuffer: nextBuffer,
+    snapshots: nextSnapshots,
+    eventCounter: nextCounter,
+  }
 }

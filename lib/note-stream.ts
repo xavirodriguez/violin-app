@@ -199,10 +199,17 @@ async function* iterateStreamQueue(params: {
   const { state, signal } = params
 
   while (!signal.aborted) {
-    while (state.queue.length > 0) {
-      yield state.queue.shift()!
-    }
+    yield* drainQueue(state)
     await waitForFrame(state, signal)
+  }
+}
+
+async function* drainQueue(state: StreamState): AsyncGenerator<RawPitchEvent> {
+  while (state.queue.length > 0) {
+    const event = state.queue.shift()
+    if (event) {
+      yield event
+    }
   }
 }
 
@@ -251,15 +258,28 @@ async function* processRawStream(params: {
   agent: TechniqueAnalysisAgent
   state: TechnicalAnalysisState
 }): AsyncGenerator<PracticeEvent> {
-  const { source, context, optionsOrGetter, signal, segmenter, agent, state } = params
+  const { source, signal, ...rest } = params
   for await (const raw of source) {
-    const isAborted = signal.aborted
-    if (isAborted) break
-
-    const options = resolveOptions(optionsOrGetter)
-    const procParams = { raw, state, segmenter, agent, context, options }
-    yield* processSourceEvents(procParams)
+    if (signal.aborted) break
+    yield* executeRawFrameProcessing({ ...rest, raw })
   }
+}
+
+async function* executeRawFrameProcessing(
+  params: {
+    raw: RawPitchEvent
+    context: PipelineContext
+    optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
+    segmenter: NoteSegmenter
+    agent: TechniqueAnalysisAgent
+    state: TechnicalAnalysisState
+  }
+): AsyncGenerator<PracticeEvent> {
+  const { raw, state, segmenter, agent, context, optionsOrGetter } = params
+  const options = resolveOptions(optionsOrGetter)
+  const procParams = { raw, state, segmenter, agent, context, options }
+
+  yield* processSourceEvents(procParams)
 }
 
 async function* processSourceEvents(params: {
@@ -323,12 +343,24 @@ function* processRawPitchEvent(params: {
   context: PipelineContext
   options: NoteStreamOptions
 }): Generator<PracticeEvent> {
-  const { raw, state, segmenter, agent, context, options } = params
+  const { raw, context } = params
   const hasTarget = !!context.targetNote
   if (!raw || !hasTarget) return
 
-  const musicalNote = parseMusicalNote(raw.pitchHz)
-  const { noteName, cents } = musicalNote
+  yield* executeEventAnalysis(params)
+}
+
+function* executeEventAnalysis(params: {
+  raw: RawPitchEvent
+  state: TechnicalAnalysisState
+  segmenter: NoteSegmenter
+  agent: TechniqueAnalysisAgent
+  context: PipelineContext
+  options: NoteStreamOptions
+}): Generator<PracticeEvent> {
+  const { raw, state, segmenter, agent, context, options } = params
+  const { noteName, cents } = parseMusicalNote(raw.pitchHz)
+
   yield* validateAndEmitDetections({ raw, noteName, cents, options })
 
   const frame = convertToTechniqueFrame({ raw, noteName, cents })
@@ -746,23 +778,28 @@ function calculateRhythmExpectations(params: {
     return { expectedStartTime: undefined, expectedDuration: undefined }
   }
 
-  const expectedDuration = calculateExpectedDuration(options, currentIndex)
-  const expectedStartTime = calculateExpectedStartTime(options, currentIndex, firstOnsetTime)
+  const expectedDuration = calculateExpectedDuration({ options, currentIndex })
+  const expectedStartTime = calculateExpectedStartTime({ options, currentIndex, firstOnsetTime })
 
   return { expectedStartTime, expectedDuration }
 }
 
-function calculateExpectedDuration(options: NoteStreamOptions, currentIndex: number): number {
+function calculateExpectedDuration(params: {
+  options: NoteStreamOptions
+  currentIndex: number
+}): number {
+  const { options, currentIndex } = params
   const note = options.exercise!.notes[currentIndex]
   const duration = getDurationMs(note.duration, options.bpm)
   return duration
 }
 
-function calculateExpectedStartTime(
-  options: NoteStreamOptions,
-  currentIndex: number,
-  firstOnsetTime: number,
-): number {
+function calculateExpectedStartTime(params: {
+  options: NoteStreamOptions
+  currentIndex: number
+  firstOnsetTime: number
+}): number {
+  const { options, currentIndex, firstOnsetTime } = params
   let startTime = firstOnsetTime
   for (let i = 0; i < currentIndex; i++) {
     const note = options.exercise!.notes[i]
