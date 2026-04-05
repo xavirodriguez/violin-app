@@ -295,31 +295,35 @@ function getPipelineContext(params: { exercise: Exercise; noteIndex: number; sta
  * @internal
  */
 async function* processPipeline(params: PipelineParams): AsyncGenerator<PracticeEngineEvent> {
-  const { pipeline, getState, noteIndex, signal } = params
+  const { pipeline, signal } = params
   for await (const event of pipeline) {
     if (signal.aborted) break
-    yield* handlePipelineEvent({ ...params, event })
-    const currentEvent = mapPipelineEventToEngineEvent(event) ?? { type: 'NO_NOTE' }
-    const terminationParams = { event: currentEvent, state: getState(), noteIndex }
-    if (shouldTerminatePipeline(terminationParams)) break
+    yield* handleNoteIteration({ ...params, event })
+    if (checkIterationTermination({ ...params, event })) break
   }
 }
 
-async function* handlePipelineEvent(params: {
-  event: PracticeEvent
-  getState: () => EngineState
-  noteIndex: number
-  updateState: (e: PracticeEngineEvent) => void
-  signal: AbortSignal
-}): AsyncGenerator<PracticeEngineEvent> {
+async function* handleNoteIteration(
+  params: PipelineParams & { event: PracticeEvent }
+): AsyncGenerator<PracticeEngineEvent> {
   const { event, getState, noteIndex, updateState, signal } = params
   const engineEvent = mapPipelineEventToEngineEvent(event)
-  const isEligible = engineEvent && !signal.aborted
 
-  if (isEligible) {
-    yield* handleEngineEvent({ event: engineEvent!, getState, noteIndex, updateState })
+  if (engineEvent && !signal.aborted) {
+    yield* handleEngineEvent({ event: engineEvent, getState, noteIndex, updateState })
   }
 }
+
+function checkIterationTermination(
+  params: PipelineParams & { event: PracticeEvent }
+): boolean {
+  const { event, getState, noteIndex } = params
+  const engineEvent = mapPipelineEventToEngineEvent(event) ?? { type: 'NO_NOTE' }
+  const state = getState()
+
+  return shouldTerminatePipeline({ event: engineEvent, state, noteIndex })
+}
+
 
 /**
  * Updates engine state and yields events to the consumer.
