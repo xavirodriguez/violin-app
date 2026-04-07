@@ -35,10 +35,14 @@ export class TechniqueAnalysisAgent {
   constructor(options: AnalysisOptions = {}) {
     const mergedOptions = { ...DEFAULT_OPTIONS, ...options }
     this.options = mergedOptions
-    const isReady = !!this.options
+
+    const isInitialized = !!this.options
+    const hasOptions = isInitialized
+    const isReady = hasOptions
 
     if (!isReady) {
-      throw new Error('Analysis agent initialization failed')
+      const errorMsg = 'Analysis agent initialization failed'
+      throw new Error(errorMsg)
     }
   }
 
@@ -190,15 +194,30 @@ export class TechniqueAnalysisAgent {
     regularity: Ratio01
   } {
     const detrended = this.detrend(frames)
-    const widthCents = (this.calculateStdDev(detrended) * 2.828) as Cents
-    const { periodMs, correlation } = this.findPeriod(
-      detrended,
-      frames.map((f) => f.timestamp),
-    )
-    const rateHz = (periodMs > 0 ? 1000 / periodMs : 0) as Hz
-    const regularity = Math.max(0, correlation) as Ratio01
+    const stdDev = this.calculateStdDev(detrended)
+    const widthCents = (stdDev * 2.828) as Cents
+
+    const analysis = this.executeVibratoAnalysis(detrended, frames)
+    const rateHz = this.calculateVibratoRate(analysis.periodMs)
+    const regularity = Math.max(0, analysis.correlation) as Ratio01
 
     return { rateHz, widthCents, regularity }
+  }
+
+  private executeVibratoAnalysis(detrended: number[], frames: PitchedFrame[]) {
+    const timestamps = frames.map((f) => f.timestamp)
+    const result = this.findPeriod(detrended, timestamps)
+    const analysis = result
+
+    return analysis
+  }
+
+  private calculateVibratoRate(periodMs: number): Hz {
+    const isPositive = periodMs > 0
+    const rate = isPositive ? 1000 / periodMs : 0
+    const finalRate = rate as Hz
+
+    return finalRate
   }
 
   private isVibratoCandidate(frames: PitchedFrame[]): boolean {
@@ -211,8 +230,11 @@ export class TechniqueAnalysisAgent {
 
   private isVibratoValid(params: { rateHz: Hz; widthCents: Cents; regularity: Ratio01 }): boolean {
     const { rateHz, widthCents, regularity } = params
-    const isRateValid =
-      rateHz >= this.options.vibratoMinRateHz && rateHz <= this.options.vibratoMaxRateHz
+
+    const isRateMin = rateHz >= this.options.vibratoMinRateHz
+    const isRateMax = rateHz <= this.options.vibratoMaxRateHz
+    const isRateValid = isRateMin && isRateMax
+
     const isWidthValid = widthCents >= this.options.vibratoMinWidthCents
     const isRegValid = regularity >= this.options.vibratoMinRegularity
 
@@ -220,22 +242,38 @@ export class TechniqueAnalysisAgent {
   }
 
   private calculateAttackRelease(frames: ReadonlyArray<TechniqueFrame>): AttackReleaseMetrics {
-    if (frames.length === 0) {
-      return {
-        attackTimeMs: 0 as TimestampMs,
-        pitchScoopCents: 0 as Cents,
-        releaseStability: 0 as Cents,
-      }
+    const noFrames = frames.length === 0
+    if (noFrames) {
+      return this.createEmptyAttackRelease()
     }
 
-    const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
-    const { attackTimeMs, pitchScoopCents } = this.analyzeAttackPhase(frames, pitchedFrames)
-    const releaseStability = this.analyzeReleasePhase(
-      pitchedFrames,
-      frames[frames.length - 1].timestamp,
-    )
+    const pitched = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
+    const result = this.executeAttackReleaseAnalysis(frames, pitched)
 
-    return { attackTimeMs, pitchScoopCents, releaseStability }
+    return result
+  }
+
+  private executeAttackReleaseAnalysis(frames: ReadonlyArray<TechniqueFrame>, pitched: PitchedFrame[]) {
+    const lastTime = frames[frames.length - 1].timestamp
+    const attack = this.analyzeAttackPhase(frames, pitched)
+    const release = this.analyzeReleasePhase(pitched, lastTime)
+
+    return {
+      attackTimeMs: attack.attackTimeMs,
+      pitchScoopCents: attack.pitchScoopCents,
+      releaseStability: release,
+    }
+  }
+
+  private createEmptyAttackRelease(): AttackReleaseMetrics {
+    const zeroMs = 0 as TimestampMs
+    const zeroCents = 0 as Cents
+
+    return {
+      attackTimeMs: zeroMs,
+      pitchScoopCents: zeroCents,
+      releaseStability: zeroCents,
+    }
   }
 
   private analyzeAttackPhase(
@@ -507,55 +545,83 @@ export class TechniqueAnalysisAgent {
   }
 
   private checkSlowVibrato(rateHz: number): Observation[] {
-    if (rateHz >= 4.5) {
+    const isSlow = rateHz < 4.5
+    if (!isSlow) {
       return []
     }
 
-    return [
-      {
-        type: 'vibrato',
-        severity: 1,
-        confidence: 0.8 as Ratio01,
-        message: 'Slow vibrato detected',
-        tip: 'Try to slightly increase the speed of your hand oscillation.',
-        evidence: { rate: rateHz },
-      },
-    ]
+    const observation = this.assembleSlowVibratoObservation(rateHz)
+    const result = [observation]
+
+    return result
+  }
+
+  private assembleSlowVibratoObservation(rateHz: number): Observation {
+    return {
+      type: 'vibrato',
+      severity: 1,
+      confidence: 0.8 as Ratio01,
+      message: 'Slow vibrato detected',
+      tip: 'Try to slightly increase the speed of your hand oscillation.',
+      evidence: { rate: rateHz },
+    }
   }
 
   private checkWideVibrato(widthCents: number): Observation[] {
-    if (widthCents <= 35) {
+    const isWide = widthCents > 35
+    if (!isWide) {
       return []
     }
 
-    return [
-      {
-        type: 'vibrato',
-        severity: 1,
-        confidence: 0.8 as Ratio01,
-        message: 'Wide vibrato detected',
-        tip: 'Focus on a narrower, more controlled oscillation.',
-        evidence: { width: widthCents },
-      },
-    ]
+    const observation = this.assembleWideVibratoObservation(widthCents)
+    const result = [observation]
+
+    return result
+  }
+
+  private assembleWideVibratoObservation(widthCents: number): Observation {
+    return {
+      type: 'vibrato',
+      severity: 1,
+      confidence: 0.8 as Ratio01,
+      message: 'Wide vibrato detected',
+      tip: 'Focus on a narrower, more controlled oscillation.',
+      evidence: { width: widthCents },
+    }
   }
 
   private analyzeInconsistentVibrato(vibrato: VibratoMetrics): Observation[] {
     const width = vibrato.widthCents ?? 0
     const reg = vibrato.regularity ?? 0
-    if (width > 10 && reg < 0.4) {
-      return [
-        {
-          type: 'vibrato',
-          severity: 2,
-          confidence: 0.7 as Ratio01,
-          message: 'Inconsistent vibrato',
-          tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
-          evidence: { regularity: reg },
-        },
-      ]
+    const isCandidate = this.isCandidateForInconsistency(width, reg)
+
+    if (!isCandidate) {
+      return []
     }
-    return []
+
+    const observation = this.assembleInconsistentVibratoObservation(reg)
+    const result = [observation]
+
+    return result
+  }
+
+  private isCandidateForInconsistency(width: number, reg: number): boolean {
+    const isWideEnough = width > 10
+    const isInconsistent = reg < 0.4
+    const result = isWideEnough && isInconsistent
+
+    return result
+  }
+
+  private assembleInconsistentVibratoObservation(reg: number): Observation {
+    return {
+      type: 'vibrato',
+      severity: 2,
+      confidence: 0.7 as Ratio01,
+      message: 'Inconsistent vibrato',
+      tip: 'Focus on a regular, relaxed movement of the wrist or arm.',
+      evidence: { regularity: reg },
+    }
   }
 
   private generateAttackObservations(technique: NoteTechnique): Observation[] {
@@ -601,20 +667,30 @@ export class TechniqueAnalysisAgent {
   }
 
   private analyzeAudibleGlissando(transition: TransitionMetrics): Observation[] {
-    if (transition.glissAmountCents <= 50 || transition.transitionTimeMs <= 120) return []
-    return [
-      {
-        type: 'transition',
-        severity: 2,
-        confidence: 0.8 as Ratio01,
-        message: 'Audible glissando',
-        tip: 'Move your hand more quickly between positions for a cleaner transition.',
-        evidence: {
-          gliss: transition.glissAmountCents,
-          time: transition.transitionTimeMs,
-        },
-      },
-    ]
+    const isGlissStrong = transition.glissAmountCents > 50
+    const isTransitionSlow = transition.transitionTimeMs > 120
+    const isSignificant = isGlissStrong && isTransitionSlow
+
+    if (!isSignificant) {
+      return []
+    }
+
+    const observation = this.assembleGlissandoObservation(transition)
+    return [observation]
+  }
+
+  private assembleGlissandoObservation(transition: TransitionMetrics): Observation {
+    const gliss = transition.glissAmountCents
+    const time = transition.transitionTimeMs
+
+    return {
+      type: 'transition',
+      severity: 2,
+      confidence: 0.8 as Ratio01,
+      message: 'Audible glissando',
+      tip: 'Move your hand more quickly between positions for a cleaner transition.',
+      evidence: { gliss, time },
+    }
   }
 
   private analyzeLandingError(landingErrorCents: Cents): Observation[] {
@@ -632,20 +708,29 @@ export class TechniqueAnalysisAgent {
   }
 
   private generateResonanceObservations(technique: NoteTechnique): Observation[] {
-    if (!technique.resonance.suspectedWolf) return []
-    return [
-      {
-        type: 'resonance',
-        severity: 3,
-        confidence: 0.6 as Ratio01,
-        message: 'Tone instability (Wolf-like resonance)',
-        tip: 'Adjust your bow pressure, speed, or contact point to stabilize the tone.',
-        evidence: {
-          beating: technique.resonance.rmsBeatingScore,
-          chaos: technique.resonance.pitchChaosScore,
-        },
-      },
-    ]
+    const suspectedWolf = technique.resonance.suspectedWolf
+    if (!suspectedWolf) {
+      return []
+    }
+
+    const observation = this.assembleResonanceObservation(technique.resonance)
+    const result = [observation]
+
+    return result
+  }
+
+  private assembleResonanceObservation(resonance: ResonanceMetrics): Observation {
+    const beating = resonance.rmsBeatingScore
+    const chaos = resonance.pitchChaosScore
+
+    return {
+      type: 'resonance',
+      severity: 3,
+      confidence: 0.6 as Ratio01,
+      message: 'Tone instability (Wolf-like resonance)',
+      tip: 'Adjust your bow pressure, speed, or contact point to stabilize the tone.',
+      evidence: { beating, chaos },
+    }
   }
 
   private generateRhythmObservations(technique: NoteTechnique): Observation[] {

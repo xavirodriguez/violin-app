@@ -89,32 +89,52 @@ export const G_MAJOR_SCALE_EXERCISE: LegacyExercise = {
  * Adapts a legacy exercise into the modern Exercise format.
  */
 export function adaptLegacyExercise(legacy: LegacyExercise): Exercise {
-  const MODERN_CLEF = 'G'
-  const MODERN_BEATS = 4
-  const MODERN_BEAT_TYPE = 4
+  const metadata = assembleModernMetadata()
+  const modernNotes = mapModernNotes(legacy.notes)
+  const result = assembleModernExercise({ legacy, metadata, notes: modernNotes })
 
-  const MODERN_METADATA = {
-    clef: MODERN_CLEF as 'G',
-    timeSignature: { beats: MODERN_BEATS, beatType: MODERN_BEAT_TYPE },
-    keySignature: 0,
+  return result
+}
+
+function assembleModernMetadata() {
+  const clef = 'G' as const
+  const beats = 4
+  const beatType = 4
+  const keySignature = 0
+
+  return {
+    clef,
+    timeSignature: { beats, beatType },
+    keySignature,
   }
+}
 
-  const modernNotes = legacy.notes.map((n) => ({
+function mapModernNotes(legacyNotes: LegacyNote[]) {
+  const modernNotes = legacyNotes.map((n) => ({
     pitch: parsePitch(n.pitch),
     duration: mapLegacyDuration(n.duration),
   }))
 
+  return modernNotes
+}
+
+function assembleModernExercise(params: {
+  legacy: LegacyExercise
+  metadata: any
+  notes: any
+}): Exercise {
+  const { legacy, metadata, notes } = params
   return {
     id: legacy.id,
     name: legacy.name,
     description: 'Legacy exercise',
     category: 'Scales',
     difficulty: 'Beginner',
-    scoreMetadata: MODERN_METADATA,
+    scoreMetadata: metadata,
     technicalGoals: [],
     estimatedDuration: '1 min',
     technicalTechnique: 'General',
-    notes: modernNotes,
+    notes: notes,
     musicXML: legacy.musicXML,
   }
 }

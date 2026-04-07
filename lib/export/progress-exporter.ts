@@ -7,6 +7,14 @@ import { PracticeSession } from '@/stores/analytics-store'
  * @returns A formatted CSV string with headers.
  */
 export function exportSessionsToCSV(sessions: PracticeSession[]): string {
+  const headers = generateCSVHeader()
+  const rows = formatSessionRows(sessions)
+  const result = [headers, ...rows].join('\n')
+
+  return result
+}
+
+function generateCSVHeader(): string {
   const headers = [
     'Date',
     'Exercise Name',
@@ -15,23 +23,33 @@ export function exportSessionsToCSV(sessions: PracticeSession[]): string {
     'Notes Completed',
     'Notes Attempted',
   ]
+  const result = headers.join(',')
 
+  return result
+}
+
+function formatSessionRows(sessions: PracticeSession[]): string[] {
   const rows = sessions.map((s) => {
-    const date = new Date(s.endTimeMs).toISOString().split('T')[0]
-    const durationMin = (s.durationMs / (60 * 1000)).toFixed(2)
-    const accuracy = s.accuracy.toFixed(1)
-
-    return [
-      date,
-      `"${s.exerciseName.replace(/"/g, '""')}"`,
-      durationMin,
-      accuracy,
-      s.notesCompleted,
-      s.notesAttempted,
-    ].join(',')
+    return formatSingleSessionRow(s)
   })
 
-  return [headers.join(','), ...rows].join('\n')
+  return rows
+}
+
+function formatSingleSessionRow(s: PracticeSession): string {
+  const date = new Date(s.endTimeMs).toISOString().split('T')[0]
+  const durationMin = (s.durationMs / (60 * 1000)).toFixed(2)
+  const accuracy = s.accuracy.toFixed(1)
+  const escapedName = `"${s.exerciseName.replace(/"/g, '""')}"`
+
+  return [
+    date,
+    escapedName,
+    durationMin,
+    accuracy,
+    s.notesCompleted,
+    s.notesAttempted,
+  ].join(',')
 }
 
 /**

@@ -82,21 +82,31 @@ export class FeatureFlagsManager {
    * Uses manual switch-case to ensure static inlining by Next.js compiler.
    */
   private getClientValue(flagName: string): string | undefined {
-    switch (flagName) {
-      case 'FEATURE_AUDIO_WEB_WORKER':
-        return process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER
-      case 'FEATURE_SOCIAL_PRACTICE_ROOMS':
-        return (
-          process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
-          process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS
-        )
-      case 'FEATURE_TELEMETRY_ACCURACY':
-        return (
-          process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY
-        )
-      default:
-        return process.env[flagName] ?? process.env[`NEXT_PUBLIC_${flagName}`]
+    const mapping = this.getFeatureMapping()
+    const mappedValue = mapping[flagName]
+    const result = mappedValue !== undefined ? mappedValue : this.lookupFlagValue(flagName)
+
+    return result
+  }
+
+  private getFeatureMapping(): Record<string, string | undefined> {
+    return {
+      FEATURE_AUDIO_WEB_WORKER:
+        process.env.FEATURE_AUDIO_WEB_WORKER ?? process.env.NEXT_PUBLIC_FEATURE_AUDIO_WEB_WORKER,
+      FEATURE_SOCIAL_PRACTICE_ROOMS:
+        process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
+        process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
+      FEATURE_TELEMETRY_ACCURACY:
+        process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY,
     }
+  }
+
+  private lookupFlagValue(flagName: string): string | undefined {
+    const direct = process.env[flagName]
+    const publicFlag = process.env[`NEXT_PUBLIC_${flagName}`]
+    const result = direct ?? publicFlag
+
+    return result
   }
 
   isEnabled(flagName: FeatureFlagName): boolean {

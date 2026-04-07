@@ -586,20 +586,28 @@ function getStartStateUpdates(params: {
 }
 
 function getResetStateForIndex(state: PracticeState, index: number): PracticeState {
-  const total = state.exercise.notes.length
-  const clamped = Math.max(0, Math.min(index, total - 1))
-  const history: DetectedNote[] = []
-  const listeningStatus: PracticeStatus = 'listening'
-
-  const result = {
-    ...state,
-    currentIndex: clamped,
-    status: listeningStatus,
-    holdDuration: 0,
-    detectionHistory: history,
-  }
+  const clamped = clampIndex(index, state.exercise.notes.length)
+  const result = assembleResetState(state, clamped)
 
   return result
+}
+
+function clampIndex(index: number, total: number): number {
+  const min = 0
+  const max = total - 1
+  const clamped = Math.max(min, Math.min(index, max))
+
+  return clamped
+}
+
+function assembleResetState(state: PracticeState, index: number): PracticeState {
+  return {
+    ...state,
+    currentIndex: index,
+    status: 'listening',
+    holdDuration: 0,
+    detectionHistory: [],
+  }
 }
 
 function getExerciseLoadUpdates(exercise: Exercise) {
@@ -640,19 +648,26 @@ function getStartFailureUpdates(currentState: PracticeStore, error: unknown): Pa
 }
 
 function getResetUpdates() {
-  const idleState: PracticeStoreState = {
+  const idleState = createIdleStoreState()
+  const result = assembleResetUpdates(idleState)
+
+  return result
+}
+
+function createIdleStoreState(): PracticeStoreState {
+  return {
     status: 'idle',
     exercise: undefined,
     error: undefined,
   }
+}
 
-  const result = {
+function assembleResetUpdates(idleState: PracticeStoreState) {
+  return {
     state: idleState,
     practiceState: undefined,
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
   }
-
-  return result
 }

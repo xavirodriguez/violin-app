@@ -181,38 +181,35 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      */
     updatePitch: (pitch: number, confidence: number) => {
       const { state } = get()
+      const isEligible = state.kind === 'LISTENING' || state.kind === 'DETECTED'
 
-      if (state.kind !== 'LISTENING' && state.kind !== 'DETECTED') {
-        return
-      }
+      if (!isEligible) return
 
       const token = state.sessionToken
       const hasSignal = confidence > 0.85 && pitch > 0
 
       if (hasSignal) {
-        try {
-          const note = MusicalNote.fromFrequency(pitch)
-          set({
-            state: {
-              kind: 'DETECTED',
-              pitch,
-              note: note.nameWithOctave,
-              cents: note.centsDeviation,
-              confidence,
-              sessionToken: token,
-            },
-          })
-        } catch (_err) {
-          logger.error({
-            msg: 'Failed to create MusicalNote from frequency',
-            err: _err,
-            context: { pitch },
-          })
-          // On error, revert to listening state without valid pitch
-          set({ state: { kind: 'LISTENING', sessionToken: token } })
-        }
+        get().handleDetectedPitch(pitch, confidence, token)
       } else {
-        // If signal is lost, transition back to LISTENING
+        set({ state: { kind: 'LISTENING', sessionToken: token } })
+      }
+    },
+
+    handleDetectedPitch: (pitch: number, confidence: number, token: number) => {
+      try {
+        const note = MusicalNote.fromFrequency(pitch)
+        set({
+          state: {
+            kind: 'DETECTED',
+            pitch,
+            note: note.nameWithOctave,
+            cents: note.centsDeviation,
+            confidence,
+            sessionToken: token,
+          },
+        })
+      } catch (err) {
+        logger.error({ msg: 'Pitch creation failed', err, context: { pitch } })
         set({ state: { kind: 'LISTENING', sessionToken: token } })
       }
     },
