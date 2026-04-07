@@ -152,19 +152,33 @@ interface NoteComponents {
 }
 
 function parseNoteName(fullName: NoteName): NoteComponents {
+  const match = executeNoteParsing(fullName)
+  const components = assembleNoteComponents(match)
+  const result = components
+
+  return result
+}
+
+function executeNoteParsing(fullName: NoteName): RegExpMatchArray {
   const match = (fullName as string).match(/^([A-G])(b{1,2}|#{1,2})?([0-8])$/)
   if (!match) {
+    const errorMsg = `Invalid note name format: "${fullName}" (octave must be 0-8)`
     throw new AppError({
-      message: `Invalid note name format: "${fullName}" (octave must be 0-8)`,
+      message: errorMsg,
       code: ERROR_CODES.NOTE_PARSING_FAILED,
     })
   }
+  return match
+}
 
+function assembleNoteComponents(match: RegExpMatchArray): NoteComponents {
   const [, step, accidental = '', octaveStr] = match
+  const octave = parseInt(octaveStr, 10)
+
   return {
     step,
     accidental,
-    octave: parseInt(octaveStr, 10),
+    octave,
   }
 }
 

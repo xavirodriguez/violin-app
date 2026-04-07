@@ -384,15 +384,32 @@ function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
     throw new Error('Cannot build achievement stats without active session')
   }
 
-  const totalCompleted = sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
-  const totalNotesCompleted = totalCompleted + currentSession.notesCompleted
+  const stats = assembleAchievementStats({
+    currentSession,
+    currentPerfectStreak,
+    sessions,
+    progress,
+  })
+
+  return stats
+}
+
+function assembleAchievementStats(params: {
+  currentSession: PracticeSession
+  currentPerfectStreak: number
+  sessions: PracticeSession[]
+  progress: UserProgress
+}): AchievementCheckStats {
+  const { currentSession, currentPerfectStreak, sessions, progress } = params
+  const currentDurationMs = Date.now() - currentSession.startTimeMs
+  const totalNotesCompleted = calculateTotalNotesCompleted(sessions, currentSession)
 
   return {
     currentSession: {
       correctNotes: currentSession.notesCompleted,
       perfectNoteStreak: currentPerfectStreak,
       accuracy: currentSession.accuracy,
-      durationMs: Date.now() - currentSession.startTimeMs,
+      durationMs: currentDurationMs,
       exerciseId: currentSession.exerciseId,
     },
     totalSessions: sessions.length,
@@ -404,6 +421,16 @@ function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
     averageAccuracy: progress.overallSkill,
     totalNotesCompleted,
   }
+}
+
+function calculateTotalNotesCompleted(
+  sessions: PracticeSession[],
+  current: PracticeSession,
+): number {
+  const pastCompleted = sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
+  const total = pastCompleted + current.notesCompleted
+
+  return total
 }
 
 function processNewAchievements(
@@ -474,21 +501,36 @@ function updateExerciseStats(
  * - Last session was older than yesterday: resets streak to 1.
  */
 function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
-  const today = startOfDayMs(Date.now())
   const lastSession = sessions[1]
-  const lastSessionDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
-  const yesterday = today - DAY_MS
+  const lastDay = lastSession ? startOfDayMs(lastSession.endTimeMs) : 0
+  const streakInfo = calculateStreakUpdates(lastDay)
 
-  const shouldReset = !lastSession || lastSessionDay < yesterday
-  const shouldIncrement = lastSessionDay === yesterday
+  applyStreakUpdate(progress, streakInfo)
+  updateLongestStreak(progress)
+}
 
-  if (shouldReset) {
+function applyStreakUpdate(progress: UserProgress, info: { shouldReset: boolean; shouldIncrement: boolean }) {
+  if (info.shouldReset) {
     progress.currentStreak = 1
-  } else if (shouldIncrement) {
+  } else if (info.shouldIncrement) {
     progress.currentStreak += 1
   }
+}
 
-  progress.longestStreak = Math.max(progress.longestStreak, progress.currentStreak)
+function updateLongestStreak(progress: UserProgress) {
+  const current = progress.currentStreak
+  const longest = progress.longestStreak
+  progress.longestStreak = Math.max(longest, current)
+}
+
+function calculateStreakUpdates(lastDay: number) {
+  const today = startOfDayMs(Date.now())
+  const yesterday = today - DAY_MS
+
+  const shouldReset = lastDay === 0 || lastDay < yesterday
+  const shouldIncrement = lastDay === yesterday
+
+  return { shouldReset, shouldIncrement }
 }
 
 function calculateSkills(progress: UserProgress, sessions: PracticeSession[]) {
@@ -569,18 +611,38 @@ function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   let totalCount = 0
 
   for (const session of sessions) {
-    for (const nr of session.noteResults) {
-      const onsetError = nr.technique?.rhythm.onsetErrorMs
-      if (onsetError !== undefined) {
-        const error = Math.abs(onsetError)
-        totalError += error
-        if (error <= 40) inWindowCount++
-        totalCount++
-      }
-    }
+    const sessionMetrics = processSessionRhythm(session)
+    totalError += sessionMetrics.error
+    inWindowCount += sessionMetrics.inWindow
+    totalCount += sessionMetrics.count
   }
 
   return { totalError, inWindowCount, totalCount }
+}
+
+function processSessionRhythm(session: PracticeSession) {
+  const initial = { error: 0, inWindow: 0, count: 0 }
+  const results = session.noteResults
+
+  const finalMetrics = results.reduce((metrics, nr) => {
+    return updateRhythmMetricsFromNote(metrics, nr)
+  }, initial)
+
+  return finalMetrics
+}
+
+function updateRhythmMetricsFromNote(metrics: any, nr: NoteResult) {
+  const onsetError = nr.technique?.rhythm.onsetErrorMs
+  if (onsetError === undefined) return metrics
+
+  const absError = Math.abs(onsetError)
+  const isInside = absError <= 40
+
+  return {
+    error: metrics.error + absError,
+    inWindow: metrics.inWindow + (isInside ? 1 : 0),
+    count: metrics.count + 1,
+  }
 }
 
 function calculateRhythmScore(metrics: RhythmMetrics): number {
@@ -603,29 +665,52 @@ function calculateRhythmScore(metrics: RhythmMetrics): number {
 function checkStorageCapacity(): void {
   try {
     const usage = estimateLocalStorageUsagePercent()
-    if (usage >= 95) {
-      toast.error(
-        'Your practice history is almost full. Consider exporting your data and cleaning old sessions.',
-        { duration: 10_000 },
-      )
-    } else if (usage >= 80) {
-      toast.warning('Your practice history is almost full. Consider exporting your data.', {
-        duration: 8_000,
-      })
-    }
+    notifyStorageThresholds(usage)
   } catch {
     // localStorage may not be available in some environments
   }
 }
 
+function notifyStorageThresholds(usage: number): void {
+  const isCritical = usage >= 95
+  const isHigh = usage >= 80
+
+  if (isCritical) {
+    showCriticalStorageError()
+  } else if (isHigh) {
+    showHighStorageWarning()
+  }
+}
+
+function showCriticalStorageError() {
+  const msg = 'Your practice history is almost full. Export data and clean sessions.'
+  toast.error(msg, { duration: 10_000 })
+}
+
+function showHighStorageWarning() {
+  const msg = 'Your practice history is almost full. Consider exporting your data.'
+  toast.warning(msg, { duration: 8_000 })
+}
+
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
   const persistedData = persisted as Record<string, unknown>
-  if (version < 3) {
+  const isOldVersion = version < 3
+  if (isOldVersion) {
     migrateV1V2(persistedData)
   }
 
   const sessions = migrateSessions(persistedData.sessions)
   const progressData = (persistedData.progress as Record<string, unknown>) || {}
+  const result = assembleMigratedData(persistedData, sessions, progressData)
+
+  return result
+}
+
+function assembleMigratedData(
+  persistedData: Record<string, unknown>,
+  sessions: PracticeSession[],
+  progressData: Record<string, unknown>,
+): AnalyticsStore {
   const achievements = migrateAchievements(progressData.achievements)
   const exerciseStats = migrateExerciseStats(progressData.exerciseStats)
 

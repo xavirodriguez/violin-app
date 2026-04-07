@@ -119,13 +119,19 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const onAbort = () => this.cancel()
     externalSignal.addEventListener('abort', onAbort)
 
+    return this.executeSession(controller.signal, externalSignal, onAbort)
+  }
+
+  private async executeSession(
+    internalSignal: AbortSignal,
+    externalSignal: AbortSignal,
+    onAbort: () => void,
+  ): Promise<SessionResult> {
     try {
-      await this.executeLoop(controller.signal)
-      const result = this.determineResult(externalSignal)
-      return result
+      await this.executeLoop(internalSignal)
+      return this.determineResult(externalSignal)
     } catch (error) {
-      const errorResult = this.handleRunError(error)
-      return errorResult
+      return this.handleRunError(error)
     } finally {
       externalSignal.removeEventListener('abort', onAbort)
     }
@@ -166,20 +172,25 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private async executeLoop(signal: AbortSignal): Promise<void> {
+    const engine = this.initializeEngine()
+    const events = engine.start(signal)
+
+    for await (const event of events) {
+      const isTerminated = signal.aborted
+      if (isTerminated) break
+      this.processEngineEvent(event, signal)
+    }
+  }
+
+  private initializeEngine() {
     const context = this.environment
-    const engine = createPracticeEngine({
+    return createPracticeEngine({
       audio: context.audioLoop,
       pitch: context.detector,
       exercise: context.exercise,
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
     })
-
-    for await (const event of engine.start(signal)) {
-      const isTerminated = signal.aborted
-      if (isTerminated) break
-      this.processEngineEvent(event, signal)
-    }
   }
 
   private processEngineEvent(event: PracticeEngineEvent, signal: AbortSignal): void {
