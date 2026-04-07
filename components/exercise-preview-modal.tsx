@@ -48,7 +48,7 @@ export function ExercisePreviewModal({
         const noteName = formatPitchName(note.pitch)
         const musicalNote = MusicalNote.fromName(noteName)
         const freq = musicalNote.frequency
-        const bpm = 120
+        const bpm = exercise.tempoRange?.min ?? 120
         const durationSeconds = (4 / note.duration) * (60 / bpm)
 
         const osc = audioContext.createOscillator()
