@@ -605,6 +605,12 @@ interface RhythmMetrics {
   totalCount: number
 }
 
+interface InternalRhythmAccumulator {
+  error: number
+  inWindow: number
+  count: number
+}
+
 function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   let totalError = 0
   let inWindowCount = 0
@@ -620,8 +626,8 @@ function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   return { totalError, inWindowCount, totalCount }
 }
 
-function processSessionRhythm(session: PracticeSession) {
-  const initial = { error: 0, inWindow: 0, count: 0 }
+function processSessionRhythm(session: PracticeSession): InternalRhythmAccumulator {
+  const initial: InternalRhythmAccumulator = { error: 0, inWindow: 0, count: 0 }
   const results = session.noteResults
 
   const finalMetrics = results.reduce((metrics, nr) => {
@@ -631,7 +637,10 @@ function processSessionRhythm(session: PracticeSession) {
   return finalMetrics
 }
 
-function updateRhythmMetricsFromNote(metrics: any, nr: NoteResult) {
+function updateRhythmMetricsFromNote(
+  metrics: InternalRhythmAccumulator,
+  nr: NoteResult,
+): InternalRhythmAccumulator {
   const onsetError = nr.technique?.rhythm.onsetErrorMs
   if (onsetError === undefined) return metrics
 

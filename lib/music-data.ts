@@ -6,7 +6,7 @@
  * Use the new exercise system in `lib/exercises/` for new features.
  */
 
-import type { Exercise, NoteDuration } from './exercises/types'
+import type { Exercise, NoteDuration, Note, ScoreMetadata } from './exercises/types'
 import { parsePitch } from './exercises/utils'
 
 /**
@@ -96,7 +96,7 @@ export function adaptLegacyExercise(legacy: LegacyExercise): Exercise {
   return result
 }
 
-function assembleModernMetadata() {
+function assembleModernMetadata(): ScoreMetadata {
   const clef = 'G' as const
   const beats = 4
   const beatType = 4
@@ -109,7 +109,7 @@ function assembleModernMetadata() {
   }
 }
 
-function mapModernNotes(legacyNotes: LegacyNote[]) {
+function mapModernNotes(legacyNotes: LegacyNote[]): Note[] {
   const modernNotes = legacyNotes.map((n) => ({
     pitch: parsePitch(n.pitch),
     duration: mapLegacyDuration(n.duration),
@@ -118,11 +118,13 @@ function mapModernNotes(legacyNotes: LegacyNote[]) {
   return modernNotes
 }
 
-function assembleModernExercise(params: {
+interface ModernExerciseParams {
   legacy: LegacyExercise
-  metadata: any
-  notes: any
-}): Exercise {
+  metadata: ScoreMetadata
+  notes: Note[]
+}
+
+function assembleModernExercise(params: ModernExerciseParams): Exercise {
   const { legacy, metadata, notes } = params
   return {
     id: legacy.id,

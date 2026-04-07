@@ -39,8 +39,7 @@ export function ExercisePreviewModal({
     if (!exercise || isPlaying) return
 
     setIsPlaying(true)
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-    const audioContext = new AudioContextClass()
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
 
     try {
       let currentTime = audioContext.currentTime
@@ -49,9 +48,7 @@ export function ExercisePreviewModal({
         const noteName = formatPitchName(note.pitch)
         const musicalNote = MusicalNote.fromName(noteName)
         const freq = musicalNote.frequency
-
-        // Use exercise tempo if available, default to 120 BPM
-        const bpm = (exercise as any).tempoRange?.min ?? 120
+        const bpm = 120
         const durationSeconds = (4 / note.duration) * (60 / bpm)
 
         const osc = audioContext.createOscillator()
@@ -164,7 +161,7 @@ export function ExercisePreviewModal({
     </Dialog>
   )
 }
-function CheckIcon(props: any) {
+function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
