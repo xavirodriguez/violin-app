@@ -14,8 +14,8 @@ import { useAnalyticsStore } from '@/stores/analytics-store'
 import { cn } from '@/lib/utils'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { allExercises } from '@/lib/exercises'
-import { formatPitchName } from '@/lib/practice-core'
-import type { Exercise } from '@/lib/domain/musical-types'
+import { formatPitchName, PracticeState } from '@/lib/practice-core'
+import type { Exercise, Note } from '@/lib/domain/musical-types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Maximize2, Minimize2 } from 'lucide-react'
@@ -32,13 +32,6 @@ import { PracticeControls } from './practice/practice-controls'
 import { PracticeActiveView } from './practice/practice-active-view'
 import { SheetMusicView } from './practice/sheet-music-view'
 import { PracticeSettings } from './practice/practice-settings'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 
 /**
  * Main component for the Interactive Practice Mode.
@@ -63,8 +56,8 @@ export function PracticeMode() {
   } = usePracticeStore()
 
   const { sessions } = useAnalyticsStore()
-  const { status, currentNoteIndex, targetNote, totalNotes, progress } =
-    derivePracticeState(practiceState)
+  const derived = derivePracticeState(practiceState)
+  const { status, currentNoteIndex, targetNote, totalNotes, progress } = derived
 
   const { intonationSkill } = useProgressStore()
   const centsTolerance = Math.round(35 - (intonationSkill / 100) * 25)
@@ -100,9 +93,7 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
-        {state.status === 'initializing' && (
-          <Card className="p-12 text-center">Initializing Audio...</Card>
-        )}
+        {state.status === 'initializing' && <Card className="p-12 text-center">Initializing Audio...</Card>}
 
         {!isZenModeEnabled && (state.status !== 'idle' || state.exercise) && (
           <PracticeControls
@@ -119,12 +110,7 @@ export function PracticeMode() {
 
         {state.status === 'idle' && (
           <div className="space-y-6">
-            {!isZenModeEnabled && (
-              <PracticeSettings
-                autoStartEnabled={autoStartEnabled}
-                onAutoStartChange={setAutoStart}
-              />
-            )}
+            {!isZenModeEnabled && <PracticeSettings autoStartEnabled={autoStartEnabled} onAutoStartChange={setAutoStart} />}
             <ExerciseLibrary
               selectedId={practiceState?.exercise.id}
               onSelect={(exercise) => setPreviewExercise(exercise)}
@@ -146,18 +132,7 @@ export function PracticeMode() {
           }}
         />
 
-        {status === 'idle' && (
-          <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
-            <div className="bg-primary/10 mb-4 rounded-full p-4">
-              <Maximize2 className="text-primary h-8 w-8" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold">Select an exercise to begin</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Choose from the library below to start your guided practice session with real-time
-              feedback.
-            </p>
-          </Card>
-        )}
+        {status === 'idle' && <SelectionPrompt />}
 
         <SheetMusicContainer
           status={status}
@@ -183,11 +158,7 @@ export function PracticeMode() {
         {status === 'completed' && (
           <PracticeCompletion
             onRestart={handleRestart}
-            sessionData={
-              sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id
-                ? sessions[0]
-                : undefined
-            }
+            sessionData={sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined}
           />
         )}
 
@@ -209,19 +180,30 @@ export function PracticeMode() {
   )
 }
 
+function SelectionPrompt() {
+  return (
+    <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
+      <div className="bg-primary/10 mb-4 rounded-full p-4">
+        <Maximize2 className="text-primary h-8 w-8" />
+      </div>
+      <h3 className="mb-2 text-xl font-semibold">Select an exercise to begin</h3>
+      <p className="text-muted-foreground max-w-sm">
+        Choose from the library below to start your guided practice session with real-time feedback.
+      </p>
+    </Card>
+  )
+}
+
 /**
  * Derives calculated UI state from the raw practice domain state.
  */
-function derivePracticeState(
-  practiceState: import('@/lib/practice-core').PracticeState | undefined,
-) {
+function derivePracticeState(practiceState: PracticeState | undefined) {
   const status = practiceState?.status ?? 'idle'
   const currentNoteIndex = practiceState?.currentIndex ?? 0
   const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? undefined
   const totalNotes = practiceState?.exercise.notes.length ?? 0
   const isCompleted = status === 'completed'
-  const progress =
-    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+  const progress = totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
 
   return { status, currentNoteIndex, targetNote, totalNotes, progress }
 }
@@ -233,38 +215,18 @@ function SheetMusicContainer(params: {
   status: string
   sheetMusicView: 'focused' | 'full'
   setSheetMusicView: (v: 'focused' | 'full') => void
-  practiceState: import('@/lib/practice-core').PracticeState | undefined
+  practiceState: PracticeState | undefined
   osmdHook: ReturnType<typeof useOSMDSafe>
   currentNoteIndex: number
 }) {
-  const { status, sheetMusicView, setSheetMusicView, practiceState, osmdHook, currentNoteIndex } =
-    params
+  const { status, sheetMusicView, setSheetMusicView, practiceState, osmdHook, currentNoteIndex } = params
   return (
     <div className="relative">
       {status !== 'idle' && (
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setSheetMusicView(sheetMusicView === 'focused' ? 'full' : 'focused')}
-            className="bg-background/80 shadow-sm backdrop-blur-sm"
-          >
-            {sheetMusicView === 'focused' ? (
-              <Maximize2 className="mr-2 h-4 w-4" />
-            ) : (
-              <Minimize2 className="mr-2 h-4 w-4" />
-            )}
-            {sheetMusicView === 'focused' ? 'Full View' : 'Focused View'}
-          </Button>
-        </div>
+        <ViewToggleButton view={sheetMusicView} onToggle={() => setSheetMusicView(sheetMusicView === 'focused' ? 'full' : 'focused')} />
       )}
 
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-500',
-          sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]',
-        )}
-      >
+      <div className={cn('overflow-hidden transition-all duration-500', sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]')}>
         <SheetMusicView
           musicXML={practiceState?.exercise.musicXML}
           isReady={osmdHook.isReady}
@@ -273,13 +235,7 @@ function SheetMusicContainer(params: {
         />
         {practiceState && (
           <SheetMusicAnnotations
-            annotations={practiceState.exercise.notes.reduce(
-              (acc, note, idx) => {
-                if (note.annotations) acc[idx] = note.annotations
-                return acc
-              },
-              {} as Record<number, any>,
-            )}
+            annotations={mapAnnotations(practiceState.exercise.notes)}
             currentNoteIndex={currentNoteIndex}
             osmd={osmdHook.osmd || undefined}
             containerRef={osmdHook.containerRef}
@@ -287,5 +243,28 @@ function SheetMusicContainer(params: {
         )}
       </div>
     </div>
+  )
+}
+
+function ViewToggleButton({ view, onToggle }: { view: 'focused' | 'full'; onToggle: () => void }) {
+  return (
+    <div className="absolute top-4 right-4 z-10 flex gap-2">
+      <Button variant="secondary" size="sm" onClick={onToggle} className="bg-background/80 shadow-sm backdrop-blur-sm">
+        {view === 'focused' ? <Maximize2 className="mr-2 h-4 w-4" /> : <Minimize2 className="mr-2 h-4 w-4" />}
+        {view === 'focused' ? 'Full View' : 'Focused View'}
+      </Button>
+    </div>
+  )
+}
+
+function mapAnnotations(notes: Note[]): Record<number, NonNullable<Note['annotations']>> {
+  return notes.reduce(
+    (acc, note, idx) => {
+      if (note.annotations) {
+        acc[idx] = note.annotations
+      }
+      return acc
+    },
+    {} as Record<number, NonNullable<Note['annotations']>>,
   )
 }

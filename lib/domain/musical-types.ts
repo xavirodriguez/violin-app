@@ -157,6 +157,13 @@ export interface ExerciseData {
   technicalTechnique: string
   /** Whether this exercise is highlighted as a recommendation in the UI. */
   recommended?: boolean
+  /** Optional tempo range for the exercise. */
+  tempoRange?: {
+    /** Minimum tempo in BPM. */
+    min: number
+    /** Maximum tempo in BPM. */
+    max: number
+  }
 }
 
 /**
