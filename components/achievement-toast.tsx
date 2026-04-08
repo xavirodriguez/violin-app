@@ -134,7 +134,7 @@ export function AchievementToast({
  */
 export function AchievementNotificationManager() {
   const [queue, setQueue] = useState<Achievement[]>([])
-  const [current, setCurrent] = useState<Achievement | null>(null)
+  const [current, setCurrent] = useState<Achievement | undefined>(undefined)
 
   // Conectar con analytics store
   useEffect(() => {
@@ -159,7 +159,7 @@ export function AchievementNotificationManager() {
     }
   }, [current, queue])
 
-  if (!current) return null
+  if (!current) return <></>
 
-  return <AchievementToast achievement={current} onDismiss={() => setCurrent(null)} />
+  return <AchievementToast achievement={current} onDismiss={() => setCurrent(undefined)} />
 }

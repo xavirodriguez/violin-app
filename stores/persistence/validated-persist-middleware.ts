@@ -12,7 +12,7 @@ import {
  */
 const createCompressedStorage = (_name: string) => {
   return createJSONStorage(() => ({
-    getItem: (key): any => {
+    getItem: (key): unknown => {
       const val = localStorage.getItem(key)
       if (!val) return undefined
       try {
@@ -22,7 +22,7 @@ const createCompressedStorage = (_name: string) => {
         return undefined
       }
     },
-    setItem: (key, value) => {
+    setItem: (key, value: unknown) => {
       try {
         const base64 = serializeAndCompress(value)
         localStorage.setItem(key, base64)
@@ -43,9 +43,9 @@ const createCompressedStorage = (_name: string) => {
  */
 export const validatedPersist = <T>(
   schema: z.ZodType<T>,
-  config: StateCreator<T, any, any>,
-  options: PersistOptions<T, any>,
-): StateCreator<T, any, any> => {
+  config: StateCreator<T, [], []>,
+  options: PersistOptions<T, unknown>,
+): StateCreator<T, [], []> => {
   return persist(
     (set, get, api) => {
       return config(set, get, api)
@@ -60,5 +60,5 @@ export const validatedPersist = <T>(
         })
       },
     },
-  ) as any
+  ) as StateCreator<T, [], []>
 }

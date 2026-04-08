@@ -1,14 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
 import { List, Filter } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ExerciseCard } from '@/components/exercise-card'
-import { allExercises } from '@/lib/exercises'
-import { useAnalyticsStore } from '@/stores/analytics-store'
-import { getRecommendedExercise } from '@/lib/exercise-recommender'
-import { filterExercises } from '@/lib/exercises/utils'
+import { useExerciseLibrary } from '@/hooks/use-exercise-library'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { ExerciseStats } from '@/stores/progress.store'
 
@@ -23,41 +19,22 @@ interface ExerciseLibraryProps {
  */
 export function ExerciseLibrary(props: ExerciseLibraryProps) {
   const { selectedId, onSelect } = props
-  const [activeTab, setActiveTab] = useState('all')
-  const [difficultyFilter, setDifficultyFilter] = useState('all')
-  const { progress, sessions } = useAnalyticsStore()
-
-  const filtered = useMemo(() => {
-    return filterExercises({
-      exercises: allExercises,
-      filter: { activeTab, difficulty: difficultyFilter },
-      stats: progress.exerciseStats,
-    })
-  }, [activeTab, difficultyFilter, progress.exerciseStats])
-
-  const recommended = useMemo(() => {
-    return getRecommendedExercise({
-      exercises: filtered,
-      userProgress: progress,
-      lastPlayedId: sessions[0]?.exerciseId,
-      difficultyFilter,
-    })
-  }, [filtered, progress, sessions, difficultyFilter])
+  const library = useExerciseLibrary()
 
   return (
     <div className="space-y-6">
       <LibraryHeader
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        difficulty={difficultyFilter}
-        onDifficultyChange={setDifficultyFilter}
+        activeTab={library.activeTab}
+        onTabChange={library.setActiveTab}
+        difficulty={library.difficultyFilter}
+        onDifficultyChange={library.setDifficultyFilter}
       />
       <ExerciseGrid
-        exercises={filtered}
+        exercises={library.filtered}
         selectedId={selectedId}
-        recommendedId={recommended?.id}
+        recommendedId={library.recommended?.id}
         onSelect={onSelect}
-        stats={progress.exerciseStats}
+        stats={library.exerciseStats}
       />
     </div>
   )

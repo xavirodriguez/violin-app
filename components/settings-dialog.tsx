@@ -8,6 +8,7 @@
 import { FC, useEffect } from 'react'
 import { useTunerStore } from '@/stores/tuner-store'
 import { usePreferencesStore } from '@/stores/preferences-store'
+import { FeedbackLevel } from '@/lib/user-preferences'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -122,7 +123,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
               <Label htmlFor="feedback-level" className="text-right">
                 Level
               </Label>
-              <Select value={feedbackLevel} onValueChange={(v) => setFeedbackLevel(v as any)}>
+              <Select value={feedbackLevel} onValueChange={(v) => setFeedbackLevel(v as FeedbackLevel)}>
                 <SelectTrigger id="feedback-level" className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
