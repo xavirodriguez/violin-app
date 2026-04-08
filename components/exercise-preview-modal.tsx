@@ -39,7 +39,8 @@ export function ExercisePreviewModal({
     if (!exercise || isPlaying) return
 
     setIsPlaying(true)
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    const audioContext = new AudioContextClass()
 
     try {
       let currentTime = audioContext.currentTime

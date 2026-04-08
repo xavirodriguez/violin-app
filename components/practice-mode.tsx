@@ -31,6 +31,7 @@ export function PracticeMode() {
   const osmd = useOSMDSafe(store.practiceState?.exercise.musicXML ?? '')
   const derived = derivePracticeState(store.practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
+  const lastDetectedNote = derived.lastDetectedNote ?? undefined
 
   usePracticeLifecycle({ ...store, derived, setIsZen, osmdHook: osmd })
 
@@ -47,7 +48,7 @@ export function PracticeMode() {
           state={store.state} practiceState={store.practiceState} status={derived.status} isZenModeEnabled={isZen}
           autoStartEnabled={store.autoStartEnabled} setAutoStart={store.setAutoStart} setPreviewExercise={setPreview}
           currentNoteIndex={derived.currentNoteIndex} targetNote={derived.targetNote} targetPitchName={derived.targetPitchName}
-          lastDetectedNote={derived.lastDetectedNote} liveObservations={store.liveObservations} centsTolerance={cents}
+          lastDetectedNote={lastDetectedNote} liveObservations={store.liveObservations} centsTolerance={cents}
           sheetMusicView={view} setSheetMusicView={setView} osmdHook={osmd}
           handleRestart={() => store.practiceState && store.loadExercise(store.practiceState.exercise)}
           sessions={sessions} start={store.start} stop={store.stop} setIsZenModeEnabled={setIsZen}
