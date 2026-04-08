@@ -119,14 +119,16 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const onAbort = () => this.cancel()
     externalSignal.addEventListener('abort', onAbort)
 
-    return this.executeSession(controller.signal, externalSignal, onAbort)
+    const executionParams = { internalSignal: controller.signal, externalSignal, onAbort }
+    return this.executeSession(executionParams)
   }
 
-  private async executeSession(
-    internalSignal: AbortSignal,
-    externalSignal: AbortSignal,
-    onAbort: () => void,
-  ): Promise<SessionResult> {
+  private async executeSession(params: {
+    internalSignal: AbortSignal
+    externalSignal: AbortSignal
+    onAbort: () => void
+  }): Promise<SessionResult> {
+    const { internalSignal, externalSignal, onAbort } = params
     try {
       await this.executeLoop(internalSignal)
       return this.determineResult(externalSignal)
