@@ -21,37 +21,73 @@ import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practi
 import { useState } from 'react'
 import { Exercise } from '@/lib/exercises/types'
 
+/**
+ * Custom hook to manage the local UI state for the practice view.
+ */
+export function usePracticeViewState() {
+  const [preview, setPreview] = useState<Exercise | undefined>(undefined)
+  const [view, setView] = useState<'focused' | 'full'>('focused')
+  const [isZen, setIsZen] = useState(false)
+
+  const state = { preview, view, isZen }
+  const actions = { setPreview, setView, setIsZen }
+
+  return { state, actions }
+}
+
 export function PracticeMode() {
   const store = usePracticeStore()
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
-  const [preview, setPreview] = useState<Exercise | undefined>(undefined)
-  const [view, setView] = useState<'focused' | 'full'>('focused')
-  const [isZen, setIsZen] = useState(false)
+  const { state: viewState, actions: viewActions } = usePracticeViewState()
+
   const osmd = useOSMDSafe(store.practiceState?.exercise.musicXML ?? '')
   const derived = derivePracticeState(store.practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
-  const lastDetectedNote = derived.lastDetectedNote ?? undefined
 
-  usePracticeLifecycle({ ...store, derived, setIsZen, osmdHook: osmd })
+  usePracticeLifecycle({ ...store, derived, setIsZen: viewActions.setIsZen, osmdHook: osmd })
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader store={store} />
-        <PracticeControlsRow store={store} derived={derived} isZen={isZen} />
+        <PracticeControlsRow store={store} derived={derived} isZen={viewState.isZen} />
         <ExercisePreviewModal
-          exercise={preview} isOpen={!!preview} onOpenChange={(open) => !open && setPreview(undefined)}
-          onStart={() => { if (preview) { store.loadExercise(preview); setPreview(undefined); store.start(); } }}
+          exercise={viewState.preview}
+          isOpen={!!viewState.preview}
+          onOpenChange={(open) => !open && viewActions.setPreview(undefined)}
+          onStart={() => {
+            if (viewState.preview) {
+              store.loadExercise(viewState.preview)
+              viewActions.setPreview(undefined)
+              store.start()
+            }
+          }}
         />
         <PracticeMainContent
-          state={store.state} practiceState={store.practiceState} status={derived.status} isZenModeEnabled={isZen}
-          autoStartEnabled={store.autoStartEnabled} setAutoStart={store.setAutoStart} setPreviewExercise={setPreview}
-          currentNoteIndex={derived.currentNoteIndex} targetNote={derived.targetNote} targetPitchName={derived.targetPitchName}
-          lastDetectedNote={lastDetectedNote} liveObservations={store.liveObservations} centsTolerance={cents}
-          sheetMusicView={view} setSheetMusicView={setView} osmdHook={osmd}
-          handleRestart={() => store.practiceState && store.loadExercise(store.practiceState.exercise)}
-          sessions={sessions} start={store.start} stop={store.stop} setIsZenModeEnabled={setIsZen}
+          state={store.state}
+          practiceState={store.practiceState}
+          status={derived.status}
+          isZenModeEnabled={viewState.isZen}
+          autoStartEnabled={store.autoStartEnabled}
+          setAutoStart={store.setAutoStart}
+          setPreviewExercise={viewActions.setPreview}
+          currentNoteIndex={derived.currentNoteIndex}
+          targetNote={derived.targetNote}
+          targetPitchName={derived.targetPitchName}
+          lastDetectedNote={derived.lastDetectedNote ?? undefined}
+          liveObservations={store.liveObservations}
+          centsTolerance={cents}
+          sheetMusicView={viewState.view}
+          setSheetMusicView={viewActions.setView}
+          osmdHook={osmd}
+          handleRestart={() =>
+            store.practiceState && store.loadExercise(store.practiceState.exercise)
+          }
+          sessions={sessions}
+          start={store.start}
+          stop={store.stop}
+          setIsZenModeEnabled={viewActions.setIsZen}
         />
         <KeyboardShortcutsDialog />
       </div>
@@ -61,22 +97,50 @@ export function PracticeMode() {
 
 function PracticeStatusHeader({ store }: { store: PracticeStore }) {
   const { state, reset } = store
-  if (state.status === 'error') return <ErrorDisplay error={state.error.message} onReset={reset} />
-  if (state.status === 'initializing') return <Card className="p-12 text-center">Initializing Audio...</Card>
+  const isError = state.status === 'error'
+  const isInitializing = state.status === 'initializing'
+
+  if (isError) {
+    return <ErrorDisplay error={state.error?.message ?? 'Unknown error'} onReset={reset} />
+  }
+
+  if (isInitializing) {
+    return <Card className="p-12 text-center">Initializing Audio...</Card>
+  }
+
   return <></>
 }
 
-function PracticeControlsRow({ store, derived, isZen }: { store: PracticeStore, derived: DerivedPracticeState, isZen: boolean }) {
+function PracticeControlsRow({
+  store,
+  derived,
+  isZen,
+}: {
+  store: PracticeStore
+  derived: DerivedPracticeState
+  isZen: boolean
+}) {
   const { state, start, stop, loadExercise } = store
   const { status, progress, currentNoteIndex, totalNotes } = derived
-  const show = !isZen && (state.status !== 'idle' || state.exercise)
-  if (!show) return <></>
+
+  const isIdle = state.status === 'idle'
+  const hasExercise = !!state.exercise
+  const shouldShow = !isZen && (!isIdle || hasExercise)
+
+  if (!shouldShow) return <></>
+
   const handleRestart = () => store.practiceState && loadExercise(store.practiceState.exercise)
 
   return (
     <PracticeControls
-      status={status} hasExercise={!!store.practiceState} onStart={start} onStop={stop}
-      onRestart={handleRestart} progress={progress} currentNoteIndex={currentNoteIndex} totalNotes={totalNotes}
+      status={status}
+      hasExercise={!!store.practiceState}
+      onStart={start}
+      onStop={stop}
+      onRestart={handleRestart}
+      progress={progress}
+      currentNoteIndex={currentNoteIndex}
+      totalNotes={totalNotes}
     />
   )
 }

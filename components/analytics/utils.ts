@@ -1,4 +1,4 @@
-import { PracticeSession } from '@/stores/analytics-store'
+import { PracticeSession, NoteResult } from '@/stores/analytics-store'
 
 export function formatTime(seconds: number): string {
   const totalSeconds = seconds
@@ -78,14 +78,24 @@ export function calculateTotalMinutes(sessions: PracticeSession[]): number {
 }
 
 export function getHeatmapData(lastSession: PracticeSession | undefined) {
-  const results = lastSession?.noteResults ?? []
-  const mapper = (r: any) => ({
-    noteIndex: r.noteIndex,
-    targetPitch: r.targetPitch,
-    accuracy: r.wasInTune ? 100 : Math.max(0, 100 - Math.abs(r.averageCents)),
-    cents: r.averageCents,
-  })
+  const hasSession = !!lastSession
+  const sessionResults = hasSession ? lastSession.noteResults : []
+  const heatmapItems = sessionResults.map(mapNoteResultToHeatmapItem)
+  const result = heatmapItems
 
-  const heatmapData = results.map(mapper)
-  return heatmapData
+  return result
+}
+
+function mapNoteResultToHeatmapItem(result: NoteResult) {
+  const { noteIndex, targetPitch, wasInTune, averageCents } = result
+  const baseAccuracy = 100
+  const centsPenalty = Math.abs(averageCents)
+  const accuracy = wasInTune ? baseAccuracy : Math.max(0, baseAccuracy - centsPenalty)
+
+  return {
+    noteIndex,
+    targetPitch,
+    accuracy,
+    cents: averageCents,
+  }
 }
