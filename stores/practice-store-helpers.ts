@@ -57,8 +57,15 @@ export function updatePracticeState(
   currentState: PracticeState | undefined,
   event: PracticeEvent,
 ): PracticeState | undefined {
-  if (!currentState) return undefined
-  return reducePracticeEvent(currentState, event)
+  const isStateMissing = !currentState
+  if (isStateMissing) {
+    return undefined
+  }
+
+  const transitionedState = reducePracticeEvent(currentState, event)
+  const domainUpdate = transitionedState
+
+  return domainUpdate
 }
 
 /**

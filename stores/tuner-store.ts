@@ -82,54 +82,17 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * @throws AppError - If microphone access is denied or hardware fails.
      */
     initialize: async () => {
-      const { state: currentState, deviceId, sensitivity } = get()
+      const { state: currentState, deviceId } = get()
       const token = ++initToken
 
-      if (currentState.kind !== 'IDLE' && currentState.kind !== 'ERROR') {
+      const isEligible = currentState.kind === 'IDLE' || currentState.kind === 'ERROR'
+      if (!isEligible) {
         logger.warn(`Cannot initialize from state: ${currentState.kind}`)
         return
       }
 
-      set({ state: { kind: 'INITIALIZING', sessionToken: token } })
-
-      try {
-        const { context } = await audioManager.initialize(deviceId ?? undefined)
-
-        if (token !== initToken) {
-          await audioManager.cleanup()
-          logger.info('Initialization aborted due to session token mismatch.')
-          return
-        }
-
-        // Apply current sensitivity
-        audioManager.setGain(sensitivity / 50)
-
-        const detector = new PitchDetector(context.sampleRate)
-
-        set({
-          state: { kind: 'READY', sessionToken: token },
-          permissionState: 'GRANTED',
-          detector,
-        })
-      } catch (_err) {
-        const appError = toAppError(_err, ERROR_CODES.MIC_GENERIC_ERROR)
-        logger.error({
-          msg: 'Failed to initialize microphone',
-          err: appError,
-          context: { deviceId },
-        })
-
-        if (token !== initToken) {
-          logger.info('Initialization failed, but a new session has already started.')
-          return
-        }
-
-        set({
-          state: { kind: 'ERROR', error: appError },
-          permissionState:
-            appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT',
-        })
-      }
+      prepareTunerInitialization(set, token)
+      await executeAudioInit({ set, get, token, deviceId })
     },
 
     /**
@@ -187,30 +150,22 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
       const token = state.sessionToken
       const hasSignal = confidence > 0.85 && pitch > 0
+      const params = { pitch, confidence, token }
 
       if (hasSignal) {
-        get().handleDetectedPitch(pitch, confidence, token)
+        get().handleDetectedPitch(params)
       } else {
         set({ state: { kind: 'LISTENING', sessionToken: token } })
       }
     },
 
-    handleDetectedPitch: (pitch: number, confidence: number, token: number) => {
+    handleDetectedPitch: (params: { pitch: number; confidence: number; token: number }) => {
+      const { pitch, confidence, token } = params
       try {
         const note = MusicalNote.fromFrequency(pitch)
-        set({
-          state: {
-            kind: 'DETECTED',
-            pitch,
-            note: note.nameWithOctave,
-            cents: note.centsDeviation,
-            confidence,
-            sessionToken: token,
-          },
-        })
+        setDetectedPitchState({ set, pitch, note, confidence, token })
       } catch (err) {
-        logger.error({ msg: 'Pitch creation failed', err, context: { pitch } })
-        set({ state: { kind: 'LISTENING', sessionToken: token } })
+        handlePitchDetectionError({ set, err, pitch, token })
       }
     },
 
@@ -237,7 +192,9 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      */
     stopListening: () => {
       const { state } = get()
-      if (state.kind === 'LISTENING' || state.kind === 'DETECTED') {
+      const canStop = state.kind === 'LISTENING' || state.kind === 'DETECTED'
+
+      if (canStop) {
         set({ state: { kind: 'READY', sessionToken: state.sessionToken } })
       } else {
         logger.warn(`Cannot stop listening from state: ${state.kind}`)
@@ -307,3 +264,114 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
   }
 })
+
+type TunerSet = (
+  partial: TunerStore | Partial<TunerStore> | ((state: TunerStore) => TunerStore | Partial<TunerStore>),
+  replace?: boolean,
+) => void
+
+function prepareTunerInitialization(set: TunerSet, token: number) {
+  const initializingState = { kind: 'INITIALIZING' as const, sessionToken: token }
+  const nextState = { state: initializingState }
+  set(nextState)
+}
+
+async function executeAudioInit(params: {
+  set: TunerSet
+  get: () => TunerStore
+  token: number
+  deviceId: string | undefined
+}) {
+  const { set, get, token, deviceId } = params
+  try {
+    const { context } = await audioManager.initialize(deviceId ?? undefined)
+    const isStale = isSessionStale(get().state, token)
+    if (isStale) return handleAbortedInit()
+
+    audioManager.setGain(get().sensitivity / 50)
+    const detector = new PitchDetector(context.sampleRate)
+    commitTunerReadyState({ set, token, detector })
+  } catch (err) {
+    handleTunerInitError({ set, get, err, token, deviceId })
+  }
+}
+
+function isSessionStale(state: TunerStore['state'], token: number | string): boolean {
+  if ('sessionToken' in state) {
+    return state.sessionToken !== token
+  }
+  return true
+}
+
+function handleAbortedInit() {
+  void audioManager.cleanup()
+  const msg = 'Initialization aborted due to session token mismatch.'
+  logger.info(msg)
+}
+
+function commitTunerReadyState(params: { set: TunerSet; token: number; detector: PitchDetector }) {
+  const { set, token, detector } = params
+  const readyState = { kind: 'READY' as const, sessionToken: token }
+  set({
+    state: readyState,
+    permissionState: 'GRANTED',
+    detector,
+  })
+}
+
+function handleTunerInitError(params: {
+  set: TunerSet
+  get: () => TunerStore
+  err: unknown
+  token: number
+  deviceId: string | undefined
+}) {
+  const { set, get, err, token, deviceId } = params
+  const isStale = isSessionStale(get().state, token)
+  if (isStale) return handleAbortedInit()
+
+  const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
+  logTunerError(appError, deviceId)
+
+  const permission = appError.code === ERROR_CODES.MIC_PERMISSION_DENIED ? 'DENIED' : 'PROMPT'
+  set({ state: { kind: 'ERROR', error: appError }, permissionState: permission })
+}
+
+function logTunerError(err: AppError, deviceId: string | undefined) {
+  const msg = 'Failed to initialize microphone'
+  const context = { deviceId }
+  logger.error({ msg, err, context })
+}
+
+function setDetectedPitchState(params: {
+  set: TunerSet
+  pitch: number
+  note: MusicalNote
+  confidence: number
+  token: number | string
+}) {
+  const { set, pitch, note, confidence, token } = params
+  set({
+    state: {
+      kind: 'DETECTED',
+      pitch,
+      note: note.nameWithOctave,
+      cents: note.centsDeviation,
+      confidence,
+      sessionToken: token,
+    },
+  })
+}
+
+function handlePitchDetectionError(params: {
+  set: TunerSet
+  err: unknown
+  pitch: number
+  token: number | string
+}) {
+  const { set, err, pitch, token } = params
+  const msg = 'Pitch creation failed'
+  const context = { pitch }
+  logger.error({ msg, err, context })
+  set({ state: { kind: 'LISTENING', sessionToken: token } })
+}
