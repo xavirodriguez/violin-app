@@ -28,7 +28,7 @@ interface State {
   /** Whether an error has been caught in the current boundary. */
   hasError: boolean
   /** The error object that was caught, if any. */
-  error: Error | null
+  error: Error | undefined
 }
 
 /**
@@ -39,19 +39,17 @@ interface State {
  * 1. Logs errors to the centralized `logger` with structured metadata.
  * 2. Provides a "Retry" button in its default fallback UI.
  * 3. Supports a custom `fallback` prop for tailored error states.
- *
- * Note: Error boundaries do not catch errors for event handlers, asynchronous code (e.g. `setTimeout`),
- * or server-side rendering.
  */
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: undefined }
   }
 
   /** Updates state so the next render will show the fallback UI. */
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+    const nextState = { hasError: true, error }
+    return nextState
   }
 
   /**
@@ -59,28 +57,41 @@ export class ErrorBoundary extends React.Component<Props, State> {
    * Logs the error and its component stack trace.
    */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error({
+    const context = { componentStack: errorInfo.componentStack }
+    const logParams = {
       msg: 'ErrorBoundary caught an error',
       err: error,
       code: ERROR_CODES.COMPONENT_RENDER_ERROR,
-      context: { componentStack: errorInfo.componentStack },
-    })
+      context,
+    }
+
+    logger.error(logParams)
     this.props.onError?.(error)
   }
 
   render() {
-    if (this.state.hasError) {
-      return (
-        this.props.fallback || (
-          <div className="error-fallback">
-            <h3>Something went wrong</h3>
-            <p>{this.state.error?.message}</p>
-            <button onClick={() => this.setState({ hasError: false, error: null })}>Retry</button>
-          </div>
-        )
-      )
+    const { hasError, error } = this.state
+    const { children, fallback } = this.props
+
+    if (hasError) {
+      return fallback || this.renderDefaultFallback(error)
     }
 
-    return this.props.children
+    return children
+  }
+
+  private renderDefaultFallback(error: Error | undefined) {
+    const handleRetry = () => {
+      const resetState = { hasError: false, error: undefined }
+      this.setState(resetState)
+    }
+
+    return (
+      <div className="error-fallback">
+        <h3>Something went wrong</h3>
+        <p>{error?.message}</p>
+        <button onClick={handleRetry}>Retry</button>
+      </div>
+    )
   }
 }
