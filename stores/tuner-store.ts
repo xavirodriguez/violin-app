@@ -286,7 +286,7 @@ async function executeAudioInit(params: {
   try {
     const { context } = await audioManager.initialize(deviceId ?? undefined)
     const isStale = isSessionStale(get().state, token)
-    if (isStale) return handleAbortedInit()
+    if (isStale) return await handleStaleSuccess()
 
     audioManager.setGain(get().sensitivity / 50)
     const detector = new PitchDetector(context.sampleRate)
@@ -297,16 +297,20 @@ async function executeAudioInit(params: {
 }
 
 function isSessionStale(state: TunerStore['state'], token: number | string): boolean {
-  if ('sessionToken' in state) {
-    return state.sessionToken !== token
-  }
-  return true
+  const hasToken = 'sessionToken' in state
+  const isStale = hasToken && state.sessionToken !== token
+
+  return isStale || !hasToken
 }
 
-function handleAbortedInit() {
-  void audioManager.cleanup()
-  const msg = 'Initialization aborted due to session token mismatch.'
-  logger.info(msg)
+function logStaleAbortion() {
+  const message = 'Initialization aborted due to session token mismatch.'
+  logger.info(message)
+}
+
+async function handleStaleSuccess() {
+  await audioManager.cleanup()
+  logStaleAbortion()
 }
 
 function commitTunerReadyState(params: { set: TunerSet; token: number; detector: PitchDetector }) {
@@ -328,7 +332,7 @@ function handleTunerInitError(params: {
 }) {
   const { set, get, err, token, deviceId } = params
   const isStale = isSessionStale(get().state, token)
-  if (isStale) return handleAbortedInit()
+  if (isStale) return logStaleAbortion()
 
   const appError = toAppError(err, ERROR_CODES.MIC_GENERIC_ERROR)
   logTunerError(appError, deviceId)
