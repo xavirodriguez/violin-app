@@ -99,6 +99,7 @@ export function handleRunnerFailure(params: {
 
   if (isAbort) return
 
+  console.error('[PracticeStore] Session runner failed:', err)
   set((currentState) => {
     const errorStatus = transitions.error(error, exercise)
     return {
