@@ -1,122 +1,112 @@
 /**
- * PracticeStore Helpers
- *
- * Standalone pure functions and utilities for the PracticeStore to maintain Clean Code compliance.
+ * Helper functions for the PracticeStore to keep the main store file clean.
  */
 
 import {
-  formatPitchName,
-  reducePracticeEvent,
   type PracticeState,
   type PracticeEvent,
-  DetectedNote,
+  reducePracticeEvent,
+  formatPitchName,
 } from '@/lib/practice-core'
-import { calculateLiveObservations } from '@/lib/live-observations'
-import { Observation } from '@/lib/technique-types'
-import type { Exercise } from '@/lib/exercises/types'
-import { FixedRingBuffer } from '@/lib/domain/data-structures'
-import { ReadyState, transitions } from '@/lib/practice/practice-states'
-import { PracticeStore } from './practice-store'
 import { toAppError } from '@/lib/errors/app-error'
+import { transitions, ReadyState, PracticeStoreState } from '@/lib/practice/practice-states'
+import type { Exercise } from '@/lib/exercises/types'
+import { Observation } from '@/lib/technique-types'
+import { PracticeStore } from './practice-store'
+import { calculateLiveObservations } from '@/lib/live-observations'
 
 /**
- * Returns the initial domain state for a given exercise.
+ * Returns the initial domain state for a new practice session.
  */
 export function getInitialPracticeState(exercise: Exercise): PracticeState {
-  return {
+  const initialState: PracticeState = {
     status: 'idle',
     exercise,
     currentIndex: 0,
     detectionHistory: [],
+    holdDuration: 0,
+    lastObservations: [],
     perfectNoteStreak: 0,
   }
+
+  return initialState
 }
 
 /**
- * Calculates updated live observations based on the current practice state.
+ * Extracts live observations from the current practice state.
  */
 export function getUpdatedLiveObservations(state: PracticeState): Observation[] {
-  const terminalStates = ['idle', 'correct', 'completed']
-  if (terminalStates.includes(state.status)) {
-    return state.lastObservations || []
-  }
-  return computeActiveObservations(state)
-}
+  const history = state.detectionHistory
+  const note = state.exercise.notes[state.currentIndex]
+  if (!note) return []
 
-function computeActiveObservations(state: PracticeState): Observation[] {
-  const targetNote = state.exercise.notes[state.currentIndex]
-  if (!targetNote) return []
-  const targetPitchName = formatPitchName(targetNote.pitch)
-  return calculateLiveObservations(state.detectionHistory, targetPitchName)
+  const pitch = formatPitchName(note.pitch)
+  const observations = calculateLiveObservations(history, pitch)
+
+  return observations
 }
 
 /**
- * Updates the domain practice state based on an event.
+ * Orchestrates domain state updates using the pure practice reducer.
  */
 export function updatePracticeState(
-  currentState: PracticeState | undefined,
+  state: PracticeState | undefined,
   event: PracticeEvent,
 ): PracticeState | undefined {
-  const isStateMissing = !currentState
-  if (isStateMissing) {
+  if (!state) {
     return undefined
   }
 
-  const transitionedState = reducePracticeEvent(currentState, event)
-  const domainUpdate = transitionedState
+  const updatedState = reducePracticeEvent(state, event)
+  const result = updatedState
 
-  return domainUpdate
+  return result
 }
 
 /**
- * Creates a new history buffer with the latest detection.
- */
-export function updateDetectionHistory(
-  history: readonly DetectedNote[],
-  payload: DetectedNote,
-): readonly DetectedNote[] {
-  const buffer = new FixedRingBuffer<DetectedNote, 10>(10)
-  buffer.push(...history.slice().reverse(), payload)
-  return buffer.toArray()
-}
-
-/**
- * Ensures the store is in a ready state by initializing audio if needed.
+ * Ensures the store is in a 'ready' state, initializing audio if necessary.
  */
 export async function ensureReadyState(params: {
-  getState: () => PracticeStore
+  getState: () => { state: PracticeStoreState }
   initializeAudio: () => Promise<void>
 }): Promise<ReadyState | undefined> {
   const { getState, initializeAudio } = params
-  let storeState = getState().state
-  if (storeState.status === 'idle' && storeState.exercise) {
-    await initializeAudio()
-    storeState = getState().state
-  }
-  return storeState.status === 'ready' ? storeState : undefined
-}
+  const currentStatus = getState().state.status
 
-/**
- * Parameters for handling terminal failures in the session runner.
- */
-export interface RunnerFailureParams {
-  set: (fn: (currentState: PracticeStore) => Partial<PracticeStore>) => void
-  get: () => PracticeStore
-  err: unknown
-  exercise: Exercise | undefined
+  if (currentStatus === 'idle' || currentStatus === 'error') {
+    await initializeAudio()
+  }
+
+  const nextStatus = getState().state.status
+  const isReady = nextStatus === 'ready'
+  const result = isReady ? (getState().state as ReadyState) : undefined
+
+  return result
 }
 
 /**
  * Handles terminal failures in the session runner.
  */
-export function handleRunnerFailure(params: RunnerFailureParams) {
+export function handleRunnerFailure(params: {
+  set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void
+  get: () => { state: PracticeStoreState }
+  err: unknown
+  exercise: Exercise
+}): void {
   const { set, get, err, exercise } = params
-  const isAbort =
-    err && typeof err === 'object' && 'name' in err && (err as Error).name === 'AbortError'
-  if (!isAbort) {
-    console.error('[PracticeStore] Session runner failed:', err)
-    const error = toAppError(err)
-    set((currentState) => ({ ...currentState, error, state: transitions.error(error, exercise) }))
-    void get().stop()
-  }
+  const error = toAppError(err)
+  const isAbort = error.message.includes('Aborted') || error.name === 'AbortError'
+
+  if (isAbort) return
+
+  console.error('[PracticeStore] Session runner failed:', err)
+  set((currentState) => {
+    const errorStatus = transitions.error(error, exercise)
+    return {
+      ...currentState,
+      error,
+      isStarting: false,
+      state: errorStatus,
+    }
+  })
 }

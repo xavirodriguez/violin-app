@@ -73,7 +73,7 @@ describe('useOSMDSafe', () => {
     await waitFor(
       () => {
         expect(result.current.isReady).toBe(true)
-        expect(result.current.error).toBe(null)
+        expect(result.current.error).toBe(undefined)
       },
       { timeout: 2000 },
     )

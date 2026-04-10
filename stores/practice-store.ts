@@ -78,7 +78,7 @@ export interface PracticeStore {
 }
 
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>
-type SafePartial = Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
+type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
 
 interface ResolveUpdateParams {
   currentState: PracticeStore
@@ -235,15 +235,16 @@ function computeStateUpdates(params: {
 }): Partial<PracticeStore> {
   const { currentState, next } = params
   const practiceState = next.practiceState || currentState.practiceState
-  const liveObs = practiceState
+  const observations = practiceState
     ? getUpdatedLiveObservations(practiceState)
     : currentState.liveObservations
 
-  return {
+  const result = {
     ...next,
     practiceState,
-    liveObservations: next.liveObservations ?? liveObs,
+    liveObservations: next.liveObservations ?? observations,
   }
+  return result
 }
 
 function injectActiveStateUpdates(params: {
@@ -526,12 +527,13 @@ function beginAudioInitialization(
 ) {
   set((currentState) => {
     const initStatus = transitions.initialize(currentState.state.exercise)
-    return {
+    const updates = {
       ...currentState,
       isInitializing: true,
       error: undefined,
       state: initStatus,
     }
+    return updates
   })
 }
 
@@ -601,13 +603,14 @@ function clampIndex(index: number, total: number): number {
 }
 
 function assembleResetState(state: PracticeState, index: number): PracticeState {
-  return {
+  const result = {
     ...state,
     currentIndex: index,
-    status: 'listening',
+    status: 'listening' as PracticeStatus,
     holdDuration: 0,
     detectionHistory: [],
   }
+  return result
 }
 
 function getExerciseLoadUpdates(exercise: Exercise) {
@@ -655,19 +658,21 @@ function getResetUpdates() {
 }
 
 function createIdleStoreState(): PracticeStoreState {
-  return {
+  const idle: PracticeStoreState = {
     status: 'idle',
     exercise: undefined,
     error: undefined,
   }
+  return idle
 }
 
 function assembleResetUpdates(idleState: PracticeStoreState) {
-  return {
+  const updates = {
     state: idleState,
     practiceState: undefined,
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
   }
+  return updates
 }
