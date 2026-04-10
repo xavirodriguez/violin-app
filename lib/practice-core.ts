@@ -86,7 +86,9 @@ export class MusicalNote {
     const noteIndex = ((roundedMidi % 12) + 12) % 12
     const octave = Math.floor(roundedMidi / 12) - 1
     const noteName = NOTE_NAMES[noteIndex]
-    return new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
+    const note = new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
+
+    return note
   }
 
   static fromMidi(midiNumber: number): MusicalNote {
@@ -121,7 +123,9 @@ export class MusicalNote {
     }
 
     const midiNumber = (octave + 1) * 12 + stepValue + accidentalValue
-    return MusicalNote.fromMidi(midiNumber)
+    const note = MusicalNote.fromMidi(midiNumber)
+
+    return note
   }
 
   get nameWithOctave(): NoteName {
@@ -279,7 +283,8 @@ export function isMatch(params: {
     typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
   const actualTolerance = matchStatus === 'maintaining' ? hysteresis.exit : hysteresis.enter
 
-  return checkPitchAndTune({ target, detected, tolerance: actualTolerance })
+  const result = checkPitchAndTune({ target, detected, tolerance: actualTolerance })
+  return result
 }
 
 /**
@@ -300,7 +305,9 @@ function checkPitchAndTune(params: {
 
   const isPitchMatch = targetNote.isEnharmonic(detectedNote)
   const isInTune = Math.abs(detected.cents) < tolerance
-  return isPitchMatch && isInTune
+  const result = isPitchMatch && isInTune
+
+  return result
 }
 
 /**
@@ -405,14 +412,15 @@ function handleNoteDetected(state: PracticeState, payload: DetectedNote): Practi
   const status = getStatusAfterDetection(state.status)
   const history = updateDetectionHistory(state.detectionHistory, payload)
   const isListening = status === 'listening'
-  const holdDuration = isListening ? 0 : state.holdDuration
+  const duration = isListening ? 0 : state.holdDuration
 
-  return {
+  const nextState = {
     ...state,
     detectionHistory: history,
     status,
-    holdDuration,
+    holdDuration: duration,
   }
+  return nextState
 }
 
 function updateDetectionHistory(
@@ -476,9 +484,11 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   const newStreak = calculateNewStreak(state, payload)
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
-  return isLastNote
-    ? finalizePracticeSession({ state, payload, streak: newStreak })
-    : advanceToNextNote({ state, payload, streak: newStreak })
+  if (isLastNote) {
+    return finalizePracticeSession({ state, payload, streak: newStreak })
+  }
+
+  return advanceToNextNote({ state, payload, streak: newStreak })
 }
 
 function canMatchNote(status: PracticeStatus): boolean {

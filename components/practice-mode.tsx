@@ -41,29 +41,20 @@ export function PracticeMode() {
   const { intonationSkill } = useProgressStore()
   const { state: viewState, actions: viewActions } = usePracticeViewState()
 
-  const osmd = useOSMDSafe(store.practiceState?.exercise.musicXML ?? '')
+  const xml = store.practiceState?.exercise.musicXML ?? ''
+  const osmd = useOSMDSafe(xml)
   const derived = derivePracticeState(store.practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
-  usePracticeLifecycle({ ...store, derived, setIsZen: viewActions.setIsZen, osmdHook: osmd })
+  const lifecycleParams = { ...store, derived, setIsZen: viewActions.setIsZen, osmdHook: osmd }
+  usePracticeLifecycle(lifecycleParams)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader store={store} />
         <PracticeControlsRow store={store} derived={derived} isZen={viewState.isZen} />
-        <ExercisePreviewModal
-          exercise={viewState.preview}
-          isOpen={!!viewState.preview}
-          onOpenChange={(open) => !open && viewActions.setPreview(undefined)}
-          onStart={() => {
-            if (viewState.preview) {
-              store.loadExercise(viewState.preview)
-              viewActions.setPreview(undefined)
-              store.start()
-            }
-          }}
-        />
+        <PracticePreviewModal viewState={viewState} viewActions={viewActions} store={store} />
         <PracticeMainContent
           state={store.state}
           practiceState={store.practiceState}
@@ -95,13 +86,46 @@ export function PracticeMode() {
   )
 }
 
+function PracticePreviewModal(params: {
+  viewState: { preview: Exercise | undefined }
+  viewActions: { setPreview: (ex: Exercise | undefined) => void }
+  store: PracticeStore
+}) {
+  const { viewState, viewActions, store } = params
+  const isOpen = !!viewState.preview
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      viewActions.setPreview(undefined)
+    }
+  }
+
+  const handleStart = () => {
+    if (viewState.preview) {
+      store.loadExercise(viewState.preview)
+      viewActions.setPreview(undefined)
+      store.start()
+    }
+  }
+
+  return (
+    <ExercisePreviewModal
+      exercise={viewState.preview}
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      onStart={handleStart}
+    />
+  )
+}
+
 function PracticeStatusHeader({ store }: { store: PracticeStore }) {
   const { state, reset } = store
   const isError = state.status === 'error'
   const isInitializing = state.status === 'initializing'
 
   if (isError) {
-    return <ErrorDisplay error={state.error?.message ?? 'Unknown error'} onReset={reset} />
+    const message = state.error?.message ?? 'Unknown error'
+    return <ErrorDisplay error={message} onReset={reset} />
   }
 
   if (isInitializing) {

@@ -120,7 +120,9 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     externalSignal.addEventListener('abort', onAbort)
 
     const executionParams = { internalSignal: controller.signal, externalSignal, onAbort }
-    return this.executeSession(executionParams)
+    const result = await this.executeSession(executionParams)
+
+    return result
   }
 
   private async executeSession(params: {
@@ -131,9 +133,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const { internalSignal, externalSignal, onAbort } = params
     try {
       await this.executeLoop(internalSignal)
-      return this.determineResult(externalSignal)
+      const finalResult = this.determineResult(externalSignal)
+      return finalResult
     } catch (error) {
-      return this.handleRunError(error)
+      const errorResult = this.handleRunError(error)
+      return errorResult
     } finally {
       externalSignal.removeEventListener('abort', onAbort)
     }
@@ -154,10 +158,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const abortedExternal = signal.aborted
     const isCancelled = abortedInternal || abortedExternal
 
-    return {
+    const result: SessionResult = {
       completed: !isCancelled,
       reason: isCancelled ? 'cancelled' : 'finished',
     }
+    return result
   }
 
   private handleRunError(error: unknown): SessionResult {
@@ -165,7 +170,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       error instanceof Error && (error.name === 'AbortError' || error.message === 'Aborted')
 
     if (isAbort) {
-      return { completed: false, reason: 'cancelled' }
+      const cancelled: SessionResult = { completed: false, reason: 'cancelled' }
+      return cancelled
     }
 
     console.error('[Runner] Session execution failed:', error)
@@ -186,13 +192,15 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private initializeEngine() {
     const context = this.environment
-    return createPracticeEngine({
+    const engine = createPracticeEngine({
       audio: context.audioLoop,
       pitch: context.detector,
       exercise: context.exercise,
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
     })
+
+    return engine
   }
 
   private processEngineEvent(event: PracticeEngineEvent, signal: AbortSignal): void {
@@ -204,13 +212,13 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private mapToLegacyEvent(event: PracticeEngineEvent): PracticeEvent {
     const type = event.type
-    if (type === 'NOTE_DETECTED') {
-      return { type: 'NOTE_DETECTED', payload: event.payload }
+    const isDetection = type === 'NOTE_DETECTED' || type === 'HOLDING_NOTE'
+    if (isDetection) {
+      return { type, payload: event.payload } as PracticeEvent
     }
-    if (type === 'HOLDING_NOTE') {
-      return { type: 'HOLDING_NOTE', payload: event.payload }
-    }
-    if (type === 'NOTE_MATCHED') {
+
+    const isMatch = type === 'NOTE_MATCHED'
+    if (isMatch) {
       return { type: 'NOTE_MATCHED', payload: event.payload }
     }
 
@@ -220,14 +228,18 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private dispatchInternalEvent(event: PracticeEvent, signal: AbortSignal): void {
     const state = this.environment.store.getState().practiceState
-    const hasEvent = !!event.type
-    const isReady = hasEvent && !!state
+    const isReady = !!event.type && !!state
 
     if (!isReady || !state) return
 
     this.synchronizeFeedback(event)
-    if (signal.aborted) return
+    const isInterrupted = signal.aborted
+    if (isInterrupted) return
 
+    this.handleEventOutcome(event, state)
+  }
+
+  private handleEventOutcome(event: PracticeEvent, state: PracticeState): void {
     this.handleEventCompletion(event, state)
     this.propagateToEventSink(event)
   }
@@ -235,13 +247,19 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   private synchronizeFeedback(event: PracticeEvent): void {
     const updatePitch = this.environment.updatePitch
     const isDetected = event.type === 'NOTE_DETECTED'
-    const isNotDetected = event.type === 'NO_NOTE_DETECTED'
 
     if (isDetected) {
       updatePitch?.(event.payload.pitchHz, event.payload.confidence)
       this.logTelemetry(event.payload)
-    } else if (isNotDetected) {
-      updatePitch?.(0, 0)
+    } else {
+      this.clearFeedback(event.type)
+    }
+  }
+
+  private clearFeedback(type: string): void {
+    const isNoNote = type === 'NO_NOTE_DETECTED'
+    if (isNoNote) {
+      this.environment.updatePitch?.(0, 0)
     }
   }
 
@@ -256,10 +274,11 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private propagateToEventSink(event: PracticeEvent): void {
     const dependencies = this.environment
+    const onCompleted = () => void dependencies.store.stop()
     const sinkParams = {
       event,
       store: dependencies.store,
-      onCompleted: () => void dependencies.store.stop(),
+      onCompleted,
       analytics: dependencies.analytics,
     }
 
@@ -289,9 +308,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const isNewNote = index !== this.sessionStats.lastProcessedIndex
 
     if (note && isNewNote) {
-      const duration = Date.now() - this.sessionStats.noteStartTime
+      const elapsed = Date.now() - this.sessionStats.noteStartTime
       const technique = event.payload?.technique
-      this.emitAnalytics({ index, note, duration, technique })
+      const params = { index, note, duration: elapsed, technique }
+      this.emitAnalytics(params)
       this.updateRunnerStats(index)
     }
   }
@@ -311,9 +331,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private updateRunnerStats(index: number): void {
+    const now = Date.now()
     const nextStats = {
       lastProcessedIndex: index,
-      noteStartTime: Date.now(),
+      noteStartTime: now,
     }
 
     this.sessionStats = nextStats

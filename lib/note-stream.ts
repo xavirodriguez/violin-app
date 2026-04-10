@@ -126,7 +126,8 @@ function pushFrameToQueue(params: {
  * Waits for the next frame to be pushed into the queue.
  */
 async function waitForFrame(state: StreamState, signal: AbortSignal): Promise<void> {
-  if (state.queue.length > 0 || signal.aborted) return
+  const isPending = state.queue.length === 0 && !signal.aborted
+  if (!isPending) return
 
   const { promise, resolve } = createSignalPromise(state)
   const abortHandler = () => {
@@ -246,7 +247,8 @@ async function* technicalAnalysisWindow(params: {
   const setup = initializeAnalysisWindow(optionsOrGetter)
   const { segmenter, agent, state } = setup
 
-  yield* processRawStream({ source, context, optionsOrGetter, signal, segmenter, agent, state })
+  const procParams = { source, context, optionsOrGetter, signal, segmenter, agent, state }
+  yield* processRawStream(procParams)
 }
 
 async function* processRawStream(params: {
@@ -438,10 +440,12 @@ function* maybeEmitHoldingEvent(params: {
 }): Generator<PracticeEvent> {
   const { frame, state, context, options } = params
   const targetNote = context.targetNote
-  const isHoldingCandidate = state.currentSegmentStart !== undefined && frame.kind === 'pitched' && targetNote
+  const isPitched = frame.kind === 'pitched'
+  const isHoldingCandidate = state.currentSegmentStart !== undefined && isPitched && !!targetNote
 
   if (isHoldingCandidate) {
-    yield* emitHoldingIfMatched({ state, targetNote: targetNote!, frame: frame as PitchedFrame, options })
+    const candidateParams = { state, targetNote: targetNote!, frame: frame as PitchedFrame, options }
+    yield* emitHoldingIfMatched(candidateParams)
   }
 }
 
@@ -536,7 +540,8 @@ function* handleSegmentEvents(params: SegmentEventParams): Generator<PracticeEve
     return
   }
 
-  const completionParams = { state, event: event as Extract<SegmenterEvent, { type: 'OFFSET' | 'NOTE_CHANGE' }>, targetNote, options, agent, currentIndex }
+  const typeTyped = event as Extract<SegmenterEvent, { type: 'OFFSET' | 'NOTE_CHANGE' }>
+  const completionParams = { state, event: typeTyped, targetNote, options, agent, currentIndex }
   yield* processCompletionEvent(completionParams)
 }
 
@@ -827,7 +832,8 @@ export function createPracticeEventPipeline(params: {
   const { rawPitchStream, context, options, signal } = params
   const optionsOrGetter = getOptionsOrGetter(options)
 
-  return technicalAnalysisWindow({ source: rawPitchStream, context, optionsOrGetter, signal })
+  const analysisParams = { source: rawPitchStream, context, optionsOrGetter, signal }
+  return technicalAnalysisWindow(analysisParams)
 }
 
 function getOptionsOrGetter(

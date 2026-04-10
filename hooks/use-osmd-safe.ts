@@ -10,7 +10,7 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
- * Refactored for documented lifecycle behavior.
+ * Refactored for documented lifecycle behavior and null elimination.
  *
  * @param musicXML - Valid MusicXML 3.1 string
  * @param options - OSMD configuration
@@ -27,11 +27,6 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
  * 1. `containerRef` MUST be attached to a mounted DOM element
  * 2. Cursor methods are safe to call anytime (no-op when !isReady)
  * 3. Re-initializes when `musicXML` or `options` change
- *
- * **Lifecycle**:
- * - Mount: Creates OSMD instance when containerRef is available
- * - Update: Destroys and recreates on musicXML/options change
- * - Unmount: Cleans up OSMD resources automatically
  *
  * @example
  * ```tsx
@@ -54,7 +49,7 @@ export function useOSMDSafe(
   options?: IOSMDOptions,
 ): {
   isReady: boolean
-  error: string | null
+  error: string | undefined
   containerRef: import('react').RefObject<HTMLDivElement | null>
   /** Safe to call anytime - no-op when !isReady */
   resetCursor: () => void
@@ -63,21 +58,12 @@ export function useOSMDSafe(
   /** Highlights the note at the given index */
   highlightCurrentNote: (noteIndex: number) => void
   /** Reference to the OSMD instance for advanced interactions */
-  osmd: OpenSheetMusicDisplay | null
+  osmd: OpenSheetMusicDisplay | undefined
 } {
-  /** Indicates if the sheet music has been successfully loaded and rendered. */
   const [isReady, setIsReady] = useState(false)
-
-  /** Contains the error message if loading or rendering fails. */
-  const [error, setError] = useState<string | null>(null)
-
-  /** Ref to be attached to the HTML container where OSMD will render. */
+  const [error, setError] = useState<string | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  /** Internal ref to the OSMD instance. */
-  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null)
-
-  /** Ref to track the current load token to handle race conditions. */
+  const osmdRef = useRef<OpenSheetMusicDisplay | undefined>(undefined)
   const loadTokenRef = useRef(0)
 
   useEffect(() => {
@@ -86,16 +72,8 @@ export function useOSMDSafe(
 
     async function initializeOSMD() {
       if (!containerRef.current || !musicXML) return
+      if (osmdRef.current) osmdRef.current.clear()
 
-      // Performance Optimization: Only re-instantiate if absolutely necessary
-      // If we already have an instance, we might just want to reload the XML
-      // But OSMD is tricky with re-rendering on the same container.
-      // For now, we clear the container to ensure a clean state.
-      if (osmdRef.current) {
-        osmdRef.current.clear()
-      }
-
-      // 1. Create instance and associate with the container
       const osmd = new OpenSheetMusicDisplay(containerRef.current, {
         autoResize: true,
         backend: 'svg',
@@ -107,20 +85,14 @@ export function useOSMDSafe(
       osmdRef.current = osmd
 
       try {
-        // 2. Load the MusicXML
         await osmd.load(musicXML)
-
-        // 3. Guard against race conditions: check if this is still the latest load request
         if (token !== loadTokenRef.current) return
-
-        // 4. Render the score
         osmd.render()
 
-        // 5. Show cursor and set ready state
         if (isMounted) {
           osmd.cursor.show()
           setIsReady(true)
-          setError(null)
+          setError(undefined)
         }
       } catch (err) {
         console.error('[OSMD] Error loading or rendering sheet music:', err)
@@ -131,7 +103,7 @@ export function useOSMDSafe(
       }
     }
 
-    setIsReady(false) // Reset ready state while loading
+    setIsReady(false)
     initializeOSMD()
 
     return () => {
@@ -139,14 +111,12 @@ export function useOSMDSafe(
     }
   }, [musicXML, JSON.stringify(options)])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       osmdRef.current?.clear()
     }
   }, [])
 
-  /** Resets the OSMD cursor to the beginning of the score. */
   const resetCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
       osmdRef.current.cursor.reset()
@@ -154,22 +124,18 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
-  /** Advances the OSMD cursor to the next note or measure. */
   const advanceCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
       osmdRef.current.cursor.next()
     }
   }, [isReady])
 
-  /** Highlights the current note under the cursor or by index */
   const highlightCurrentNote = useCallback(() => {
     if (!isReady || !osmdRef.current || !containerRef.current) return
 
-    // Clear previous highlights
     const highlighted = containerRef.current.querySelectorAll('.note-current')
     highlighted.forEach((el) => el.classList.remove('note-current'))
 
-    // Highlight notes under cursor
     const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface PitchAccuracyMeterProps {
-  centsOff: number | null
+  centsOff: number | undefined
   isInTune: boolean
   showNumericValue?: boolean
 }
@@ -15,7 +15,7 @@ export function PitchAccuracyMeter({
   isInTune,
   showNumericValue = true,
 }: PitchAccuracyMeterProps) {
-  const displayCents = centsOff === null ? 0 : Math.max(-50, Math.min(50, centsOff))
+  const displayCents = centsOff === undefined ? 0 : Math.max(-50, Math.min(50, centsOff))
   const positionPercent = ((displayCents + 50) / 100) * 100
 
   return (
@@ -58,7 +58,7 @@ export function PitchAccuracyMeter({
         </div>
 
         {/* Animated indicator */}
-        {centsOff !== null && (
+        {centsOff !== undefined && (
           <motion.div
             className="bg-foreground absolute top-0 bottom-0 z-10 w-1"
             initial={false}

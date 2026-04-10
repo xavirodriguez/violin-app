@@ -288,7 +288,8 @@ function drawTargetPosition(
   ctx.font = 'bold 14px Inter'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(position.finger === 0 ? 'O' : position.finger.toString(), x, y)
+  const fingerText = position.finger === 0 ? 'O' : position.finger.toString()
+  ctx.fillText(fingerText, x, y)
 }
 
 /**
@@ -320,8 +321,10 @@ function drawDetectedPosition(
   const baseX = nutX + position.fretDistance
 
   // Apply visual displacement based on cents deviation
-  const xOffset = clamp({ value: centsDeviation * 0.3, min: -maxOffsetPx, max: maxOffsetPx })
-  const finalX = clamp({ value: baseX + xOffset, min: nutX + 12, max: bridgeX - 12 }) // +12 to keep circle within bounds
+  const offsetParams = { value: centsDeviation * 0.3, min: -maxOffsetPx, max: maxOffsetPx }
+  const xOffset = clamp(offsetParams)
+  const finalXParams = { value: baseX + xOffset, min: nutX + 12, max: bridgeX - 12 }
+  const finalX = clamp(finalXParams) // +12 to keep circle within bounds
 
   ctx.fillStyle = isInTune ? '#4ADE80' : '#F87171'
   ctx.strokeStyle = isInTune ? '#16A34A' : '#DC2626'
