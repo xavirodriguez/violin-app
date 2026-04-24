@@ -16,7 +16,15 @@ const createCompressedStorage = (_name: string) => {
       const val = localStorage.getItem(key)
       if (!val) return null
       try {
-        return decompressAndDeserialize(val) as any
+        const deserialized = decompressAndDeserialize(val)
+        if (typeof deserialized === 'string') {
+          try {
+            return JSON.parse(deserialized)
+          } catch {
+            return null
+          }
+        }
+        return deserialized as any
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
         return null
