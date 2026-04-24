@@ -2,290 +2,169 @@
  * PracticeMode
  *
  * The main container component for the interactive practice session.
- * It orchestrates exercise selection, audio processing, sheet music rendering,
- * and real-time feedback.
  */
 
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { usePracticeStore } from '@/stores/practice-store'
+import { usePracticeStore, PracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
-import { cn } from '@/lib/utils'
-import { PracticeQuickActions } from '@/components/practice-quick-actions'
-import { allExercises } from '@/lib/exercises'
-import { formatPitchName } from '@/lib/practice-core'
-import type { Exercise } from '@/lib/domain/musical-types'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Maximize2, Minimize2 } from 'lucide-react'
-import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
-import { PracticeCompletion } from '@/components/practice-completion'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
-import { usePracticeUIEffects } from '@/hooks/use-practice-ui-effects'
 import { useProgressStore } from '@/stores/progress.store'
-import { ExerciseLibrary } from './practice/exercise-library'
 import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
-import { PracticeActiveView } from './practice/practice-active-view'
-import { SheetMusicView } from './practice/sheet-music-view'
-import { PracticeSettings } from './practice/practice-settings'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { PracticeMainContent } from './practice/practice-main-content'
+import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
+import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
+import { useState } from 'react'
+import { Exercise } from '@/lib/exercises/types'
 
 /**
- * Main component for the Interactive Practice Mode.
- *
- * @remarks
- * Coordinates exercise management, audio pipeline, real-time visualization,
- * and user interaction using specialized hooks and sub-components.
- *
- * @public
+ * Custom hook to manage the local UI state for the practice view.
  */
+export function usePracticeViewState() {
+  const [preview, setPreview] = useState<Exercise | undefined>(undefined)
+  const [view, setView] = useState<'focused' | 'full'>('focused')
+  const [isZen, setIsZen] = useState(false)
+
+  const state = { preview, view, isZen }
+  const actions = { setPreview, setView, setIsZen }
+
+  return { state, actions }
+}
+
 export function PracticeMode() {
-  const {
-    state,
-    practiceState,
-    loadExercise,
-    autoStartEnabled,
-    setAutoStart,
-    start,
-    stop,
-    reset,
-    liveObservations,
-  } = usePracticeStore()
-
+  const store = usePracticeStore()
   const { sessions } = useAnalyticsStore()
-  const { status, currentNoteIndex, targetNote, totalNotes, progress } =
-    derivePracticeState(practiceState)
-
   const { intonationSkill } = useProgressStore()
-  const centsTolerance = Math.round(35 - (intonationSkill / 100) * 25)
+  const { state: viewState, actions: viewActions } = usePracticeViewState()
 
-  const [previewExercise, setPreviewExercise] = useState<Exercise | undefined>(undefined)
-  const [sheetMusicView, setSheetMusicView] = useState<'focused' | 'full'>('focused')
-  const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
-  const loadedRef = useRef(false)
-  const osmdHook = useOSMDSafe(practiceState?.exercise.musicXML ?? '')
+  const xml = store.practiceState?.exercise.musicXML ?? ''
+  const osmd = useOSMDSafe(xml)
+  const derived = derivePracticeState(store.practiceState)
+  const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
-  usePracticeUIEffects({
-    status,
-    currentNoteIndex,
-    start,
-    stop,
-    setZenMode: setIsZenModeEnabled,
-    osmdHook,
-  })
-
-  useEffect(() => {
-    if (!loadedRef.current && !practiceState && allExercises.length > 0) {
-      loadExercise(allExercises[0])
-      loadedRef.current = true
-    }
-  }, [loadExercise, practiceState])
-
-  const history = practiceState?.detectionHistory ?? []
-  const lastDetectedNote = history.length > 0 ? history[0] : undefined
-  const targetPitchName = targetNote ? formatPitchName(targetNote.pitch) : undefined
-  const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
+  const lifecycleParams = { ...store, derived, setIsZen: viewActions.setIsZen, osmdHook: osmd }
+  usePracticeLifecycle(lifecycleParams)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        {state.status === 'error' && <ErrorDisplay error={state.error.message} onReset={reset} />}
-        {state.status === 'initializing' && (
-          <Card className="p-12 text-center">Initializing Audio...</Card>
-        )}
-
-        {!isZenModeEnabled && (state.status !== 'idle' || state.exercise) && (
-          <PracticeControls
-            status={status}
-            hasExercise={!!practiceState}
-            onStart={start}
-            onStop={stop}
-            onRestart={handleRestart}
-            progress={progress}
-            currentNoteIndex={currentNoteIndex}
-            totalNotes={totalNotes}
-          />
-        )}
-
-        {state.status === 'idle' && (
-          <div className="space-y-6">
-            {!isZenModeEnabled && (
-              <PracticeSettings
-                autoStartEnabled={autoStartEnabled}
-                onAutoStartChange={setAutoStart}
-              />
-            )}
-            <ExerciseLibrary
-              selectedId={practiceState?.exercise.id}
-              onSelect={(exercise) => setPreviewExercise(exercise)}
-              disabled={false}
-            />
-          </div>
-        )}
-
-        <ExercisePreviewModal
-          exercise={previewExercise}
-          isOpen={!!previewExercise}
-          onOpenChange={(open) => !open && setPreviewExercise(undefined)}
-          onStart={() => {
-            if (previewExercise) {
-              loadExercise(previewExercise)
-              setPreviewExercise(undefined)
-              start()
-            }
-          }}
+        <PracticeStatusHeader store={store} />
+        <PracticeControlsRow store={store} derived={derived} isZen={viewState.isZen} />
+        <PracticePreviewModal viewState={viewState} viewActions={viewActions} store={store} />
+        <PracticeMainContent
+          state={store.state}
+          practiceState={store.practiceState}
+          status={derived.status}
+          isZenModeEnabled={viewState.isZen}
+          autoStartEnabled={store.autoStartEnabled}
+          setAutoStart={store.setAutoStart}
+          setPreviewExercise={viewActions.setPreview}
+          currentNoteIndex={derived.currentNoteIndex}
+          targetNote={derived.targetNote}
+          targetPitchName={derived.targetPitchName}
+          lastDetectedNote={derived.lastDetectedNote ?? undefined}
+          liveObservations={store.liveObservations}
+          centsTolerance={cents}
+          sheetMusicView={viewState.view}
+          setSheetMusicView={viewActions.setView}
+          osmdHook={osmd}
+          handleRestart={() =>
+            store.practiceState && store.loadExercise(store.practiceState.exercise)
+          }
+          sessions={sessions}
+          start={store.start}
+          stop={store.stop}
+          setIsZenModeEnabled={viewActions.setIsZen}
         />
-
-        {status === 'idle' && (
-          <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
-            <div className="bg-primary/10 mb-4 rounded-full p-4">
-              <Maximize2 className="text-primary h-8 w-8" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold">Select an exercise to begin</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Choose from the library below to start your guided practice session with real-time
-              feedback.
-            </p>
-          </Card>
-        )}
-
-        <SheetMusicContainer
-          status={status}
-          sheetMusicView={sheetMusicView}
-          setSheetMusicView={setSheetMusicView}
-          practiceState={practiceState}
-          osmdHook={osmdHook}
-          currentNoteIndex={currentNoteIndex}
-        />
-
-        <PracticeActiveView
-          status={status}
-          targetNote={targetNote}
-          targetPitchName={targetPitchName}
-          lastDetectedNote={lastDetectedNote}
-          liveObservations={liveObservations}
-          holdDuration={practiceState?.holdDuration}
-          perfectNoteStreak={practiceState?.perfectNoteStreak}
-          zenMode={isZenModeEnabled}
-          centsTolerance={centsTolerance}
-        />
-
-        {status === 'completed' && (
-          <PracticeCompletion
-            onRestart={handleRestart}
-            sessionData={
-              sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id
-                ? sessions[0]
-                : undefined
-            }
-          />
-        )}
-
-        {status !== 'idle' && (
-          <PracticeQuickActions
-            status={status}
-            onRepeatNote={() => {}}
-            onRepeatMeasure={() => {}}
-            onContinue={() => {}}
-            onTogglePause={() => (status === 'listening' ? stop() : start())}
-            onToggleZen={() => setIsZenModeEnabled((v) => !v)}
-            isZen={isZenModeEnabled}
-          />
-        )}
-
         <KeyboardShortcutsDialog />
       </div>
     </div>
   )
 }
 
-/**
- * Derives calculated UI state from the raw practice domain state.
- */
-function derivePracticeState(
-  practiceState: import('@/lib/practice-core').PracticeState | undefined,
-) {
-  const status = practiceState?.status ?? 'idle'
-  const currentNoteIndex = practiceState?.currentIndex ?? 0
-  const targetNote = practiceState?.exercise.notes[currentNoteIndex] ?? undefined
-  const totalNotes = practiceState?.exercise.notes.length ?? 0
-  const isCompleted = status === 'completed'
-  const progress =
-    totalNotes > 0 ? ((currentNoteIndex + (isCompleted ? 1 : 0)) / totalNotes) * 100 : 0
+function PracticePreviewModal(params: {
+  viewState: { preview: Exercise | undefined }
+  viewActions: { setPreview: (ex: Exercise | undefined) => void }
+  store: PracticeStore
+}) {
+  const { viewState, viewActions, store } = params
+  const isOpen = !!viewState.preview
 
-  return { status, currentNoteIndex, targetNote, totalNotes, progress }
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      viewActions.setPreview(undefined)
+    }
+  }
+
+  const handleStart = () => {
+    if (viewState.preview) {
+      store.loadExercise(viewState.preview)
+      viewActions.setPreview(undefined)
+      store.start()
+    }
+  }
+
+  return (
+    <ExercisePreviewModal
+      exercise={viewState.preview}
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      onStart={handleStart}
+    />
+  )
 }
 
-/**
- * Component to wrap sheet music and its annotations.
- */
-function SheetMusicContainer(params: {
-  status: string
-  sheetMusicView: 'focused' | 'full'
-  setSheetMusicView: (v: 'focused' | 'full') => void
-  practiceState: import('@/lib/practice-core').PracticeState | undefined
-  osmdHook: ReturnType<typeof useOSMDSafe>
-  currentNoteIndex: number
-}) {
-  const { status, sheetMusicView, setSheetMusicView, practiceState, osmdHook, currentNoteIndex } =
-    params
-  return (
-    <div className="relative">
-      {status !== 'idle' && (
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setSheetMusicView(sheetMusicView === 'focused' ? 'full' : 'focused')}
-            className="bg-background/80 shadow-sm backdrop-blur-sm"
-          >
-            {sheetMusicView === 'focused' ? (
-              <Maximize2 className="mr-2 h-4 w-4" />
-            ) : (
-              <Minimize2 className="mr-2 h-4 w-4" />
-            )}
-            {sheetMusicView === 'focused' ? 'Full View' : 'Focused View'}
-          </Button>
-        </div>
-      )}
+function PracticeStatusHeader({ store }: { store: PracticeStore }) {
+  const { state, reset } = store
+  const isError = state.status === 'error'
+  const isInitializing = state.status === 'initializing'
 
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-500',
-          sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]',
-        )}
-      >
-        <SheetMusicView
-          musicXML={practiceState?.exercise.musicXML}
-          isReady={osmdHook.isReady}
-          error={osmdHook.error || undefined}
-          containerRef={osmdHook.containerRef}
-        />
-        {practiceState && (
-          <SheetMusicAnnotations
-            annotations={practiceState.exercise.notes.reduce(
-              (acc, note, idx) => {
-                if (note.annotations) acc[idx] = note.annotations
-                return acc
-              },
-              {} as Record<number, any>,
-            )}
-            currentNoteIndex={currentNoteIndex}
-            osmd={osmdHook.osmd || undefined}
-            containerRef={osmdHook.containerRef}
-          />
-        )}
-      </div>
-    </div>
+  if (isError) {
+    const message = state.error?.message ?? 'Unknown error'
+    return <ErrorDisplay error={message} onReset={reset} />
+  }
+
+  if (isInitializing) {
+    return <Card className="p-12 text-center">Initializing Audio...</Card>
+  }
+
+  return <></>
+}
+
+function PracticeControlsRow({
+  store,
+  derived,
+  isZen,
+}: {
+  store: PracticeStore
+  derived: DerivedPracticeState
+  isZen: boolean
+}) {
+  const { state, start, stop, loadExercise } = store
+  const { status, progress, currentNoteIndex, totalNotes } = derived
+
+  const isIdle = state.status === 'idle'
+  const hasExercise = !!state.exercise
+  const shouldShow = !isZen && (!isIdle || hasExercise)
+
+  if (!shouldShow) return <></>
+
+  const handleRestart = () => store.practiceState && loadExercise(store.practiceState.exercise)
+
+  return (
+    <PracticeControls
+      status={status}
+      hasExercise={!!store.practiceState}
+      onStart={start}
+      onStop={stop}
+      onRestart={handleRestart}
+      progress={progress}
+      currentNoteIndex={currentNoteIndex}
+      totalNotes={totalNotes}
+    />
   )
 }

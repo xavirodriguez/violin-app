@@ -3,6 +3,7 @@
  */
 import type { NoteDuration, Pitch, PitchName, Exercise } from './types'
 import { normalizeAccidental } from '../domain/musical-domain'
+import { ExerciseStats } from '@/stores/progress.store'
 
 const DURATION_BEATS: Record<NoteDuration, number> = {
   1: 4,
@@ -54,7 +55,7 @@ export interface ExerciseFilterParams {
     activeTab: string
     difficulty?: string
   }
-  stats: Record<string, any>
+  stats: Record<string, ExerciseStats>
 }
 
 /**
@@ -87,18 +88,30 @@ function isDifficultyMatch(exDiff: string, filterDiff?: string): boolean {
   return isMatch
 }
 
-function isTabMatch(ex: Exercise, activeTab: string, stats: Record<string, any>): boolean {
-  const statsEntry = stats[ex.id]
+function isTabMatch(ex: Exercise, activeTab: string, stats: Record<string, ExerciseStats>): boolean {
+  if (activeTab === 'all') return true
+  if (activeTab === 'inProgress') return isExerciseInProgress(ex.id, stats)
+
+  return isDifficultyCategoryMatch(ex.difficulty, activeTab)
+}
+
+function isExerciseInProgress(exerciseId: string, stats: Record<string, ExerciseStats>): boolean {
+  const statsEntry = stats[exerciseId]
   const isStarted = statsEntry && statsEntry.timesCompleted > 0
   const isNotMastered = statsEntry && statsEntry.bestAccuracy < 100
+  const result = isStarted && isNotMastered
 
-  if (activeTab === 'all') return true
-  if (activeTab === 'beginner') return ex.difficulty === 'Beginner'
-  if (activeTab === 'intermediate') return ex.difficulty === 'Intermediate'
-  if (activeTab === 'advanced') return ex.difficulty === 'Advanced'
-  if (activeTab === 'inProgress') {
-    return isStarted && isNotMastered
+  return result
+}
+
+function isDifficultyCategoryMatch(exDifficulty: string, activeTab: string): boolean {
+  const mapping: Record<string, string> = {
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    advanced: 'Advanced',
   }
+  const target = mapping[activeTab]
+  const isMatch = target === undefined || exDifficulty === target
 
-  return true
+  return isMatch
 }

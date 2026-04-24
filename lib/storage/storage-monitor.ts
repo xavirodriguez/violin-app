@@ -11,21 +11,33 @@
  * @returns Usage percentage (0-100).
  */
 export function estimateLocalStorageUsagePercent(): number {
-  if (typeof window === 'undefined') return 0
+  const isServer = typeof window === 'undefined'
+  if (isServer) return 0
 
-  const ESTIMATED_LIMIT = 5 * 1024 * 1024 // 5MB
+  const limit = 5 * 1024 * 1024
+  const bytes = calculateTotalBytes()
+  const result = formatUsagePercent(bytes, limit)
+
+  return result
+}
+
+function calculateTotalBytes(): number {
   let totalBytes = 0
 
   for (const key in localStorage) {
     if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
       const value = localStorage.getItem(key)
-      if (value) {
-        // Simple byte estimation for UTF-16
-        totalBytes += (key.length + value.length) * 2
-      }
+      const valueLength = value ? value.length : 0
+      totalBytes += (key.length + valueLength) * 2
     }
   }
 
-  const percentage = (totalBytes / ESTIMATED_LIMIT) * 100
-  return Math.min(100, Math.max(0, percentage))
+  return totalBytes
+}
+
+function formatUsagePercent(bytes: number, limit: number): number {
+  const percentage = (bytes / limit) * 100
+  const result = Math.min(100, Math.max(0, percentage))
+
+  return result
 }

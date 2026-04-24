@@ -111,10 +111,14 @@ function createEngineCore(ctx: PracticeEngineContext) {
 
   return {
     getState: () => state,
-    updateState: (e: PracticeEngineEvent) => (state = reducer(state, e)),
+    updateState: (e: PracticeEngineEvent) => {
+      state = reducer(state, e)
+    },
     getOptions: () => getEngineOptions(ctx),
     isRunning: () => isRunning,
-    setRunning: (val: boolean) => (isRunning = val),
+    setRunning: (val: boolean) => {
+      isRunning = val
+    },
   }
 }
 
@@ -170,12 +174,12 @@ function getInitialEngineState(exercise: Exercise): EngineState {
  * @internal
  */
 function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
-  const { centsTolerance, requiredHoldTime } = calculateAdaptiveDifficulty(0)
-  const options = {
+  const difficulty = calculateAdaptiveDifficulty(0)
+  const options: NoteStreamOptions = {
     exercise: ctx.exercise,
     bpm: 60,
-    centsTolerance: ctx.centsTolerance ?? centsTolerance,
-    requiredHoldTime,
+    centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
+    requiredHoldTime: difficulty.requiredHoldTime,
     minRms: 0.01,
     minConfidence: 0.85,
   }
@@ -191,11 +195,11 @@ function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
  * @internal
  */
 function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
-  const streakValue = perfectNoteStreak
+  const streak = perfectNoteStreak
   const toleranceBase = 25
-  const centsTolerance = Math.max(10, toleranceBase - Math.floor(streakValue / 3) * 5)
+  const centsTolerance = Math.max(10, toleranceBase - Math.floor(streak / 3) * 5)
   const holdBase = 500
-  const requiredHoldTime = Math.min(800, holdBase + Math.floor(streakValue / 5) * 100)
+  const requiredHoldTime = Math.min(800, holdBase + Math.floor(streak / 5) * 100)
 
   const result = { centsTolerance, requiredHoldTime }
   return result
@@ -210,10 +214,11 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
  */
 async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
   const { ctx, signal } = params
-  const stream = createRawPitchStream({ audioLoop: ctx.audio, detector: ctx.pitch, signal })
+  const options = { audioLoop: ctx.audio, detector: ctx.pitch, signal }
+  const stream = createRawPitchStream(options)
   const startTime = Date.now()
 
-  return yield* executeNoteLoop({ ...params, stream, startTime })
+  yield* executeNoteLoop({ ...params, stream, startTime })
 }
 
 async function* executeNoteLoop(params: EngineRunnerParams & {
@@ -310,7 +315,8 @@ async function* handleNoteIteration(
   const engineEvent = mapPipelineEventToEngineEvent(event)
 
   if (engineEvent && !signal.aborted) {
-    yield* handleEngineEvent({ event: engineEvent, getState, noteIndex, updateState })
+    const handlerParams = { event: engineEvent, getState, noteIndex, updateState }
+    yield* handleEngineEvent(handlerParams)
   }
 }
 
@@ -318,10 +324,12 @@ function checkIterationTermination(
   params: PipelineParams & { event: PracticeEvent }
 ): boolean {
   const { event, getState, noteIndex } = params
-  const engineEvent = mapPipelineEventToEngineEvent(event) ?? { type: 'NO_NOTE' }
+  const fallback: PracticeEngineEvent = { type: 'NO_NOTE' }
+  const engineEvent = mapPipelineEventToEngineEvent(event) ?? fallback
   const state = getState()
 
-  return shouldTerminatePipeline({ event: engineEvent, state, noteIndex })
+  const shouldBreak = shouldTerminatePipeline({ event: engineEvent, state, noteIndex })
+  return shouldBreak
 }
 
 
@@ -336,7 +344,9 @@ async function* handleEngineEvent(params: EventHandlerParams): AsyncGenerator<Pr
   const { event, updateState, getState } = params
   updateState(event)
   yield event
-  const isTerminal = isTerminalEvent(event, getState())
+
+  const state = getState()
+  const isTerminal = isTerminalEvent(event, state)
   if (isTerminal) {
     yield* finalizeSession(updateState)
   }
@@ -367,10 +377,11 @@ function mapMatchedEvent(payload: {
   const observations = payload.observations ?? []
   const isPerfect = payload.isPerfect ?? false
 
-  return {
+  const matched: PracticeEngineEvent = {
     type: 'NOTE_MATCHED',
     payload: { technique, observations, isPerfect },
   }
+  return matched
 }
 
 /**
@@ -390,7 +401,8 @@ function shouldTerminatePipeline(params: {
   const isMatched = event.type === 'NOTE_MATCHED'
   const isNewNote = isMatched && state.currentNoteIndex !== noteIndex
 
-  return isComplete || isNewNote
+  const result = isComplete || isNewNote
+  return result
 }
 
 /**

@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useAnalyticsStore, type ExerciseStats } from '@/stores/analytics-store'
+import { useAnalyticsStore, type ExerciseStats, type UserProgress } from '@/stores/analytics-store'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
@@ -31,13 +31,6 @@ export function AnalyticsDashboard() {
   const practiceTimeData = getLast7DaysData(recentSessions)
   const heatmapData = getHeatmapData(lastSession)
   const totalCompleted = progress.exercisesCompleted?.length ?? 0
-
-  const handleExport = () => {
-    const allSessions = getSessionHistory(365)
-    const csv = exportSessionsToCSV(allSessions)
-    const filename = `violin-progress-${new Date().toISOString().split('T')[0]}.csv`
-    downloadCSV(csv, filename)
-  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

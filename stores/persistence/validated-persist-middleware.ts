@@ -11,18 +11,26 @@ import {
  * Custom storage that uses SuperJSON for serialization and Pako for compression.
  */
 const createCompressedStorage = (_name: string) => {
-  return createJSONStorage(() => ({
-    getItem: (key): any => {
+  return {
+    getItem: (key: string) => {
       const val = localStorage.getItem(key)
-      if (!val) return undefined
+      if (!val) return null
       try {
-        return decompressAndDeserialize(val)
+        const deserialized = decompressAndDeserialize(val)
+        if (typeof deserialized === 'string') {
+          try {
+            return JSON.parse(deserialized)
+          } catch {
+            return null
+          }
+        }
+        return deserialized as any
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
-        return undefined
+        return null
       }
     },
-    setItem: (key, value) => {
+    setItem: (key: string, value: any) => {
       try {
         const base64 = serializeAndCompress(value)
         localStorage.setItem(key, base64)
@@ -30,8 +38,8 @@ const createCompressedStorage = (_name: string) => {
         console.error(`[Storage] Failed to compress/save ${key}`, e)
       }
     },
-    removeItem: (key) => localStorage.removeItem(key),
-  }))
+    removeItem: (key: string) => localStorage.removeItem(key),
+  }
 }
 
 /**
@@ -43,9 +51,9 @@ const createCompressedStorage = (_name: string) => {
  */
 export const validatedPersist = <T>(
   schema: z.ZodType<T>,
-  config: StateCreator<T, any, any>,
-  options: PersistOptions<T, any>,
-): StateCreator<T, any, any> => {
+  config: StateCreator<T, [], []>,
+  options: PersistOptions<T, unknown>,
+): StateCreator<T, [], []> => {
   return persist(
     (set, get, api) => {
       return config(set, get, api)
@@ -60,5 +68,5 @@ export const validatedPersist = <T>(
         })
       },
     },
-  ) as any
+  ) as StateCreator<T, [], []>
 }

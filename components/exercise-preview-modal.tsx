@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { SheetMusic } from '@/components/sheet-music'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { Music, Play, Target, ListCheck, Volume2 } from 'lucide-react'
-import type { Exercise } from '@/lib/domain/musical-types'
+import type { Exercise, Note } from '@/lib/domain/musical-types'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { formatPitchName, MusicalNote } from '@/lib/practice-core'
 import { useState } from 'react'
@@ -37,44 +37,11 @@ export function ExercisePreviewModal({
 
   const playReferenceAudio = async () => {
     if (!exercise || isPlaying) return
-
     setIsPlaying(true)
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-    const audioContext = new AudioContextClass()
+    const audioContext = createAudioContext()
 
     try {
-      let currentTime = audioContext.currentTime
-
-      for (const note of exercise.notes) {
-        const noteName = formatPitchName(note.pitch)
-        const musicalNote = MusicalNote.fromName(noteName)
-        const freq = musicalNote.frequency
-
-        // Use exercise tempo if available, default to 120 BPM
-        const bpm = (exercise as any).tempoRange?.min ?? 120
-        const durationSeconds = (4 / note.duration) * (60 / bpm)
-
-        const osc = audioContext.createOscillator()
-        const gain = audioContext.createGain()
-
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, currentTime)
-
-        gain.gain.setValueAtTime(0, currentTime)
-        gain.gain.linearRampToValueAtTime(0.15, currentTime + 0.02)
-        gain.gain.exponentialRampToValueAtTime(0.001, currentTime + durationSeconds)
-
-        osc.connect(gain)
-        gain.connect(audioContext.destination)
-
-        osc.start(currentTime)
-        osc.stop(currentTime + durationSeconds)
-
-        currentTime += durationSeconds + 0.02
-      }
-
-      // Reset isPlaying after total duration
-      const totalDuration = currentTime - audioContext.currentTime
+      const totalDuration = scheduleExercisePlayback(exercise, audioContext)
       setTimeout(() => setIsPlaying(false), totalDuration * 1000)
     } catch (err) {
       console.error('Failed to play reference audio:', err)
@@ -83,88 +50,212 @@ export function ExercisePreviewModal({
   }
 
   if (!exercise) return <></>
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden p-0">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="text-2xl font-bold">{exercise.name}</DialogTitle>
-          <DialogDescription>
-            {exercise.category} • {exercise.difficulty} • {exercise.estimatedDuration}
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="flex-1 p-6 pt-2">
-          <div className="space-y-8">
-            <section>
-              <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-                <Music className="text-primary h-5 w-5" />
-                Sheet Music
-              </h4>
-              <div className="min-h-[300px] overflow-hidden rounded-xl border bg-white">
-                <SheetMusic
-                  containerRef={osmdHook.containerRef}
-                  isReady={osmdHook.isReady}
-                  error={osmdHook.error}
-                />
-              </div>
-            </section>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <section className="space-y-4">
-                <h4 className="flex items-center gap-2 text-lg font-semibold">
-                  <Target className="text-primary h-5 w-5" />
-                  Technical Goals
-                </h4>
-                <div className="bg-muted/30 rounded-xl border p-4">
-                  <ul className="space-y-3">
-                    {exercise.technicalGoals.map((goal, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-sm">
-                        <div className="bg-primary/10 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
-                          <CheckIcon className="text-primary h-3 w-3" />
-                        </div>
-                        {goal}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <p className="text-lg font-semibold">{exercise.technicalTechnique}</p>
-              </section>
-              <section className="space-y-4">
-                <h4 className="flex items-center gap-2 text-lg font-semibold">
-                  Finger Position Guide
-                </h4>
-                <div className="bg-card flex h-full flex-col justify-center rounded-xl border p-4">
-                  <ViolinFingerboard
-                    targetNote={undefined}
-                    detectedPitchName={undefined}
-                    centsDeviation={undefined}
-                  />
-                </div>
-              </section>
-            </div>
-          </div>
-        </ScrollArea>
-        <DialogFooter className="bg-muted/20 flex flex-row items-center gap-4 border-t p-6 sm:justify-between">
-          <Button
-            variant="outline"
-            onClick={playReferenceAudio}
-            disabled={isPlaying}
-            className="gap-2"
-          >
-            {isPlaying ? (
-              <div className="bg-primary h-4 w-4 animate-pulse rounded-full" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-            {isPlaying ? 'Playing...' : 'Listen Reference'}
-          </Button>
-          <Button onClick={onStart} size="lg" className="gap-2 px-8 font-bold">
-            <Play className="h-4 w-4" /> Start Practice
-          </Button>
-        </DialogFooter>
+        <PreviewHeader exercise={exercise} />
+        <PreviewScrollContent exercise={exercise} osmdHook={osmdHook} />
+        <PreviewFooter
+          isPlaying={isPlaying}
+          onPlay={playReferenceAudio}
+          onStart={onStart}
+        />
       </DialogContent>
     </Dialog>
   )
 }
-function CheckIcon(props: any) {
+
+function PreviewHeader({ exercise }: { exercise: Exercise }) {
+  const { name, category, difficulty, estimatedDuration } = exercise
+  return (
+    <DialogHeader className="p-6 pb-2">
+      <DialogTitle className="text-2xl font-bold">{name}</DialogTitle>
+      <DialogDescription>
+        {category} • {difficulty} • {estimatedDuration}
+      </DialogDescription>
+    </DialogHeader>
+  )
+}
+
+function PreviewScrollContent({
+  exercise,
+  osmdHook,
+}: {
+  exercise: Exercise
+  osmdHook: ReturnType<typeof useOSMDSafe>
+}) {
+  return (
+    <ScrollArea className="flex-1 p-6 pt-2">
+      <div className="space-y-8">
+        <SheetMusicSection osmdHook={osmdHook} />
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <TechnicalGoalsSection exercise={exercise} />
+          <FingerPositionSection />
+        </div>
+      </div>
+    </ScrollArea>
+  )
+}
+
+function SheetMusicSection({ osmdHook }: { osmdHook: ReturnType<typeof useOSMDSafe> }) {
+  return (
+    <section>
+      <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+        <Music className="text-primary h-5 w-5" />
+        Sheet Music
+      </h4>
+      <div className="min-h-[300px] overflow-hidden rounded-xl border bg-white">
+        <SheetMusic
+          containerRef={osmdHook.containerRef}
+          isReady={osmdHook.isReady}
+          error={osmdHook.error}
+        />
+      </div>
+    </section>
+  )
+}
+
+function TechnicalGoalsSection({ exercise }: { exercise: Exercise }) {
+  return (
+    <section className="space-y-4">
+      <h4 className="flex items-center gap-2 text-lg font-semibold">
+        <Target className="text-primary h-5 w-5" />
+        Technical Goals
+      </h4>
+      <div className="bg-muted/30 rounded-xl border p-4">
+        <ul className="space-y-3">
+          {exercise.technicalGoals.map((goal, idx) => (
+            <GoalListItem key={idx} goal={goal} />
+          ))}
+        </ul>
+      </div>
+      <p className="text-lg font-semibold">{exercise.technicalTechnique}</p>
+    </section>
+  )
+}
+
+function GoalListItem({ goal }: { goal: string }) {
+  return (
+    <li className="flex items-start gap-3 text-sm">
+      <div className="bg-primary/10 mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
+        <GoalCheckIcon className="text-primary h-3 w-3" />
+      </div>
+      {goal}
+    </li>
+  )
+}
+
+function FingerPositionSection() {
+  return (
+    <section className="space-y-4">
+      <h4 className="flex items-center gap-2 text-lg font-semibold">
+        Finger Position Guide
+      </h4>
+      <div className="bg-card flex h-full flex-col justify-center rounded-xl border p-4">
+        <ViolinFingerboard
+          targetNote={undefined}
+          detectedPitchName={undefined}
+          centsDeviation={undefined}
+        />
+      </div>
+    </section>
+  )
+}
+
+function PreviewFooter({
+  isPlaying,
+  onPlay,
+  onStart,
+}: {
+  isPlaying: boolean
+  onPlay: () => void
+  onStart: () => void
+}) {
+  return (
+    <DialogFooter className="bg-muted/20 flex flex-row items-center gap-4 border-t p-6 sm:justify-between">
+      <Button variant="outline" onClick={onPlay} disabled={isPlaying} className="gap-2">
+        {isPlaying ? <PlayingIndicator /> : <Volume2 className="h-4 w-4" />}
+        {isPlaying ? 'Playing...' : 'Listen Reference'}
+      </Button>
+      <Button onClick={onStart} size="lg" className="gap-2 px-8 font-bold">
+        <Play className="h-4 w-4" /> Start Practice
+      </Button>
+    </DialogFooter>
+  )
+}
+
+function PlayingIndicator() {
+  return <div className="bg-primary h-4 w-4 animate-pulse rounded-full" />
+}
+
+function createAudioContext(): AudioContext {
+  const WinAudioContext =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  const context = new WinAudioContext()
+  const result = context
+
+  return result
+}
+
+function scheduleExercisePlayback(exercise: Exercise, context: AudioContext): number {
+  let currentTime = context.currentTime
+  const bpm = exercise.tempoRange?.min ?? 120
+
+  for (const note of exercise.notes) {
+    const durationSeconds = calculateNoteDuration(note.duration, bpm)
+    const frequency = getNoteFrequency(note)
+
+    scheduleNotePlayback({ context, frequency, startTime: currentTime, duration: durationSeconds })
+    currentTime += durationSeconds + 0.02
+  }
+
+  const finalDuration = currentTime - context.currentTime
+  return finalDuration
+}
+
+function calculateNoteDuration(duration: number, bpm: number): number {
+  const beatsPerWholeNote = 4
+  const secondsPerMinute = 60
+  const durationSeconds = (beatsPerWholeNote / duration) * (secondsPerMinute / bpm)
+
+  return durationSeconds
+}
+
+function getNoteFrequency(note: Note): number {
+  const noteName = formatPitchName(note.pitch)
+  const musicalNote = MusicalNote.fromName(noteName)
+  const frequency = musicalNote.frequency
+
+  return frequency
+}
+
+function scheduleNotePlayback(params: {
+  context: AudioContext
+  frequency: number
+  startTime: number
+  duration: number
+}): void {
+  const { context, frequency, startTime, duration } = params
+  const oscillator = context.createOscillator()
+  const gainNode = context.createGain()
+
+  oscillator.type = 'triangle'
+  oscillator.frequency.setValueAtTime(frequency, startTime)
+
+  gainNode.gain.setValueAtTime(0, startTime)
+  gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.02)
+  gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+
+  oscillator.connect(gainNode)
+  gainNode.connect(context.destination)
+
+  oscillator.start(startTime)
+  oscillator.stop(startTime + duration)
+}
+
+function GoalCheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

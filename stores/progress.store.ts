@@ -305,13 +305,27 @@ function processSessionRhythm(
   for (const nr of session.noteResults) {
     const errorMs = nr.technique?.rhythm.onsetErrorMs
     if (errorMs !== undefined) {
-      const error = Math.abs(errorMs)
-      result.totalError += error
-      if (error <= 40) result.inWindowCount++
-      result.totalCount++
+      const { totalError, inWindowCount, totalCount } = updateRhythmFromNote(errorMs, result)
+      result.totalError = totalError
+      result.inWindowCount = inWindowCount
+      result.totalCount = totalCount
     }
   }
   return result
+}
+
+function updateRhythmFromNote(errorMs: number, current: RhythmMetricsAccumulator): RhythmMetricsAccumulator {
+  const error = Math.abs(errorMs)
+  const nextError = current.totalError + error
+  const nextCount = current.totalCount + 1
+  const isPerfect = error <= 40
+  const nextInWindow = isPerfect ? current.inWindowCount + 1 : current.inWindowCount
+
+  return {
+    totalError: nextError,
+    inWindowCount: nextInWindow,
+    totalCount: nextCount,
+  }
 }
 
 function calculateRhythmScore(metrics: RhythmMetricsAccumulator): number {
@@ -465,12 +479,28 @@ function assembleSessionUpdates(params: {
     statsMap: exerciseStats,
   })
 
+  return assembleStateUpdates({ session, get, exercisesCompleted, nextStatsMap, nextBuffer, nextSnapshots, nextCounter })
+}
+
+function assembleStateUpdates(params: {
+  session: PracticeSession
+  get: () => ProgressState
+  exercisesCompleted: string[]
+  nextStatsMap: Record<string, ExerciseStats>
+  nextBuffer: ProgressEvent[]
+  nextSnapshots: ProgressSnapshot[]
+  nextCounter: number
+}): Partial<ProgressState> {
+  const { session, get, exercisesCompleted, nextStatsMap, nextBuffer, nextSnapshots, nextCounter } = params
+  const nextExercises = exercisesCompleted.includes(session.exerciseId)
+      ? exercisesCompleted
+      : [...exercisesCompleted, session.exerciseId]
+  const practiceTimeAdd = Math.floor(session.durationMs / 1000)
+
   return {
     totalPracticeSessions: get().totalPracticeSessions + 1,
-    totalPracticeTime: get().totalPracticeTime + Math.floor(session.durationMs / 1000),
-    exercisesCompleted: exercisesCompleted.includes(session.exerciseId)
-      ? exercisesCompleted
-      : [...exercisesCompleted, session.exerciseId],
+    totalPracticeTime: get().totalPracticeTime + practiceTimeAdd,
+    exercisesCompleted: nextExercises,
     exerciseStats: nextStatsMap,
     eventBuffer: nextBuffer,
     snapshots: nextSnapshots,

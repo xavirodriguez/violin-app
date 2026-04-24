@@ -157,6 +157,13 @@ export interface ExerciseData {
   technicalTechnique: string
   /** Whether this exercise is highlighted as a recommendation in the UI. */
   recommended?: boolean
+  /** Optional tempo range for the exercise. */
+  tempoRange?: {
+    /** Minimum tempo in BPM. */
+    min: number
+    /** Maximum tempo in BPM. */
+    max: number
+  }
 }
 
 /**
@@ -335,6 +342,12 @@ export interface TunerStore {
    * @param confidence - Detection confidence (0.0 to 1.0).
    */
   updatePitch: (pitch: number, confidence: number) => void
+
+  /**
+   * Internal handler for processing detected pitch and updating state.
+   * @internal
+   */
+  handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => void
 
   /**
    * Transitions the tuner into the 'LISTENING' state.

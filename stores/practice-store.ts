@@ -78,7 +78,7 @@ export interface PracticeStore {
 }
 
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>
-type SafePartial = Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
+type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>)
 
 interface ResolveUpdateParams {
   currentState: PracticeStore
@@ -235,15 +235,16 @@ function computeStateUpdates(params: {
 }): Partial<PracticeStore> {
   const { currentState, next } = params
   const practiceState = next.practiceState || currentState.practiceState
-  const liveObs = practiceState
+  const observations = practiceState
     ? getUpdatedLiveObservations(practiceState)
     : currentState.liveObservations
 
-  return {
+  const result = {
     ...next,
     practiceState,
-    liveObservations: next.liveObservations ?? liveObs,
+    liveObservations: next.liveObservations ?? observations,
   }
+  return result
 }
 
 function injectActiveStateUpdates(params: {
@@ -526,12 +527,13 @@ function beginAudioInitialization(
 ) {
   set((currentState) => {
     const initStatus = transitions.initialize(currentState.state.exercise)
-    return {
+    const updates = {
       ...currentState,
       isInitializing: true,
       error: undefined,
       state: initStatus,
     }
+    return updates
   })
 }
 
@@ -586,19 +588,28 @@ function getStartStateUpdates(params: {
 }
 
 function getResetStateForIndex(state: PracticeState, index: number): PracticeState {
-  const total = state.exercise.notes.length
-  const clamped = Math.max(0, Math.min(index, total - 1))
-  const history: DetectedNote[] = []
-  const listeningStatus: PracticeStatus = 'listening'
+  const clamped = clampIndex(index, state.exercise.notes.length)
+  const result = assembleResetState(state, clamped)
 
+  return result
+}
+
+function clampIndex(index: number, total: number): number {
+  const min = 0
+  const max = total - 1
+  const clamped = Math.max(min, Math.min(index, max))
+
+  return clamped
+}
+
+function assembleResetState(state: PracticeState, index: number): PracticeState {
   const result = {
     ...state,
-    currentIndex: clamped,
-    status: listeningStatus,
+    currentIndex: index,
+    status: 'listening' as PracticeStatus,
     holdDuration: 0,
-    detectionHistory: history,
+    detectionHistory: [],
   }
-
   return result
 }
 
@@ -640,19 +651,28 @@ function getStartFailureUpdates(currentState: PracticeStore, error: unknown): Pa
 }
 
 function getResetUpdates() {
-  const idleState: PracticeStoreState = {
+  const idleState = createIdleStoreState()
+  const result = assembleResetUpdates(idleState)
+
+  return result
+}
+
+function createIdleStoreState(): PracticeStoreState {
+  const idle: PracticeStoreState = {
     status: 'idle',
     exercise: undefined,
     error: undefined,
   }
+  return idle
+}
 
-  const result = {
+function assembleResetUpdates(idleState: PracticeStoreState) {
+  const updates = {
     state: idleState,
     practiceState: undefined,
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
   }
-
-  return result
+  return updates
 }

@@ -9,225 +9,238 @@ import { Observation } from '@/lib/technique-types'
  * @public
  */
 export interface PracticeFeedbackProps {
-  /**
-   * The scientific pitch name of the target note (e.g., "A4").
-   */
+  /** The scientific pitch name of the target note (e.g., "A4"). */
   targetNote: string
-
-  /**
-   * The scientific pitch name detected by the audio engine.
-   * `undefined` indicates no signal or signal below confidence threshold.
-   */
+  /** The scientific pitch name detected by the audio engine. */
   detectedPitchName: string | undefined
-
-  /**
-   * Pitch deviation in cents from the target note's ideal frequency.
-   * Positive values are sharp, negative values are flat.
-   */
+  /** Pitch deviation in cents from the target note's ideal frequency. */
   centsOff: number | undefined
-
-  /**
-   * Current status of the practice state machine.
-   *
-   * @remarks
-   * Values like 'listening', 'validating', 'correct', 'completed' affect
-   * which UI feedback layers are prioritized.
-   */
+  /** Current status of the practice state machine. */
   status: string
-
-  /**
-   * Maximum allowed deviation in cents to be considered "in tune".
-   *
-   * @defaultValue 10
-   */
+  /** Maximum allowed deviation in cents to be considered "in tune". */
   centsTolerance?: number
-
-  /**
-   * List of real-time technical observations (intonation, stability, etc.).
-   *
-   * @remarks
-   * These are derived from a rolling window of detections. Usually limited
-   * to the top 2 most severe/confident observations.
-   */
+  /** List of real-time technical observations. */
   liveObservations?: Observation[]
-
-  /**
-   * Duration the current note has been held correctly in tune (ms).
-   */
+  /** Duration the current note has been held correctly in tune (ms). */
   holdDuration?: number
-
-  /**
-   * Required hold time for a note to be considered successfully matched (ms).
-   */
+  /** Required hold time for a note to be considered successfully matched (ms). */
   requiredHoldTime?: number
-
-  /**
-   * Current count of consecutive notes played with high accuracy (`< 5` cents).
-   */
+  /** Current count of consecutive notes played with high accuracy. */
   perfectNoteStreak?: number
 }
 
 /**
  * Component that provides real-time pedagogical feedback during a practice session.
- *
- * @remarks
- * This component implements a hierarchical feedback system designed to guide
- * students from raw pitch matching toward technical mastery:
- *
- * **Feedback Levels**:
- * 1. **Primary Status (Reactive)**: Large, high-contrast indicators for "Perfect", "Wrong Note", or "Adjust" (arrows). Optimized for peripheral vision while reading sheet music.
- * 2. **Technical Details (Optional)**: Provides exact numeric cents deviation for advanced students requiring precise data.
- * 3. **Live Observations (Heuristic)**: Displays actionable, human-readable tips (e.g., "Consistently sharp") derived from analysis of the audio stream patterns.
- *
- * **Performance**: This component is updated at the frequency of the audio pipeline (up to 60Hz).
- * Layout shifts are minimized to ensure a stable reading environment for the student.
- *
- * **Design Goal**:
- * The UI is optimized for "at-a-glance" recognition while playing an instrument,
- * using color coding (Green/Yellow/Red) and large iconography.
- *
- * @param props - Component props.
- *
- * @example
- * ```tsx
- * <PracticeFeedback
- *   targetNote="A4"
- *   detectedPitchName="A#4"
- *   centsOff={15}
- *   status="listening"
- * />
- * ```
- *
- * @public
  */
-export function PracticeFeedback({
-  targetNote,
-  detectedPitchName,
-  centsOff,
-  status,
-  centsTolerance = 10,
-  liveObservations = [],
-}: PracticeFeedbackProps) {
-  /** Derived boolean: True if the detected pitch is within the user's current tolerance. */
+export function PracticeFeedback(props: PracticeFeedbackProps) {
+  const {
+    targetNote,
+    detectedPitchName,
+    centsOff,
+    status,
+    centsTolerance = 10,
+    liveObservations = [],
+  } = props
+
   const isInTune = centsOff !== undefined && Math.abs(centsOff) < centsTolerance
-  /** Derived boolean: True if a valid audio signal is being processed. */
   const isPlaying = !!(detectedPitchName && detectedPitchName !== '')
-  /** Derived boolean: True if the detected note matches the target scientific pitch. */
   const isCorrectNote = detectedPitchName === targetNote
 
   return (
     <div className="space-y-8">
-      {/* LEVEL 1: Main Status - Dominant feedback for quick recognition */}
-      <div className="flex min-h-[200px] items-center justify-center">
-        {status === 'listening' && !isPlaying && (
-          <div className="text-center">
-            <div className="mb-4 text-6xl">🎻</div>
-            <div className="text-muted-foreground text-2xl font-medium">Play {targetNote}</div>
-          </div>
-        )}
+      <FeedbackStatus
+        targetNote={targetNote}
+        detectedPitchName={detectedPitchName}
+        centsOff={centsOff}
+        status={status}
+        isPlaying={isPlaying}
+        isCorrectNote={isCorrectNote}
+        isInTune={isInTune}
+      />
 
-        {isPlaying && isCorrectNote && isInTune && (
-          <div className="text-center">
-            <CheckCircle2 className="mx-auto mb-4 h-32 w-32 text-green-500" />
-            <div className="text-4xl font-bold text-green-500">Perfect!</div>
-          </div>
-        )}
+      <TechnicalDetails
+        isPlaying={isPlaying}
+        centsOff={centsOff}
+        centsTolerance={centsTolerance}
+      />
 
-        {isPlaying && isCorrectNote && !isInTune && (
-          <div className="text-center">
-            <div
-              className="mb-4 text-8xl font-bold"
-              style={{
-                color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444',
-              }}
-            >
-              {centsOff! > 0 ? '↑' : '↓'}
-            </div>
-            <div
-              className="text-3xl font-semibold"
-              style={{
-                color: Math.abs(centsOff!) < 15 ? '#F59E0B' : '#EF4444',
-              }}
-            >
-              {Math.abs(centsOff!) < 15 ? 'Almost!' : 'Adjust'}
-            </div>
-            <div className="text-muted-foreground mt-2 text-xl">
-              {centsOff! > 0 ? 'Move finger down' : 'Move finger up'}
-            </div>
-          </div>
-        )}
-
-        {isPlaying && !isCorrectNote && (
-          <div className="text-center">
-            <AlertTriangle className="mx-auto mb-4 h-24 w-24 text-yellow-500" />
-            <div className="mb-2 text-3xl font-bold text-yellow-500">Wrong Note</div>
-            <div className="text-muted-foreground text-xl">
-              Playing: <span className="font-mono">{detectedPitchName}</span>
-            </div>
-            <div className="text-muted-foreground text-xl">
-              Need: <span className="font-mono">{targetNote}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* LEVEL 2: Precise Metrics - For students who want exact data */}
-      {isPlaying && centsOff !== undefined && (
-        <details className="text-center">
-          <summary className="text-muted-foreground cursor-pointer text-sm">
-            Show Technical Details
-          </summary>
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="flex justify-center gap-8">
-              <div>
-                <div className="text-muted-foreground">Deviation</div>
-                <div className="font-mono text-lg">
-                  {centsOff > 0 ? '+' : ''}
-                  {centsOff.toFixed(1)}¢
-                </div>
-              </div>
-              <div>
-                <div className="text-muted-foreground">Tolerance</div>
-                <div className="font-mono text-lg">±{centsTolerance}¢</div>
-              </div>
-            </div>
-          </div>
-        </details>
-      )}
-
-      {/* LEVEL 3: Live Observations - Actionable pedagogical tips */}
-      {liveObservations.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
-            <Info className="h-4 w-4" />
-            <span>Live Feedback</span>
-          </div>
-          {liveObservations.slice(0, 2).map((obs, idx) => (
-            <div
-              key={idx}
-              className={`rounded-lg border p-3 ${
-                obs.severity === 3
-                  ? 'border-red-500/20 bg-red-500/10'
-                  : obs.severity === 2
-                    ? 'border-yellow-500/20 bg-yellow-500/10'
-                    : 'border-blue-500/20 bg-blue-500/10'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <AlertTriangle
-                  className={`h-5 w-5 flex-shrink-0 ${
-                    obs.severity === 3 ? 'text-red-500' : 'text-yellow-500'
-                  }`}
-                />
-                <div className="flex-1">
-                  <div className="text-sm font-bold">{obs.message}</div>
-                  <div className="text-muted-foreground text-xs">{obs.tip}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <LiveObservationsList observations={liveObservations} />
     </div>
   )
+}
+
+function FeedbackStatus(props: {
+  targetNote: string
+  detectedPitchName: string | undefined
+  centsOff: number | undefined
+  status: string
+  isPlaying: boolean
+  isCorrectNote: boolean
+  isInTune: boolean
+}) {
+  const { targetNote, detectedPitchName, centsOff, status, isPlaying, isCorrectNote, isInTune } =
+    props
+
+  if (status === 'listening' && !isPlaying) {
+    return <WaitingPrompt targetNote={targetNote} />
+  }
+
+  if (isPlaying && isCorrectNote && isInTune) {
+    return <PerfectFeedback />
+  }
+
+  if (isPlaying && isCorrectNote && !isInTune) {
+    return <AdjustmentFeedback centsOff={centsOff!} />
+  }
+
+  if (isPlaying && !isCorrectNote) {
+    return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
+  }
+
+  return <div className="flex min-h-[200px] items-center justify-center" />
+}
+
+function WaitingPrompt({ targetNote }: { targetNote: string }) {
+  return (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <div className="text-center">
+        <div className="mb-4 text-6xl">🎻</div>
+        <div className="text-muted-foreground text-2xl font-medium">Play {targetNote}</div>
+      </div>
+    </div>
+  )
+}
+
+function PerfectFeedback() {
+  return (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <div className="text-center">
+        <CheckCircle2 className="mx-auto mb-4 h-32 w-32 text-green-500" />
+        <div className="text-4xl font-bold text-green-500">Perfect!</div>
+      </div>
+    </div>
+  )
+}
+
+function AdjustmentFeedback({ centsOff }: { centsOff: number }) {
+  const isAlmost = Math.abs(centsOff) < 15
+  const color = isAlmost ? '#F59E0B' : '#EF4444'
+  const directionIcon = centsOff > 0 ? '↑' : '↓'
+  const statusText = isAlmost ? 'Almost!' : 'Adjust'
+  const tipText = centsOff > 0 ? 'Move finger down' : 'Move finger up'
+
+  return (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <div className="text-center">
+        <div className="mb-4 text-8xl font-bold" style={{ color }}>
+          {directionIcon}
+        </div>
+        <div className="text-3xl font-semibold" style={{ color }}>
+          {statusText}
+        </div>
+        <div className="text-muted-foreground mt-2 text-xl">{tipText}</div>
+      </div>
+    </div>
+  )
+}
+
+function WrongNoteFeedback({
+  detectedNote,
+  targetNote,
+}: {
+  detectedNote: string
+  targetNote: string
+}) {
+  return (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <div className="text-center">
+        <AlertTriangle className="mx-auto mb-4 h-24 w-24 text-yellow-500" />
+        <div className="mb-2 text-3xl font-bold text-yellow-500">Wrong Note</div>
+        <div className="text-muted-foreground text-xl">
+          Playing: <span className="font-mono">{detectedNote}</span>
+        </div>
+        <div className="text-muted-foreground text-xl">
+          Need: <span className="font-mono">{targetNote}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TechnicalDetails(props: {
+  isPlaying: boolean
+  centsOff: number | undefined
+  centsTolerance: number
+}) {
+  const { isPlaying, centsOff, centsTolerance } = props
+  const shouldShow = isPlaying && centsOff !== undefined
+
+  if (!shouldShow) return <></>
+
+  return (
+    <details className="text-center">
+      <summary className="text-muted-foreground cursor-pointer text-sm">
+        Show Technical Details
+      </summary>
+      <div className="mt-4 space-y-2 text-sm">
+        <div className="flex justify-center gap-8">
+          <MetricDisplay label="Deviation" value={`${centsOff > 0 ? '+' : ''}${centsOff.toFixed(1)}¢`} />
+          <MetricDisplay label="Tolerance" value={`±${centsTolerance}¢`} />
+        </div>
+      </div>
+    </details>
+  )
+}
+
+function MetricDisplay({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-muted-foreground">{label}</div>
+      <div className="font-mono text-lg">{value}</div>
+    </div>
+  )
+}
+
+function LiveObservationsList({ observations }: { observations: Observation[] }) {
+  const hasObservations = observations.length > 0
+  if (!hasObservations) return <></>
+
+  return (
+    <div className="space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
+        <Info className="h-4 w-4" />
+        <span>Live Feedback</span>
+      </div>
+      {observations.slice(0, 2).map((obs, idx) => (
+        <ObservationItem key={idx} observation={obs} />
+      ))}
+    </div>
+  )
+}
+
+function ObservationItem({ observation }: { observation: Observation }) {
+  const { severity, message, tip } = observation
+  const styles = getObservationStyles(severity)
+
+  return (
+    <div className={`rounded-lg border p-3 ${styles.container}`}>
+      <div className="flex items-start gap-3">
+        <AlertTriangle className={`h-5 w-5 flex-shrink-0 ${styles.icon}`} />
+        <div className="flex-1">
+          <div className="text-sm font-bold">{message}</div>
+          <div className="text-muted-foreground text-xs">{tip}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function getObservationStyles(severity: number) {
+  if (severity === 3) {
+    return { container: 'border-red-500/20 bg-red-500/10', icon: 'text-red-500' }
+  }
+  if (severity === 2) {
+    return { container: 'border-yellow-500/20 bg-yellow-500/10', icon: 'text-yellow-500' }
+  }
+  return { container: 'border-blue-500/20 bg-blue-500/10', icon: 'text-blue-500' }
 }

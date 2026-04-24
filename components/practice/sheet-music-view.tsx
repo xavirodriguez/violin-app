@@ -23,7 +23,7 @@ export function SheetMusicView({
   return (
     <Card className="p-6">
       <ErrorBoundary fallback={<div>Failed to load sheet music</div>}>
-        <SheetMusic containerRef={containerRef} isReady={isReady} error={error ?? null} />
+        <SheetMusic containerRef={containerRef} isReady={isReady} error={error} />
       </ErrorBoundary>
     </Card>
   )

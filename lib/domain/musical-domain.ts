@@ -80,21 +80,38 @@ const ACCIDENTAL_MAP: Record<string, CanonicalAccidental> = {
 export function normalizeAccidental(input: number | string | undefined): CanonicalAccidental {
   const isUndefined = input === undefined
   if (isUndefined) {
-    const defaultAccidental = 0
-    return defaultAccidental as CanonicalAccidental
+    return handleUndefinedAccidental()
   }
 
+  const result = lookupAccidentalMapping(input)
+  const finalAccidental = result
+
+  return finalAccidental
+}
+
+function handleUndefinedAccidental(): CanonicalAccidental {
+  const defaultAccidental = 0
+  const result = defaultAccidental as CanonicalAccidental
+
+  return result
+}
+
+function lookupAccidentalMapping(input: number | string): CanonicalAccidental {
   const mappingKey = String(input)
-  const mappingTable = ACCIDENTAL_MAP
-  const mappedValue = mappingTable[mappingKey]
-
+  const mappedValue = ACCIDENTAL_MAP[mappingKey]
   const hasMapping = mappedValue !== undefined
+
   if (hasMapping) {
-    return mappedValue!
+    return mappedValue as CanonicalAccidental
   }
 
+  throwUnsupportedAlterError(input)
+}
+
+function throwUnsupportedAlterError(input: number | string): never {
+  const errorMsg = `Unsupported alter value: ${input}`
   throw new AppError({
-    message: `Unsupported alter value: ${input}`,
+    message: errorMsg,
     code: ERROR_CODES.DATA_VALIDATION_ERROR,
   })
 }
