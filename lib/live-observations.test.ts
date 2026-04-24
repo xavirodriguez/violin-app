@@ -14,7 +14,7 @@ describe('calculateLiveObservations', () => {
 
   it('should return empty array if less than 5 detections', () => {
     const detections = Array(4)
-      .fill(null)
+      .fill(undefined)
       .map(() => mockDetection())
     const result = calculateLiveObservations(detections, 'A4')
     expect(result).toEqual([])
@@ -22,7 +22,7 @@ describe('calculateLiveObservations', () => {
 
   it('should detect consistently sharp intonation', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           cents: 20,
@@ -37,7 +37,7 @@ describe('calculateLiveObservations', () => {
 
   it('should detect consistently flat intonation', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           cents: -20,
@@ -52,7 +52,7 @@ describe('calculateLiveObservations', () => {
 
   it('should detect wavering pitch (unstable)', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           cents: i % 2 === 0 ? 20 : -20,
@@ -66,7 +66,7 @@ describe('calculateLiveObservations', () => {
 
   it('should detect wrong note', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           pitch: 'G4',
@@ -82,7 +82,7 @@ describe('calculateLiveObservations', () => {
 
   it('should detect weak tone (low confidence)', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           confidence: 0.5,
@@ -96,7 +96,7 @@ describe('calculateLiveObservations', () => {
 
   it('should limit to maximum 2 observations', () => {
     const detections = Array(10)
-      .fill(null)
+      .fill(undefined)
       .map((_, i) =>
         mockDetection({
           pitch: 'G4', // Wrong note (Severity 3)

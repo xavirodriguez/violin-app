@@ -30,7 +30,7 @@ describe('useAnalyticsStore', () => {
     const now = Date.now()
     vi.setSystemTime(now)
 
-    startSession('ex1', 'Exercise 1', 'practice')
+    startSession({ exerciseId: 'ex1', exerciseName: 'Exercise 1', mode: 'practice' })
 
     const session = useAnalyticsStore.getState().currentSession
     expect(session).toBeDefined()
@@ -41,16 +41,16 @@ describe('useAnalyticsStore', () => {
 
   it('should record note attempts immutably', () => {
     const { startSession, recordNoteAttempt } = useAnalyticsStore.getState()
-    startSession('ex1', 'Exercise 1', 'practice')
+    startSession({ exerciseId: 'ex1', exerciseName: 'Exercise 1', mode: 'practice' })
 
-    recordNoteAttempt(0, 'A4', 10, true)
+    recordNoteAttempt({ noteIndex: 0, targetPitch: 'A4', cents: 10, wasInTune: true })
 
     const session1 = useAnalyticsStore.getState().currentSession
     expect(session1?.noteResults).toHaveLength(1)
     expect(session1?.noteResults[0].attempts).toBe(1)
     expect(session1?.noteResults[0].averageCents).toBe(10)
 
-    recordNoteAttempt(0, 'A4', 20, true)
+    recordNoteAttempt({ noteIndex: 0, targetPitch: 'A4', cents: 20, wasInTune: true })
     const session2 = useAnalyticsStore.getState().currentSession
     expect(session2?.noteResults[0].attempts).toBe(2)
     expect(session2?.noteResults[0].averageCents).toBe(15) // (10 + 20) / 2
@@ -63,13 +63,12 @@ describe('useAnalyticsStore', () => {
     const { startSession, recordNoteAttempt, endSession } = useAnalyticsStore.getState()
     const startTime = Date.now()
     vi.setSystemTime(startTime)
-    startSession('ex1', 'Exercise 1', 'practice')
+    startSession({ exerciseId: 'ex1', exerciseName: 'Exercise 1', mode: 'practice' })
 
-    recordNoteAttempt(0, 'A4', 0, true)
+    recordNoteAttempt({ noteIndex: 0, targetPitch: 'A4', cents: 0, wasInTune: true })
 
     const endTime = startTime + 5000 // 5 seconds later
     vi.setSystemTime(endTime)
-
     endSession()
 
     const state = useAnalyticsStore.getState()
@@ -169,44 +168,50 @@ describe('useAnalyticsStore', () => {
     expect(ex1Stats.fastestCompletion).toBeUndefined()
   })
 
-  it('should calculate rhythm skill correctly based on technical metrics', () => {
+  it("should calculate rhythm skill correctly based on technical metrics", () => {
     const { startSession, recordNoteAttempt, recordNoteCompletion, endSession } =
       useAnalyticsStore.getState()
-    startSession('ex1', 'Exercise 1', 'practice')
-
+    startSession({ exerciseId: "ex1", exerciseName: "Exercise 1", mode: "practice" })
     // Note 1: Perfect timing (0ms error)
-    recordNoteAttempt(0, 'A4', 0, true)
-    recordNoteCompletion(0, 500, {
-      rhythm: { onsetErrorMs: 0 },
-      vibrato: { present: false, rateHz: 0, widthCents: 0, regularity: 0 },
-      pitchStability: {
-        settlingStdCents: 0,
-        globalStdCents: 0,
-        driftCentsPerSec: 0,
-        inTuneRatio: 1,
-      },
-      attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
-      resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
-      transition: {
-        transitionTimeMs: 0,
-        glissAmountCents: 0,
-        landingErrorCents: 0,
-        correctionCount: 0,
-      },
-    } as unknown as NoteTechnique)
+    recordNoteAttempt({ noteIndex: 0, targetPitch: "A4", cents: 0, wasInTune: true })
+    recordNoteCompletion({
+      noteIndex: 0,
+      timeToCompleteMs: 500,
+      technique: {
+        rhythm: { onsetErrorMs: 0 },
+        vibrato: { present: false, rateHz: 0, widthCents: 0, regularity: 0 },
+        pitchStability: {
+          settlingStdCents: 0,
+          globalStdCents: 0,
+          driftCentsPerSec: 0,
+          inTuneRatio: 1,
+        },
+        attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
+        resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
+        transition: {
+          transitionTimeMs: 0,
+          glissAmountCents: 0,
+          landingErrorCents: 0,
+          correctionCount: 0,
+        },
+      } as unknown as NoteTechnique,
+    })
 
     // Note 2: Poor timing (200ms error)
-    recordNoteAttempt(1, 'B4', 0, true)
-    recordNoteCompletion(1, 500, {
-      rhythm: { onsetErrorMs: 200 },
-    } as unknown as NoteTechnique)
+    recordNoteAttempt({ noteIndex: 1, targetPitch: "B4", cents: 0, wasInTune: true })
+    recordNoteCompletion({
+      noteIndex: 1,
+      timeToCompleteMs: 500,
+      technique: {
+        rhythm: { onsetErrorMs: 200 },
+      } as unknown as NoteTechnique,
+    })
 
-    endSession()
-
-    const { progress } = useAnalyticsStore.getState()
     // MAE = 100ms. maeScore = 100 - 100/4 = 75.
     // In Window: 1 of 2 = 50%.
     // Total score = (75 + 50) / 2 = 62.5 -> 63
+    endSession()
+    const { progress } = useAnalyticsStore.getState()
     expect(progress.rhythmSkill).toBe(63)
   })
 })
