@@ -23,7 +23,6 @@ import {
   Hz,
   Cents,
   NoteTechnique,
-  Observation,
 } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'
@@ -263,7 +262,8 @@ async function* processRawStream(params: {
   const { source, signal, ...rest } = params
   for await (const raw of source) {
     if (signal.aborted) break
-    yield* executeRawFrameProcessing({ ...rest, raw })
+    const procParams = { ...rest, raw }
+    yield* executeRawFrameProcessing(procParams)
   }
 }
 
@@ -531,8 +531,6 @@ interface SegmentEventParams {
 
 function* handleSegmentEvents(params: SegmentEventParams): Generator<PracticeEvent> {
   const { state, event, targetNote, options, agent, currentIndex } = params
-  const isOffset = event.type === 'OFFSET'
-  const isChange = event.type === 'NOTE_CHANGE'
 
   if (event.type === 'ONSET') {
     state.lastGapFrames = event.gapFrames

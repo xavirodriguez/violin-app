@@ -1,36 +1,37 @@
 import { StateCreator } from 'zustand'
-import { persist, PersistOptions, createJSONStorage } from 'zustand/middleware'
+import { persist, PersistOptions } from 'zustand/middleware'
 import { z } from 'zod'
 import {
   serializeAndCompress,
   decompressAndDeserialize,
   validateAndMerge,
 } from '@/lib/persistence/persistence-core'
+import type { DeserializedStorageValue } from '@/lib/persistence/storage-types'
 
 /**
  * Custom storage that uses SuperJSON for serialization and Pako for compression.
  */
 const createCompressedStorage = (_name: string) => {
   return {
-    getItem: (key: string) => {
+    getItem: (key: string): DeserializedStorageValue => {
       const val = localStorage.getItem(key)
       if (!val) return null
       try {
         const deserialized = decompressAndDeserialize(val)
         if (typeof deserialized === 'string') {
           try {
-            return JSON.parse(deserialized)
+            return JSON.parse(deserialized) as { state: Record<string, unknown>; version?: number }
           } catch {
             return null
           }
         }
-        return deserialized as any
+        return deserialized as { state: Record<string, unknown>; version?: number }
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
         return null
       }
     },
-    setItem: (key: string, value: any) => {
+    setItem: (key: string, value: unknown) => {
       try {
         const base64 = serializeAndCompress(value)
         localStorage.setItem(key, base64)
@@ -50,7 +51,8 @@ const createCompressedStorage = (_name: string) => {
  * array types from Zustand's middleware.
  */
 export const validatedPersist = <T>(
-  schema: z.ZodType<T>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: z.ZodType<any>,
   config: StateCreator<T, [], []>,
   options: PersistOptions<T, unknown>,
 ): StateCreator<T, [], []> => {

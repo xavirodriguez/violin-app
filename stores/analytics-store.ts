@@ -528,7 +528,7 @@ function calculatePracticeDays(sessions: PracticeSession[]): number {
 }
 
 function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResult[] }): NoteResult[] {
-  const { noteResults, noteIndex, targetPitch, cents, wasInTune } = params
+  const { noteResults, noteIndex } = params
   const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
   if (existing) {
     return applyAttemptToExisting(noteResults, params)
@@ -651,43 +651,7 @@ function calculateRhythmScore(metrics: RhythmMetrics): number {
  * - Above 80%: warning toast suggesting data export.
  * - Above 95%: error toast suggesting cleanup of old sessions.
  */
-function checkStorageCapacity(): void {
-  try {
-    const usage = estimateLocalStorageUsagePercent()
-    notifyStorageThresholds(usage)
-  } catch {
-    // localStorage may not be available in some environments
-  }
-}
 
-function notifyStorageThresholds(usage: number): void {
-  const isCritical = usage >= 95
-  const isHigh = usage >= 80
-
-  if (isCritical) {
-    showCriticalStorageError()
-  } else if (isHigh) {
-    showHighStorageWarning()
-  }
-}
-
-function showCriticalStorageError() {
-  const message = 'Your practice history is almost full. Export data and clean sessions.'
-  const options = { duration: 10_000 }
-  const sonnerToast = toast
-  const activeToast = sonnerToast.error(message, options)
-
-  return activeToast
-}
-
-function showHighStorageWarning() {
-  const message = 'Your practice history is almost full. Consider exporting your data.'
-  const options = { duration: 8_000 }
-  const sonnerToast = toast
-  const activeToast = sonnerToast.warning(message, options)
-
-  return activeToast
-}
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
   const persistedData = persisted as Record<string, unknown>

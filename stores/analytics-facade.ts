@@ -1,8 +1,25 @@
-import { useSessionStore } from './session.store'
-import { useProgressStore } from './progress.store'
-import { useAchievementsStore } from './achievements.store'
+import { useSessionStore, PracticeSession } from './session.store'
+import { useProgressStore, ProgressState } from './progress.store'
+import { useAchievementsStore, Achievement } from './achievements.store'
 import { useSessionHistoryStore } from './session-history.store'
 import { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
+import { NoteTechnique } from '@/lib/technique-types'
+import type {
+  LegacyPersistedFacadeState,
+  LegacySessionV2,
+  LegacyNoteResultV2,
+  LegacyAchievementV2,
+  LegacyExerciseStatsV2,
+} from '@/lib/persistence/legacy-types'
+
+interface AnalyticsFacadePartialState {
+  progress?: Partial<ProgressState> & {
+    achievements?: Achievement[]
+  }
+  sessions?: PracticeSession[]
+  currentSession?: PracticeSession | undefined
+  currentPerfectStreak?: number
+}
 
 /**
  * Temporary facade to maintain backward compatibility with the legacy analytics API.
@@ -48,7 +65,7 @@ export const useAnalyticsStore = Object.assign(
       /** Records an attempt at a note. */
       recordNoteAttempt: session.recordAttempt,
       /** Records a completed note and checks for achievements. */
-      recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: any) => {
+      recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => {
         useSessionStore.getState().recordCompletion(noteIndex, timeMs, technique)
 
         const latestSession = useSessionStore.getState()
@@ -143,14 +160,7 @@ export const useAnalyticsStore = Object.assign(
       }
     },
     /** Imperative state update (for compatibility). */
-    setState: (
-      partial: Partial<{
-        progress: any
-        sessions: any[]
-        currentSession: any
-        currentPerfectStreak: number
-      }>,
-    ) => {
+    setState: (partial: AnalyticsFacadePartialState) => {
       if (partial.progress) {
         useProgressStore.setState(partial.progress)
         if (partial.progress.achievements) {
@@ -166,9 +176,9 @@ export const useAnalyticsStore = Object.assign(
     /** Persistence options for the facade (migrated from legacy). */
     persist: {
       getOptions: () => ({
-        migrate: (persisted: any, version: number) => {
-          if (!persisted) return persisted
-          const persistedData = persisted as Record<string, any>
+        migrate: (persisted: unknown, version: number) => {
+          if (!persisted || typeof persisted !== 'object') return persisted
+          const persistedData = persisted as LegacyPersistedFacadeState
 
           function toMs(value: unknown): number {
             if (typeof value === 'number') return value
@@ -182,16 +192,16 @@ export const useAnalyticsStore = Object.assign(
 
           if (version < 3) {
             if (Array.isArray(persistedData.sessions)) {
-              persistedData.sessions = persistedData.sessions.map((s: any) => {
-                const session = s as Record<string, any>
-                const { duration, ...rest } = session || {}
+              persistedData.sessions = persistedData.sessions.map((s: LegacySessionV2) => {
+                const session = s
+                const { duration, ...rest } = session
                 return {
                   ...rest,
                   durationMs: ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000,
                   noteResults: Array.isArray(session.noteResults)
-                    ? session.noteResults.map((nr: any) => {
-                        const noteResult = nr as Record<string, any>
-                        const { timeToComplete, ...nrRest } = noteResult || {}
+                    ? session.noteResults.map((nr: LegacyNoteResultV2) => {
+                        const noteResult = nr
+                        const { timeToComplete, ...nrRest } = noteResult
                         return {
                           ...nrRest,
                           timeToCompleteMs:
@@ -204,26 +214,24 @@ export const useAnalyticsStore = Object.assign(
                 }
               })
             }
-            const progress = persistedData.progress as Record<string, any> | undefined
+            const progress = persistedData.progress
             if (progress?.exerciseStats) {
-              Object.values(progress.exerciseStats as Record<string, Record<string, any>>).forEach(
-                (stats) => {
-                  if (
-                    stats.fastestCompletion !== undefined &&
-                    stats.fastestCompletionMs === undefined
-                  ) {
-                    stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
-                    delete stats.fastestCompletion
-                  }
-                },
-              )
+              Object.values(progress.exerciseStats).forEach((stats: LegacyExerciseStatsV2) => {
+                if (
+                  stats.fastestCompletion !== undefined &&
+                  stats.fastestCompletionMs === undefined
+                ) {
+                  stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
+                  delete stats.fastestCompletion
+                }
+              })
             }
           }
 
           const sessions = Array.isArray(persistedData.sessions)
-            ? persistedData.sessions.map((s: any) => {
-                const session = s as Record<string, any>
-                const { startTime, endTime, ...rest } = session || {}
+            ? persistedData.sessions.map((s: LegacySessionV2) => {
+                const session = s
+                const { startTime, endTime, ...rest } = session
                 return {
                   ...rest,
                   startTimeMs: toMs(session?.startTimeMs ?? startTime),
@@ -232,11 +240,11 @@ export const useAnalyticsStore = Object.assign(
               })
             : []
 
-          const progress = (persistedData.progress as Record<string, any>) || {}
+          const progress = persistedData.progress || {}
           const achievements = Array.isArray(progress.achievements)
-            ? progress.achievements.map((a: any) => {
-                const achievement = a as Record<string, any>
-                const { unlockedAt, ...rest } = achievement || {}
+            ? progress.achievements.map((a: LegacyAchievementV2) => {
+                const achievement = a
+                const { unlockedAt, ...rest } = achievement
                 return {
                   ...rest,
                   unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
@@ -244,12 +252,11 @@ export const useAnalyticsStore = Object.assign(
               })
             : []
 
-          const exerciseStats =
-            (progress.exerciseStats as Record<string, Record<string, any>>) || {}
+          const exerciseStats = progress.exerciseStats || {}
           const migratedExerciseStats = Object.fromEntries(
             Object.entries(exerciseStats).map(([k, v]) => {
-              const stats = v as Record<string, any>
-              const { lastPracticed, ...rest } = stats || {}
+              const stats = v
+              const { lastPracticed, ...rest } = stats
               return [
                 k,
                 {

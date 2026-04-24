@@ -52,7 +52,7 @@ describe('ProgressStore persistence', () => {
     const migrate = useProgressStore.persist.getOptions().migrate
     if (!migrate) throw new Error('Migrate function not found')
 
-    const migrated = migrate(legacyState, 0) as any
+    const migrated = migrate(legacyState, 0) as unknown
 
     expect(migrated).toMatchObject({
       totalPracticeSessions: 5,

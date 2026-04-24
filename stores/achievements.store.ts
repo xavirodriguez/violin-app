@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { z } from 'zod'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
@@ -106,8 +107,8 @@ interface AchievementsActions {
  * @public
  */
 export const useAchievementsStore = create<AchievementsState & AchievementsActions>()(
-  validatedPersist(
-    AchievementsStateSchema as any,
+  validatedPersist<AchievementsState & AchievementsActions>(
+    AchievementsStateSchema as z.ZodType<AchievementsState>,
     (set, get) => ({
       schemaVersion: 1,
       unlocked: [],
@@ -136,10 +137,10 @@ export const useAchievementsStore = create<AchievementsState & AchievementsActio
     {
       name: 'violin-achievements',
       version: 1,
-      migrate: createMigrator({
-        1: (state: any) => ({
+      migrate: createMigrator<AchievementsState>({
+        1: (state) => ({
           ...state,
-          schemaVersion: 1,
+          schemaVersion: 1 as const,
         }),
       }),
     },

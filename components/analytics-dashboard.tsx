@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useAnalyticsStore, type ExerciseStats, type UserProgress } from '@/stores/analytics-store'
+import { useAnalyticsStore, type UserProgress } from '@/stores/analytics-store'
 import { getLast7DaysData, getHeatmapData } from './analytics/utils'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
@@ -34,7 +34,7 @@ export function AnalyticsDashboard() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <DashboardHeader onExport={() => handleExport(progress)} />
+      <DashboardHeader onExport={() => handleExport()} />
       <MetricsSection
         streak={streakInfo.current}
         todayDuration={todayStats.duration}
@@ -56,21 +56,6 @@ export function AnalyticsDashboard() {
   )
 }
 
-function useDashboardData() {
-  const { progress, getTodayStats, getStreakInfo, getSessionHistory } = useAnalyticsStore()
-  const recentSessions = getSessionHistory(7)
-  const lastSession = recentSessions[0]
-  const result = {
-    streakInfo: getStreakInfo(),
-    todayStats: getTodayStats(),
-    progress,
-    practiceTimeData: getLast7DaysData(recentSessions),
-    heatmapData: getHeatmapData(lastSession),
-    totalCompleted: progress.exercisesCompleted?.length ?? 0,
-  }
-  return result
-}
-
 function DashboardHeader({ onExport }: { onExport: () => void }) {
   const title = '📊 Your Progress'
   const buttonText = 'Export CSV'
@@ -85,7 +70,7 @@ function DashboardHeader({ onExport }: { onExport: () => void }) {
   )
 }
 
-function handleExport(progress: UserProgress) {
+function handleExport() {
   const store = useAnalyticsStore.getState()
   const allSessions = store.getSessionHistory(365)
   const csv = exportSessionsToCSV(allSessions)

@@ -4,6 +4,11 @@ import { PracticeMode } from '../components/practice-mode'
 import { usePracticeStore } from '../stores/practice-store'
 import { allExercises } from '../lib/exercises'
 import React from 'react'
+import type {
+  AnimatePresenceProps,
+  MotionCircleProps,
+  MotionDivProps,
+} from '@/lib/testing/mock-types'
 
 // Mock OSMD and hooks to avoid canvas issues in JSDOM
 vi.mock('@/hooks/use-osmd-safe', () => ({
@@ -21,10 +26,10 @@ vi.mock('@/hooks/use-osmd-safe', () => ({
 // Mock Framer Motion to avoid animation issues
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    circle: (props: any) => <circle {...props} />,
+    div: ({ children, ...props }: MotionDivProps) => <div {...props}>{children}</div>,
+    circle: (props: MotionCircleProps) => <circle {...props} />,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: AnimatePresenceProps) => <>{children}</>,
 }))
 
 describe('Initialization Flow Verification', () => {

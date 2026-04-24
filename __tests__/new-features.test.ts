@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { getAchievementProgress } from '@/lib/achievements/achievement-checker'
 import { ACHIEVEMENT_DEFINITIONS, type AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { exportSessionsToCSV } from '@/lib/export/progress-exporter'
