@@ -90,10 +90,10 @@ describe('toAppError', () => {
     expect(result.cause).toBe(errorObject)
   })
 
-  it('should handle undefined', () => {
-    const undefinedResultAsNull = toAppError(undefined)
-    expect(undefinedResultAsNull).toBeInstanceOf(AppError)
-    expect(undefinedResultAsNull.message).toContain('An unknown error occurred')
+  it('should handle null and undefined', () => {
+    const nullResult = toAppError(null)
+    expect(nullResult).toBeInstanceOf(AppError)
+    expect(nullResult.message).toContain('An unknown error occurred')
 
     const undefinedResult = toAppError(undefined)
     expect(undefinedResult).toBeInstanceOf(AppError)
