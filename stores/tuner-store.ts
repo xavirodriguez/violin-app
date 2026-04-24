@@ -9,7 +9,7 @@
 import { create } from 'zustand'
 import { MusicalNote } from '@/lib/practice-core'
 import { PitchDetector } from '@/lib/pitch-detector'
-import { toAppError, ERROR_CODES } from '@/lib/errors/app-error'
+import { toAppError, ERROR_CODES, AppError } from '@/lib/errors/app-error'
 import { logger } from '@/lib/observability/logger'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import type { TunerStore } from '@/lib/domain/musical-types'
@@ -159,7 +159,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
       }
     },
 
-    handleDetectedPitch: (params: { pitch: number; confidence: number; token: number }) => {
+    handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => {
       const { pitch, confidence, token } = params
       try {
         const note = MusicalNote.fromFrequency(pitch)
@@ -267,7 +267,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 
 type TunerSet = (
   partial: TunerStore | Partial<TunerStore> | ((state: TunerStore) => TunerStore | Partial<TunerStore>),
-  replace?: boolean,
+  replace?: false | undefined,
 ) => void
 
 function prepareTunerInitialization(set: TunerSet, token: number) {

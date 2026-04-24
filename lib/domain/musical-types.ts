@@ -344,6 +344,12 @@ export interface TunerStore {
   updatePitch: (pitch: number, confidence: number) => void
 
   /**
+   * Internal handler for processing detected pitch and updating state.
+   * @internal
+   */
+  handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => void
+
+  /**
    * Transitions the tuner into the 'LISTENING' state.
    */
   startListening: () => void

@@ -3,7 +3,7 @@
 import React from 'react'
 import { Achievement, useAnalyticsStore } from '@/stores/analytics-store'
 import { Progress } from '@/components/ui/progress'
-import { ACHIEVEMENT_DEFINITIONS } from '@/lib/achievements/achievement-definitions'
+import { ACHIEVEMENT_DEFINITIONS, type AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
 import { getAchievementProgress } from '@/lib/achievements/achievement-checker'
 import { cn } from '@/lib/utils'
 
@@ -52,7 +52,7 @@ export function AchievementsSection(props: AchievementsSectionProps) {
               .slice(-3)
               .reverse()
               .map((achievement) => (
-                <AchievementCard key={achievement.id} achievement={achievement} />
+                <UnlockedAchievementCard key={achievement.id} achievement={achievement} />
               ))}
           </div>
         )}

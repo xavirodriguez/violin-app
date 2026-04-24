@@ -11,18 +11,18 @@ import {
  * Custom storage that uses SuperJSON for serialization and Pako for compression.
  */
 const createCompressedStorage = (_name: string) => {
-  return createJSONStorage(() => ({
-    getItem: (key): unknown => {
+  return {
+    getItem: (key: string) => {
       const val = localStorage.getItem(key)
-      if (!val) return undefined
+      if (!val) return null
       try {
-        return decompressAndDeserialize(val)
+        return decompressAndDeserialize(val) as any
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
-        return undefined
+        return null
       }
     },
-    setItem: (key, value: unknown) => {
+    setItem: (key: string, value: any) => {
       try {
         const base64 = serializeAndCompress(value)
         localStorage.setItem(key, base64)
@@ -30,8 +30,8 @@ const createCompressedStorage = (_name: string) => {
         console.error(`[Storage] Failed to compress/save ${key}`, e)
       }
     },
-    removeItem: (key) => localStorage.removeItem(key),
-  }))
+    removeItem: (key: string) => localStorage.removeItem(key),
+  }
 }
 
 /**
