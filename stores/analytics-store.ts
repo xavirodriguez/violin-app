@@ -659,10 +659,13 @@ function checkStorageCapacity(): void {
 }
 
 function emitStorageFullToast(): void {
-  toast.error(
-    'Your practice history is almost full. Consider exporting your data and cleaning old sessions.',
-    { duration: 10_000 },
-  )
+  toast.warning('Storage almost full!', {
+    description: 'Please clean up your practice history to avoid data loss.',
+    action: {
+      label: 'Clean old sessions',
+      onClick: () => useAnalyticsStore.getState().cleanOldSessions(50),
+    },
+  })
 }
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
