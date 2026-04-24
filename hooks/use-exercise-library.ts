@@ -5,7 +5,6 @@ import { allExercises } from '@/lib/exercises'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { getRecommendedExercise } from '@/lib/exercise-recommender'
 import { filterExercises } from '@/lib/exercises/utils'
-import type { Exercise } from '@/lib/domain/musical-types'
 
 /**
  * Custom hook to manage the state and logic of the Exercise Library.

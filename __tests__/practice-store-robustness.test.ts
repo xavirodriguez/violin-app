@@ -3,13 +3,16 @@ import { usePracticeStore } from '../stores/practice-store'
 import { audioManager } from '../lib/infrastructure/audio-manager'
 import { PracticeSessionRunnerImpl } from '../lib/practice/session-runner'
 import crypto from 'crypto'
+import type { MockExercise, MockAudioResources, GlobalThisWithCrypto } from '@/lib/testing/mock-types'
+import { Exercise } from '@/lib/exercises/types'
 
 // Polyfill crypto for node environment
-if (!globalThis.crypto) {
-  ;(globalThis as any).crypto = crypto
+const typedGlobal = globalThis as typeof globalThis & GlobalThisWithCrypto
+if (!typedGlobal.crypto) {
+  typedGlobal.crypto = crypto as unknown as Crypto & { randomUUID?: () => string }
 }
-if (!globalThis.crypto.randomUUID) {
-  ;(globalThis.crypto as any).randomUUID = () => crypto.randomBytes(16).toString('hex')
+if (!typedGlobal.crypto.randomUUID) {
+  typedGlobal.crypto.randomUUID = () => crypto.randomBytes(16).toString('hex')
 }
 
 // Mock dependencies
@@ -63,7 +66,7 @@ vi.mock('@/stores/analytics-store', () => ({
   },
 }))
 
-const mockExercise: any = {
+const mockExercise: MockExercise = {
   id: 'test-ex',
   name: 'Test',
   notes: [{ pitch: { step: 'A', octave: 4, alter: 0 }, duration: 4 }],
@@ -77,7 +80,7 @@ describe('PracticeStore Robustness', () => {
 
   it('should prevent double start while already starting', async () => {
     const store = usePracticeStore.getState()
-    await store.loadExercise(mockExercise)
+    await store.loadExercise(mockExercise as Exercise)
 
     // Mock initializeAudio to be slow
     vi.mocked(audioManager.initialize).mockImplementation(
@@ -89,7 +92,7 @@ describe('PracticeStore Robustness', () => {
                 context: { sampleRate: 44100 },
                 analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
                 stream: { getTracks: () => [] },
-              } as any),
+              } as unknown as MockAudioResources),
             100,
           ),
         ),
@@ -105,14 +108,14 @@ describe('PracticeStore Robustness', () => {
   })
 
   it('should handle idempotent stop calls', async () => {
-    await usePracticeStore.getState().loadExercise(mockExercise)
+    await usePracticeStore.getState().loadExercise(mockExercise as Exercise)
 
     // Setup for active state
     vi.mocked(audioManager.initialize).mockResolvedValue({
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as any)
+    } as unknown as MockAudioResources)
 
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().state.status).toBe('active')
@@ -126,7 +129,7 @@ describe('PracticeStore Robustness', () => {
   })
 
   it('should allow retrying initializeAudio after a failure', async () => {
-    await usePracticeStore.getState().loadExercise(mockExercise)
+    await usePracticeStore.getState().loadExercise(mockExercise as Exercise)
 
     // First attempt fails
     vi.mocked(audioManager.initialize).mockRejectedValueOnce(new Error('Mic denied'))
@@ -139,7 +142,7 @@ describe('PracticeStore Robustness', () => {
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as any)
+    } as unknown as MockAudioResources)
 
     await usePracticeStore.getState().initializeAudio()
     expect(usePracticeStore.getState().state.status).toBe('ready')
@@ -147,13 +150,13 @@ describe('PracticeStore Robustness', () => {
   })
 
   it('should ignore updates from old session tokens', async () => {
-    await usePracticeStore.getState().loadExercise(mockExercise)
+    await usePracticeStore.getState().loadExercise(mockExercise as Exercise)
 
     vi.mocked(audioManager.initialize).mockResolvedValue({
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as any)
+    } as unknown as MockAudioResources)
 
     await usePracticeStore.getState().start()
     const firstToken = usePracticeStore.getState().sessionToken
@@ -173,8 +176,9 @@ describe('PracticeStore Robustness', () => {
     const oldPracticeState = {
       ...usePracticeStore.getState().practiceState,
       holdDuration: 999,
-    } as any
-    safeSet({ practiceState: oldPracticeState })
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    safeSet({ practiceState: oldPracticeState as any })
 
     // Should NOT have updated because sessionToken in store is now different
     expect(usePracticeStore.getState().practiceState?.holdDuration).not.toBe(999)

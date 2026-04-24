@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { z } from 'zod'
 import { PracticeSession } from './session.store'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
@@ -198,8 +199,8 @@ const DEFAULT_PROGRESS: ProgressState = {
  * @public
  */
 export const useProgressStore = create<ProgressState & ProgressActions>()(
-  validatedPersist(
-    ProgressStateSchema as any,
+  validatedPersist<ProgressState & ProgressActions>(
+    ProgressStateSchema as z.ZodType<ProgressState>,
     (set, get) => ({
       ...DEFAULT_PROGRESS,
 
@@ -222,14 +223,14 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
     {
       name: 'violin-progress',
       version: 1,
-      migrate: createMigrator({
-        1: (state: any) => ({
+      migrate: createMigrator<ProgressState>({
+        1: (state) => ({
           ...state,
           intonationSkill: state.intonationSkill || 0,
           rhythmSkill: state.rhythmSkill || 0,
           overallSkill: state.overallSkill || 0,
           exerciseStats: state.exerciseStats || {},
-          schemaVersion: 1,
+          schemaVersion: 1 as const,
         }),
       }),
     },

@@ -19,7 +19,7 @@ interface PracticeQuickActionsProps {
 export function PracticeQuickActions({
   status,
   onRepeatNote,
-  onRepeatMeasure,
+  onRepeatMeasure: _onRepeatMeasure,
   onContinue,
   onTogglePause,
   onToggleZen,

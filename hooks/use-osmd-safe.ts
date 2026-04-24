@@ -139,7 +139,7 @@ export function useOSMDSafe(
     const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {
-        // @ts-ignore - getSVGGElement exists at runtime for SVG backend
+        // @ts-expect-error - getSVGGElement exists at runtime for SVG backend
         gn.getSVGGElement()?.classList.add('note-current')
       })
     }

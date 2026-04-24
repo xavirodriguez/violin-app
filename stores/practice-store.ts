@@ -13,7 +13,6 @@ import {
   type PracticeState,
   type PracticeEvent,
   type PracticeStatus,
-  DetectedNote,
 } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
@@ -633,9 +632,9 @@ async function performAudioInitialization(
     const resources = await acquireAudioResources()
     const difficulty = get().state.exercise?.difficulty
     const adapters = createAudioAdapters({ resources, difficulty })
-    set((currentState) => getSuccessInitUpdates({ currentState, resources, adapters }))
+    set(() => getSuccessInitUpdates({ currentState: get(), resources, adapters }))
   } catch (err) {
-    set((currentState) => getFailureInitUpdates(get(), err))
+    set(() => getFailureInitUpdates(get(), err))
   }
 }
 

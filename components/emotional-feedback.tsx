@@ -131,7 +131,6 @@ function TechnicalFeedback({ centsOff, isInTune }: { centsOff: number | undefine
 function HybridFeedback({
   state,
   centsOff,
-  isInTune,
 }: {
   state: EmotionalState
   centsOff: number | undefined

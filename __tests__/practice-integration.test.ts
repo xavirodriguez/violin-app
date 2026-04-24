@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
 import type { Exercise } from '../lib/exercises/types'
 import { audioManager } from '../lib/infrastructure/audio-manager'
@@ -81,10 +81,10 @@ describe('Practice Store Integration', () => {
       context: mockContext,
     }
     vi.mocked(audioManager.initialize).mockResolvedValue({
-      context: mockContext as any,
-      analyser: mockAnalyser as any,
-      stream: {} as any,
-    })
+      context: mockContext as unknown as AudioContext,
+      analyser: mockAnalyser as unknown as AnalyserNode,
+      stream: {} as MediaStream,
+    } as unknown as { context: AudioContext; analyser: AnalyserNode; stream: MediaStream })
 
     await store.start()
 

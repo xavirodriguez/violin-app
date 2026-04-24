@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { z } from 'zod'
 import { PracticeSession } from './session.store'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
@@ -41,8 +42,8 @@ interface SessionHistoryActions {
  * @public
  */
 export const useSessionHistoryStore = create<SessionHistoryState & SessionHistoryActions>()(
-  validatedPersist(
-    SessionHistoryStateSchema as any,
+  validatedPersist<SessionHistoryState & SessionHistoryActions>(
+    SessionHistoryStateSchema as z.ZodType<SessionHistoryState>,
     (set, get) => ({
       sessions: [],
 

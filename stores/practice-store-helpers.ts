@@ -93,7 +93,7 @@ export function handleRunnerFailure(params: {
   err: unknown
   exercise: Exercise
 }): void {
-  const { set, get, err, exercise } = params
+  const { set, err, exercise } = params
   const error = toAppError(err)
   const isAbort = error.message.includes('Aborted') || error.name === 'AbortError'
 

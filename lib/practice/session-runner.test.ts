@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { PracticeSessionRunnerImpl, SessionRunnerDependencies } from './session-runner'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
+import type { MockExercise } from '@/lib/testing/mock-types'
+import { Exercise } from '@/lib/exercises/types'
 
 describe('PracticeSessionRunner', () => {
   const mockAudioLoop: AudioLoopPort = {
@@ -22,10 +24,10 @@ describe('PracticeSessionRunner', () => {
     calculateRMS: vi.fn(() => 0.1),
   }
 
-  const mockExercise = {
+  const mockExercise: MockExercise = {
     id: 'test',
     name: 'Test',
-    notes: [{ pitch: { step: 'A', octave: 4, alter: 0 }, duration: '4' }],
+    notes: [{ pitch: { step: 'A', octave: 4, alter: 0 }, duration: 4 }],
   }
 
   const mockStore = {
@@ -49,10 +51,10 @@ describe('PracticeSessionRunner', () => {
   const deps: SessionRunnerDependencies = {
     audioLoop: mockAudioLoop,
     detector: mockDetector,
-    exercise: mockExercise as any,
+    exercise: mockExercise as Exercise,
     sessionStartTime: Date.now(),
-    store: mockStore,
-    analytics: mockAnalytics,
+    store: mockStore as unknown as SessionRunnerDependencies['store'],
+    analytics: mockAnalytics as unknown as SessionRunnerDependencies['analytics'],
   }
 
   it('cancela la sesión al llamar a cancel()', async () => {

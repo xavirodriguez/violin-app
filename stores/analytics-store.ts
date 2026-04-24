@@ -591,7 +591,7 @@ function calculatePracticeDays(sessions: PracticeSession[]): number {
 }
 
 function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResult[] }): NoteResult[] {
-  const { noteResults, noteIndex, targetPitch, cents, wasInTune } = params
+  const { noteResults, noteIndex } = params
   const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
   if (existing) {
     return applyAttemptToExisting(noteResults, params)
@@ -729,33 +729,7 @@ function calculateRhythmScore(metrics: RhythmMetrics): number {
 /**
  * Checks localStorage usage and warns the user via toast if capacity is high.
  */
-function checkStorageCapacity(): void {
-  try {
-    const usage = estimateLocalStorageUsagePercent()
-    const isFull = usage >= 95
-    const isHigh = usage >= 80
 
-    if (isFull) {
-      emitStorageFullToast()
-    } else if (isHigh) {
-      toast.warning('Your practice history is almost full. Consider exporting your data.', {
-        duration: 8_000,
-      })
-    }
-  } catch {
-    // localStorage may not be available in some environments
-  }
-}
-
-function emitStorageFullToast(): void {
-  toast.warning('Storage almost full!', {
-    description: 'Please clean up your practice history to avoid data loss.',
-    action: {
-      label: 'Clean old sessions',
-      onClick: () => useAnalyticsStore.getState().cleanOldSessions(50),
-    },
-  })
-}
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
   const persistedData = persisted as Record<string, unknown>

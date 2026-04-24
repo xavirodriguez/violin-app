@@ -8,6 +8,7 @@ import {
   Cents,
   MusicalNoteName,
 } from './technique-types'
+import type { MutableTechniqueFrame } from '@/lib/testing/mock-types'
 
 describe('TechniqueAnalysisAgent', () => {
   const agent = new TechniqueAnalysisAgent()
@@ -160,9 +161,9 @@ describe('TechniqueAnalysisAgent', () => {
     expect(metrics.attackRelease.pitchScoopCents).toBeLessThan(-5)
 
     // Unstable release: add some noise at the end
-    const lastFrames = (segment.frames as any).slice(-5)
-    lastFrames.forEach((f: any, i: number) => {
-      f.cents += Math.sin(i) * 20
+    const lastFrames = segment.frames.slice(-5) as MutableTechniqueFrame[]
+    lastFrames.forEach((frame, i) => {
+      frame.cents = (frame.cents + Math.sin(i) * 20) as Cents
     })
 
     const metricsWithRelease = agent.analyzeSegment({ segment })
@@ -262,14 +263,15 @@ describe('TechniqueAnalysisAgent', () => {
     }
 
     // Add some RMS beating (8Hz) for wolf tone detection
-    frames.forEach((f: any) => {
+    const mutableFrames = frames as MutableTechniqueFrame[]
+    mutableFrames.forEach((f) => {
       f.rms = 0.05 + 0.04 * Math.sin(2 * Math.PI * 8 * (f.timestamp / 1000))
     })
 
     // Add some pitch noise to trigger inconsistent vibrato
-    frames.forEach((f: any, i: number) => {
+    mutableFrames.forEach((f, i) => {
       // Random-ish noise to ensure low regularity
-      f.cents += Math.sin(i * 0.5) * 15 + Math.cos(i * 2) * 10
+      f.cents = (f.cents + Math.sin(i * 0.5) * 15 + Math.cos(i * 2) * 10) as Cents
     })
 
     const metrics = agent.analyzeSegment({ segment })

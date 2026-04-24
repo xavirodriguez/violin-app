@@ -3,9 +3,8 @@
 import React from 'react'
 import { Achievement, useAnalyticsStore } from '@/stores/analytics-store'
 import { Progress } from '@/components/ui/progress'
-import { ACHIEVEMENT_DEFINITIONS, type AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
+import { ACHIEVEMENT_DEFINITIONS } from '@/lib/achievements/achievement-definitions'
 import { getAchievementProgress } from '@/lib/achievements/achievement-checker'
-import { cn } from '@/lib/utils'
 
 interface AchievementsSectionProps {
   achievements: Achievement[]
@@ -106,80 +105,3 @@ function UnlockedAchievementCard({ achievement }: { achievement: Achievement }) 
 /**
  * Renders a locked achievement with a progress bar showing completion percentage.
  */
-function LockedAchievementCard({
-  name,
-  description,
-  icon,
-  progressPercent,
-}: {
-  name: string
-  description: string
-  icon: string
-  progressPercent: number
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-lg p-2 opacity-60">
-      <div className="text-2xl grayscale">{icon}</div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-bold">{name}</div>
-        <div className="text-muted-foreground text-xs">{description}</div>
-        <div className="mt-1 flex items-center gap-2">
-          <Progress value={progressPercent} className="h-1.5 flex-1" />
-          <span className="text-muted-foreground text-xs">{progressPercent}%</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Builds AchievementCheckStats from the current store state for progress calculation.
- *
- * @param sessions - All stored sessions.
- * @param progress - Current user progress.
- * @param currentPerfectStreak - Current perfect note streak.
- * @param currentSession - The active session, if any.
- * @returns Stats suitable for achievement progress calculation.
- */
-function buildCurrentStats(
-  sessions: { notesCompleted: number; endTimeMs: number }[],
-  progress: {
-    currentStreak: number
-    longestStreak: number
-    exercisesCompleted: string[]
-    totalPracticeTime: number
-    overallSkill: number
-    totalPracticeSessions: number
-  },
-  currentPerfectStreak: number,
-  currentSession:
-    | {
-        notesCompleted: number
-        accuracy: number
-        startTimeMs: number
-        exerciseId: string
-      }
-    | undefined,
-): AchievementCheckStats {
-  const totalNotesCompleted =
-    sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
-    (currentSession?.notesCompleted ?? 0)
-
-  return {
-    currentSession: {
-      correctNotes: currentSession?.notesCompleted ?? 0,
-      perfectNoteStreak: currentPerfectStreak,
-      accuracy: currentSession?.accuracy ?? 0,
-      durationMs: currentSession ? Date.now() - currentSession.startTimeMs : 0,
-      exerciseId: currentSession?.exerciseId ?? '',
-    },
-    totalSessions: progress.totalPracticeSessions,
-    totalPracticeDays: new Set(sessions.map((s) => new Date(s.endTimeMs).toDateString())).size,
-    currentStreak: progress.currentStreak,
-    longestStreak: progress.longestStreak,
-    exercisesCompleted: progress.exercisesCompleted ?? [],
-    totalPracticeTimeMs: progress.totalPracticeTime * 1000,
-    averageAccuracy: progress.overallSkill,
-    totalNotesCompleted,
-  }
-}

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { z } from 'zod'
 import { UserPreferences, FeedbackLevel } from '@/lib/user-preferences'
 import { analytics } from '@/lib/analytics-tracker'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
@@ -116,8 +117,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  * @public
  */
 export const usePreferencesStore = create<PreferencesStore>()(
-  validatedPersist(
-    PreferencesStateSchema as any,
+  validatedPersist<PreferencesStore>(
+    PreferencesStateSchema as z.ZodType<UserPreferences>,
     (set) => ({
       schemaVersion: 1,
       ...DEFAULT_PREFERENCES,
@@ -147,10 +148,10 @@ export const usePreferencesStore = create<PreferencesStore>()(
     {
       name: 'violin-mentor-preferences',
       version: 1,
-      migrate: createMigrator({
-        1: (state: any) => ({
+      migrate: createMigrator<PreferencesStore>({
+        1: (state) => ({
           ...state,
-          schemaVersion: 1,
+          schemaVersion: 1 as const,
         }),
       }),
     },
