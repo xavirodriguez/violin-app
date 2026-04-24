@@ -4,7 +4,7 @@
  * Pure utility functions for the practice mode domain.
  */
 
-import { formatPitchName, PracticeState, DetectedNote } from '@/lib/practice-core'
+import { formatPitchName, PracticeState, DetectedNote, PracticeStatus } from '@/lib/practice-core'
 import { Note } from '@/lib/exercises/types'
 
 /**
@@ -12,7 +12,7 @@ import { Note } from '@/lib/exercises/types'
  * and targets of a practice session.
  */
 export interface DerivedPracticeState {
-  status: string
+  status: PracticeStatus
   currentNoteIndex: number
   targetNote: Note | undefined
   totalNotes: number
