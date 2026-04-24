@@ -95,35 +95,34 @@ export const useAnalyticsStore = Object.assign(
       },
       /** Manually triggers an achievement check. */
       checkAndUnlockAchievements: () => {
-        const stats: AchievementCheckStats = {
-          currentSession: {
-            correctNotes: session.current?.notesCompleted || 0,
-            perfectNoteStreak: session.perfectNoteStreak,
-            accuracy: session.current?.accuracy || 0,
-            durationMs: session.current ? Date.now() - session.current.startTimeMs : 0,
-            exerciseId: session.current?.exerciseId || '',
-          },
-          totalSessions: progress.totalPracticeSessions,
-          totalPracticeDays: 1,
-          currentStreak: progress.currentStreak,
-          longestStreak: progress.longestStreak,
-          exercisesCompleted: progress.exercisesCompleted,
-          totalPracticeTimeMs: progress.totalPracticeTime * 1000,
-          averageAccuracy: progress.overallSkill,
-          totalNotesCompleted:
-            useSessionHistoryStore.getState().sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
-            (session.current?.notesCompleted || 0),
-        }
-        return achievements.check(stats)
+        const stats = prepareAchievementCheckStats()
+        const checker = useAchievementsStore.getState()
+        const unlocked = checker.check(stats)
+        return unlocked
       },
       /** Retrieves filtered session history. */
       getSessionHistory: history.getHistory,
       /** Gets stats for a specific exercise. */
-      getExerciseStats: (exerciseId: string) => progress.exerciseStats[exerciseId] || undefined,
+      getExerciseStats: (exerciseId: string) => {
+        const statsMap = progress.exerciseStats
+        const entry = statsMap[exerciseId]
+        const result = entry || undefined
+        return result
+      },
       /** Returns summary stats for the current day. */
-      getTodayStats: () => ({ duration: 0, accuracy: 0, sessionsCount: 0 }),
+      getTodayStats: () => {
+        const duration = 0
+        const accuracy = 0
+        const sessionsCount = 0
+        return { duration, accuracy, sessionsCount }
+      },
       /** Returns streak information. */
-      getStreakInfo: () => ({ current: progress.currentStreak, longest: progress.longestStreak }),
+      getStreakInfo: () => {
+        const current = progress.currentStreak
+        const longest = progress.longestStreak
+        const info = { current, longest }
+        return info
+      },
     }
   },
   {
@@ -162,14 +161,15 @@ export const useAnalyticsStore = Object.assign(
     /** Imperative state update (for compatibility). */
     setState: (partial: AnalyticsFacadePartialState) => {
       if (partial.progress) {
-        useProgressStore.setState(partial.progress)
-        if (partial.progress.achievements) {
-          useAchievementsStore.setState({ unlocked: partial.progress.achievements })
+        useProgressStore.setState(partial.progress as any)
+        const progressObj = partial.progress as { achievements?: unknown[] }
+        if (progressObj.achievements) {
+          useAchievementsStore.setState({ unlocked: progressObj.achievements as any[] })
         }
       }
-      if (partial.sessions) useSessionHistoryStore.setState({ sessions: partial.sessions })
+      if (partial.sessions) useSessionHistoryStore.setState({ sessions: partial.sessions as any[] })
       if (partial.currentSession !== undefined)
-        useSessionStore.setState({ current: partial.currentSession })
+        useSessionStore.setState({ current: partial.currentSession as any })
       if (partial.currentPerfectStreak !== undefined)
         useSessionStore.setState({ perfectNoteStreak: partial.currentPerfectStreak })
     },
@@ -281,3 +281,160 @@ export const useAnalyticsStore = Object.assign(
     },
   },
 )
+
+function prepareAchievementCheckStats(): AchievementCheckStats {
+  const session = useSessionStore.getState()
+  const progress = useProgressStore.getState()
+  const history = useSessionHistoryStore.getState()
+
+  const currentStats = {
+    correctNotes: session.current?.notesCompleted || 0,
+    perfectNoteStreak: session.perfectNoteStreak,
+    accuracy: session.current?.accuracy || 0,
+    durationMs: session.current ? Date.now() - session.current.startTimeMs : 0,
+    exerciseId: session.current?.exerciseId || '',
+  }
+
+  return assembleCheckStats({ session, progress, history, currentStats })
+}
+
+function assembleCheckStats(params: {
+  session: { current?: { notesCompleted: number } }
+  progress: unknown
+  history: { sessions: any[] }
+  currentStats: unknown
+}): AchievementCheckStats {
+  const { session, progress, history, currentStats } = params
+  const totalCompleted = history.sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
+  const totalNotes = totalCompleted + (session.current?.notesCompleted || 0)
+
+  return {
+    currentSession: currentStats,
+    totalSessions: progress.totalPracticeSessions,
+    totalPracticeDays: 1,
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
+    exercisesCompleted: progress.exercisesCompleted,
+    totalPracticeTimeMs: progress.totalPracticeTime * 1000,
+    averageAccuracy: progress.overallSkill,
+    totalNotesCompleted: totalNotes,
+  }
+}
+
+function toMs(value: unknown): number {
+  if (typeof value === 'number') return value
+  if (value instanceof Date) return value.getTime()
+  if (typeof value === 'string') {
+    const ms = new Date(value).getTime()
+    const result = Number.isFinite(ms) ? ms : 0
+    return result
+  }
+  return 0
+}
+
+function migrateV1V2(data: Record<string, unknown>): void {
+  if (Array.isArray(data.sessions)) {
+    data.sessions = data.sessions.map(migrateSessionV1V2)
+  }
+  const progress = data.progress as Record<string, unknown> | undefined
+  if (progress?.exerciseStats) {
+    const stats = progress.exerciseStats as Record<string, Record<string, unknown>>
+    Object.values(stats).forEach(migrateExerciseStatsV1V2)
+  }
+}
+
+function migrateSessionV1V2(s: unknown): Record<string, unknown> {
+  const session = s as Record<string, unknown>
+  const { duration, ...rest } = session || {}
+  const durationMs = ((session.durationMs as number) ?? (duration as number) ?? 0) * 1000
+  const noteResults = Array.isArray(session.noteResults)
+    ? session.noteResults.map(migrateNoteResultV1V2)
+    : []
+
+  const result = { ...rest, durationMs, noteResults }
+  return result
+}
+
+function migrateNoteResultV1V2(nr: unknown): Record<string, unknown> {
+  const noteResult = nr as Record<string, unknown>
+  const { timeToComplete, ...nrRest } = noteResult || {}
+  const ms = (noteResult.timeToCompleteMs as number) ?? (timeToComplete as number) ?? 0
+
+  const result = { ...nrRest, timeToCompleteMs: ms }
+  return result
+}
+
+function migrateExerciseStatsV1V2(stats: Record<string, unknown>): void {
+  const hasFastest = stats.fastestCompletion !== undefined
+  const needsMigration = stats.fastestCompletionMs === undefined
+  if (hasFastest && needsMigration) {
+    stats.fastestCompletionMs = (stats.fastestCompletion as number) * 1000
+    delete stats.fastestCompletion
+  }
+}
+
+function finalizeMigration(data: Record<string, unknown>): Record<string, unknown> {
+  const sessions = migrateSessionsV3(data.sessions)
+  const progress = (data.progress as Record<string, unknown>) || {}
+  const achievements = migrateAchievementsV3(progress.achievements)
+  const exerciseStats = migrateExerciseStatsV3(progress.exerciseStats)
+
+  return assembleMigratedData({ data, sessions, progress, achievements, exerciseStats })
+}
+
+function assembleMigratedData(params: {
+  data: Record<string, unknown>
+  sessions: unknown[]
+  progress: Record<string, unknown>
+  achievements: unknown[]
+  exerciseStats: Record<string, unknown>
+}): Record<string, unknown> {
+  const { data, sessions, progress, achievements, exerciseStats } = params
+  return {
+    ...data,
+    sessions,
+    progress: {
+      ...progress,
+      achievements,
+      exerciseStats,
+    },
+  }
+}
+
+function migrateSessionsV3(sessions: unknown): unknown[] {
+  if (!Array.isArray(sessions)) return []
+  return sessions.map((s) => {
+    const session = s as Record<string, unknown>
+    const { startTime, endTime, ...rest } = session || {}
+    return {
+      ...rest,
+      startTimeMs: toMs(session?.startTimeMs ?? startTime),
+      endTimeMs: toMs(session?.endTimeMs ?? endTime),
+    }
+  })
+}
+
+function migrateAchievementsV3(achievements: unknown): unknown[] {
+  if (!Array.isArray(achievements)) return []
+  return achievements.map((a) => {
+    const achievement = a as Record<string, unknown>
+    const { unlockedAt, ...rest } = achievement || {}
+    return {
+      ...rest,
+      unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
+    }
+  })
+}
+
+function migrateExerciseStatsV3(stats: unknown): Record<string, unknown> {
+  const rawStats = (stats as Record<string, Record<string, unknown>>) || {}
+  const entries = Object.entries(rawStats).map(([k, v]) => {
+    const s = v as Record<string, unknown>
+    const { lastPracticed, ...rest } = s || {}
+    const lastPracticedMs = toMs(s?.lastPracticedMs ?? lastPracticed)
+    return [k, { ...rest, lastPracticedMs }]
+  })
+
+  const result = Object.fromEntries(entries)
+  return result
+}
