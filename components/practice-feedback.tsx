@@ -81,22 +81,25 @@ function FeedbackStatus(props: {
   const { targetNote, detectedPitchName, centsOff, status, isPlaying, isCorrectNote, isInTune } =
     props
 
-  if (status === 'listening' && !isPlaying) {
-    return <WaitingPrompt targetNote={targetNote} />
+  if (!isPlaying) {
+    return renderWaitingState(status, targetNote)
   }
 
-  if (isPlaying && isCorrectNote && isInTune) {
-    return <PerfectFeedback />
-  }
-
-  if (isPlaying && isCorrectNote && !isInTune) {
-    return <AdjustmentFeedback centsOff={centsOff!} />
-  }
-
-  if (isPlaying && !isCorrectNote) {
+  if (!isCorrectNote) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
   }
 
+  if (isInTune) {
+    return <PerfectFeedback />
+  }
+
+  return <AdjustmentFeedback centsOff={centsOff!} />
+}
+
+function renderWaitingState(status: string, targetNote: string) {
+  if (status === 'listening') {
+    return <WaitingPrompt targetNote={targetNote} />
+  }
   return <div className="flex min-h-[200px] items-center justify-center" />
 }
 
