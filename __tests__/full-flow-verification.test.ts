@@ -23,7 +23,7 @@ vi.mock('@/lib/pitch-detector', () => {
     setMaxFrequency: vi.fn(),
     detectPitch: vi.fn(() => ({ pitchHz: 0, confidence: 0 })),
     calculateRMS: vi.fn(() => 0),
-    getFrequencyRange: vi.fn(() => ({ min: 180, max: 700 })),
+    getFrequencyRange: vi.fn(() => ({ min: 180, max: 1320 })),
   }
   return {
     PitchDetector: vi.fn().mockImplementation(() => mockDetector),

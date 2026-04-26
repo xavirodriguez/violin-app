@@ -38,10 +38,10 @@ export class PitchDetector {
 
   /**
    * The maximum frequency we care about (in Hz).
-   * For violin, the highest note is E7 at ~2637 Hz.
-   * We set this to 2637 Hz to cover the full standard violin range.
+   * For violin, the practical upper limit for beginner/intermediate is E6 at ~1320 Hz.
+   * We set this to 1320 Hz by default to improve detection reliability.
    */
-  private MAX_FREQUENCY = 2637
+  private MAX_FREQUENCY = 1320
 
   /**
    * The threshold for the YIN algorithm.
@@ -424,8 +424,8 @@ export function createPitchDetectorForDifficulty(
   sampleRate: number,
 ): PitchDetector {
   const mapping: Record<string, number> = {
-    Beginner: 700,
-    Intermediate: 1400,
+    Beginner: 1320,
+    Intermediate: 1760,
     Advanced: 2637,
   }
   const maxFreq = mapping[difficulty] || 2637

@@ -101,12 +101,12 @@ describe('BUG-3 · MAX_FREQUENCY configurable via constructor', () => {
 })
 
 describe('BUG-3 · createPitchDetectorForDifficulty factory', () => {
-  it('should create detector for Beginner with 700 Hz limit', () => {
+  it('should create detector for Beginner with 1320 Hz limit', () => {
     const detector = createPitchDetectorForDifficulty('Beginner', 44100)
     expect(detector).toBeInstanceOf(PitchDetector)
   })
 
-  it('should create detector for Intermediate with 1400 Hz limit', () => {
+  it('should create detector for Intermediate with 1760 Hz limit', () => {
     const detector = createPitchDetectorForDifficulty('Intermediate', 44100)
     expect(detector).toBeInstanceOf(PitchDetector)
   })

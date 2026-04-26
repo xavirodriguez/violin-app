@@ -35,7 +35,7 @@ function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercis
   const tolerance = 35 - (skill / 100) * 25
   const options = {
     minRms: 0.015,
-    minConfidence: 0.85,
+    minConfidence: 0.8,
     centsTolerance: Math.round(tolerance),
     requiredHoldTime: 500,
     exercise: state.exercise,
