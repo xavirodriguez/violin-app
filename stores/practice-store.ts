@@ -9,11 +9,7 @@
 'use client'
 
 import { create } from 'zustand'
-import {
-  type PracticeState,
-  type PracticeEvent,
-  type PracticeStatus,
-} from '@/lib/practice-core'
+import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -108,7 +104,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     const nextSessionId = get().sessionId + 1
     startAnalyticsSession(ready.exercise)
     set((currentState) => {
-      const updates = getStartStateUpdates({ currentState, storeState: ready, runner, abort, token })
+      const updates = getStartStateUpdates({
+        currentState,
+        storeState: ready,
+        runner,
+        abort,
+        token,
+      })
       return { ...updates, sessionId: nextSessionId }
     })
     syncWithTuner(token, ready.detector)
@@ -432,7 +434,9 @@ function createAudioAdapters(params: {
 }) {
   const { resources, difficulty = 'Beginner' } = params
   const sampleRate = resources.context.sampleRate
-  const detector = new PitchDetectorAdapter(createPitchDetectorForDifficulty(difficulty, sampleRate))
+  const detector = new PitchDetectorAdapter(
+    createPitchDetectorForDifficulty(difficulty, sampleRate),
+  )
   const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
   const audioLoop = new WebAudioLoopAdapter(frameAdapter)
 
@@ -521,9 +525,7 @@ function startAnalyticsSession(exercise: Exercise | undefined) {
   }
 }
 
-function beginAudioInitialization(
-  set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void,
-) {
+function beginAudioInitialization(set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void) {
   set((currentState) => {
     const initStatus = transitions.initialize(currentState.state.exercise)
     const updates = {
@@ -638,7 +640,10 @@ async function performAudioInitialization(
   }
 }
 
-function getStartFailureUpdates(currentState: PracticeStore, error: unknown): Partial<PracticeStore> {
+function getStartFailureUpdates(
+  currentState: PracticeStore,
+  error: unknown,
+): Partial<PracticeStore> {
   const appError = toAppError(error)
   const updates = {
     ...currentState,

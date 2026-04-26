@@ -315,7 +315,10 @@ function processSessionRhythm(
   return result
 }
 
-function updateRhythmFromNote(errorMs: number, current: RhythmMetricsAccumulator): RhythmMetricsAccumulator {
+function updateRhythmFromNote(
+  errorMs: number,
+  current: RhythmMetricsAccumulator,
+): RhythmMetricsAccumulator {
   const error = Math.abs(errorMs)
   const nextError = current.totalError + error
   const nextCount = current.totalCount + 1
@@ -480,7 +483,15 @@ function assembleSessionUpdates(params: {
     statsMap: exerciseStats,
   })
 
-  return assembleStateUpdates({ session, get, exercisesCompleted, nextStatsMap, nextBuffer, nextSnapshots, nextCounter })
+  return assembleStateUpdates({
+    session,
+    get,
+    exercisesCompleted,
+    nextStatsMap,
+    nextBuffer,
+    nextSnapshots,
+    nextCounter,
+  })
 }
 
 function assembleStateUpdates(params: {
@@ -492,10 +503,11 @@ function assembleStateUpdates(params: {
   nextSnapshots: ProgressSnapshot[]
   nextCounter: number
 }): Partial<ProgressState> {
-  const { session, get, exercisesCompleted, nextStatsMap, nextBuffer, nextSnapshots, nextCounter } = params
+  const { session, get, exercisesCompleted, nextStatsMap, nextBuffer, nextSnapshots, nextCounter } =
+    params
   const nextExercises = exercisesCompleted.includes(session.exerciseId)
-      ? exercisesCompleted
-      : [...exercisesCompleted, session.exerciseId]
+    ? exercisesCompleted
+    : [...exercisesCompleted, session.exerciseId]
   const practiceTimeAdd = Math.floor(session.durationMs / 1000)
 
   return {

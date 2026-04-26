@@ -71,11 +71,7 @@ function EmojiBasedFeedback(props: { state: EmotionalState; showCelebration: boo
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
-        key={state}
-        {...getEmojiContainerAnimation()}
-        className="text-center"
-      >
+      <motion.div key={state} {...getEmojiContainerAnimation()} className="text-center">
         <motion.div animate={animate} transition={{ duration: 0.6 }} className="mb-2 text-7xl">
           {feedback.emoji}
         </motion.div>
@@ -101,7 +97,13 @@ function getEmojiContainerAnimation() {
   }
 }
 
-function TechnicalFeedback({ centsOff, isInTune }: { centsOff: number | undefined; isInTune: boolean }) {
+function TechnicalFeedback({
+  centsOff,
+  isInTune,
+}: {
+  centsOff: number | undefined
+  isInTune: boolean
+}) {
   if (centsOff === undefined) {
     return (
       <div className="text-muted-foreground text-center">

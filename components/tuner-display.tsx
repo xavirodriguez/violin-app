@@ -27,12 +27,7 @@ export function TunerDisplay(props: TunerDisplayProps) {
 
   return (
     <div className="space-y-6">
-      <ScreenReaderStatus
-        note={note}
-        cents={cents}
-        isInTune={isInTune}
-        isClose={isClose}
-      />
+      <ScreenReaderStatus note={note} cents={cents} isInTune={isInTune} isClose={isClose} />
 
       <TunerNoteInfo
         note={note}
@@ -44,12 +39,7 @@ export function TunerDisplay(props: TunerDisplayProps) {
 
       <TunerMeter cents={cents} />
 
-      <TunerStatusIndicators
-        note={note}
-        cents={cents}
-        isInTune={isInTune}
-        isClose={isClose}
-      />
+      <TunerStatusIndicators note={note} cents={cents} isInTune={isInTune} isClose={isClose} />
     </div>
   )
 }
@@ -120,9 +110,7 @@ function ActiveNoteView(props: {
   return (
     <>
       <div className="text-foreground mb-2 text-6xl font-bold">{note}</div>
-      {cents !== undefined && (
-        <CentsDisplay cents={cents} isInTune={isInTune} isClose={isClose} />
-      )}
+      {cents !== undefined && <CentsDisplay cents={cents} isInTune={isInTune} isClose={isClose} />}
       <div className="text-muted-foreground mt-1 text-sm">
         Confidence: {(confidence * 100).toFixed(0)}%
       </div>
@@ -235,7 +223,8 @@ function TunerStatusIndicators(props: {
 function AdjustmentIndicator({ cents, isClose }: { cents: number; isClose: boolean }) {
   const colorClass = isClose ? 'text-yellow-500' : 'text-red-500'
   const arrow = cents > 0 ? (isClose ? '↑' : '↑↑') : isClose ? '↓' : '↓↓'
-  const text = cents > 0 ? (isClose ? 'A bit sharp' : 'Too sharp') : isClose ? 'A bit flat' : 'Too flat'
+  const text =
+    cents > 0 ? (isClose ? 'A bit sharp' : 'Too sharp') : isClose ? 'A bit flat' : 'Too flat'
 
   return (
     <div className={`text-lg font-semibold ${colorClass}`}>

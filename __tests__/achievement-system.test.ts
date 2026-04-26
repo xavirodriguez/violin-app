@@ -31,8 +31,17 @@ describe('Achievement System', () => {
     const { result } = renderHook(() => useAnalyticsStore())
 
     act(() => {
-      result.current.startSession({ exerciseId: 'test-exercise', exerciseName: 'Test', mode: 'practice' })
-      result.current.recordNoteAttempt({ noteIndex: 0, targetPitch: 'A4', cents: 2, wasInTune: true }) // Perfect note (< 5 cents)
+      result.current.startSession({
+        exerciseId: 'test-exercise',
+        exerciseName: 'Test',
+        mode: 'practice',
+      })
+      result.current.recordNoteAttempt({
+        noteIndex: 0,
+        targetPitch: 'A4',
+        cents: 2,
+        wasInTune: true,
+      }) // Perfect note (< 5 cents)
       result.current.recordNoteCompletion({ noteIndex: 0, timeToCompleteMs: 1000 })
     })
 
@@ -44,11 +53,20 @@ describe('Achievement System', () => {
     const { result } = renderHook(() => useAnalyticsStore())
 
     act(() => {
-      result.current.startSession({ exerciseId: 'test-exercise', exerciseName: 'Test', mode: 'practice' })
+      result.current.startSession({
+        exerciseId: 'test-exercise',
+        exerciseName: 'Test',
+        mode: 'practice',
+      })
 
       // Simulate 5 perfect notes
       for (let i = 0; i < 5; i++) {
-        result.current.recordNoteAttempt({ noteIndex: i, targetPitch: 'A4', cents: 2, wasInTune: true })
+        result.current.recordNoteAttempt({
+          noteIndex: i,
+          targetPitch: 'A4',
+          cents: 2,
+          wasInTune: true,
+        })
         result.current.recordNoteCompletion({ noteIndex: i, timeToCompleteMs: 1000 })
       }
     })
@@ -61,21 +79,40 @@ describe('Achievement System', () => {
     const { result } = renderHook(() => useAnalyticsStore())
 
     act(() => {
-      result.current.startSession({ exerciseId: 'test-exercise', exerciseName: 'Test', mode: 'practice' })
+      result.current.startSession({
+        exerciseId: 'test-exercise',
+        exerciseName: 'Test',
+        mode: 'practice',
+      })
 
       // 3 perfect notes
       for (let i = 0; i < 3; i++) {
-        result.current.recordNoteAttempt({ noteIndex: i, targetPitch: 'A4', cents: 2, wasInTune: true })
+        result.current.recordNoteAttempt({
+          noteIndex: i,
+          targetPitch: 'A4',
+          cents: 2,
+          wasInTune: true,
+        })
         result.current.recordNoteCompletion({ noteIndex: i, timeToCompleteMs: 1000 })
       }
 
       // 1 off-pitch note (breaks streak)
-      result.current.recordNoteAttempt({ noteIndex: 3, targetPitch: 'A4', cents: 15, wasInTune: false })
+      result.current.recordNoteAttempt({
+        noteIndex: 3,
+        targetPitch: 'A4',
+        cents: 15,
+        wasInTune: false,
+      })
       result.current.recordNoteCompletion({ noteIndex: 3, timeToCompleteMs: 1000 })
 
       // 2 more perfect notes
       for (let i = 4; i < 6; i++) {
-        result.current.recordNoteAttempt({ noteIndex: i, targetPitch: 'A4', cents: 2, wasInTune: true })
+        result.current.recordNoteAttempt({
+          noteIndex: i,
+          targetPitch: 'A4',
+          cents: 2,
+          wasInTune: true,
+        })
         result.current.recordNoteCompletion({ noteIndex: i, timeToCompleteMs: 1000 })
       }
     })

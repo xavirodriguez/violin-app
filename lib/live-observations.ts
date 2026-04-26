@@ -31,7 +31,7 @@ export function calculateLiveObservations(
 
 function gatherTechnicalObservations(
   detections: readonly DetectedNote[],
-  targetPitch: string
+  targetPitch: string,
 ): Observation[] {
   const intonation = analyzeIntonation(detections)
   const stability = intonation.length === 0 ? analyzeStability(detections) : []

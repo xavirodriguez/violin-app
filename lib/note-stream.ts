@@ -267,16 +267,14 @@ async function* processRawStream(params: {
   }
 }
 
-async function* executeRawFrameProcessing(
-  params: {
-    raw: RawPitchEvent
-    context: PipelineContext
-    optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
-    segmenter: NoteSegmenter
-    agent: TechniqueAnalysisAgent
-    state: TechnicalAnalysisState
-  }
-): AsyncGenerator<PracticeEvent> {
+async function* executeRawFrameProcessing(params: {
+  raw: RawPitchEvent
+  context: PipelineContext
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)
+  segmenter: NoteSegmenter
+  agent: TechniqueAnalysisAgent
+  state: TechnicalAnalysisState
+}): AsyncGenerator<PracticeEvent> {
   const { raw, state, segmenter, agent, context, optionsOrGetter } = params
   const options = resolveOptions(optionsOrGetter)
   const procParams = { raw, state, segmenter, agent, context, options }
@@ -297,9 +295,7 @@ async function* processSourceEvents(params: {
   yield* processRawPitchEvent(processParams)
 }
 
-function initializeAnalysisWindow(
-  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
-) {
+function initializeAnalysisWindow(optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)) {
   const initialOptions = resolveOptions(optionsOrGetter)
   const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
@@ -431,7 +427,6 @@ function prepareSegmentEventParams(params: {
   }
 }
 
-
 function* maybeEmitHoldingEvent(params: {
   frame: TechniqueFrame
   state: TechnicalAnalysisState
@@ -444,7 +439,12 @@ function* maybeEmitHoldingEvent(params: {
   const isHoldingCandidate = state.currentSegmentStart !== undefined && isPitched && !!targetNote
 
   if (isHoldingCandidate) {
-    const candidateParams = { state, targetNote: targetNote!, frame: frame as PitchedFrame, options }
+    const candidateParams = {
+      state,
+      targetNote: targetNote!,
+      frame: frame as PitchedFrame,
+      options,
+    }
     yield* emitHoldingIfMatched(candidateParams)
   }
 }
@@ -621,7 +621,8 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
 
   if (pitchedFrames.length === 0) return undefined
 
-  const isMatched = currentTarget && isValidMatch({ target: currentTarget, segment, pitchedFrames, options })
+  const isMatched =
+    currentTarget && isValidMatch({ target: currentTarget, segment, pitchedFrames, options })
   if (!isMatched) {
     return undefined
   }
@@ -835,7 +836,7 @@ export function createPracticeEventPipeline(params: {
 }
 
 function getOptionsOrGetter(
-  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions)
+  options: (Partial<NoteStreamOptions> & { exercise: Exercise }) | (() => NoteStreamOptions),
 ): NoteStreamOptions | (() => NoteStreamOptions) {
   const isFunction = typeof options === 'function'
   if (isFunction) {

@@ -382,7 +382,11 @@ export class NoteSegmenter {
     noteState: NoteState
   }): SegmenterEvent | undefined {
     const { frame, isSignalPresent, now, noteState } = params
-    const isDifferent = this.isDifferentNoteDetected({ frame, isSignal: isSignalPresent, noteState })
+    const isDifferent = this.isDifferentNoteDetected({
+      frame,
+      isSignal: isSignalPresent,
+      noteState,
+    })
 
     if (isDifferent) {
       return this.processPendingNoteChange({ frame: frame as PitchedFrame, now, noteState })
@@ -506,5 +510,4 @@ export class NoteSegmenter {
       buffer.shift()
     }
   }
-
 }

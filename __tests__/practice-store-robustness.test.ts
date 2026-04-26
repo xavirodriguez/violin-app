@@ -3,7 +3,11 @@ import { usePracticeStore } from '../stores/practice-store'
 import { audioManager } from '../lib/infrastructure/audio-manager'
 import { PracticeSessionRunnerImpl } from '../lib/practice/session-runner'
 import crypto from 'crypto'
-import type { MockExercise, MockAudioResources, GlobalThisWithCrypto } from '@/lib/testing/mock-types'
+import type {
+  MockExercise,
+  MockAudioResources,
+  GlobalThisWithCrypto,
+} from '@/lib/testing/mock-types'
 import { Exercise } from '@/lib/exercises/types'
 
 // Polyfill crypto for node environment

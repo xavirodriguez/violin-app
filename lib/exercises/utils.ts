@@ -88,7 +88,11 @@ function isDifficultyMatch(exDiff: string, filterDiff?: string): boolean {
   return isMatch
 }
 
-function isTabMatch(ex: Exercise, activeTab: string, stats: Record<string, ExerciseStats>): boolean {
+function isTabMatch(
+  ex: Exercise,
+  activeTab: string,
+  stats: Record<string, ExerciseStats>,
+): boolean {
   if (activeTab === 'all') return true
   if (activeTab === 'inProgress') return isExerciseInProgress(ex.id, stats)
 

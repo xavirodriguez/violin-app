@@ -67,7 +67,7 @@ function HeatmapItem({ id, stats }: { id: string; stats: ExerciseStats }) {
 
   return (
     <div className={containerClass} title={tooltip}>
-      <span className="text-xs font-bold uppercase tracking-tight opacity-80">{id}</span>
+      <span className="text-xs font-bold tracking-tight uppercase opacity-80">{id}</span>
       <span className="text-lg font-black">{Math.round(accuracy)}%</span>
     </div>
   )

@@ -150,7 +150,9 @@ export const logger = {
   ) => {
     const input = payload
     const isString = typeof input === 'string'
-    const logPayload = isString ? { msg: input, level: 'error' as const } : { ...input, level: 'error' as const }
+    const logPayload = isString
+      ? { msg: input, level: 'error' as const }
+      : { ...input, level: 'error' as const }
 
     log(logPayload)
   },

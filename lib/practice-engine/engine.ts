@@ -221,20 +221,24 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
   yield* executeNoteLoop({ ...params, stream, startTime })
 }
 
-async function* executeNoteLoop(params: EngineRunnerParams & {
-  stream: AsyncIterable<RawPitchEvent>
-  startTime: number
-}): AsyncGenerator<PracticeEngineEvent> {
+async function* executeNoteLoop(
+  params: EngineRunnerParams & {
+    stream: AsyncIterable<RawPitchEvent>
+    startTime: number
+  },
+): AsyncGenerator<PracticeEngineEvent> {
   const { getState, signal } = params
   while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
     yield* iterateScoreNotes(params)
   }
 }
 
-async function* iterateScoreNotes(params: EngineRunnerParams & {
-  stream: AsyncIterable<RawPitchEvent>
-  startTime: number
-}): AsyncGenerator<PracticeEngineEvent> {
+async function* iterateScoreNotes(
+  params: EngineRunnerParams & {
+    stream: AsyncIterable<RawPitchEvent>
+    startTime: number
+  },
+): AsyncGenerator<PracticeEngineEvent> {
   const pipelineParams = getPipelineParams(params)
   const pipeline = setupPipeline(pipelineParams)
   const { getState, updateState, signal } = params
@@ -243,10 +247,12 @@ async function* iterateScoreNotes(params: EngineRunnerParams & {
   yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
 }
 
-function getPipelineParams(params: EngineRunnerParams & {
-  stream: AsyncIterable<RawPitchEvent>
-  startTime: number
-}): SetupPipelineParams {
+function getPipelineParams(
+  params: EngineRunnerParams & {
+    stream: AsyncIterable<RawPitchEvent>
+    startTime: number
+  },
+): SetupPipelineParams {
   const { ctx, getState, stream, getOptions, signal, startTime } = params
   const noteIndex = getState().currentNoteIndex
 
@@ -309,7 +315,7 @@ async function* processPipeline(params: PipelineParams): AsyncGenerator<Practice
 }
 
 async function* handleNoteIteration(
-  params: PipelineParams & { event: PracticeEvent }
+  params: PipelineParams & { event: PracticeEvent },
 ): AsyncGenerator<PracticeEngineEvent> {
   const { event, getState, noteIndex, updateState, signal } = params
   const engineEvent = mapPipelineEventToEngineEvent(event)
@@ -320,9 +326,7 @@ async function* handleNoteIteration(
   }
 }
 
-function checkIterationTermination(
-  params: PipelineParams & { event: PracticeEvent }
-): boolean {
+function checkIterationTermination(params: PipelineParams & { event: PracticeEvent }): boolean {
   const { event, getState, noteIndex } = params
   const fallback: PracticeEngineEvent = { type: 'NO_NOTE' }
   const engineEvent = mapPipelineEventToEngineEvent(event) ?? fallback
@@ -331,7 +335,6 @@ function checkIterationTermination(
   const shouldBreak = shouldTerminatePipeline({ event: engineEvent, state, noteIndex })
   return shouldBreak
 }
-
 
 /**
  * Updates engine state and yields events to the consumer.

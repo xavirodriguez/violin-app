@@ -9,9 +9,19 @@
 import { Button } from '@/components/ui/button'
 import { Maximize2, Minimize2 } from 'lucide-react'
 
-export function ViewToggleButton({ view, onToggle }: { view: 'focused' | 'full'; onToggle: () => void }) {
+export function ViewToggleButton({
+  view,
+  onToggle,
+}: {
+  view: 'focused' | 'full'
+  onToggle: () => void
+}) {
   const isFocused = view === 'focused'
-  const icon = isFocused ? <Maximize2 className="mr-2 h-4 w-4" /> : <Minimize2 className="mr-2 h-4 w-4" />
+  const icon = isFocused ? (
+    <Maximize2 className="mr-2 h-4 w-4" />
+  ) : (
+    <Minimize2 className="mr-2 h-4 w-4" />
+  )
   const label = isFocused ? 'Full View' : 'Focused View'
 
   return (

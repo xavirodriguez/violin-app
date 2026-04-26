@@ -83,7 +83,12 @@ export function usePracticePipeline({
 
     const abortController = new AbortController()
     runPipelineSession({
-      deps: { state: practiceState!, audioLoop: audioLoop!, detector: detector!, signal: abortController.signal },
+      deps: {
+        state: practiceState!,
+        audioLoop: audioLoop!,
+        detector: detector!,
+        signal: abortController.signal,
+      },
       consume: consumePipelineEvents,
     })
 

@@ -55,7 +55,13 @@ export class TechniqueAnalysisAgent {
     const frames = segment.frames
     const pitched = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
-    const technique = this.buildTechniqueObject({ segment, frames, pitched, gapFrames, prevSegment })
+    const technique = this.buildTechniqueObject({
+      segment,
+      frames,
+      pitched,
+      gapFrames,
+      prevSegment,
+    })
     return technique
   }
 
@@ -261,7 +267,10 @@ export class TechniqueAnalysisAgent {
     return result
   }
 
-  private executeAttackReleaseAnalysis(frames: ReadonlyArray<TechniqueFrame>, pitched: PitchedFrame[]) {
+  private executeAttackReleaseAnalysis(
+    frames: ReadonlyArray<TechniqueFrame>,
+    pitched: PitchedFrame[],
+  ) {
     const lastTime = frames[frames.length - 1].timestamp
     const attack = this.analyzeAttackPhase(frames, pitched)
     const release = this.analyzeReleasePhase(pitched, lastTime)
@@ -301,7 +310,9 @@ export class TechniqueAnalysisAgent {
   ): TimestampMs {
     const stableRmsThreshold = this.calculateStableRms(frames) * 0.85
     const stableFrame = frames.find((f) => f.rms >= stableRmsThreshold)
-    const result = stableFrame ? ((stableFrame.timestamp - startTime) as TimestampMs) : (0 as TimestampMs)
+    const result = stableFrame
+      ? ((stableFrame.timestamp - startTime) as TimestampMs)
+      : (0 as TimestampMs)
 
     return result
   }
@@ -323,7 +334,9 @@ export class TechniqueAnalysisAgent {
 
   private calculatePitchScoop(pitchedFrames: PitchedFrame[], startTime: TimestampMs): Cents {
     const early = pitchedFrames.filter((f) => f.timestamp - startTime <= 150)
-    const stable = pitchedFrames.filter((f) => f.timestamp - startTime > this.options.settlingTimeMs)
+    const stable = pitchedFrames.filter(
+      (f) => f.timestamp - startTime > this.options.settlingTimeMs,
+    )
 
     if (early.length === 0 || stable.length === 0) {
       return 0 as Cents
@@ -338,9 +351,10 @@ export class TechniqueAnalysisAgent {
 
   private analyzeReleasePhase(pitchedFrames: PitchedFrame[], endTime: TimestampMs): Cents {
     const latePitched = pitchedFrames.filter((f) => endTime - f.timestamp <= 100)
-    const stdDev = latePitched.length > 0
-      ? (this.calculateStdDev(latePitched.map((f) => f.cents)) as Cents)
-      : (0 as Cents)
+    const stdDev =
+      latePitched.length > 0
+        ? (this.calculateStdDev(latePitched.map((f) => f.cents)) as Cents)
+        : (0 as Cents)
 
     return stdDev
   }
@@ -399,7 +413,10 @@ export class TechniqueAnalysisAgent {
     const meanRms = rmsValues.reduce((a, b) => a + b) / rmsValues.length
     const detrendedRms = rmsValues.map((v) => v - meanRms)
 
-    const analysis = this.findPeriod(detrendedRms, frames.map((f) => f.timestamp))
+    const analysis = this.findPeriod(
+      detrendedRms,
+      frames.map((f) => f.timestamp),
+    )
     const score = Math.max(0, analysis.correlation) as Ratio01
 
     return score
@@ -420,12 +437,14 @@ export class TechniqueAnalysisAgent {
 
   private calculateRhythm(segment: NoteSegment): RhythmMetrics {
     const hasExpectedStart = segment.expectedStartTime !== undefined
-    const onsetErrorMs = hasExpectedStart ? segment.startTime - (segment.expectedStartTime as number) : 0
+    const onsetErrorMs = hasExpectedStart
+      ? segment.startTime - (segment.expectedStartTime as number)
+      : 0
 
     const hasExpectedDur = segment.expectedDuration !== undefined
     const durationErrorMs = hasExpectedDur
-        ? segment.endTime - segment.startTime - (segment.expectedDuration as number)
-        : undefined
+      ? segment.endTime - segment.startTime - (segment.expectedDuration as number)
+      : undefined
 
     return { onsetErrorMs, durationErrorMs }
   }

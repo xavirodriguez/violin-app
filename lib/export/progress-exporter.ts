@@ -42,14 +42,7 @@ function formatSingleSessionRow(s: PracticeSession): string {
   const accuracy = s.accuracy.toFixed(1)
   const escapedName = `"${s.exerciseName.replace(/"/g, '""')}"`
 
-  return [
-    date,
-    escapedName,
-    durationMin,
-    accuracy,
-    s.notesCompleted,
-    s.notesAttempted,
-  ].join(',')
+  return [date, escapedName, durationMin, accuracy, s.notesCompleted, s.notesAttempted].join(',')
 }
 
 /**

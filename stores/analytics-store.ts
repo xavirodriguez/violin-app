@@ -101,7 +101,11 @@ export interface AnalyticsStore {
   onAchievementUnlocked?: (achievement: Achievement) => void
   currentPerfectStreak: number
 
-  startSession: (params: { exerciseId: string; exerciseName: string; mode: 'tuner' | 'practice' }) => void
+  startSession: (params: {
+    exerciseId: string
+    exerciseName: string
+    mode: 'tuner' | 'practice'
+  }) => void
   endSession: () => void
   recordNoteAttempt: (params: RecordAttemptParams) => void
   recordNoteCompletion: (params: RecordCompletionParams) => void
@@ -399,7 +403,10 @@ function handleStreakMilestones(streak: number): void {
   }
 }
 
-function updateCompletedNote(noteResults: NoteResult[], params: RecordCompletionParams): NoteResult[] {
+function updateCompletedNote(
+  noteResults: NoteResult[],
+  params: RecordCompletionParams,
+): NoteResult[] {
   const { noteIndex, timeToCompleteMs, technique } = params
   const results = noteResults.map((nr) =>
     nr.noteIndex === noteIndex ? { ...nr, timeToCompleteMs, technique } : nr,
@@ -489,7 +496,8 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
   const recentSessions = sessions.slice(0, 10)
   const totalAcc = recentSessions.reduce((sum, s) => sum + s.accuracy, 0)
   const avgAccuracy = totalAcc / recentSessions.length
-  const trend = recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
+  const trend =
+    recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
   const skill = Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
 
   return skill
@@ -552,7 +560,10 @@ function updateStreak(progress: UserProgress, sessions: PracticeSession[]) {
   updateLongestStreak(progress)
 }
 
-function applyStreakUpdate(progress: UserProgress, info: { shouldReset: boolean; shouldIncrement: boolean }) {
+function applyStreakUpdate(
+  progress: UserProgress,
+  info: { shouldReset: boolean; shouldIncrement: boolean },
+) {
   if (info.shouldReset) {
     progress.currentStreak = 1
   } else if (info.shouldIncrement) {
@@ -590,7 +601,9 @@ function calculatePracticeDays(sessions: PracticeSession[]): number {
   return uniqueDays.size
 }
 
-function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResult[] }): NoteResult[] {
+function updateNoteResults(
+  params: RecordAttemptParams & { noteResults: NoteResult[] },
+): NoteResult[] {
   const { noteResults, noteIndex } = params
   const existing = noteResults.find((nr) => nr.noteIndex === noteIndex)
   if (existing) {
@@ -599,10 +612,7 @@ function updateNoteResults(params: RecordAttemptParams & { noteResults: NoteResu
   return [...noteResults, createInitialNoteResult(params)]
 }
 
-function applyAttemptToExisting(
-  results: NoteResult[],
-  params: RecordAttemptParams,
-): NoteResult[] {
+function applyAttemptToExisting(results: NoteResult[], params: RecordAttemptParams): NoteResult[] {
   const { noteIndex, targetPitch, cents, wasInTune } = params
   return results.map((nr) => {
     if (nr.noteIndex !== noteIndex) return nr
@@ -648,7 +658,6 @@ interface RhythmMetrics {
   totalCount: number
 }
 
-
 function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   let metrics: RhythmMetrics = { totalError: 0, inWindowCount: 0, totalCount: 0 }
 
@@ -683,7 +692,6 @@ function applyNoteRhythm(onsetError: number, metrics: RhythmMetrics): RhythmMetr
   }
 }
 
-
 function calculateRhythmScore(metrics: RhythmMetrics): number {
   const { totalError, inWindowCount, totalCount } = metrics
   const mae = totalError / totalCount
@@ -697,7 +705,6 @@ function calculateRhythmScore(metrics: RhythmMetrics): number {
 /**
  * Checks localStorage usage and warns the user via toast if capacity is high.
  */
-
 
 function migratePersistence(persisted: unknown, version: number): AnalyticsStore {
   const persistedData = persisted as Record<string, unknown>
@@ -860,4 +867,3 @@ function assembleUpdatedSession(params: {
     ...summary,
   }
 }
-

@@ -82,6 +82,8 @@ describe('FeatureFlagsManager', () => {
   })
 
   it('should return provided default value from get() when both env and metadata are missing', () => {
-    expect(featureFlags.get('TOTALLY_MISSING' as FeatureFlagName, 'custom-default')).toBe('custom-default')
+    expect(featureFlags.get('TOTALLY_MISSING' as FeatureFlagName, 'custom-default')).toBe(
+      'custom-default',
+    )
   })
 })

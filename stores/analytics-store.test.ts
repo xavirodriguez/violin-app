@@ -168,12 +168,12 @@ describe('useAnalyticsStore', () => {
     expect(ex1Stats.fastestCompletion).toBeUndefined()
   })
 
-  it("should calculate rhythm skill correctly based on technical metrics", () => {
+  it('should calculate rhythm skill correctly based on technical metrics', () => {
     const { startSession, recordNoteAttempt, recordNoteCompletion, endSession } =
       useAnalyticsStore.getState()
-    startSession({ exerciseId: "ex1", exerciseName: "Exercise 1", mode: "practice" })
+    startSession({ exerciseId: 'ex1', exerciseName: 'Exercise 1', mode: 'practice' })
     // Note 1: Perfect timing (0ms error)
-    recordNoteAttempt({ noteIndex: 0, targetPitch: "A4", cents: 0, wasInTune: true })
+    recordNoteAttempt({ noteIndex: 0, targetPitch: 'A4', cents: 0, wasInTune: true })
     recordNoteCompletion({
       noteIndex: 0,
       timeToCompleteMs: 500,
@@ -187,7 +187,12 @@ describe('useAnalyticsStore', () => {
           inTuneRatio: 1,
         },
         attackRelease: { attackTimeMs: 0, pitchScoopCents: 0, releaseStability: 0 },
-        resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
+        resonance: {
+          suspectedWolf: false,
+          rmsBeatingScore: 0,
+          pitchChaosScore: 0,
+          lowConfRatio: 0,
+        },
         transition: {
           transitionTimeMs: 0,
           glissAmountCents: 0,
@@ -198,7 +203,7 @@ describe('useAnalyticsStore', () => {
     })
 
     // Note 2: Poor timing (200ms error)
-    recordNoteAttempt({ noteIndex: 1, targetPitch: "B4", cents: 0, wasInTune: true })
+    recordNoteAttempt({ noteIndex: 1, targetPitch: 'B4', cents: 0, wasInTune: true })
     recordNoteCompletion({
       noteIndex: 1,
       timeToCompleteMs: 500,

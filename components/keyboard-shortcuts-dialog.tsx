@@ -83,9 +83,7 @@ export function KeyboardShortcutsDialog() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Keyboard Shortcuts</DialogTitle>
-            <DialogDescription>
-              Available shortcuts during practice sessions.
-            </DialogDescription>
+            <DialogDescription>Available shortcuts during practice sessions.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {SHORTCUTS.map((shortcut, index) => (
@@ -94,9 +92,7 @@ export function KeyboardShortcutsDialog() {
                 <div className="flex items-center gap-1">
                   {shortcut.keys.map((key, keyIndex) => (
                     <span key={keyIndex} className="flex items-center gap-1">
-                      {keyIndex > 0 && (
-                        <span className="text-muted-foreground text-xs">+</span>
-                      )}
+                      {keyIndex > 0 && <span className="text-muted-foreground text-xs">+</span>}
                       <Kbd>{key}</Kbd>
                     </span>
                   ))}

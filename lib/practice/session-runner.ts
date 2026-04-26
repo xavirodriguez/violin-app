@@ -50,10 +50,7 @@ export interface RunnerStore {
     partial:
       | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
       | Partial<{ practiceState: PracticeState | undefined; liveObservations?: Observation[] }>
-      | ((state: {
-          practiceState: PracticeState | undefined
-          liveObservations?: Observation[]
-        }) =>
+      | ((state: { practiceState: PracticeState | undefined; liveObservations?: Observation[] }) =>
           | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
           | Partial<{
               practiceState: PracticeState | undefined

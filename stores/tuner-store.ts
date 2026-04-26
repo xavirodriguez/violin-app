@@ -159,7 +159,11 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
       }
     },
 
-    handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => {
+    handleDetectedPitch: (params: {
+      pitch: number
+      confidence: number
+      token: number | string
+    }) => {
       const { pitch, confidence, token } = params
       try {
         const note = MusicalNote.fromFrequency(pitch)
@@ -266,7 +270,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
 })
 
 type TunerSet = (
-  partial: TunerStore | Partial<TunerStore> | ((state: TunerStore) => TunerStore | Partial<TunerStore>),
+  partial:
+    | TunerStore
+    | Partial<TunerStore>
+    | ((state: TunerStore) => TunerStore | Partial<TunerStore>),
   replace?: false | undefined,
 ) => void
 

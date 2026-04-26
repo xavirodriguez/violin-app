@@ -4,13 +4,12 @@ import React from 'react'
 import { PracticeSummaryChart } from '../practice-summary-chart'
 
 interface HeatmapSectionProps {
-  data:
-    | Array<{
-        noteIndex: number
-        targetPitch: string
-        accuracy: number
-        cents: number
-      }>
+  data: Array<{
+    noteIndex: number
+    targetPitch: string
+    accuracy: number
+    cents: number
+  }>
 }
 
 export function HeatmapSection(props: HeatmapSectionProps) {

@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { getAchievementProgress } from '@/lib/achievements/achievement-checker'
-import { ACHIEVEMENT_DEFINITIONS, type AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  type AchievementCheckStats,
+} from '@/lib/achievements/achievement-definitions'
 import { exportSessionsToCSV } from '@/lib/export/progress-exporter'
 import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
 import type { PracticeSession } from '@/stores/analytics-store'
@@ -58,7 +61,13 @@ describe('FEAT-2 · getAchievementProgress', () => {
   it('should return partial progress for hot-streak-5 with 3/5 streak', () => {
     const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === 'hot-streak-5')!
     const stats = makeStats({
-      currentSession: { correctNotes: 3, perfectNoteStreak: 3, accuracy: 100, durationMs: 5000, exerciseId: 'ex' },
+      currentSession: {
+        correctNotes: 3,
+        perfectNoteStreak: 3,
+        accuracy: 100,
+        durationMs: 5000,
+        exerciseId: 'ex',
+      },
     })
     const progress = getAchievementProgress(def, stats)
     expect(progress).toBe(60) // 3/5 * 100
@@ -67,7 +76,13 @@ describe('FEAT-2 · getAchievementProgress', () => {
   it('should return 100 for a completed achievement', () => {
     const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === 'hot-streak-5')!
     const stats = makeStats({
-      currentSession: { correctNotes: 5, perfectNoteStreak: 5, accuracy: 100, durationMs: 5000, exerciseId: 'ex' },
+      currentSession: {
+        correctNotes: 5,
+        perfectNoteStreak: 5,
+        accuracy: 100,
+        durationMs: 5000,
+        exerciseId: 'ex',
+      },
     })
     const progress = getAchievementProgress(def, stats)
     expect(progress).toBe(100)
@@ -76,7 +91,13 @@ describe('FEAT-2 · getAchievementProgress', () => {
   it('should cap progress at 100 for over-achieved values', () => {
     const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === 'hot-streak-5')!
     const stats = makeStats({
-      currentSession: { correctNotes: 10, perfectNoteStreak: 10, accuracy: 100, durationMs: 5000, exerciseId: 'ex' },
+      currentSession: {
+        correctNotes: 10,
+        perfectNoteStreak: 10,
+        accuracy: 100,
+        durationMs: 5000,
+        exerciseId: 'ex',
+      },
     })
     const progress = getAchievementProgress(def, stats)
     expect(progress).toBe(100)
@@ -100,7 +121,13 @@ describe('FEAT-2 · getAchievementProgress', () => {
     const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === 'marathon-session')!
     const halfwayMs = 15 * 60 * 1000
     const stats = makeStats({
-      currentSession: { correctNotes: 0, perfectNoteStreak: 0, accuracy: 0, durationMs: halfwayMs, exerciseId: 'ex' },
+      currentSession: {
+        correctNotes: 0,
+        perfectNoteStreak: 0,
+        accuracy: 0,
+        durationMs: halfwayMs,
+        exerciseId: 'ex',
+      },
     })
     const progress = getAchievementProgress(def, stats)
     expect(progress).toBe(50)
@@ -109,7 +136,13 @@ describe('FEAT-2 · getAchievementProgress', () => {
   it('should return 100 for first-perfect-note when at least 1 correct note', () => {
     const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === 'first-perfect-note')!
     const stats = makeStats({
-      currentSession: { correctNotes: 1, perfectNoteStreak: 0, accuracy: 50, durationMs: 1000, exerciseId: 'ex' },
+      currentSession: {
+        correctNotes: 1,
+        perfectNoteStreak: 0,
+        accuracy: 50,
+        durationMs: 1000,
+        exerciseId: 'ex',
+      },
     })
     const progress = getAchievementProgress(def, stats)
     expect(progress).toBe(100)
@@ -122,11 +155,16 @@ describe('FEAT-2 · getAchievementProgress', () => {
 describe('FEAT-3 · exportSessionsToCSV', () => {
   it('should produce correct CSV headers', () => {
     const csv = exportSessionsToCSV([])
-    expect(csv).toBe('Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted')
+    expect(csv).toBe(
+      'Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted',
+    )
   })
 
   it('should produce one data row per session', () => {
-    const sessions = [makeMockSession(), makeMockSession({ id: 'session-2', exerciseName: 'Another Scale' })]
+    const sessions = [
+      makeMockSession(),
+      makeMockSession({ id: 'session-2', exerciseName: 'Another Scale' }),
+    ]
     const csv = exportSessionsToCSV(sessions)
     const lines = csv.split('\n')
     expect(lines).toHaveLength(3) // header + 2 rows

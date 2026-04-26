@@ -20,8 +20,16 @@ interface PracticeControlsProps {
  * Control bar for starting, stopping, and monitoring practice progress.
  */
 export function PracticeControls(props: PracticeControlsProps) {
-  const { status, hasExercise, onStart, onStop, onRestart, progress, currentNoteIndex, totalNotes } =
-    props
+  const {
+    status,
+    hasExercise,
+    onStart,
+    onStop,
+    onRestart,
+    progress,
+    currentNoteIndex,
+    totalNotes,
+  } = props
 
   return (
     <Card className="p-4">
@@ -33,7 +41,9 @@ export function PracticeControls(props: PracticeControlsProps) {
           onStop={onStop}
           onRestart={onRestart}
         />
-        {hasExercise && <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />}
+        {hasExercise && (
+          <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+        )}
       </div>
     </Card>
   )

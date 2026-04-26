@@ -88,7 +88,9 @@ export const useAnalyticsStore = Object.assign(
           totalPracticeTimeMs: latestProgress.totalPracticeTime * 1000,
           averageAccuracy: latestProgress.overallSkill,
           totalNotesCompleted:
-            useSessionHistoryStore.getState().sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
+            useSessionHistoryStore
+              .getState()
+              .sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
             (latestSession.current?.notesCompleted || 0),
         }
         useAchievementsStore.getState().check(stats)
@@ -320,5 +322,3 @@ function assembleCheckStats(params: {
     totalNotesCompleted: totalNotes,
   }
 }
-
-

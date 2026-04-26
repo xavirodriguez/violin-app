@@ -97,7 +97,8 @@ export class FeatureFlagsManager {
         process.env.FEATURE_SOCIAL_PRACTICE_ROOMS ??
         process.env.NEXT_PUBLIC_FEATURE_SOCIAL_PRACTICE_ROOMS,
       FEATURE_TELEMETRY_ACCURACY:
-        process.env.FEATURE_TELEMETRY_ACCURACY ?? process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY,
+        process.env.FEATURE_TELEMETRY_ACCURACY ??
+        process.env.NEXT_PUBLIC_FEATURE_TELEMETRY_ACCURACY,
     }
   }
 
@@ -129,7 +130,8 @@ export class FeatureFlagsManager {
     const metadata = FEATURE_FLAGS_METADATA[flagName]
     if (!metadata) return defaultValue
 
-    const result = defaultValue !== undefined ? defaultValue : (metadata.defaultValue as unknown as T)
+    const result =
+      defaultValue !== undefined ? defaultValue : (metadata.defaultValue as unknown as T)
     return result
   }
 

@@ -69,7 +69,7 @@ export function AchievementsSection(props: AchievementsSectionProps) {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{def.icon}</span>
                     <div>
-                      <div className="text-sm font-bold leading-tight">{def.name}</div>
+                      <div className="text-sm leading-tight font-bold">{def.name}</div>
                       <div className="text-muted-foreground text-xs">{def.description}</div>
                     </div>
                   </div>

@@ -56,11 +56,7 @@ export function ExercisePreviewModal({
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden p-0">
         <PreviewHeader exercise={exercise} />
         <PreviewScrollContent exercise={exercise} osmdHook={osmdHook} />
-        <PreviewFooter
-          isPlaying={isPlaying}
-          onPlay={playReferenceAudio}
-          onStart={onStart}
-        />
+        <PreviewFooter isPlaying={isPlaying} onPlay={playReferenceAudio} onStart={onStart} />
       </DialogContent>
     </Dialog>
   )
@@ -149,9 +145,7 @@ function GoalListItem({ goal }: { goal: string }) {
 function FingerPositionSection() {
   return (
     <section className="space-y-4">
-      <h4 className="flex items-center gap-2 text-lg font-semibold">
-        Finger Position Guide
-      </h4>
+      <h4 className="flex items-center gap-2 text-lg font-semibold">Finger Position Guide</h4>
       <div className="bg-card flex h-full flex-col justify-center rounded-xl border p-4">
         <ViolinFingerboard
           targetNote={undefined}

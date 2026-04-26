@@ -58,11 +58,7 @@ export function PracticeFeedback(props: PracticeFeedbackProps) {
         isInTune={isInTune}
       />
 
-      <TechnicalDetails
-        isPlaying={isPlaying}
-        centsOff={centsOff}
-        centsTolerance={centsTolerance}
-      />
+      <TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} centsTolerance={centsTolerance} />
 
       <LiveObservationsList observations={liveObservations} />
     </div>
@@ -187,7 +183,10 @@ function TechnicalDetails(props: {
       </summary>
       <div className="mt-4 space-y-2 text-sm">
         <div className="flex justify-center gap-8">
-          <MetricDisplay label="Deviation" value={`${centsOff > 0 ? '+' : ''}${centsOff.toFixed(1)}¢`} />
+          <MetricDisplay
+            label="Deviation"
+            value={`${centsOff > 0 ? '+' : ''}${centsOff.toFixed(1)}¢`}
+          />
           <MetricDisplay label="Tolerance" value={`±${centsTolerance}¢`} />
         </div>
       </div>

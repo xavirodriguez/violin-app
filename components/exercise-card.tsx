@@ -186,10 +186,16 @@ function DifficultyBadge({ difficulty }: { difficulty: string }) {
 
 function getDifficultyStyles(difficulty: string) {
   if (difficulty === 'Beginner') {
-    return { badge: 'bg-green-100 text-green-700 hover:bg-green-200', icon: 'fill-green-500 text-green-500' }
+    return {
+      badge: 'bg-green-100 text-green-700 hover:bg-green-200',
+      icon: 'fill-green-500 text-green-500',
+    }
   }
   if (difficulty === 'Intermediate') {
-    return { badge: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200', icon: 'fill-yellow-500 text-yellow-500' }
+    return {
+      badge: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+      icon: 'fill-yellow-500 text-yellow-500',
+    }
   }
   return { badge: 'bg-red-100 text-red-700 hover:bg-red-200', icon: 'fill-red-500 text-red-500' }
 }
@@ -207,7 +213,10 @@ function LastAttemptStats({ lastAttempt }: { lastAttempt?: { accuracy: number } 
         <span className="font-bold">{accuracy.toFixed(0)}%</span>
       </div>
       <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-        <div className={cn('h-full transition-all', colorClass)} style={{ width: `${accuracy}%` }} />
+        <div
+          className={cn('h-full transition-all', colorClass)}
+          style={{ width: `${accuracy}%` }}
+        />
       </div>
     </div>
   )

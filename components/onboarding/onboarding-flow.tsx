@@ -70,7 +70,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
       <Card className="border-primary/20 w-full max-w-2xl p-8 shadow-2xl">
         {/* Skip button and Progress indicator */}
         <div className="mb-8">
-          <div className="flex justify-end mb-4">
+          <div className="mb-4 flex justify-end">
             <Button
               variant="ghost"
               size="sm"

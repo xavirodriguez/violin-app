@@ -26,13 +26,17 @@ describe('exportSessionsToCSV', () => {
     const csv = exportSessionsToCSV(sessions as PracticeSession[])
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted')
+    expect(lines[0]).toBe(
+      'Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted',
+    )
     expect(lines[1]).toBe('2023-10-27,"Scale C Major",2.00,85.5,20,24')
     expect(lines[2]).toBe('2023-10-28,"The ""Happy"" Song",5.00,92.0,50,52')
   })
 
   it('should handle an empty list of sessions', () => {
     const csv = exportSessionsToCSV([])
-    expect(csv).toBe('Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted')
+    expect(csv).toBe(
+      'Date,Exercise Name,Duration (min),Accuracy (%),Notes Completed,Notes Attempted',
+    )
   })
 })

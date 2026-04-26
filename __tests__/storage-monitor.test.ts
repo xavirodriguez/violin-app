@@ -13,7 +13,7 @@ describe('estimateLocalStorageUsagePercent', () => {
 
   it('should return a percentage based on estimated limit', () => {
     const key = 'test-key'
-    const value = 'a'.repeat(5 * 1024 * 1024 / 4) // 1.25M chars * 2 bytes/char = 2.5MB (50%)
+    const value = 'a'.repeat((5 * 1024 * 1024) / 4) // 1.25M chars * 2 bytes/char = 2.5MB (50%)
     localStorage.setItem(key, value)
 
     const usage = estimateLocalStorageUsagePercent()

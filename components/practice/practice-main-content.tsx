@@ -58,7 +58,14 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 }
 
 function PracticeIdleContent(props: PracticeMainContentProps) {
-  const { state, isZenModeEnabled, autoStartEnabled, setAutoStart, practiceState, setPreviewExercise } = props
+  const {
+    state,
+    isZenModeEnabled,
+    autoStartEnabled,
+    setAutoStart,
+    practiceState,
+    setPreviewExercise,
+  } = props
   if (state.status !== 'idle') return <></>
 
   return (
@@ -76,42 +83,91 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
 }
 
 function PracticeActiveViewContent(props: PracticeMainContentProps) {
-  const { status, targetNote, targetPitchName, lastDetectedNote, liveObservations, practiceState, isZenModeEnabled, centsTolerance } = props
+  const {
+    status,
+    targetNote,
+    targetPitchName,
+    lastDetectedNote,
+    liveObservations,
+    practiceState,
+    isZenModeEnabled,
+    centsTolerance,
+  } = props
   const hold = practiceState?.holdDuration
   const streak = practiceState?.perfectNoteStreak
 
   return (
     <PracticeActiveView
-      status={status} targetNote={targetNote} targetPitchName={targetPitchName}
-      lastDetectedNote={lastDetectedNote} liveObservations={liveObservations}
-      holdDuration={hold} perfectNoteStreak={streak} zenMode={isZenModeEnabled}
+      status={status}
+      targetNote={targetNote}
+      targetPitchName={targetPitchName}
+      lastDetectedNote={lastDetectedNote}
+      liveObservations={liveObservations}
+      holdDuration={hold}
+      perfectNoteStreak={streak}
+      zenMode={isZenModeEnabled}
       centsTolerance={centsTolerance}
     />
   )
 }
 
 function PracticePostSessionContent(props: PracticeMainContentProps) {
-  const { status, handleRestart, sessions, practiceState, start, stop, setIsZenModeEnabled, isZenModeEnabled } = props
+  const {
+    status,
+    handleRestart,
+    sessions,
+    practiceState,
+    start,
+    stop,
+    setIsZenModeEnabled,
+    isZenModeEnabled,
+  } = props
   const isCompleted = status === 'completed'
   const isActive = status !== 'idle'
-  const session = sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined
+  const session =
+    sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined
 
   return (
     <>
       {isCompleted && <PracticeCompletion onRestart={handleRestart} sessionData={session} />}
-      {isActive && <QuickActionsView status={status} start={start} stop={stop} setZen={setIsZenModeEnabled} isZen={isZenModeEnabled} />}
+      {isActive && (
+        <QuickActionsView
+          status={status}
+          start={start}
+          stop={stop}
+          setZen={setIsZenModeEnabled}
+          isZen={isZenModeEnabled}
+        />
+      )}
     </>
   )
 }
 
-function QuickActionsView({ status, start, stop, setZen, isZen }: { status: string, start: () => void, stop: () => void, setZen: (enabled: boolean | ((prev: boolean) => boolean)) => void, isZen: boolean }) {
+function QuickActionsView({
+  status,
+  start,
+  stop,
+  setZen,
+  isZen,
+}: {
+  status: string
+  start: () => void
+  stop: () => void
+  setZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  isZen: boolean
+}) {
   const onTogglePause = () => (status === 'listening' ? stop() : start())
   const onToggleZen = () => setZen((prev: boolean) => !prev)
 
   return (
     <PracticeQuickActions
-      status={status} onRepeatNote={() => {}} onRepeatMeasure={() => {}} onContinue={() => {}}
-      onTogglePause={onTogglePause} onToggleZen={onToggleZen} isZen={isZen}
+      status={status}
+      onRepeatNote={() => {}}
+      onRepeatMeasure={() => {}}
+      onContinue={() => {}}
+      onTogglePause={onTogglePause}
+      onToggleZen={onToggleZen}
+      isZen={isZen}
     />
   )
 }

@@ -62,7 +62,13 @@ function LibraryHeader(props: LibraryHeaderProps) {
   )
 }
 
-function ModeTabs({ activeTab, onTabChange }: { activeTab: string; onTabChange: (v: string) => void }) {
+function ModeTabs({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string
+  onTabChange: (v: string) => void
+}) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full md:w-auto">
       <TabsList className="grid w-full grid-cols-5 md:w-auto">
@@ -76,7 +82,13 @@ function ModeTabs({ activeTab, onTabChange }: { activeTab: string; onTabChange: 
   )
 }
 
-function DifficultyToggle({ difficulty, onDifficultyChange }: { difficulty: string; onDifficultyChange: (v: string) => void }) {
+function DifficultyToggle({
+  difficulty,
+  onDifficultyChange,
+}: {
+  difficulty: string
+  onDifficultyChange: (v: string) => void
+}) {
   return (
     <div className="bg-muted/30 flex flex-wrap items-center gap-4 rounded-lg p-3">
       <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
@@ -109,7 +121,9 @@ interface ExerciseGridProps {
 function ExerciseGrid(props: ExerciseGridProps) {
   const { exercises, selectedId, recommendedId, onSelect, stats } = props
   if (exercises.length === 0) {
-    return <div className="rounded-xl border-2 border-dashed py-12 text-center">No exercises found.</div>
+    return (
+      <div className="rounded-xl border-2 border-dashed py-12 text-center">No exercises found.</div>
+    )
   }
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,7 +149,9 @@ function LibraryCard(props: {
   stats?: ExerciseStats
 }) {
   const { exercise, isRecommended, isSelected, onSelect, stats } = props
-  const lastAttempt = stats ? { accuracy: stats.bestAccuracy, timestamp: stats.lastPracticedMs } : undefined
+  const lastAttempt = stats
+    ? { accuracy: stats.bestAccuracy, timestamp: stats.lastPracticedMs }
+    : undefined
 
   return (
     <ExerciseCard
