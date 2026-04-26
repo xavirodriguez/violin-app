@@ -44,7 +44,8 @@ import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
  * @public
  */
 export function TunerMode() {
-  const { state, analyser, detector, initialize, retry, reset, updatePitch } = useTunerStore()
+  const { state, analyser, detector, initialize, retry, reset, updatePitch, startListening } =
+    useTunerStore()
 
   // Derived state for UI logic orchestration
   const isIdle = state.kind === 'IDLE'
@@ -55,6 +56,16 @@ export function TunerMode() {
   const currentNote = state.kind === 'DETECTED' ? state.note : undefined
   const centsDeviation = state.kind === 'DETECTED' ? state.cents : undefined
   const errorMessage = state.kind === 'ERROR' ? state.error.message : undefined
+
+  /**
+   * Effect that automatically starts listening when the tuner is READY.
+   * Ensures the analysis loop can progress beyond the initialization phase.
+   */
+  useEffect(() => {
+    if (state.kind === 'READY') {
+      startListening()
+    }
+  }, [state.kind, startListening])
 
   /** Reference to the current animation frame to ensure clean teardown. */
   const animationFrameRef = useRef<number>(undefined)

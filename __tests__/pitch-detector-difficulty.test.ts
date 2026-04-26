@@ -4,16 +4,16 @@ import { createPitchDetectorForDifficulty, PitchDetector } from '@/lib/pitch-det
 describe('PitchDetector Difficulty Factory', () => {
   const sampleRate = 44100
 
-  it('should create a detector with 700Hz max frequency for Beginner', () => {
+  it('should create a detector with 1320Hz max frequency for Beginner', () => {
     const detector = createPitchDetectorForDifficulty('Beginner', sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(700)
+    expect(range.max).toBe(1320)
   })
 
-  it('should create a detector with 1400Hz max frequency for Intermediate', () => {
+  it('should create a detector with 1760Hz max frequency for Intermediate', () => {
     const detector = createPitchDetectorForDifficulty('Intermediate', sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(1400)
+    expect(range.max).toBe(1760)
   })
 
   it('should create a detector with 2637Hz max frequency for Advanced', () => {
@@ -31,6 +31,6 @@ describe('PitchDetector Difficulty Factory', () => {
   it('should use default max frequency if not provided in constructor', () => {
     const detector = new PitchDetector(sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(2637)
+    expect(range.max).toBe(1320)
   })
 })

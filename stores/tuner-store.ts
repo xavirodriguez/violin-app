@@ -149,7 +149,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
       if (!isEligible) return
 
       const token = state.sessionToken
-      const hasSignal = confidence > 0.85 && pitch > 0
+      const hasSignal = confidence > 0.8 && pitch > 0
       const params = { pitch, confidence, token }
 
       if (hasSignal) {
