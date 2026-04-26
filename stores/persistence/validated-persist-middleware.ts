@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand'
-import { persist, PersistOptions } from 'zustand/middleware'
+import { persist, PersistOptions, PersistStorage, StorageValue } from 'zustand/middleware'
 import { z } from 'zod'
 import {
   serializeAndCompress,
@@ -11,25 +11,28 @@ import type { DeserializedStorageValue } from '@/lib/persistence/storage-types'
 /**
  * Custom storage that uses SuperJSON for serialization and Pako for compression.
  */
-const createCompressedStorage = (_name: string) => {
+const createCompressedStorage = (_name: string): PersistStorage<unknown> => {
   return {
-    getItem: (key: string): DeserializedStorageValue => {
+    getItem: (key: string) => {
       const val = localStorage.getItem(key)
       if (!val) return null
+      let result: DeserializedStorageValue
       try {
         const deserialized = decompressAndDeserialize(val)
         if (typeof deserialized === 'string') {
           try {
-            return JSON.parse(deserialized) as { state: Record<string, unknown>; version?: number }
+            result = JSON.parse(deserialized) as { state: Record<string, unknown>; version?: number }
           } catch {
-            return null
+            result = null
           }
+        } else {
+          result = deserialized as { state: Record<string, unknown>; version?: number }
         }
-        return deserialized as { state: Record<string, unknown>; version?: number }
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
-        return null
+        result = null
       }
+      return result as unknown as StorageValue<unknown> | null
     },
     setItem: (key: string, value: unknown) => {
       try {
