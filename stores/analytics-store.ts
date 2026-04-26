@@ -648,11 +648,6 @@ interface RhythmMetrics {
   totalCount: number
 }
 
-interface InternalRhythmAccumulator {
-  error: number
-  inWindow: number
-  count: number
-}
 
 function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetrics {
   let metrics: RhythmMetrics = { totalError: 0, inWindowCount: 0, totalCount: 0 }
@@ -688,33 +683,6 @@ function applyNoteRhythm(onsetError: number, metrics: RhythmMetrics): RhythmMetr
   }
 }
 
-function processSessionRhythm(session: PracticeSession): InternalRhythmAccumulator {
-  const initial: InternalRhythmAccumulator = { error: 0, inWindow: 0, count: 0 }
-  const results = session.noteResults
-
-  const finalMetrics = results.reduce((metrics, nr) => {
-    return updateRhythmMetricsFromNote(metrics, nr)
-  }, initial)
-
-  return finalMetrics
-}
-
-function updateRhythmMetricsFromNote(
-  metrics: InternalRhythmAccumulator,
-  nr: NoteResult,
-): InternalRhythmAccumulator {
-  const onsetError = nr.technique?.rhythm.onsetErrorMs
-  if (onsetError === undefined) return metrics
-
-  const absError = Math.abs(onsetError)
-  const isInside = absError <= 40
-
-  return {
-    error: metrics.error + absError,
-    inWindow: metrics.inWindow + (isInside ? 1 : 0),
-    count: metrics.count + 1,
-  }
-}
 
 function calculateRhythmScore(metrics: RhythmMetrics): number {
   const { totalError, inWindowCount, totalCount } = metrics
@@ -893,75 +861,3 @@ function assembleUpdatedSession(params: {
   }
 }
 
-function createNewPracticeSession(params: {
-  exerciseId: string
-  exerciseName: string
-  mode: 'tuner' | 'practice'
-  nowMs: number
-}): PracticeSession {
-  const { exerciseId, exerciseName, mode, nowMs } = params
-  return {
-    id: crypto.randomUUID(),
-    startTimeMs: nowMs,
-    endTimeMs: nowMs,
-    durationMs: 0,
-    exerciseId,
-    exerciseName,
-    mode,
-    notesAttempted: 0,
-    notesCompleted: 0,
-    accuracy: 0,
-    averageCents: 0,
-    noteResults: [],
-  }
-}
-
-function calculateNewPerfectStreak(state: AnalyticsStore, noteIndex: number): number {
-  const session = state.currentSession!
-  const noteResult = session.noteResults.find((nr) => nr.noteIndex === noteIndex)
-  const isPerfect = noteResult !== undefined && Math.abs(noteResult.averageCents) < 5
-  const newStreak = isPerfect ? state.currentPerfectStreak + 1 : 0
-
-  return newStreak
-}
-
-function applyNoteCompletionUpdate(
-  prevState: AnalyticsStore,
-  params: {
-    noteIndex: number
-    timeToCompleteMs: number
-    technique?: NoteTechnique
-    newPerfectStreak: number
-  },
-): Partial<AnalyticsStore> {
-  const prevSession = prevState.currentSession
-  if (prevSession === undefined) return prevState
-
-  const nextNoteResults = updateCompletedNote(prevSession.noteResults, params)
-  const currentSession = {
-    ...prevSession,
-    notesCompleted: prevSession.notesCompleted + 1,
-    noteResults: nextNoteResults,
-  }
-
-  return {
-    currentPerfectStreak: params.newPerfectStreak,
-    currentSession,
-  }
-}
-
-function calculateAggregatedTodayStats(todaySessions: PracticeSession[]) {
-  const count = todaySessions.length
-  const durationSec = todaySessions.reduce(
-    (sum, s) => sum + Math.floor(s.durationMs / 1000),
-    0,
-  )
-  const totalAccuracy = todaySessions.reduce((sum, s) => sum + s.accuracy, 0)
-  const accuracy = count > 0 ? totalAccuracy / count : 0
-
-  return {
-    duration: durationSec,
-    accuracy,
-    sessionsCount: count,
-  }
-}
