@@ -9,11 +9,12 @@ import type {
   GlobalThisWithCrypto,
 } from '@/lib/testing/mock-types'
 import { Exercise } from '@/lib/exercises/types'
+import { PracticeState } from '@/lib/practice-core'
 
 // Polyfill crypto for node environment
 const typedGlobal = globalThis as typeof globalThis & GlobalThisWithCrypto
 if (!typedGlobal.crypto) {
-  typedGlobal.crypto = crypto as unknown as Crypto & { randomUUID?: () => string }
+  typedGlobal.crypto = crypto as Crypto
 }
 if (!typedGlobal.crypto.randomUUID) {
   typedGlobal.crypto.randomUUID = () => crypto.randomBytes(16).toString('hex')
@@ -90,15 +91,14 @@ describe('PracticeStore Robustness', () => {
     vi.mocked(audioManager.initialize).mockImplementation(
       () =>
         new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                context: { sampleRate: 44100 },
-                analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
-                stream: { getTracks: () => [] },
-              } as unknown as MockAudioResources),
-            100,
-          ),
+          setTimeout(() => {
+            const resources: MockAudioResources = {
+              context: { sampleRate: 44100 },
+              analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
+              stream: { getTracks: () => [] },
+            }
+            resolve(resources as unknown as MockAudioResources)
+          }, 100),
         ),
     )
 
@@ -115,11 +115,12 @@ describe('PracticeStore Robustness', () => {
     await usePracticeStore.getState().loadExercise(mockExercise as Exercise)
 
     // Setup for active state
-    vi.mocked(audioManager.initialize).mockResolvedValue({
+    const resources: MockAudioResources = {
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as unknown as MockAudioResources)
+    }
+    vi.mocked(audioManager.initialize).mockResolvedValue(resources as unknown as MockAudioResources)
 
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().state.status).toBe('active')
@@ -142,11 +143,14 @@ describe('PracticeStore Robustness', () => {
     expect(usePracticeStore.getState().error).not.toBeUndefined()
 
     // Second attempt succeeds
-    vi.mocked(audioManager.initialize).mockResolvedValueOnce({
+    const successResources: MockAudioResources = {
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as unknown as MockAudioResources)
+    }
+    vi.mocked(audioManager.initialize).mockResolvedValueOnce(
+      successResources as unknown as MockAudioResources,
+    )
 
     await usePracticeStore.getState().initializeAudio()
     expect(usePracticeStore.getState().state.status).toBe('ready')
@@ -156,11 +160,14 @@ describe('PracticeStore Robustness', () => {
   it('should ignore updates from old session tokens', async () => {
     await usePracticeStore.getState().loadExercise(mockExercise as Exercise)
 
-    vi.mocked(audioManager.initialize).mockResolvedValue({
+    const sessionResources: MockAudioResources = {
       context: { sampleRate: 44100 },
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
-    } as unknown as MockAudioResources)
+    }
+    vi.mocked(audioManager.initialize).mockResolvedValue(
+      sessionResources as unknown as MockAudioResources,
+    )
 
     await usePracticeStore.getState().start()
     const firstToken = usePracticeStore.getState().sessionToken
@@ -181,8 +188,7 @@ describe('PracticeStore Robustness', () => {
       ...usePracticeStore.getState().practiceState,
       holdDuration: 999,
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    safeSet({ practiceState: oldPracticeState as any })
+    safeSet({ practiceState: oldPracticeState as PracticeState })
 
     // Should NOT have updated because sessionToken in store is now different
     expect(usePracticeStore.getState().practiceState?.holdDuration).not.toBe(999)

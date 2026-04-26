@@ -828,6 +828,12 @@ function handleSessionCompletion(params: {
   })
 }
 
+function emitStorageFullToast(): void {
+  toast.error('Storage full', {
+    description: 'Please clean up your history to save more data.',
+  })
+}
+
 function checkStorageThresholds(): void {
   const usage = estimateLocalStorageUsagePercent()
   if (usage > 95) {

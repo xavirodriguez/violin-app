@@ -163,10 +163,10 @@ export const useAnalyticsStore = Object.assign(
     /** Imperative state update (for compatibility). */
     setState: (partial: AnalyticsFacadePartialState) => {
       if (partial.progress) {
-        useProgressStore.setState(partial.progress)
-        const progressObj = partial.progress as { achievements?: Achievement[] }
-        if (progressObj.achievements) {
-          useAchievementsStore.setState({ unlocked: progressObj.achievements })
+        const { achievements, ...progressState } = partial.progress
+        useProgressStore.setState(progressState)
+        if (achievements) {
+          useAchievementsStore.setState({ unlocked: achievements })
         }
       }
       if (partial.sessions) useSessionHistoryStore.setState({ sessions: partial.sessions })
