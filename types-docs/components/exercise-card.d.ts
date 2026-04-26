@@ -12,5 +12,5 @@ interface ExerciseCardProps {
 /**
  * Visual card representing a violin exercise with OSMD preview.
  */
-export declare function ExerciseCard({ exercise, isRecommended, lastAttempt, onClick, isSelected, }: ExerciseCardProps): import("react/jsx-runtime").JSX.Element;
+export declare function ExerciseCard(props: ExerciseCardProps): import("react/jsx-runtime").JSX.Element;
 export {};

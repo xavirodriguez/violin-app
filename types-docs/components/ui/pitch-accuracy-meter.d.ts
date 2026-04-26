@@ -1,5 +1,5 @@
 interface PitchAccuracyMeterProps {
-    centsOff: number | null;
+    centsOff: number | undefined;
     isInTune: boolean;
     showNumericValue?: boolean;
 }

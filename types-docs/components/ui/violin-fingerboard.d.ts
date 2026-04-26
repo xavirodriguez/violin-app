@@ -6,13 +6,13 @@
 /**
  * Props for the ViolinFingerboard component.
  */
-interface ViolinFingerboardProps {
+export interface ViolinFingerboardProps {
     /** The note the student should be playing (e.g., "A4"). */
-    targetNote: string | null;
+    targetNote: string | undefined;
     /** The note currently detected by the pitch tracker. */
-    detectedPitchName: string | null;
+    detectedPitchName: string | undefined;
     /** The deviation in cents from the ideal frequency. Used for visual offset. */
-    centsDeviation: number | null;
+    centsDeviation: number | undefined;
     /** The tolerance in cents within which a note is considered "In Tune". @defaultValue 25 */
     centsTolerance?: number;
     /** Explicit override for the in-tune state. */
@@ -37,4 +37,3 @@ interface ViolinFingerboardProps {
  * - The horizontal position of the detected note is shifted based on `centsDeviation`.
  */
 export declare function ViolinFingerboard({ targetNote, detectedPitchName, centsDeviation, centsTolerance, isInTune, }: ViolinFingerboardProps): import("react/jsx-runtime").JSX.Element;
-export {};

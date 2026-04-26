@@ -10,17 +10,17 @@ export declare const AchievementsContractV1: z.ZodObject<{
             icon: z.ZodString;
             unlockedAtMs: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }, {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }>, "many">;
         pending: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
@@ -29,48 +29,48 @@ export declare const AchievementsContractV1: z.ZodObject<{
             icon: z.ZodString;
             unlockedAtMs: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }, {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }>, "many">;
     }, "strip", z.ZodTypeAny, {
         schemaVersion: 1;
         unlocked: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         pending: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
     }, {
         unlocked: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         pending: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         schemaVersion?: 1 | undefined;
     }>;
@@ -78,36 +78,36 @@ export declare const AchievementsContractV1: z.ZodObject<{
     state: {
         schemaVersion: 1;
         unlocked: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         pending: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
     };
     schemaVersion: 1;
 }, {
     state: {
         unlocked: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         pending: {
-            icon: string;
             id: string;
-            name: string;
             unlockedAtMs: number;
+            icon: string;
             description: string;
+            name: string;
         }[];
         schemaVersion?: 1 | undefined;
     };

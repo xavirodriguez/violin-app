@@ -5,7 +5,7 @@
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
- * Refactored for documented lifecycle behavior.
+ * Refactored for documented lifecycle behavior and null elimination.
  *
  * @param musicXML - Valid MusicXML 3.1 string
  * @param options - OSMD configuration
@@ -22,11 +22,6 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
  * 1. `containerRef` MUST be attached to a mounted DOM element
  * 2. Cursor methods are safe to call anytime (no-op when !isReady)
  * 3. Re-initializes when `musicXML` or `options` change
- *
- * **Lifecycle**:
- * - Mount: Creates OSMD instance when containerRef is available
- * - Update: Destroys and recreates on musicXML/options change
- * - Unmount: Cleans up OSMD resources automatically
  *
  * @example
  * ```tsx
@@ -46,7 +41,7 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
  */
 export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
     isReady: boolean;
-    error: string | null;
+    error: string | undefined;
     containerRef: import('react').RefObject<HTMLDivElement | null>;
     /** Safe to call anytime - no-op when !isReady */
     resetCursor: () => void;
@@ -55,5 +50,5 @@ export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
     /** Highlights the note at the given index */
     highlightCurrentNote: (noteIndex: number) => void;
     /** Reference to the OSMD instance for advanced interactions */
-    osmd: OpenSheetMusicDisplay | null;
+    osmd: OpenSheetMusicDisplay | undefined;
 };

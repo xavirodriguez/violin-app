@@ -19,19 +19,19 @@ export declare const ProgressContractV1: z.ZodObject<{
             fastestCompletionMs: z.ZodNumber;
             lastPracticedMs: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }>>;
         eventBuffer: z.ZodDefault<z.ZodArray<z.ZodObject<{
             ts: z.ZodNumber;
@@ -68,7 +68,7 @@ export declare const ProgressContractV1: z.ZodObject<{
             lastSessionId: z.ZodString;
         }, "strip", z.ZodTypeAny, {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;
@@ -77,7 +77,7 @@ export declare const ProgressContractV1: z.ZodObject<{
             lastSessionId: string;
         }, {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;
@@ -88,19 +88,19 @@ export declare const ProgressContractV1: z.ZodObject<{
         eventCounter: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         exerciseStats: Record<string, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }>;
-        currentStreak: number;
-        longestStreak: number;
         schemaVersion: 1;
         totalPracticeSessions: number;
         totalPracticeTime: number;
         exercisesCompleted: string[];
+        currentStreak: number;
+        longestStreak: number;
         intonationSkill: number;
         rhythmSkill: number;
         overallSkill: number;
@@ -112,7 +112,7 @@ export declare const ProgressContractV1: z.ZodObject<{
         }[];
         snapshots: {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;
@@ -123,18 +123,18 @@ export declare const ProgressContractV1: z.ZodObject<{
         eventCounter: number;
     }, {
         exerciseStats: Record<string, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }>;
-        currentStreak: number;
-        longestStreak: number;
         totalPracticeSessions: number;
         totalPracticeTime: number;
         exercisesCompleted: string[];
+        currentStreak: number;
+        longestStreak: number;
         intonationSkill: number;
         rhythmSkill: number;
         overallSkill: number;
@@ -147,7 +147,7 @@ export declare const ProgressContractV1: z.ZodObject<{
         }[] | undefined;
         snapshots?: {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;
@@ -160,19 +160,19 @@ export declare const ProgressContractV1: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     state: {
         exerciseStats: Record<string, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }>;
-        currentStreak: number;
-        longestStreak: number;
         schemaVersion: 1;
         totalPracticeSessions: number;
         totalPracticeTime: number;
         exercisesCompleted: string[];
+        currentStreak: number;
+        longestStreak: number;
         intonationSkill: number;
         rhythmSkill: number;
         overallSkill: number;
@@ -184,7 +184,7 @@ export declare const ProgressContractV1: z.ZodObject<{
         }[];
         snapshots: {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;
@@ -198,18 +198,18 @@ export declare const ProgressContractV1: z.ZodObject<{
 }, {
     state: {
         exerciseStats: Record<string, {
-            lastPracticedMs: number;
             exerciseId: string;
+            fastestCompletionMs: number;
+            lastPracticedMs: number;
             timesCompleted: number;
             bestAccuracy: number;
             averageAccuracy: number;
-            fastestCompletionMs: number;
         }>;
-        currentStreak: number;
-        longestStreak: number;
         totalPracticeSessions: number;
         totalPracticeTime: number;
         exercisesCompleted: string[];
+        currentStreak: number;
+        longestStreak: number;
         intonationSkill: number;
         rhythmSkill: number;
         overallSkill: number;
@@ -222,7 +222,7 @@ export declare const ProgressContractV1: z.ZodObject<{
         }[] | undefined;
         snapshots?: {
             userId: string;
-            window: "all" | "7d" | "30d";
+            window: "7d" | "30d" | "all";
             aggregates: {
                 intonation: number;
                 rhythm: number;

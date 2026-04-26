@@ -60,10 +60,12 @@ export interface PracticeSession {
 }
 /**
  * Internal state of the session store.
+ *
+ * @internal
  */
 interface SessionState {
-    /** The current active session data, or null if no session is active. */
-    current: PracticeSession | null;
+    /** The current active session data, or undefined if no session is active. */
+    current: PracticeSession | undefined;
     /** Whether a session is currently being recorded. */
     isActive: boolean;
     /** Current streak of notes played with high accuracy (`< 5` cents). */
@@ -71,10 +73,15 @@ interface SessionState {
 }
 /**
  * Actions for managing practice sessions and recording real-time metrics.
+ *
+ * @public
  */
 interface SessionActions {
     /**
      * Starts a new practice session recording.
+     *
+     * @remarks
+     * Resets the `current` session state with initial metadata.
      *
      * @param exerciseId - Unique ID of the exercise.
      * @param exerciseName - Display name of the exercise.
@@ -84,18 +91,26 @@ interface SessionActions {
     /**
      * Ends the current session, calculates final metrics, and returns the data.
      *
-     * @returns The completed {@link PracticeSession} or null if no session was active.
+     * @remarks
+     * This method calculates the final accuracy and duration before clearing the active session.
+     *
+     * @returns The completed {@link PracticeSession} or undefined if no session was active.
      */
-    end: () => PracticeSession | null;
+    end: () => PracticeSession | undefined;
     /**
-     * Records a single attempt at a specific note.
+     * Records a single attempt (audio frame) at a specific note.
      *
      * @remarks
-     * This method updates the rolling average of cents deviation for the note.
+     * This method updates the rolling average of cents deviation for the note using
+     * the formula: `nextAvg = (currentAvg * count + newCents) / (count + 1)`.
+     *
+     * **Frequency**: It is designed to be called at high frequency (60Hz+) from
+     * the audio pipeline. Updates are performed atomically using functional
+     * state updates to avoid race conditions.
      *
      * @param noteIndex - Index of the note in the exercise.
-     * @param pitch - Detected pitch name.
-     * @param cents - Pitch deviation in cents.
+     * @param pitch - Detected scientific pitch name (e.g., "G3").
+     * @param cents - Pitch deviation in cents from the target.
      * @param inTune - Whether the attempt was within the current tolerance.
      */
     recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
@@ -103,11 +118,15 @@ interface SessionActions {
      * Records the successful completion of a note.
      *
      * @remarks
-     * Updates the perfect note streak if the average deviation is `< 5` cents.
+     * Updates the session progress and technical metrics.
+     *
+     * **Perfect Streak**: Increments the `perfectNoteStreak` if the final average
+     * deviation for the note is strictly less than 5 cents. Otherwise, the
+     * streak is reset to zero.
      *
      * @param noteIndex - Index of the completed note.
-     * @param timeMs - Total time taken to complete the note.
-     * @param technique - Optional technique metrics.
+     * @param timeMs - Total time taken to complete the note (from first detection to match).
+     * @param technique - Optional pedagogical metrics (e.g., rhythm, vibrato).
      */
     recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
 }
@@ -116,8 +135,16 @@ interface SessionActions {
  *
  * @remarks
  * This store serves as a high-frequency accumulator for session data. It is
- * decoupled from the long-term `ProgressStore` to ensure that real-time
- * updates don't trigger expensive persistence logic on every audio frame.
+ * decoupled from the long-term `ProgressStore` and `AnalyticsStore` to ensure
+ * that real-time updates don't trigger expensive persistence logic or
+ * heavy recalculations on every audio frame.
+ *
+ * **Concurrency**: Updates are performed using Zustand's functional set state,
+ * which is safe for high-frequency calls from the audio processing loop.
+ *
+ * **Metric Calculation**:
+ * - Accuracy is calculated as the ratio of `notesCompleted` to `notesAttempted`.
+ * - Average Cents uses a rolling mean to incorporate every detected frame.
  *
  * @public
  */

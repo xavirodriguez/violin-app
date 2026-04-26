@@ -23,15 +23,15 @@ export declare const PracticeContractV1: z.ZodObject<{
                     widthCents: z.ZodNumber;
                     regularity: z.ZodNumber;
                 }, "strip", z.ZodTypeAny, {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 }, {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 }>;
                 pitchStability: z.ZodObject<{
                     settlingStdCents: z.ZodNumber;
@@ -61,10 +61,10 @@ export declare const PracticeContractV1: z.ZodObject<{
                 }>;
             }, "strip", z.ZodTypeAny, {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -78,10 +78,10 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             }, {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -95,18 +95,18 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             }>>;
         }, "strip", z.ZodTypeAny, {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -120,18 +120,18 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }, {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -150,28 +150,24 @@ export declare const PracticeContractV1: z.ZodObject<{
         accuracy: z.ZodNumber;
         averageCents: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        mode: "tuner" | "practice";
-        id: string;
-        startTimeMs: number;
-        endTimeMs: number;
         accuracy: number;
-        averageCents: number;
-        exerciseName: string;
-        durationMs: number;
+        id: string;
         exerciseId: string;
+        exerciseName: string;
+        mode: "practice" | "tuner";
         noteResults: {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -185,31 +181,31 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
+        endTimeMs: number;
+        startTimeMs: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }, {
-        mode: "tuner" | "practice";
-        id: string;
-        startTimeMs: number;
-        endTimeMs: number;
         accuracy: number;
-        averageCents: number;
-        exerciseName: string;
-        durationMs: number;
+        id: string;
         exerciseId: string;
+        exerciseName: string;
+        mode: "practice" | "tuner";
         noteResults: {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -223,34 +219,34 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
+        endTimeMs: number;
+        startTimeMs: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }>;
 }, "strip", z.ZodTypeAny, {
     schemaVersion: 1;
     session: {
-        mode: "tuner" | "practice";
-        id: string;
-        startTimeMs: number;
-        endTimeMs: number;
         accuracy: number;
-        averageCents: number;
-        exerciseName: string;
-        durationMs: number;
+        id: string;
         exerciseId: string;
+        exerciseName: string;
+        mode: "practice" | "tuner";
         noteResults: {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -264,34 +260,34 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
+        endTimeMs: number;
+        startTimeMs: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     };
 }, {
     schemaVersion: 1;
     session: {
-        mode: "tuner" | "practice";
-        id: string;
-        startTimeMs: number;
-        endTimeMs: number;
         accuracy: number;
-        averageCents: number;
-        exerciseName: string;
-        durationMs: number;
+        id: string;
         exerciseId: string;
+        exerciseName: string;
+        mode: "practice" | "tuner";
         noteResults: {
-            averageCents: number;
             noteIndex: number;
             targetPitch: string;
-            attempts: number;
             wasInTune: boolean;
+            averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
-                    present: boolean;
                     rateHz: number;
                     widthCents: number;
                     regularity: number;
+                    present: boolean;
                 };
                 rhythm: {
                     onsetErrorMs?: number | undefined;
@@ -305,7 +301,11 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
+        endTimeMs: number;
+        startTimeMs: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     };
 }>;

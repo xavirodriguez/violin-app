@@ -1,5 +1,5 @@
 /**
- * Sistema de logros basado en milestones de práctica
+ * Achievement system based on practice milestones
  */
 export interface AchievementDefinition {
     id: string;
@@ -30,5 +30,7 @@ export interface AchievementCheckStats {
     exercisesCompleted: string[];
     totalPracticeTimeMs: number;
     averageAccuracy: number;
+    /** Cumulative number of notes completed across all sessions. */
+    totalNotesCompleted: number;
 }
 export declare const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[];

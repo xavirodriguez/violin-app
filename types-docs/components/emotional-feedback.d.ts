@@ -1,5 +1,5 @@
 interface EmotionalFeedbackProps {
-    centsOff: number | null;
+    centsOff: number | undefined;
     isInTune: boolean;
     noteMatches: boolean;
     status: string;
@@ -8,5 +8,5 @@ interface EmotionalFeedbackProps {
  * Componente que proporciona feedback emocional visual
  * adaptado al nivel de experiencia del usuario
  */
-export declare function EmotionalFeedback({ centsOff, isInTune, noteMatches, status }: EmotionalFeedbackProps): import("react/jsx-runtime").JSX.Element;
+export declare function EmotionalFeedback({ centsOff, isInTune, noteMatches, status, }: EmotionalFeedbackProps): import("react/jsx-runtime").JSX.Element;
 export {};

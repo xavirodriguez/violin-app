@@ -43,48 +43,33 @@ export interface NoteStreamOptions {
  * Captured once at pipeline creation to prevent state drift.
  */
 export interface PipelineContext {
-    readonly targetNote: TargetNote | null;
+    readonly targetNote: TargetNote | undefined;
     readonly currentIndex: number;
     readonly sessionStartTime: number;
 }
 /**
  * Creates an async iterable of raw pitch events using audio ports.
  */
-export declare function createRawPitchStream(audioLoop: AudioLoopPort, detector: PitchDetectionPort, signal: AbortSignal): AsyncGenerator<RawPitchEvent>;
+export declare function createRawPitchStream(params: {
+    audioLoop: AudioLoopPort;
+    detector: PitchDetectionPort;
+    signal: AbortSignal;
+}): AsyncGenerator<RawPitchEvent>;
 /**
  * Creates a practice event processing pipeline with immutable context.
  *
- * @param rawPitchStream - Raw pitch detection events
- * @param context - Immutable context snapshot. Pipeline processes events
- *   relative to THIS context. To change context, create a new pipeline.
- * @param options - Pipeline configuration
- * @param signal - AbortSignal to stop the pipeline
+ * @param params - Configuration parameters for the pipeline.
  * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  *
  * @remarks
  * This design prevents context drift during async iteration.
  * When the exercise note changes, create a new pipeline.
- *
- * **Critical Performance**: The pipeline runs at 60+ fps.
- * Ensure that any dynamic options provided as getters:
- * 1. Are fast (< 1ms)
- * 2. Return consistent values for the same underlying state
- * 3. Use memoized selectors if possible
- *
- * @example
- * ```ts
- * const pipeline = createPracticeEventPipeline(
- *   rawStream,
- *   {
- *     targetNote: usePracticeStore.getState().practiceState?.exercise.notes[0] || null,
- *     currentIndex: 0,
- *     sessionStartTime: Date.now(),
- *   },
- *   options,
- *   signal
- * );
- * ```
  */
-export declare function createPracticeEventPipeline(rawPitchStream: AsyncIterable<RawPitchEvent>, context: PipelineContext, options: (Partial<NoteStreamOptions> & {
-    exercise: Exercise;
-}) | (() => NoteStreamOptions), signal: AbortSignal): AsyncIterable<PracticeEvent>;
+export declare function createPracticeEventPipeline(params: {
+    rawPitchStream: AsyncIterable<RawPitchEvent>;
+    context: PipelineContext;
+    options: (Partial<NoteStreamOptions> & {
+        exercise: Exercise;
+    }) | (() => NoteStreamOptions);
+    signal: AbortSignal;
+}): AsyncIterable<PracticeEvent>;

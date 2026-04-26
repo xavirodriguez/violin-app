@@ -1,4 +1,7 @@
-export type MigrationFn<T = any> = (state: T) => T;
+/**
+ * Type-safe persistence migration utilities.
+ */
+export type MigrationFn<T = unknown> = (state: T) => T;
 export interface MigratorConfig<T> {
     [version: number]: MigrationFn<T>;
 }
@@ -13,4 +16,4 @@ export interface MigratorConfig<T> {
  * });
  * ```
  */
-export declare function createMigrator<T>(config: MigratorConfig<T>): (persistedState: any, version: number) => T;
+export declare function createMigrator<T>(config: MigratorConfig<T>): (persistedState: unknown, version: number) => T;

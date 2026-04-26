@@ -1,2 +1,2 @@
-export declare const generateOpenApiDocument: () => any;
-export declare const openApiDocument: any;
+export declare const generateOpenApiDocument: () => unknown;
+export declare const openApiDocument: unknown;

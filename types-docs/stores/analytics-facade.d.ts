@@ -1,3 +1,15 @@
+import { PracticeSession } from './session.store';
+import { ProgressState } from './progress.store';
+import { Achievement } from './achievements.store';
+import { NoteTechnique } from '@/lib/technique-types';
+interface AnalyticsFacadePartialState {
+    progress?: Partial<ProgressState> & {
+        achievements?: Achievement[];
+    };
+    sessions?: PracticeSession[];
+    currentSession?: PracticeSession | undefined;
+    currentPerfectStreak?: number;
+}
 /**
  * Temporary facade to maintain backward compatibility with the legacy analytics API.
  *
@@ -10,12 +22,12 @@
  */
 export declare const useAnalyticsStore: (() => {
     /** The current active session, if any. */
-    currentSession: import("./session.store").PracticeSession | null;
+    currentSession: PracticeSession | undefined;
     /** History of completed sessions. */
-    sessions: import("./session.store").PracticeSession[];
+    sessions: PracticeSession[];
     /** Aggregated user progress. */
     progress: {
-        achievements: import("./achievements.store").Achievement[];
+        achievements: Achievement[];
         schemaVersion: 1;
         totalPracticeSessions: number;
         totalPracticeTime: number;
@@ -29,23 +41,23 @@ export declare const useAnalyticsStore: (() => {
         eventBuffer: import("./progress.store").ProgressEvent[];
         snapshots: import("./progress.store").ProgressSnapshot[];
         eventCounter: number;
-        addSession: (session: import("./session.store").PracticeSession) => void;
-        updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
+        addSession: (session: PracticeSession) => void;
+        updateSkills: (sessions: PracticeSession[]) => void;
     };
     /** Current streak of perfect notes. */
     currentPerfectStreak: number;
     /** Starts a new session. */
     startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
     /** Ends the current session and updates related stores. */
-    endSession: () => import("./session.store").PracticeSession | null;
+    endSession: () => PracticeSession | undefined;
     /** Records an attempt at a note. */
     recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
     /** Records a completed note and checks for achievements. */
-    recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: any) => void;
+    recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
     /** Manually triggers an achievement check. */
-    checkAndUnlockAchievements: () => import("./achievements.store").Achievement[];
+    checkAndUnlockAchievements: () => Achievement[];
     /** Retrieves filtered session history. */
-    getSessionHistory: (days?: number) => import("./session.store").PracticeSession[];
+    getSessionHistory: (days?: number) => PracticeSession[];
     /** Gets stats for a specific exercise. */
     getExerciseStats: (exerciseId: string) => import("./progress.store").ExerciseStats;
     /** Returns summary stats for the current day. */
@@ -62,10 +74,10 @@ export declare const useAnalyticsStore: (() => {
 }) & {
     /** Imperative access to the facade's state. */
     getState: () => {
-        currentSession: import("./session.store").PracticeSession | null;
-        sessions: import("./session.store").PracticeSession[];
+        currentSession: PracticeSession | undefined;
+        sessions: PracticeSession[];
         progress: {
-            achievements: import("./achievements.store").Achievement[];
+            achievements: Achievement[];
             schemaVersion: 1;
             totalPracticeSessions: number;
             totalPracticeTime: number;
@@ -79,27 +91,23 @@ export declare const useAnalyticsStore: (() => {
             eventBuffer: import("./progress.store").ProgressEvent[];
             snapshots: import("./progress.store").ProgressSnapshot[];
             eventCounter: number;
-            addSession: (session: import("./session.store").PracticeSession) => void;
-            updateSkills: (sessions: import("./session.store").PracticeSession[]) => void;
+            addSession: (session: PracticeSession) => void;
+            updateSkills: (sessions: PracticeSession[]) => void;
         };
         currentPerfectStreak: number;
         startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
         recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
-        recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: import("../lib/technique-types").NoteTechnique) => void;
-        endSession: () => import("./session.store").PracticeSession | null;
+        recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
+        endSession: () => PracticeSession | undefined;
         checkAndUnlockAchievements: () => never[];
     };
     /** Imperative state update (for compatibility). */
-    setState: (partial: Partial<{
-        progress: any;
-        sessions: any[];
-        currentSession: any;
-        currentPerfectStreak: number;
-    }>) => void;
+    setState: (partial: AnalyticsFacadePartialState) => void;
     /** Persistence options for the facade (migrated from legacy). */
     persist: {
         getOptions: () => {
-            migrate: (persisted: any, version: number) => any;
+            migrate: (persisted: unknown, version: number) => unknown;
         };
     };
 };
+export {};

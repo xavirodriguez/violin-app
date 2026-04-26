@@ -32,8 +32,8 @@ export declare class PitchDetector {
     private readonly MIN_FREQUENCY;
     /**
      * The maximum frequency we care about (in Hz).
-     * For violin, the highest common note is around E7 at ~2637 Hz.
-     * We set this to 700 Hz by default to focus on the practical range for beginners.
+     * For violin, the highest note is E7 at ~2637 Hz.
+     * We set this to 2637 Hz to cover the full standard violin range.
      */
     private MAX_FREQUENCY;
     /**
@@ -53,9 +53,10 @@ export declare class PitchDetector {
      * Constructs a new PitchDetector instance.
      *
      * @param sampleRate - The sample rate of the audio context in which the detector will be used.
+     * @param maxFrequency - Optional maximum frequency threshold (defaults to 2637 Hz).
      * @throws Will throw an error if the sample rate is not a positive number.
      */
-    constructor(sampleRate: number);
+    constructor(sampleRate: number, maxFrequency?: number);
     /**
      * Detects the pitch of an audio buffer using the full YIN algorithm.
      *
@@ -68,14 +69,8 @@ export declare class PitchDetector {
      * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
      */
     detectPitch(buffer: Float32Array): PitchDetectionResult;
-    /** Step 1: Difference function */
-    private difference;
-    /** Step 2: Cumulative mean normalized difference function */
-    private cumulativeMeanNormalizedDifference;
-    /** Step 3: Absolute threshold */
-    private absoluteThreshold;
-    /** Step 4: Parabolic interpolation */
-    private parabolicInterpolation;
+    private executeYinAnalysis;
+    private validateAndRefineYinResult;
     /**
      * Calculates the Root Mean Square (RMS) of an audio buffer, which represents its volume.
      *
@@ -135,6 +130,23 @@ export declare class PitchDetector {
      * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
      */
     setMaxFrequency(maxHz: number): void;
+    private calculateSearchSize;
+    private refineAndValidatePitch;
+    private isFrequencyInRange;
+    /** Step 1: Difference function */
+    private difference;
+    private calculateSquaredDifferenceSum;
+    /** Step 2: Cumulative mean normalized difference function */
+    private cumulativeMeanNormalizedDifference;
+    /** Step 3: Absolute threshold */
+    private absoluteThreshold;
+    private findFirstBelowThreshold;
+    private localMinimum;
+    private findGlobalMinimum;
+    /** Step 4: Parabolic interpolation */
+    private parabolicInterpolation;
+    private isAtSearchEdge;
+    private calculateParabolicCorrection;
 }
 /**
  * Helper function to create a PitchDetector from a Web Audio API `AudioContext`.
@@ -147,3 +159,11 @@ export declare class PitchDetector {
  * @returns A new, correctly configured `PitchDetector` instance.
  */
 export declare function createPitchDetectorFromContext(audioContext: AudioContext): PitchDetector;
+/**
+ * Factory function to create a PitchDetector instance based on difficulty.
+ *
+ * @param difficulty - The difficulty level of the exercise.
+ * @param sampleRate - The audio sample rate.
+ * @returns A PitchDetector instance configured for the difficulty.
+ */
+export declare function createPitchDetectorForDifficulty(difficulty: 'Beginner' | 'Intermediate' | 'Advanced', sampleRate: number): PitchDetector;

@@ -21,7 +21,7 @@ interface State {
     /** Whether an error has been caught in the current boundary. */
     hasError: boolean;
     /** The error object that was caught, if any. */
-    error: Error | null;
+    error: Error | undefined;
 }
 /**
  * A class-based component that catches JavaScript errors anywhere in its child component tree.
@@ -31,9 +31,6 @@ interface State {
  * 1. Logs errors to the centralized `logger` with structured metadata.
  * 2. Provides a "Retry" button in its default fallback UI.
  * 3. Supports a custom `fallback` prop for tailored error states.
- *
- * Note: Error boundaries do not catch errors for event handlers, asynchronous code (e.g. `setTimeout`),
- * or server-side rendering.
  */
 export declare class ErrorBoundary extends React.Component<Props, State> {
     constructor(props: Props);
@@ -44,6 +41,7 @@ export declare class ErrorBoundary extends React.Component<Props, State> {
      * Logs the error and its component stack trace.
      */
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void;
-    render(): string | number | bigint | boolean | import("react/jsx-runtime").JSX.Element | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined;
+    render(): string | number | bigint | boolean | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | import("react/jsx-runtime").JSX.Element | null | undefined;
+    private renderDefaultFallback;
 }
 export {};

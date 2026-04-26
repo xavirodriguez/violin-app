@@ -7,9 +7,9 @@ interface AchievementToastProps {
 /**
  * Notificación animada que celebra logros desbloqueados
  */
-export declare function AchievementToast({ achievement, onDismiss, autoHideDuration }: AchievementToastProps): import("react/jsx-runtime").JSX.Element;
+export declare function AchievementToast({ achievement, onDismiss, autoHideDuration, }: AchievementToastProps): import("react/jsx-runtime").JSX.Element;
 /**
  * Manager component para manejar cola de notificaciones de logros
  */
-export declare function AchievementNotificationManager(): import("react/jsx-runtime").JSX.Element | null;
+export declare function AchievementNotificationManager(): import("react/jsx-runtime").JSX.Element;
 export {};

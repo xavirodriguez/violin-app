@@ -1,41 +1,30 @@
 import { Observation } from '@/lib/technique-types';
 /**
  * Props for the {@link PracticeFeedback} component.
+ *
+ * @public
  */
-interface PracticeFeedbackProps {
+export interface PracticeFeedbackProps {
     /** The scientific pitch name of the target note (e.g., "A4"). */
     targetNote: string;
-    /** The scientific pitch name detected by the audio engine, if any. */
-    detectedPitchName: string | null;
+    /** The scientific pitch name detected by the audio engine. */
+    detectedPitchName: string | undefined;
     /** Pitch deviation in cents from the target note's ideal frequency. */
-    centsOff: number | null;
-    /** Current status of the practice machine (e.g., 'listening', 'correct'). */
+    centsOff: number | undefined;
+    /** Current status of the practice state machine. */
     status: string;
-    /** Maximum allowed deviation in cents to be considered "in tune". Defaults to 10. */
+    /** Maximum allowed deviation in cents to be considered "in tune". */
     centsTolerance?: number;
-    /** List of real-time technical observations (intonation, stability, etc.) to display. */
+    /** List of real-time technical observations. */
     liveObservations?: Observation[];
-    /** Duration the current note has been held correctly in tune, in milliseconds. */
+    /** Duration the current note has been held correctly in tune (ms). */
     holdDuration?: number;
-    /** Required hold time for a note to be considered successfully matched. */
+    /** Required hold time for a note to be considered successfully matched (ms). */
     requiredHoldTime?: number;
-    /** Current count of consecutive notes played with perfect accuracy. */
+    /** Current count of consecutive notes played with high accuracy. */
     perfectNoteStreak?: number;
 }
 /**
- * Component that provides real-time visual feedback during a practice session.
- *
- * @remarks
- * This component implements a multi-level feedback system designed to guide
- * students without overwhelming them:
- *
- * 1. **Primary Status (60% visual weight)**: Large indicators for "Perfect", "Wrong Note", or "Adjust" (arrows).
- * 2. **Technical Details (Collapsible)**: Provides exact cents deviation for advanced students.
- * 3. **Pedagogical Observations**: Displays high-level tips (e.g., "Consistently sharp")
- *    derived from long-term analysis of the current note.
- *
- * @param props - Component props.
- * @public
+ * Component that provides real-time pedagogical feedback during a practice session.
  */
-export declare function PracticeFeedback({ targetNote, detectedPitchName, centsOff, status, centsTolerance, liveObservations, }: PracticeFeedbackProps): import("react/jsx-runtime").JSX.Element;
-export {};
+export declare function PracticeFeedback(props: PracticeFeedbackProps): import("react/jsx-runtime").JSX.Element;
