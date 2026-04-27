@@ -180,8 +180,8 @@ function QuickActionsView({
   }
 
   const onContinue = () => {
-    if (status !== 'listening' && status !== 'completed') {
-      start()
+    if (practiceState && status !== 'completed') {
+      setNoteIndex(practiceState.currentIndex + 1)
     }
   }
 
