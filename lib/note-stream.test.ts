@@ -35,7 +35,7 @@ describe('createPracticeEventPipeline', () => {
 
   const testOptions = {
     minRms: 0.01,
-    minConfidence: 0.85,
+    minConfidence: 0.80,
     centsTolerance: 25,
     requiredHoldTime: 100, // Use a shorter hold time for efficient testing
     exercise: allExercises[0],

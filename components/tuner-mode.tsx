@@ -61,6 +61,7 @@ export function TunerMode() {
   /**
    * Effect that automatically starts listening when the tuner is READY.
    * Ensures the analysis loop can progress beyond the initialization phase.
+   * This addresses Bug 2 by transitioning from READY to LISTENING automatically.
    */
   useEffect(() => {
     if (state.kind === 'READY') {

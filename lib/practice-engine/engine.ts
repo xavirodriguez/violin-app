@@ -184,7 +184,7 @@ function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
     requiredHoldTime: difficulty.requiredHoldTime,
     minRms: 0.01,
-    minConfidence: 0.85,
+    minConfidence: 0.80,
   }
 
   return options
