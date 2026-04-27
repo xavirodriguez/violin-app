@@ -1,3 +1,4 @@
+import { pitchDebugBus } from './observability/pitch-debug'
 import {
   TechniqueFrame,
   PitchedFrame,
@@ -168,6 +169,14 @@ export class NoteSegmenter {
     const now = frame.timestamp
     const context = { frame, isSignalPresent, isSilence, now }
 
+    pitchDebugBus.emit({
+      stage: 'segmenter_frame',
+      segmenterState: this.state.kind,
+      isSignal: isSignalPresent,
+      isSilence,
+      timestamp: now,
+    })
+
     const isSilentState = this.state.kind === 'SILENCE'
     if (isSilentState) {
       return this.handleSilenceState(context)
@@ -264,6 +273,13 @@ export class NoteSegmenter {
 
     const gap = Object.freeze([...this.gapFrames])
     this.gapFrames = []
+
+    pitchDebugBus.emit({
+      stage: 'segmenter_event',
+      eventType: 'ONSET',
+      noteName,
+      timestamp: now,
+    })
 
     return { type: 'ONSET', timestamp: now, noteName, gapFrames: gap }
   }
@@ -372,6 +388,13 @@ export class NoteSegmenter {
     this.frames = []
     this.lastSignalTime = undefined
 
+    pitchDebugBus.emit({
+      stage: 'segmenter_event',
+      eventType: 'OFFSET',
+      noteName,
+      timestamp: now,
+    })
+
     return { type: 'OFFSET', timestamp: now, segment }
   }
 
@@ -467,6 +490,13 @@ export class NoteSegmenter {
     noteState.pendingSince = undefined
     noteState.lastSignalTime = now
     noteState.lastBelowThresholdTime = undefined
+
+    pitchDebugBus.emit({
+      stage: 'segmenter_event',
+      eventType: 'NOTE_CHANGE',
+      noteName: frame.noteName,
+      timestamp: now,
+    })
 
     return { type: 'NOTE_CHANGE', timestamp: now, noteName: frame.noteName, segment }
   }

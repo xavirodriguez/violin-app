@@ -13,6 +13,7 @@ import {
 } from '@/lib/practice-core'
 import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
+import { pitchDebugBus } from './observability/pitch-debug'
 import { TechniqueAnalysisAgent } from './technique-analysis-agent'
 import {
   TechniqueFrame,
@@ -111,6 +112,12 @@ function pushFrameToQueue(params: {
 
   state.queue.push({
     ...detection,
+    rms: rmsValue,
+    timestamp: currentTime,
+  })
+
+  pitchDebugBus.emit({
+    stage: 'raw_audio',
     rms: rmsValue,
     timestamp: currentTime,
   })
@@ -574,6 +581,7 @@ function* validateAndEmitDetections(params: {
 }): Generator<PracticeEvent> {
   const { raw, noteName, cents, options } = params
   const isHighQuality = isDetectionHighQuality({ raw, noteName, cents, options })
+
   if (isHighQuality) {
     yield createNoteDetectedEvent({ raw, noteName, cents })
   } else {
@@ -610,7 +618,36 @@ function isDetectionHighQuality(params: {
   const hasConfidence = raw.confidence >= options.minConfidence
   const isPitched = !!noteName && Math.abs(cents) <= 50
 
-  return hasRms && hasConfidence && isPitched
+  const result = hasRms && hasConfidence && isPitched
+
+  if (result) {
+    pitchDebugBus.emit({
+      stage: 'quality_passed',
+      noteName,
+      cents,
+      rms: raw.rms,
+      confidence: raw.confidence,
+      timestamp: Date.now(),
+    })
+  } else {
+    let reason: 'low_rms' | 'low_confidence' | 'unpitched' = 'unpitched'
+    if (!hasRms) {
+      reason = 'low_rms'
+    } else if (!hasConfidence) {
+      reason = 'low_confidence'
+    }
+
+    pitchDebugBus.emit({
+      stage: 'quality_rejected',
+      reason,
+      rms: raw.rms,
+      confidence: raw.confidence,
+      noteName,
+      timestamp: Date.now(),
+    })
+  }
+
+  return result
 }
 
 function handleSegmentCompletion(params: CompletionParams): PracticeEvent | undefined {
@@ -672,6 +709,10 @@ function isValidMatch(params: {
 }): boolean {
   const { target, segment, pitchedFrames, options } = params
   const lastFrame = pitchedFrames[pitchedFrames.length - 1]
+  if (!lastFrame) {
+    return false
+  }
+
   const lastDetected: DetectedNote = {
     pitch: segment.targetPitch,
     pitchHz: lastFrame.pitchHz,
@@ -684,6 +725,19 @@ function isValidMatch(params: {
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
 
   const result = isMatched && isDurationValid
+
+  pitchDebugBus.emit({
+    stage: 'match_check',
+    detectedNote: segment.targetPitch,
+    targetNote: typeof target.pitch === 'string' ? target.pitch : JSON.stringify(target.pitch),
+    cents: lastFrame.cents,
+    centsTolerance: options.centsTolerance,
+    durationMs: segment.durationMs,
+    requiredHoldTime: options.requiredHoldTime,
+    passed: result,
+    timestamp: Date.now(),
+  })
+
   return result
 }
 

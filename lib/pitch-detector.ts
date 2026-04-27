@@ -10,6 +10,7 @@
  */
 
 import { AppError, ERROR_CODES } from './errors/app-error'
+import { pitchDebugBus } from './observability/pitch-debug'
 
 export interface PitchDetectionResult {
   /** Detected frequency in Hz (0 if no pitch detected) */
@@ -174,11 +175,37 @@ export class PitchDetector {
     buffer: Float32Array,
     rmsThreshold = this.DEFAULT_RMS_THRESHOLD,
   ): PitchDetectionResult {
-    if (!this.hasSignal(buffer, rmsThreshold)) {
+    const rms = this.calculateRMS(buffer)
+    if (rms <= rmsThreshold) {
+      pitchDebugBus.emit({
+        stage: 'yin_silent',
+        rms,
+        threshold: rmsThreshold,
+        timestamp: Date.now(),
+      })
       return { pitchHz: 0, confidence: 0 }
     }
 
-    return this.detectPitch(buffer)
+    const result = this.detectPitch(buffer)
+
+    if (result.pitchHz > 0) {
+      pitchDebugBus.emit({
+        stage: 'yin_detected',
+        pitchHz: result.pitchHz,
+        confidence: result.confidence,
+        rms,
+        timestamp: Date.now(),
+      })
+    } else if (result.confidence > 0) {
+      pitchDebugBus.emit({
+        stage: 'yin_no_pitch',
+        rms,
+        confidence: result.confidence,
+        timestamp: Date.now(),
+      })
+    }
+
+    return result
   }
 
   /**
@@ -246,6 +273,13 @@ export class PitchDetector {
     const pitchHz = this.sampleRate / betterTau
 
     if (!this.isFrequencyInRange(pitchHz)) {
+      pitchDebugBus.emit({
+        stage: 'yin_out_of_range',
+        pitchHz,
+        minHz: this.MIN_FREQUENCY,
+        maxHz: this.MAX_FREQUENCY,
+        timestamp: Date.now(),
+      })
       return { pitchHz: 0, confidence: 0 }
     }
 
