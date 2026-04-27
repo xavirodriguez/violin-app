@@ -42,6 +42,7 @@ interface PracticeMainContentProps {
   start: () => void
   stop: () => void
   setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  setNoteIndex: (index: number) => void
 }
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
@@ -137,6 +138,8 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
           stop={stop}
           setZen={setIsZenModeEnabled}
           isZen={isZenModeEnabled}
+          practiceState={practiceState}
+          setNoteIndex={props.setNoteIndex}
         />
       )}
     </>
@@ -149,22 +152,54 @@ function QuickActionsView({
   stop,
   setZen,
   isZen,
+  practiceState,
+  setNoteIndex,
 }: {
   status: string
   start: () => void
   stop: () => void
   setZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
   isZen: boolean
+  practiceState: PracticeState | undefined
+  setNoteIndex: (index: number) => void
 }) {
   const onTogglePause = () => (status === 'listening' ? stop() : start())
   const onToggleZen = () => setZen((prev: boolean) => !prev)
 
+  const onRepeatNote = () => {
+    if (practiceState) {
+      setNoteIndex(practiceState.currentIndex)
+    }
+  }
+
+  const onRepeatMeasure = () => {
+    if (practiceState) {
+      /**
+       * Current implementation resets to the start of the exercise (index 0).
+       * In future iterations, this will be updated to identify the start of the
+       * current measure using OSMD/domain metadata if available.
+       */
+      setNoteIndex(0)
+    }
+  }
+
+  const onContinue = () => {
+    if (practiceState && status !== 'completed') {
+      /**
+       * Skip the current or next note.
+       * Always increments the index relative to the current logical position.
+       */
+      const nextIndex = practiceState.currentIndex + 1
+      setNoteIndex(nextIndex)
+    }
+  }
+
   return (
     <PracticeQuickActions
       status={status}
-      onRepeatNote={() => {}}
-      onRepeatMeasure={() => {}}
-      onContinue={() => {}}
+      onRepeatNote={onRepeatNote}
+      onRepeatMeasure={onRepeatMeasure}
+      onContinue={onContinue}
       onTogglePause={onTogglePause}
       onToggleZen={onToggleZen}
       isZen={isZen}

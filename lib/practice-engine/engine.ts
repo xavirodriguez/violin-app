@@ -28,6 +28,8 @@ export interface PracticeEngineContext {
   reducer?: PracticeReducer
   /** Optional cents tolerance override. */
   centsTolerance?: number
+  /** The index of the note to start practicing from. */
+  initialNoteIndex?: number
 }
 
 /**
@@ -107,7 +109,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 function createEngineCore(ctx: PracticeEngineContext) {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
-  let state = getInitialEngineState(ctx.exercise)
+  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex)
 
   return {
     getState: () => state,
@@ -158,11 +160,12 @@ async function* executeEngineStart(
   }
 }
 
-function getInitialEngineState(exercise: Exercise): EngineState {
+function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): EngineState {
   const noteCount = exercise.notes.length
   const initialState: EngineState = {
     ...INITIAL_ENGINE_STATE,
     scoreLength: noteCount,
+    currentNoteIndex: initialNoteIndex,
   }
 
   const result = initialState
@@ -198,7 +201,7 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
   const streak = perfectNoteStreak
   const toleranceBase = 25
   const centsTolerance = Math.max(10, toleranceBase - Math.floor(streak / 3) * 5)
-  const holdBase = 500
+  const holdBase = 180
   const requiredHoldTime = Math.min(800, holdBase + Math.floor(streak / 5) * 100)
 
   const result = { centsTolerance, requiredHoldTime }
