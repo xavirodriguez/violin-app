@@ -46,7 +46,14 @@ export function PracticeMode() {
   const derived = derivePracticeState(store.practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
-  const lifecycleParams = { ...store, derived, setIsZen: viewActions.setIsZen, osmdHook: osmd }
+  const lifecycleParams = {
+    ...store,
+    derived,
+    setIsZen: viewActions.setIsZen,
+    osmdHook: osmd,
+    autoStartEnabled: store.autoStartEnabled,
+    loadId: store.loadId,
+  }
   usePracticeLifecycle(lifecycleParams)
 
   return (
@@ -79,6 +86,7 @@ export function PracticeMode() {
           start={store.start}
           stop={store.stop}
           setIsZenModeEnabled={viewActions.setIsZen}
+          setNoteIndex={store.setNoteIndex}
         />
         <KeyboardShortcutsDialog />
       </div>

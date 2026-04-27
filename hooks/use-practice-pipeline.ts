@@ -3,10 +3,10 @@
 import { useEffect } from 'react'
 import {
   createRawPitchStream,
+  createPracticeEventPipeline,
   type PipelineContext,
   type NoteStreamOptions,
 } from '@/lib/note-stream'
-import { createPracticeEventPipeline } from '@/lib/debug/instrumented-pipeline'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import type { PracticeState, PracticeEvent } from '@/lib/practice-core'
 import type { Exercise } from '@/lib/exercises/types'
@@ -37,7 +37,7 @@ function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercis
     minRms: 0.015,
     minConfidence: 0.8,
     centsTolerance: Math.round(tolerance),
-    requiredHoldTime: 500,
+    requiredHoldTime: 180,
     exercise: state.exercise,
     bpm: 60,
   }

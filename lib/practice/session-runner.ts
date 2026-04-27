@@ -1,5 +1,4 @@
 import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
-import { debugBus } from '../debug/debug-event-bus'
 import { createPracticeEngine } from '../practice-engine/engine'
 import { PracticeEngineEvent } from '../practice-engine/engine.types'
 import { engineReducer } from '../practice-engine/engine.reducer'
@@ -178,44 +177,26 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private async executeLoop(signal: AbortSignal): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      debugBus.emit({
-        type: 'PIPELINE_INSTANCE',
-        timestamp: Date.now(),
-        source: 'runner',
-        action: 'created',
-      })
-    }
+    const engine = this.initializeEngine()
+    const events = engine.start(signal)
 
-    try {
-      const engine = this.initializeEngine()
-      const events = engine.start(signal)
-
-      for await (const event of events) {
-        const isTerminated = signal.aborted
-        if (isTerminated) break
-        this.processEngineEvent(event, signal)
-      }
-    } finally {
-      if (process.env.NODE_ENV === 'development') {
-        debugBus.emit({
-          type: 'PIPELINE_INSTANCE',
-          timestamp: Date.now(),
-          source: 'runner',
-          action: 'destroyed',
-        })
-      }
+    for await (const event of events) {
+      const isTerminated = signal.aborted
+      if (isTerminated) break
+      this.processEngineEvent(event, signal)
     }
   }
 
   private initializeEngine() {
     const context = this.environment
+    const storeState = context.store.getState()
     const engine = createPracticeEngine({
       audio: context.audioLoop,
       pitch: context.detector,
       exercise: context.exercise,
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
+      initialNoteIndex: storeState.practiceState?.currentIndex ?? 0,
     })
 
     return engine
