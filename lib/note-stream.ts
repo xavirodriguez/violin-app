@@ -26,6 +26,7 @@ import {
 } from './technique-types'
 import { getDurationMs } from './exercises/utils'
 import type { Exercise } from './exercises/types'
+import { debugBus } from './debug/debug-event-bus'
 
 /**
  * The raw data yielded from the pitch detector on each animation frame.
@@ -610,7 +611,29 @@ function isDetectionHighQuality(params: {
   const hasConfidence = raw.confidence >= options.minConfidence
   const isPitched = !!noteName && Math.abs(cents) <= 50
 
-  return hasRms && hasConfidence && isPitched
+  const passed = hasRms && hasConfidence && isPitched
+
+  if (process.env.NODE_ENV === 'development') {
+    let reason = ''
+    if (!hasRms) reason = `Low RMS: ${raw.rms.toFixed(4)} < ${options.minRms}`
+    else if (!hasConfidence)
+      reason = `Low Confidence: ${raw.confidence.toFixed(2)} < ${options.minConfidence}`
+    else if (!noteName) reason = 'No note name detected'
+    else if (Math.abs(cents) > 50) reason = `Pitch too far: ${cents.toFixed(1)} cents`
+
+    debugBus.emit({
+      type: 'DETECTION_QUALITY',
+      timestamp: Date.now(),
+      passed,
+      reason: passed ? undefined : reason,
+      pitchHz: raw.pitchHz,
+      rms: raw.rms,
+      confidence: raw.confidence,
+      cents: cents,
+    })
+  }
+
+  return passed
 }
 
 function handleSegmentCompletion(params: CompletionParams): PracticeEvent | undefined {
@@ -619,11 +642,49 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
   const frames = segment.frames
   const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
-  if (pitchedFrames.length === 0) return undefined
+  if (pitchedFrames.length === 0) {
+    if (process.env.NODE_ENV === 'development') {
+      debugBus.emit({
+        type: 'SEGMENT_EVALUATED',
+        timestamp: Date.now(),
+        noteName: segment.targetPitch,
+        durationMs: segment.durationMs,
+        requiredHoldTime: options.requiredHoldTime,
+        centsDev: 0,
+        centsTolerance: options.centsTolerance,
+        passed: false,
+        failReason: 'No pitched frames in segment',
+      })
+    }
+    return undefined
+  }
 
   const isMatched =
     currentTarget && isValidMatch({ target: currentTarget, segment, pitchedFrames, options })
+
   if (!isMatched) {
+    if (process.env.NODE_ENV === 'development') {
+      const lastFrame = pitchedFrames[pitchedFrames.length - 1]
+      const durationValid = segment.durationMs >= options.requiredHoldTime
+      let failReason = ''
+      if (!durationValid) {
+        failReason = `Duration too short: ${segment.durationMs}ms < ${options.requiredHoldTime}ms`
+      } else {
+        failReason = `Pitch mismatch or out of tolerance: ${lastFrame.cents.toFixed(1)} cents`
+      }
+
+      debugBus.emit({
+        type: 'SEGMENT_EVALUATED',
+        timestamp: Date.now(),
+        noteName: segment.targetPitch,
+        durationMs: segment.durationMs,
+        requiredHoldTime: options.requiredHoldTime,
+        centsDev: lastFrame.cents,
+        centsTolerance: options.centsTolerance,
+        passed: false,
+        failReason,
+      })
+    }
     return undefined
   }
 

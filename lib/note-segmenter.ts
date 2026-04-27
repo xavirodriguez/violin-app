@@ -129,6 +129,8 @@ export type SegmenterEvent =
       segment: NoteSegment
     }
 
+import { debugBus } from './debug/debug-event-bus'
+
 /**
  * Internal state of the segmenter.
  */
@@ -169,11 +171,24 @@ export class NoteSegmenter {
     const context = { frame, isSignalPresent, isSilence, now }
 
     const isSilentState = this.state.kind === 'SILENCE'
+    let event: SegmenterEvent | undefined
+
     if (isSilentState) {
-      return this.handleSilenceState(context)
+      event = this.handleSilenceState(context)
+    } else {
+      event = this.handleNoteState(context)
     }
 
-    return this.handleNoteState(context)
+    if (process.env.NODE_ENV === 'development') {
+      debugBus.emit({
+        type: 'SEGMENTER_STATE',
+        timestamp: now,
+        state: this.state.kind,
+        event: event?.type,
+      })
+    }
+
+    return event
   }
 
   reset(): void {
