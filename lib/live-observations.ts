@@ -86,7 +86,7 @@ function createStabilityObservation(stdDev: number): Observation {
   return {
     type: 'stability',
     severity: 2,
-    confidence: 0.85 as Ratio01,
+    confidence: 0.80 as Ratio01,
     message: 'Pitch is wavering',
     tip: 'Apply steady finger pressure and keep your hand relaxed',
     evidence: { stdDev },

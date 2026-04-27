@@ -152,7 +152,10 @@ export function ViolinFingerboard({
   }, [targetNote, detectedPitchName, centsDeviation, centsTolerance, isInTune])
 
   return (
-    <div className="violin-fingerboard" style={{ position: 'relative' }}>
+    <div
+      className="violin-fingerboard"
+      style={{ position: 'relative', width: '400px', height: '300px' }}
+    >
       <canvas
         ref={baseCanvasRef}
         width={400}
