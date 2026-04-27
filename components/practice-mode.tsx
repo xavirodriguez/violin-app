@@ -52,6 +52,7 @@ export function PracticeMode() {
     setIsZen: viewActions.setIsZen,
     osmdHook: osmd,
     autoStartEnabled: store.autoStartEnabled,
+    loadId: store.loadId,
   }
   usePracticeLifecycle(lifecycleParams)
 

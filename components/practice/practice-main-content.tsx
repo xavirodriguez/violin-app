@@ -174,14 +174,18 @@ function QuickActionsView({
 
   const onRepeatMeasure = () => {
     if (practiceState) {
-      // Fallback: reset to start of exercise if no measure metadata
+      /**
+       * Current implementation resets to the start of the exercise (index 0).
+       * In future iterations, this will be updated to identify the start of the
+       * current measure using OSMD/domain metadata if available.
+       */
       setNoteIndex(0)
     }
   }
 
   const onContinue = () => {
-    if (practiceState && status !== 'completed') {
-      setNoteIndex(practiceState.currentIndex + 1)
+    if (status !== 'listening' && status !== 'completed') {
+      start()
     }
   }
 
