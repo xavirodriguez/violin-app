@@ -131,7 +131,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      *
      * @remarks
      * **Signal Processing**:
-     * - **Gating**: Implements a strict confidence threshold (0.85) to filter out
+     * - **Gating**: Implements a strict confidence threshold (0.80) to filter out
      *   ambient noise and low-energy signals.
      * - **State Machine**: Automatically transitions the store kind to `DETECTED`
      *   when a valid signal is found, and reverts to `LISTENING` when the signal
@@ -149,7 +149,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
       if (!isEligible) return
 
       const token = state.sessionToken
-      const hasSignal = confidence > 0.8 && pitch > 0
+      const hasSignal = confidence > 0.80 && pitch > 0
       const params = { pitch, confidence, token }
 
       if (hasSignal) {

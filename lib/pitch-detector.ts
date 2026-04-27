@@ -38,10 +38,10 @@ export class PitchDetector {
 
   /**
    * The maximum frequency we care about (in Hz).
-   * For violin, the practical upper limit is E7 at ~2637 Hz.
-   * We set this to 3000 Hz by default to comfortably support the full professional range.
+   * For violin, the practical upper limit is E6 at ~1318 Hz.
+   * We set this to 1320 Hz by default to cover the practical range for beginner/intermediate violin.
    */
-  private MAX_FREQUENCY = 3000
+  private MAX_FREQUENCY = 1320
 
   /**
    * The threshold for the YIN algorithm.
