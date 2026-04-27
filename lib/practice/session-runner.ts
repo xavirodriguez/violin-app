@@ -1,4 +1,5 @@
 import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
+import { debugBus } from '../debug/debug-event-bus'
 import { createPracticeEngine } from '../practice-engine/engine'
 import { PracticeEngineEvent } from '../practice-engine/engine.types'
 import { engineReducer } from '../practice-engine/engine.reducer'
@@ -177,13 +178,33 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
   }
 
   private async executeLoop(signal: AbortSignal): Promise<void> {
-    const engine = this.initializeEngine()
-    const events = engine.start(signal)
+    if (process.env.NODE_ENV === 'development') {
+      debugBus.emit({
+        type: 'PIPELINE_INSTANCE',
+        timestamp: Date.now(),
+        source: 'runner',
+        action: 'created',
+      })
+    }
 
-    for await (const event of events) {
-      const isTerminated = signal.aborted
-      if (isTerminated) break
-      this.processEngineEvent(event, signal)
+    try {
+      const engine = this.initializeEngine()
+      const events = engine.start(signal)
+
+      for await (const event of events) {
+        const isTerminated = signal.aborted
+        if (isTerminated) break
+        this.processEngineEvent(event, signal)
+      }
+    } finally {
+      if (process.env.NODE_ENV === 'development') {
+        debugBus.emit({
+          type: 'PIPELINE_INSTANCE',
+          timestamp: Date.now(),
+          source: 'runner',
+          action: 'destroyed',
+        })
+      }
     }
   }
 
