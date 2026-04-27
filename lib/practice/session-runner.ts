@@ -67,8 +67,8 @@ export interface RunnerStore {
  */
 export interface RunnerAnalytics {
   endSession: () => void
-  recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void
-  recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void
+  recordNoteAttempt: (params: { index: number; pitch: string; cents: number; inTune: boolean }) => void
+  recordNoteCompletion: (params: { index: number; time: number; technique?: NoteTechnique }) => void
 }
 
 /**
@@ -325,8 +325,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const pitch = formatPitchName(note.pitch)
     const analytics = this.environment.analytics
 
-    analytics.recordNoteAttempt(index, pitch, 0, true)
-    analytics.recordNoteCompletion(index, duration, technique)
+    analytics.recordNoteAttempt({ index, pitch, cents: 0, inTune: true })
+    analytics.recordNoteCompletion({ index, time: duration, technique })
   }
 
   private updateRunnerStats(index: number): void {

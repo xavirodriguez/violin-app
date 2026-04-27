@@ -343,11 +343,13 @@ function buildRunnerStoreInterface(
 
 function buildRunnerAnalyticsInterface(): RunnerAnalytics {
   const analyticsInterface: RunnerAnalytics = {
-    recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => {
-      useSessionStore.getState().recordAttempt(index, pitch, cents, inTune)
+    recordNoteAttempt: (params) => {
+      const { index, pitch, cents, inTune } = params
+      useSessionStore.getState().recordAttempt({ noteIndex: index, pitch, cents, inTune })
     },
-    recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => {
-      useSessionStore.getState().recordCompletion(index, time, technique)
+    recordNoteCompletion: (params) => {
+      const { index, time, technique } = params
+      useSessionStore.getState().recordCompletion({ noteIndex: index, timeMs: time, technique })
     },
     endSession: finalizeAnalyticsSession,
   }

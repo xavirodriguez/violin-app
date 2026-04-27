@@ -21,6 +21,62 @@ interface AnalyticsFacadePartialState {
   currentPerfectStreak?: number
 }
 
+function calculateTotalNotes(params: {
+  history: { sessions: PracticeSession[] }
+  current?: { notesCompleted: number }
+}): number {
+  const { history, current } = params
+  const totalCompleted = history.sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
+  const totalNotes = totalCompleted + (current?.notesCompleted || 0)
+  return totalNotes
+}
+
+function buildFinalStats(params: {
+  progress: ProgressState
+  currentStats: AchievementCheckStats['currentSession']
+  totalNotes: number
+}): AchievementCheckStats {
+  const { progress, currentStats, totalNotes } = params
+  return {
+    currentSession: currentStats,
+    totalSessions: progress.totalPracticeSessions,
+    totalPracticeDays: 1,
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
+    exercisesCompleted: progress.exercisesCompleted,
+    totalPracticeTimeMs: progress.totalPracticeTime * 1000,
+    averageAccuracy: progress.overallSkill,
+    totalNotesCompleted: totalNotes,
+  }
+}
+
+function assembleCheckStats(params: {
+  session: { current?: { notesCompleted: number } }
+  progress: ProgressState
+  history: { sessions: PracticeSession[] }
+  currentStats: AchievementCheckStats['currentSession']
+}): AchievementCheckStats {
+  const { session, progress, history, currentStats } = params
+  const totalNotes = calculateTotalNotes({ history, current: session.current })
+  return buildFinalStats({ progress, currentStats, totalNotes })
+}
+
+function prepareAchievementCheckStats(): AchievementCheckStats {
+  const session = useSessionStore.getState()
+  const progress = useProgressStore.getState()
+  const history = useSessionHistoryStore.getState()
+
+  const currentStats = {
+    correctNotes: session.current?.notesCompleted || 0,
+    perfectNoteStreak: session.perfectNoteStreak,
+    accuracy: session.current?.accuracy || 0,
+    durationMs: session.current ? Date.now() - session.current.startTimeMs : 0,
+    exerciseId: session.current?.exerciseId || '',
+  }
+
+  return assembleCheckStats({ session, progress, history, currentStats })
+}
+
 /**
  * Temporary facade to maintain backward compatibility with the legacy analytics API.
  *
@@ -63,36 +119,23 @@ export const useAnalyticsStore = Object.assign(
         return completed
       },
       /** Records an attempt at a note. */
-      recordNoteAttempt: session.recordAttempt,
+      recordNoteAttempt: (params: {
+        noteIndex: number
+        pitch: string
+        cents: number
+        inTune: boolean
+      }) => {
+        useSessionStore.getState().recordAttempt(params)
+      },
       /** Records a completed note and checks for achievements. */
-      recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => {
-        useSessionStore.getState().recordCompletion(noteIndex, timeMs, technique)
-
-        const latestSession = useSessionStore.getState()
-        const latestProgress = useProgressStore.getState()
-
-        // Side effect: check achievements
-        const stats: AchievementCheckStats = {
-          currentSession: {
-            correctNotes: latestSession.current?.notesCompleted || 0,
-            perfectNoteStreak: latestSession.perfectNoteStreak,
-            accuracy: latestSession.current?.accuracy || 0,
-            durationMs: latestSession.current ? Date.now() - latestSession.current.startTimeMs : 0,
-            exerciseId: latestSession.current?.exerciseId || '',
-          },
-          totalSessions: latestProgress.totalPracticeSessions,
-          totalPracticeDays: 1,
-          currentStreak: latestProgress.currentStreak,
-          longestStreak: latestProgress.longestStreak,
-          exercisesCompleted: latestProgress.exercisesCompleted,
-          totalPracticeTimeMs: latestProgress.totalPracticeTime * 1000,
-          averageAccuracy: latestProgress.overallSkill,
-          totalNotesCompleted:
-            useSessionHistoryStore
-              .getState()
-              .sessions.reduce((sum, s) => sum + s.notesCompleted, 0) +
-            (latestSession.current?.notesCompleted || 0),
-        }
+      recordNoteCompletion: (params: {
+        noteIndex: number
+        timeMs: number
+        technique?: NoteTechnique
+      }) => {
+        const sessionStore = useSessionStore.getState()
+        sessionStore.recordCompletion(params)
+        const stats = prepareAchievementCheckStats()
         useAchievementsStore.getState().check(stats)
       },
       /** Manually triggers an achievement check. */
@@ -144,8 +187,17 @@ export const useAnalyticsStore = Object.assign(
         },
         currentPerfectStreak: session.perfectNoteStreak,
         startSession: session.start,
-        recordNoteAttempt: session.recordAttempt,
-        recordNoteCompletion: session.recordCompletion,
+        recordNoteAttempt: (params: {
+          noteIndex: number
+          pitch: string
+          cents: number
+          inTune: boolean
+        }) => session.recordAttempt(params),
+        recordNoteCompletion: (params: {
+          noteIndex: number
+          timeMs: number
+          technique?: NoteTechnique
+        }) => session.recordCompletion(params),
         endSession: () => {
           const completed = useSessionStore.getState().end()
           if (completed) {
@@ -284,41 +336,3 @@ export const useAnalyticsStore = Object.assign(
   },
 )
 
-function prepareAchievementCheckStats(): AchievementCheckStats {
-  const session = useSessionStore.getState()
-  const progress = useProgressStore.getState()
-  const history = useSessionHistoryStore.getState()
-
-  const currentStats = {
-    correctNotes: session.current?.notesCompleted || 0,
-    perfectNoteStreak: session.perfectNoteStreak,
-    accuracy: session.current?.accuracy || 0,
-    durationMs: session.current ? Date.now() - session.current.startTimeMs : 0,
-    exerciseId: session.current?.exerciseId || '',
-  }
-
-  return assembleCheckStats({ session, progress, history, currentStats })
-}
-
-function assembleCheckStats(params: {
-  session: { current?: { notesCompleted: number } }
-  progress: ProgressState
-  history: { sessions: PracticeSession[] }
-  currentStats: AchievementCheckStats['currentSession']
-}): AchievementCheckStats {
-  const { session, progress, history, currentStats } = params
-  const totalCompleted = history.sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
-  const totalNotes = totalCompleted + (session.current?.notesCompleted || 0)
-
-  return {
-    currentSession: currentStats,
-    totalSessions: progress.totalPracticeSessions,
-    totalPracticeDays: 1,
-    currentStreak: progress.currentStreak,
-    longestStreak: progress.longestStreak,
-    exercisesCompleted: progress.exercisesCompleted,
-    totalPracticeTimeMs: progress.totalPracticeTime * 1000,
-    averageAccuracy: progress.overallSkill,
-    totalNotesCompleted: totalNotes,
-  }
-}
