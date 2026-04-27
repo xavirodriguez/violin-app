@@ -12,8 +12,6 @@ import { useTunerStore } from '@/stores/tuner-store'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Mic, MicOff, AlertCircle } from 'lucide-react'
-import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
-import { TunerDisplay } from '@/components/tuner-display'
 
 /**
  * Main component for the Standalone Tuner Mode.
@@ -54,14 +52,11 @@ export function TunerMode() {
   const isError = state.kind === 'ERROR'
   const isActive = state.kind === 'READY' || state.kind === 'LISTENING' || state.kind === 'DETECTED'
 
-  const currentNote = state.kind === 'DETECTED' ? state.note : undefined
-  const centsDeviation = state.kind === 'DETECTED' ? state.cents : undefined
   const errorMessage = state.kind === 'ERROR' ? state.error.message : undefined
 
   /**
    * Effect that automatically starts listening when the tuner is READY.
    * Ensures the analysis loop can progress beyond the initialization phase.
-   * This addresses Bug 2 by transitioning from READY to LISTENING automatically.
    */
   useEffect(() => {
     if (state.kind === 'READY') {
@@ -182,23 +177,10 @@ export function TunerMode() {
 
           {/* ACTIVE States: Tuning interface */}
           {isActive && (
-            <div className="space-y-8">
-              <TunerDisplay
-                note={currentNote}
-                cents={centsDeviation}
-                confidence={state.kind === 'DETECTED' ? state.confidence : 0}
-              />
-
-              <div className="flex justify-center py-4">
-                <ViolinFingerboard
-                  targetNote={undefined}
-                  detectedPitchName={currentNote}
-                  centsDeviation={centsDeviation}
-                />
-              </div>
-
+            <div className="space-y-6">
+              { /** Missing nice interface for tunner */}
               <div className="flex justify-center gap-2">
-                <Button onClick={reset} variant="outline" className="gap-2">
+                <Button onClick={reset} variant="outline" className="gap-2 bg-transparent">
                   <MicOff className="h-4 w-4" />
                   Stop Tuner
                 </Button>

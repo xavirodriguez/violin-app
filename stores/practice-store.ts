@@ -43,7 +43,7 @@ import {
 } from './practice-store-helpers'
 
 import type { Exercise } from '@/lib/exercises/types'
-import { Observation, NoteTechnique } from '@/lib/technique-types'
+import { Observation } from '@/lib/technique-types'
 
 /**
  * Main store for managing the practice mode lifecycle and real-time audio pipeline.

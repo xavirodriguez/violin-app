@@ -85,7 +85,7 @@ export interface PipelineContext {
 
 const defaultOptions: NoteStreamOptions = {
   minRms: 0.01,
-  minConfidence: 0.80,
+  minConfidence: 0.85,
   centsTolerance: 25,
   requiredHoldTime: 500,
   bpm: 60,

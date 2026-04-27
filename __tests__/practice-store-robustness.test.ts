@@ -10,6 +10,7 @@ import type {
 } from '@/lib/testing/mock-types'
 import { Exercise } from '@/lib/exercises/types'
 import { PracticeState } from '@/lib/practice-core'
+import { AudioResources } from '@/lib/infrastructure/audio-manager'
 
 // Polyfill crypto for node environment
 const typedGlobal = globalThis as typeof globalThis & GlobalThisWithCrypto
@@ -97,7 +98,7 @@ describe('PracticeStore Robustness', () => {
               analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
               stream: { getTracks: () => [] },
             }
-            resolve(resources as unknown as MockAudioResources)
+            resolve(resources as unknown as AudioResources)
           }, 100),
         ),
     )
@@ -120,7 +121,7 @@ describe('PracticeStore Robustness', () => {
       analyser: { fftSize: 2048, context: { sampleRate: 44100 } },
       stream: { getTracks: () => [] },
     }
-    vi.mocked(audioManager.initialize).mockResolvedValue(resources as unknown as MockAudioResources)
+    vi.mocked(audioManager.initialize).mockResolvedValue(resources as unknown as AudioResources)
 
     await usePracticeStore.getState().start()
     expect(usePracticeStore.getState().state.status).toBe('active')
@@ -149,7 +150,7 @@ describe('PracticeStore Robustness', () => {
       stream: { getTracks: () => [] },
     }
     vi.mocked(audioManager.initialize).mockResolvedValueOnce(
-      successResources as unknown as MockAudioResources,
+      successResources as unknown as AudioResources,
     )
 
     await usePracticeStore.getState().initializeAudio()
@@ -166,7 +167,7 @@ describe('PracticeStore Robustness', () => {
       stream: { getTracks: () => [] },
     }
     vi.mocked(audioManager.initialize).mockResolvedValue(
-      sessionResources as unknown as MockAudioResources,
+      sessionResources as unknown as AudioResources,
     )
 
     await usePracticeStore.getState().start()
