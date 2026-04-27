@@ -15,7 +15,7 @@ const createCompressedStorage = (_name: string): PersistStorage<unknown> => {
   return {
     getItem: (key: string) => {
       const val = localStorage.getItem(key)
-      if (!val) return undefined
+      if (!val) return null
       let result: DeserializedStorageValue
       try {
         const deserialized = decompressAndDeserialize(val)
@@ -30,9 +30,9 @@ const createCompressedStorage = (_name: string): PersistStorage<unknown> => {
         }
       } catch (e) {
         console.error(`[Storage] Failed to decompress/parse ${key}`, e)
-        result = undefined
+        result = null
       }
-      return result as unknown as StorageValue<unknown> | undefined
+      return result as StorageValue<unknown> | null
     },
     setItem: (key: string, value: unknown) => {
       try {

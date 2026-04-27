@@ -12,7 +12,6 @@ import { useTunerStore } from '@/stores/tuner-store'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Mic, MicOff, AlertCircle } from 'lucide-react'
-import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 
 /**
  * Main component for the Standalone Tuner Mode.
@@ -53,8 +52,6 @@ export function TunerMode() {
   const isError = state.kind === 'ERROR'
   const isActive = state.kind === 'READY' || state.kind === 'LISTENING' || state.kind === 'DETECTED'
 
-  const currentNote = state.kind === 'DETECTED' ? state.note : undefined
-  const centsDeviation = state.kind === 'DETECTED' ? state.cents : undefined
   const errorMessage = state.kind === 'ERROR' ? state.error.message : undefined
 
   /**
