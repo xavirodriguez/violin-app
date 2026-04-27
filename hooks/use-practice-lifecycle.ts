@@ -39,7 +39,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     loadId,
   } = params
   const loadedRef = useRef(false)
-  const lastAutoStartLoadId = useRef<number>(-1)
+  const lastAutoStartLoadId = useRef<number>(loadId)
 
   usePracticeUIEffects({
     status: derived.status,

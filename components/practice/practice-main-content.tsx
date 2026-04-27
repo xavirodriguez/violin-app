@@ -184,8 +184,13 @@ function QuickActionsView({
   }
 
   const onContinue = () => {
-    if (status !== 'listening' && status !== 'completed') {
-      start()
+    if (practiceState && status !== 'completed') {
+      /**
+       * Skip the current or next note.
+       * Always increments the index relative to the current logical position.
+       */
+      const nextIndex = practiceState.currentIndex + 1
+      setNoteIndex(nextIndex)
     }
   }
 

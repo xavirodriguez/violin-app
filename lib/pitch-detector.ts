@@ -62,7 +62,7 @@ export class PitchDetector {
    * Constructs a new PitchDetector instance.
    *
    * @param sampleRate - The sample rate of the audio context in which the detector will be used.
-   * @param maxFrequency - Optional maximum frequency threshold (defaults to 2637 Hz).
+   * @param maxFrequency - Optional maximum frequency threshold (defaults to 3000 Hz).
    * @throws Will throw an error if the sample rate is not a positive number.
    */
   constructor(sampleRate: number, maxFrequency?: number) {

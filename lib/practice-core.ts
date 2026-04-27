@@ -221,7 +221,7 @@ export interface PracticeState {
 
 /** Events that can modify the practice state. */
 export type PracticeEvent =
-  | { type: 'START' }
+  | { type: 'START'; payload?: { startIndex?: number } }
   | { type: 'STOP' }
   | { type: 'RESET' }
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
@@ -380,11 +380,14 @@ function getEventHandler(type: string) {
   return finalHandler
 }
 
-function handleStart(state: PracticeState): PracticeState {
+function handleStart(state: PracticeState, event: PracticeEvent): PracticeState {
+  const payload = (event as Extract<PracticeEvent, { type: 'START' }>).payload
+  const startIndex = payload?.startIndex ?? 0
+
   const nextState = {
     ...state,
     status: 'listening' as PracticeStatus,
-    currentIndex: 0,
+    currentIndex: startIndex,
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],

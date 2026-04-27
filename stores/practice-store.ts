@@ -150,7 +150,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     setNoteIndex: (index) => {
       const state = get().practiceState
-      if (!state) return
+      if (!state || get().isStarting) return
 
       const wasActive = get().state.status === 'active'
       const updates = getResetStateForIndex(state, index)
@@ -159,8 +159,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         get()
           .stop()
           .then(() => {
-            set((currentState) => ({ ...currentState, practiceState: updates }))
-            return get().start()
+            // Re-check state if it changed during stop
+            if (get().practiceState) {
+              set((currentState) => ({ ...currentState, practiceState: updates }))
+              return get().start()
+            }
           })
           .catch((err) => console.error('[PracticeStore] Failed to restart after index change:', err))
       } else {
@@ -594,12 +597,13 @@ function getStartStateUpdates(params: {
   token: string
 }): Partial<PracticeStore> {
   const { currentState, storeState, runner, abort, token } = params
-  const startEvent: PracticeEvent = { type: 'START' }
+  const startIndex = currentState.practiceState?.currentIndex ?? 0
+  const startEvent: PracticeEvent = { type: 'START', payload: { startIndex } }
   const practiceState = updatePracticeState(currentState.practiceState, startEvent)
 
   return {
     ...currentState,
-    state: transitions.start(storeState, runner, abort),
+    state: transitions.start(storeState, runner, abort, startIndex),
     practiceState,
     sessionToken: token,
     isStarting: false,

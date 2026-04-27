@@ -185,6 +185,7 @@ export const transitions = {
     state: ReadyState,
     runner: PracticeSessionRunner,
     abortController: AbortController,
+    startIndex = 0,
   ): ActiveState => ({
     status: 'active',
     audioLoop: state.audioLoop,
@@ -196,7 +197,7 @@ export const transitions = {
     practiceState: {
       status: 'listening',
       exercise: state.exercise,
-      currentIndex: 0,
+      currentIndex: startIndex,
       detectionHistory: [],
       perfectNoteStreak: 0,
     },

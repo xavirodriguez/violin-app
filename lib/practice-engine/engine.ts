@@ -201,7 +201,7 @@ function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
   const streak = perfectNoteStreak
   const toleranceBase = 25
   const centsTolerance = Math.max(10, toleranceBase - Math.floor(streak / 3) * 5)
-  const holdBase = 500
+  const holdBase = 180
   const requiredHoldTime = Math.min(800, holdBase + Math.floor(streak / 5) * 100)
 
   const result = { centsTolerance, requiredHoldTime }
