@@ -16,10 +16,10 @@ describe('PitchDetector Difficulty Factory', () => {
     expect(range.max).toBe(1760)
   })
 
-  it('should create a detector with 2637Hz max frequency for Advanced', () => {
+  it('should create a detector with 3000Hz max frequency for Advanced', () => {
     const detector = createPitchDetectorForDifficulty('Advanced', sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(2637)
+    expect(range.max).toBe(3000)
   })
 
   it('should allow overriding max frequency in constructor', () => {
@@ -31,6 +31,6 @@ describe('PitchDetector Difficulty Factory', () => {
   it('should use default max frequency if not provided in constructor', () => {
     const detector = new PitchDetector(sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(1320)
+    expect(range.max).toBe(3000)
   })
 })

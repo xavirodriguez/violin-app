@@ -22,10 +22,20 @@ interface LifecycleParams {
   setIsZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
   osmdHook: ReturnType<typeof useOSMDSafe>
   derived: DerivedPracticeState
+  autoStartEnabled: boolean
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
-  const { practiceState, loadExercise, start, stop, setIsZen, osmdHook, derived } = params
+  const {
+    practiceState,
+    loadExercise,
+    start,
+    stop,
+    setIsZen,
+    osmdHook,
+    derived,
+    autoStartEnabled,
+  } = params
   const loadedRef = useRef(false)
 
   usePracticeUIEffects({
@@ -44,4 +54,11 @@ export function usePracticeLifecycle(params: LifecycleParams) {
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
+
+  useEffect(() => {
+    const shouldAutoStart = autoStartEnabled && practiceState && derived.status === 'idle'
+    if (shouldAutoStart) {
+      start()
+    }
+  }, [autoStartEnabled, practiceState, derived.status, start])
 }

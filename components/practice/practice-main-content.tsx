@@ -42,6 +42,7 @@ interface PracticeMainContentProps {
   start: () => void
   stop: () => void
   setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  setNoteIndex: (index: number) => void
 }
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
@@ -137,6 +138,8 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
           stop={stop}
           setZen={setIsZenModeEnabled}
           isZen={isZenModeEnabled}
+          practiceState={practiceState}
+          setNoteIndex={props.setNoteIndex}
         />
       )}
     </>
@@ -149,22 +152,45 @@ function QuickActionsView({
   stop,
   setZen,
   isZen,
+  practiceState,
+  setNoteIndex,
 }: {
   status: string
   start: () => void
   stop: () => void
   setZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
   isZen: boolean
+  practiceState: PracticeState | undefined
+  setNoteIndex: (index: number) => void
 }) {
   const onTogglePause = () => (status === 'listening' ? stop() : start())
   const onToggleZen = () => setZen((prev: boolean) => !prev)
 
+  const onRepeatNote = () => {
+    if (practiceState) {
+      setNoteIndex(practiceState.currentIndex)
+    }
+  }
+
+  const onRepeatMeasure = () => {
+    if (practiceState) {
+      // Fallback: reset to start of exercise if no measure metadata
+      setNoteIndex(0)
+    }
+  }
+
+  const onContinue = () => {
+    if (status !== 'listening' && status !== 'completed') {
+      start()
+    }
+  }
+
   return (
     <PracticeQuickActions
       status={status}
-      onRepeatNote={() => {}}
-      onRepeatMeasure={() => {}}
-      onContinue={() => {}}
+      onRepeatNote={onRepeatNote}
+      onRepeatMeasure={onRepeatMeasure}
+      onContinue={onContinue}
       onTogglePause={onTogglePause}
       onToggleZen={onToggleZen}
       isZen={isZen}

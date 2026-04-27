@@ -37,7 +37,7 @@ function getPipelineOptions(state: PracticeState): NoteStreamOptions & { exercis
     minRms: 0.015,
     minConfidence: 0.8,
     centsTolerance: Math.round(tolerance),
-    requiredHoldTime: 500,
+    requiredHoldTime: 180,
     exercise: state.exercise,
     bpm: 60,
   }
