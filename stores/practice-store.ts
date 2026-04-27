@@ -151,8 +151,21 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     setNoteIndex: (index) => {
       const state = get().practiceState
       if (!state) return
+
+      const wasActive = get().state.status === 'active'
       const updates = getResetStateForIndex(state, index)
-      set((currentState) => ({ ...currentState, practiceState: updates }))
+
+      if (wasActive) {
+        get()
+          .stop()
+          .then(() => {
+            set((currentState) => ({ ...currentState, practiceState: updates }))
+            return get().start()
+          })
+          .catch((err) => console.error('[PracticeStore] Failed to restart after index change:', err))
+      } else {
+        set((currentState) => ({ ...currentState, practiceState: updates }))
+      }
     },
 
     initializeAudio: async () => {

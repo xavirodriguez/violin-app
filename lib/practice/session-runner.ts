@@ -189,12 +189,14 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private initializeEngine() {
     const context = this.environment
+    const storeState = context.store.getState()
     const engine = createPracticeEngine({
       audio: context.audioLoop,
       pitch: context.detector,
       exercise: context.exercise,
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
+      initialNoteIndex: storeState.practiceState?.currentIndex ?? 0,
     })
 
     return engine
