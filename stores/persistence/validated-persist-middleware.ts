@@ -23,7 +23,7 @@ const createCompressedStorage = (_name: string): PersistStorage<unknown> => {
           try {
             result = JSON.parse(deserialized) as { state: Record<string, unknown>; version?: number }
           } catch {
-            result = undefined
+            result = null
           }
         } else {
           result = deserialized as { state: Record<string, unknown>; version?: number }

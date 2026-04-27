@@ -333,7 +333,7 @@ graph TD
 4. `startListening()` → Estado → `LISTENING`
 5. Loop RAF captura frames con `analyser.getFloatTimeDomainData()`
 6. `PitchDetector.detectPitch()` aplica algoritmo YIN
-7. Si confidence > 0.80 → `MusicalNote.fromFrequency()`
+7. Si confidence > 0.85 → `MusicalNote.fromFrequency()`
 8. `updatePitch()` actualiza estado → `DETECTED`
 
 ### 5.4 Algoritmo YIN (Detección de Pitch) [12](#0-11)
@@ -384,7 +384,7 @@ PracticeState actualizado
 **Parámetros de configuración**:
 
 - `MIN_FREQUENCY`: 180 Hz (por debajo de G3 en violín)
-- `MAX_FREQUENCY`: 1320 Hz (configurable, default enfocado en principiantes/intermedios)
+- `MAX_FREQUENCY`: 700 Hz (configurable, default enfocado en principiantes)
 - `YIN_THRESHOLD`: 0.1 (balance precisión/recall)
 - `DEFAULT_RMS_THRESHOLD`: 0.01 (gate de ruido)
 

@@ -308,7 +308,7 @@ export class TechniqueAnalysisAgent {
     frames: ReadonlyArray<TechniqueFrame>,
     startTime: TimestampMs,
   ): TimestampMs {
-    const stableRmsThreshold = this.calculateStableRms(frames) * 0.80
+    const stableRmsThreshold = this.calculateStableRms(frames) * 0.85
     const stableFrame = frames.find((f) => f.rms >= stableRmsThreshold)
     const result = stableFrame
       ? ((stableFrame.timestamp - startTime) as TimestampMs)
@@ -598,7 +598,7 @@ export class TechniqueAnalysisAgent {
     return {
       type: 'vibrato',
       severity: 1,
-      confidence: 0.80 as Ratio01,
+      confidence: 0.8 as Ratio01,
       message: 'Slow vibrato detected',
       tip: 'Try to slightly increase the speed of your hand oscillation.',
       evidence: { rate: rateHz },
@@ -621,7 +621,7 @@ export class TechniqueAnalysisAgent {
     return {
       type: 'vibrato',
       severity: 1,
-      confidence: 0.80 as Ratio01,
+      confidence: 0.8 as Ratio01,
       message: 'Wide vibrato detected',
       tip: 'Focus on a narrower, more controlled oscillation.',
       evidence: { width: widthCents },
@@ -689,7 +689,7 @@ export class TechniqueAnalysisAgent {
     const observation: Observation = {
       type: 'attack',
       severity: 2,
-      confidence: 0.80 as Ratio01,
+      confidence: 0.85 as Ratio01,
       message,
       tip: 'Ensure your finger is accurately placed before starting the bow.',
       evidence: { scoop: pitchScoopCents },
@@ -725,7 +725,7 @@ export class TechniqueAnalysisAgent {
     return {
       type: 'transition',
       severity: 2,
-      confidence: 0.80 as Ratio01,
+      confidence: 0.8 as Ratio01,
       message: 'Audible glissando',
       tip: 'Move your hand more quickly between positions for a cleaner transition.',
       evidence: { gliss, time },

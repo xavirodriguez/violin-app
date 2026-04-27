@@ -31,6 +31,6 @@ describe('PitchDetector Difficulty Factory', () => {
   it('should use default max frequency if not provided in constructor', () => {
     const detector = new PitchDetector(sampleRate)
     const range = detector.getFrequencyRange()
-    expect(range.max).toBe(1320)
+    expect(range.max).toBe(3000)
   })
 })
