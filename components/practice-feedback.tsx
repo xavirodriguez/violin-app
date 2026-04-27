@@ -78,8 +78,35 @@ function FeedbackStatus(props: {
     props
 
   if (!isPlaying) {
-    return renderWaitingState(status, targetNote)
+    return <WaitingState status={status} targetNote={targetNote} />
   }
+
+  return (
+    <ActiveFeedback
+      targetNote={targetNote}
+      detectedPitchName={detectedPitchName}
+      centsOff={centsOff}
+      isCorrectNote={isCorrectNote}
+      isInTune={isInTune}
+    />
+  )
+}
+
+function WaitingState({ status, targetNote }: { status: string; targetNote: string }) {
+  if (status === 'listening') {
+    return <WaitingPrompt targetNote={targetNote} />
+  }
+  return <div className="flex min-h-[200px] items-center justify-center" />
+}
+
+function ActiveFeedback(props: {
+  targetNote: string
+  detectedPitchName: string | undefined
+  centsOff: number | undefined
+  isCorrectNote: boolean
+  isInTune: boolean
+}) {
+  const { targetNote, detectedPitchName, centsOff, isCorrectNote, isInTune } = props
 
   if (!isCorrectNote) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
@@ -90,13 +117,6 @@ function FeedbackStatus(props: {
   }
 
   return <AdjustmentFeedback centsOff={centsOff!} />
-}
-
-function renderWaitingState(status: string, targetNote: string) {
-  if (status === 'listening') {
-    return <WaitingPrompt targetNote={targetNote} />
-  }
-  return <div className="flex min-h-[200px] items-center justify-center" />
 }
 
 function WaitingPrompt({ targetNote }: { targetNote: string }) {

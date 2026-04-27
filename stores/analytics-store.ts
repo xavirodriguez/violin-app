@@ -185,7 +185,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       recordNoteCompletion: (params) => {
         const state = get()
-        if (state.currentSession === undefined) return
+        const session = state.currentSession
+        if (session === undefined) return
         const newStreak = calculateStreakUpdate(state, params.noteIndex)
 
         handleStreakMilestones(newStreak)
@@ -195,14 +196,15 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       checkAndUnlockAchievements: () => {
         const state = get()
-        if (state.currentSession === undefined) return
+        const session = state.currentSession
+        if (session === undefined) return
 
         const stats = buildAchievementStats(state)
         const unlockedIds = state.progress.achievements.map((a) => a.id)
         const newAchievements = checkAchievements({ stats, unlockedAchievementIds: unlockedIds })
 
         if (newAchievements.length > 0) {
-          processNewAchievements(set, state, newAchievements)
+          processNewAchievements({ set, state, newAchievements })
         }
       },
 
@@ -269,7 +271,7 @@ function createInitialSession(params: {
 }): PracticeSession {
   const { exerciseId, exerciseName, mode } = params
   const nowMs = Date.now()
-  return {
+  const baseSession = {
     id: crypto.randomUUID(),
     startTimeMs: nowMs,
     endTimeMs: nowMs,
@@ -277,6 +279,9 @@ function createInitialSession(params: {
     exerciseId,
     exerciseName,
     mode,
+  }
+  return {
+    ...baseSession,
     notesAttempted: 0,
     notesCompleted: 0,
     accuracy: 0,
@@ -339,7 +344,7 @@ function getUpdatedProgress(params: {
   sessions: PracticeSession[]
 }): UserProgress {
   const { progress, completedSession, sessions } = params
-  const nextExerciseStats = updateExerciseStats({
+  const nextStats = updateExerciseStats({
     exerciseStats: progress.exerciseStats,
     exerciseId: completedSession.exerciseId,
     accuracy: completedSession.accuracy,
@@ -350,11 +355,12 @@ function getUpdatedProgress(params: {
   const newProgress = assembleUpdatedProgress({
     progress,
     completedSession,
-    nextExerciseStats,
+    nextExerciseStats: nextStats,
   })
 
+  const allRecentSessions = [completedSession, ...sessions]
   updateStreak(newProgress, sessions)
-  calculateSkills(newProgress, [completedSession, ...sessions])
+  calculateSkills(newProgress, allRecentSessions)
 
   return newProgress
 }
@@ -439,16 +445,40 @@ function assembleAchievementStats(params: {
 }): AchievementCheckStats {
   const { currentSession, currentPerfectStreak, sessions, progress } = params
   const currentDurationMs = Date.now() - currentSession.startTimeMs
-  const totalNotesCompleted = calculateTotalNotesCompleted(sessions, currentSession)
+  const totalNotes = calculateTotalNotesCompleted(sessions, currentSession)
+  const currentSessionStats = buildCurrentSessionStats({
+    session: currentSession,
+    streak: currentPerfectStreak,
+    durationMs: currentDurationMs,
+  })
 
+  return buildCheckStats({ sessions, progress, currentSessionStats, totalNotes })
+}
+
+function buildCurrentSessionStats(params: {
+  session: PracticeSession
+  streak: number
+  durationMs: number
+}): AchievementCheckStats['currentSession'] {
+  const { session, streak, durationMs } = params
   return {
-    currentSession: {
-      correctNotes: currentSession.notesCompleted,
-      perfectNoteStreak: currentPerfectStreak,
-      accuracy: currentSession.accuracy,
-      durationMs: currentDurationMs,
-      exerciseId: currentSession.exerciseId,
-    },
+    correctNotes: session.notesCompleted,
+    perfectNoteStreak: streak,
+    accuracy: session.accuracy,
+    durationMs,
+    exerciseId: session.exerciseId,
+  }
+}
+
+function buildCheckStats(params: {
+  sessions: PracticeSession[]
+  progress: UserProgress
+  currentSessionStats: AchievementCheckStats['currentSession']
+  totalNotes: number
+}): AchievementCheckStats {
+  const { sessions, progress, currentSessionStats, totalNotes } = params
+  return {
+    currentSession: currentSessionStats,
     totalSessions: sessions.length,
     totalPracticeDays: calculatePracticeDays(sessions),
     currentStreak: progress.currentStreak,
@@ -456,7 +486,7 @@ function assembleAchievementStats(params: {
     exercisesCompleted: progress.exercisesCompleted || [],
     totalPracticeTimeMs: progress.totalPracticeTime * 1000,
     averageAccuracy: progress.overallSkill,
-    totalNotesCompleted,
+    totalNotesCompleted: totalNotes,
   }
 }
 
@@ -470,9 +500,18 @@ function calculateTotalNotesCompleted(
   return total
 }
 
-function processNewAchievements(
+function processNewAchievements(params: {
+  set: (update: Partial<AnalyticsStore> | ((s: AnalyticsStore) => Partial<AnalyticsStore>)) => void
+  state: AnalyticsStore
+  newAchievements: Achievement[]
+}): void {
+  const { set, state, newAchievements } = params
+  updateAchievementsState(set, newAchievements)
+  notifyAchievementsUnlocked(state, newAchievements)
+}
+
+function updateAchievementsState(
   set: (update: Partial<AnalyticsStore> | ((s: AnalyticsStore) => Partial<AnalyticsStore>)) => void,
-  state: AnalyticsStore,
   newAchievements: Achievement[],
 ): void {
   set((prev) => ({
@@ -481,7 +520,9 @@ function processNewAchievements(
       achievements: [...prev.progress.achievements, ...newAchievements],
     },
   }))
+}
 
+function notifyAchievementsUnlocked(state: AnalyticsStore, newAchievements: Achievement[]): void {
   newAchievements.forEach((achievement) => {
     state.onAchievementUnlocked?.(achievement)
     analytics.track('achievement_unlocked', {
@@ -715,16 +756,21 @@ function migratePersistence(persisted: unknown, version: number): AnalyticsStore
 
   const migratedSessions = migrateSessions(persistedData.sessions)
   const progressData = (persistedData.progress as Record<string, unknown>) || {}
-  const migratedStore = assembleMigratedData(persistedData, migratedSessions, progressData)
+  const migratedStore = assembleMigratedData({
+    persistedData,
+    sessions: migratedSessions,
+    progressData,
+  })
 
   return migratedStore
 }
 
-function assembleMigratedData(
-  persistedData: Record<string, unknown>,
-  sessions: PracticeSession[],
-  progressData: Record<string, unknown>,
-): AnalyticsStore {
+function assembleMigratedData(params: {
+  persistedData: Record<string, unknown>
+  sessions: PracticeSession[]
+  progressData: Record<string, unknown>
+}): AnalyticsStore {
+  const { persistedData, sessions, progressData } = params
   const achievements = migrateAchievements(progressData.achievements)
   const exerciseStats = migrateExerciseStats(progressData.exerciseStats)
 

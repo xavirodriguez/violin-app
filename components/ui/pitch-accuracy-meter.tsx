@@ -21,19 +21,38 @@ export function PitchAccuracyMeter({
   return (
     <div className="w-full space-y-2">
       <div className="bg-muted/30 border-border relative h-[60px] w-full overflow-hidden rounded-lg border">
-        <MeterBackground />
-        <MeterLabels />
-
-        {centsOff !== undefined && (
-          <MeterIndicator
-            centsOff={centsOff}
-            isInTune={isInTune}
-            positionPercent={positionPercent}
-            showNumericValue={showNumericValue}
-          />
-        )}
+        <MeterContent
+          centsOff={centsOff}
+          isInTune={isInTune}
+          positionPercent={positionPercent}
+          showNumericValue={showNumericValue}
+        />
       </div>
     </div>
+  )
+}
+
+function MeterContent(props: {
+  centsOff: number | undefined
+  isInTune: boolean
+  positionPercent: number
+  showNumericValue: boolean
+}) {
+  const { centsOff, isInTune, positionPercent, showNumericValue } = props
+  return (
+    <>
+      <MeterBackground />
+      <MeterLabels />
+
+      {centsOff !== undefined && (
+        <MeterIndicator
+          centsOff={centsOff}
+          isInTune={isInTune}
+          positionPercent={positionPercent}
+          showNumericValue={showNumericValue}
+        />
+      )}
+    </>
   )
 }
 

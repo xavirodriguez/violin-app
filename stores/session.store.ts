@@ -111,16 +111,9 @@ interface SessionActions {
    * This method updates the rolling average of cents deviation for the note using
    * the formula: `nextAvg = (currentAvg * count + newCents) / (count + 1)`.
    *
-   * **Frequency**: It is designed to be called at high frequency (60Hz+) from
-   * the audio pipeline. Updates are performed atomically using functional
-   * state updates to avoid race conditions.
-   *
-   * @param noteIndex - Index of the note in the exercise.
-   * @param pitch - Detected scientific pitch name (e.g., "G3").
-   * @param cents - Pitch deviation in cents from the target.
-   * @param inTune - Whether the attempt was within the current tolerance.
+   * @param params - Parameters for the note attempt.
    */
-  recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void
+  recordAttempt: (params: { noteIndex: number; pitch: string; cents: number; inTune: boolean }) => void
 
   /**
    * Records the successful completion of a note.
@@ -128,15 +121,9 @@ interface SessionActions {
    * @remarks
    * Updates the session progress and technical metrics.
    *
-   * **Perfect Streak**: Increments the `perfectNoteStreak` if the final average
-   * deviation for the note is strictly less than 5 cents. Otherwise, the
-   * streak is reset to zero.
-   *
-   * @param noteIndex - Index of the completed note.
-   * @param timeMs - Total time taken to complete the note (from first detection to match).
-   * @param technique - Optional pedagogical metrics (e.g., rhythm, vibrato).
+   * @param params - Parameters for the note completion.
    */
-  recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void
+  recordCompletion: (params: { noteIndex: number; timeMs: number; technique?: NoteTechnique }) => void
 }
 
 /**
@@ -200,47 +187,27 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     return completed
   },
 
-  recordAttempt: (noteIndex, pitch, cents, inTune) => {
+  recordAttempt: (params) => {
     const { current } = get()
     if (!current) return
 
-    const existingIndex = current.noteResults.findIndex((r) => r.noteIndex === noteIndex)
-    const nextNoteResults = [...current.noteResults]
-
-    if (existingIndex >= 0) {
-      const existing = nextNoteResults[existingIndex]
-      const nextAttempts = existing.attempts + 1
-      nextNoteResults[existingIndex] = {
-        ...existing,
-        attempts: nextAttempts,
-        averageCents: (existing.averageCents * existing.attempts + cents) / nextAttempts,
-        wasInTune: inTune || existing.wasInTune,
-      }
-    } else {
-      nextNoteResults.push({
-        noteIndex,
-        targetPitch: pitch,
-        attempts: 1,
-        averageCents: cents,
-        wasInTune: inTune,
-      })
-    }
-
+    const results = updateNoteAttemptResults(current.noteResults, params)
     const notesAttempted = current.notesAttempted + 1
-    const inTuneCount = nextNoteResults.filter((r) => r.wasInTune).length
-    const accuracy = (inTuneCount / nextNoteResults.length) * 100
+    const inTuneCount = results.filter((r) => r.wasInTune).length
+    const accuracy = (inTuneCount / results.length) * 100
 
     set({
       current: {
         ...current,
         notesAttempted,
-        noteResults: nextNoteResults,
+        noteResults: results,
         accuracy,
       },
     })
   },
 
-  recordCompletion: (noteIndex, timeMs, technique) => {
+  recordCompletion: (params) => {
+    const { noteIndex, timeMs, technique } = params
     const { current, perfectNoteStreak } = get()
     if (!current) return
 
@@ -262,3 +229,50 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     })
   },
 }))
+
+function updateNoteAttemptResults(
+  results: NoteResult[],
+  params: { noteIndex: number; pitch: string; cents: number; inTune: boolean },
+): NoteResult[] {
+  const { noteIndex, pitch, cents, inTune } = params
+  const index = results.findIndex((r) => r.noteIndex === noteIndex)
+  if (index >= 0) {
+    return updateExistingNoteResult({ results, index, cents, inTune })
+  }
+  return [...results, createNewNoteResult({ noteIndex, pitch, cents, inTune })]
+}
+
+function updateExistingNoteResult(params: {
+  results: NoteResult[]
+  index: number
+  cents: number
+  inTune: boolean
+}): NoteResult[] {
+  const { results, index, cents, inTune } = params
+  const nextResults = [...results]
+  const existing = nextResults[index]
+  const nextAttempts = existing.attempts + 1
+  nextResults[index] = {
+    ...existing,
+    attempts: nextAttempts,
+    averageCents: (existing.averageCents * existing.attempts + cents) / nextAttempts,
+    wasInTune: inTune || existing.wasInTune,
+  }
+  return nextResults
+}
+
+function createNewNoteResult(params: {
+  noteIndex: number
+  pitch: string
+  cents: number
+  inTune: boolean
+}): NoteResult {
+  const { noteIndex, pitch, cents, inTune } = params
+  return {
+    noteIndex,
+    targetPitch: pitch,
+    attempts: 1,
+    averageCents: cents,
+    wasInTune: inTune,
+  }
+}
