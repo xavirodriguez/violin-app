@@ -44,6 +44,7 @@ import {
 
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
+import { validateExercise } from '@/lib/exercises/validation'
 
 /**
  * Main store for managing the practice mode lifecycle and real-time audio pipeline.
@@ -133,13 +134,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     detector: undefined,
 
     loadExercise: async (exercise) => {
-      await get().stop()
-      const updates = getExerciseLoadUpdates(exercise)
-      set((currentState) => ({
-        ...currentState,
-        ...updates,
-        loadId: currentState.loadId + 1,
-      }))
+      try {
+        await get().stop()
+        const validated = validateExercise(exercise)
+        const updates = getExerciseLoadUpdates(validated)
+        set((currentState) => ({
+          ...currentState,
+          ...updates,
+          loadId: currentState.loadId + 1,
+        }))
+      } catch (err) {
+        const error = toAppError(err)
+        set((currentState) => ({
+          ...currentState,
+          error,
+          state: transitions.error(error, exercise as Exercise),
+        }))
+      }
     },
 
     setAutoStart: (enabled) => {
