@@ -430,13 +430,7 @@ function updateDetectionHistory(
   history: readonly DetectedNote[],
   payload: DetectedNote,
 ): readonly DetectedNote[] {
-  const bufferLimit = 10
-  const buffer = new FixedRingBuffer<DetectedNote, 10>(bufferLimit)
-  const reversedHistory = history.slice().reverse()
-  buffer.push(...reversedHistory, payload)
-  const result = buffer.toArray()
-
-  return result
+  return [payload, ...history].slice(0, 10)
 }
 
 function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
@@ -463,18 +457,15 @@ function handleHoldingNote(state: PracticeState, duration: number): PracticeStat
 }
 
 function handleNoNoteDetected(state: PracticeState): PracticeState {
-  const emptyHistory: DetectedNote[] = []
-  const listeningStatus: PracticeStatus = 'listening'
-  const zeroDuration = 0
-
-  const resetState = {
-    ...state,
-    detectionHistory: emptyHistory,
-    status: listeningStatus,
-    holdDuration: zeroDuration,
+  if (state.status !== 'validating') {
+    return state
   }
 
-  return resetState
+  return {
+    ...state,
+    status: 'listening',
+    holdDuration: 0,
+  }
 }
 
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']

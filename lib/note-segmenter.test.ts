@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { NoteSegmenter } from './note-segmenter'
+import { NoteSegmenter, SegmenterEvent } from './note-segmenter'
 import { TechniqueFrame, MusicalNoteName, TimestampMs, Hz, Cents } from './technique-types'
 
 describe('NoteSegmenter', () => {
@@ -158,5 +158,38 @@ describe('NoteSegmenter', () => {
     // 100ms offset debounce from 110ms -> 210ms
     const offset = segmenter.processFrame(createUnpitchedFrame(210, 0.03, 0.0))
     expect(offset?.type).toBe('OFFSET')
+  })
+
+  it('should generate deterministic segment IDs', () => {
+    const segmenter = new NoteSegmenter({
+      onsetDebounceMs: 0,
+      offsetDebounceMs: 0,
+      minRms: 0.01,
+      minConfidence: 0.5,
+    })
+
+    const pitched = createPitchedFrame(0, 0.1, 0.9, 'A4')
+    const silence = createUnpitchedFrame(1, 0, 0)
+
+    // First frame starts above threshold timer
+    segmenter.processFrame(pitched)
+    // Next frame (same pitch, same time or slightly later) triggers ONSET because debounce is 0
+    // Actually ONSET needs elapsed >= onsetDebounceMs. 0-0 >= 0 is true.
+    segmenter.processFrame(createPitchedFrame(0, 0.1, 0.9, 'A4'))
+
+    // Silence starts below threshold timer
+    segmenter.processFrame(silence)
+    // Next silence triggers OFFSET
+    const event = segmenter.processFrame(silence) as Extract<SegmenterEvent, { type: 'OFFSET' }>
+
+    expect(event).toBeDefined()
+    expect(event.type).toBe('OFFSET')
+    expect(event.segment.segmentId).toBe('seg-0')
+
+    segmenter.processFrame(pitched)
+    segmenter.processFrame(createPitchedFrame(0, 0.1, 0.9, 'A4'))
+    segmenter.processFrame(silence)
+    const event2 = segmenter.processFrame(silence) as Extract<SegmenterEvent, { type: 'OFFSET' }>
+    expect(event2.segment.segmentId).toBe('seg-1')
   })
 })
