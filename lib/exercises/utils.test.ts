@@ -20,6 +20,11 @@ describe('Exercise Utilities', () => {
       expect(() => parsePitch('C#')).toThrow(/Invalid pitch format/)
       expect(() => parsePitch('4C')).toThrow(/Invalid pitch format/)
     })
+
+    it('should reject double accidentals with descriptive error', () => {
+      expect(() => parsePitch('C##4')).toThrow(/Double accidentals are not supported/)
+      expect(() => parsePitch('Dbb4')).toThrow(/Double accidentals are not supported/)
+    })
   })
 
   describe('getDurationMs', () => {

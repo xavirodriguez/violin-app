@@ -325,12 +325,13 @@ function createRunnerDeps(params: {
   return deps
 }
 
-function calculateCentsTolerance(): number {
+/** @internal */
+export function calculateCentsTolerance(): number {
   const { intonationSkill } = useProgressStore.getState()
   const baseTolerance = 35
   const skillBonus = (intonationSkill / 100) * 25
   const adaptiveTolerance = Math.round(baseTolerance - skillBonus)
-  const tolerance = adaptiveTolerance
+  const tolerance = Math.max(15, adaptiveTolerance)
 
   return tolerance
 }

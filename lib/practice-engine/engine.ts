@@ -112,17 +112,19 @@ function createEngineCore(ctx: PracticeEngineContext) {
   const reducer = ctx.reducer ?? engineReducer
   let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex)
 
-  return {
+  const core = {
     getState: () => state,
     updateState: (e: PracticeEngineEvent) => {
       state = reducer(state, e)
     },
-    getOptions: () => getEngineOptions(ctx),
+    getOptions: () => getEngineOptions(ctx, state.perfectNoteStreak),
     isRunning: () => isRunning,
     setRunning: (val: boolean) => {
       isRunning = val
     },
   }
+
+  return core
 }
 
 interface EngineBuilderParams {
@@ -177,8 +179,8 @@ function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): Engine
  * Builds the pipeline options for the engine iteration.
  * @internal
  */
-function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
-  const difficulty = calculateAdaptiveDifficulty(0)
+function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): NoteStreamOptions {
+  const difficulty = calculateAdaptiveDifficulty(perfectNoteStreak)
   const options: NoteStreamOptions = {
     exercise: ctx.exercise,
     bpm: 60,
@@ -198,10 +200,11 @@ function getEngineOptions(ctx: PracticeEngineContext): NoteStreamOptions {
  * @returns Object containing intonation tolerance and required hold duration.
  * @internal
  */
-function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
+/** @internal */
+export function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
   const streak = perfectNoteStreak
   const toleranceBase = 25
-  const centsTolerance = Math.max(10, toleranceBase - Math.floor(streak / 3) * 5)
+  const centsTolerance = Math.max(15, toleranceBase - Math.floor(streak / 3) * 5)
   const holdBase = 180
   const requiredHoldTime = Math.min(800, holdBase + Math.floor(streak / 5) * 100)
 
