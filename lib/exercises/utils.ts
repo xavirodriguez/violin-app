@@ -4,6 +4,7 @@
 import type { NoteDuration, Pitch, PitchName, Exercise } from './types'
 import { normalizeAccidental } from '../domain/musical-domain'
 import { ExerciseStats } from '@/stores/progress.store'
+import { AppError, ERROR_CODES } from '../errors/app-error'
 
 const DURATION_BEATS: Record<NoteDuration, number> = {
   1: 4,
@@ -29,12 +30,24 @@ export const getDurationMs = (duration: NoteDuration, bpm: number = 60): number 
 
 /**
  * Parses a pitch string (e.g., "G#4", "Bb3") into a Pitch object.
+ *
+ * @remarks
+ * Does not support double accidentals (##, bb) at this time.
  */
 export const parsePitch = (pitchString: string): Pitch => {
+  if (pitchString.includes('##') || pitchString.includes('bb')) {
+    throw new AppError({
+      message: `Double accidentals are not supported: "${pitchString}"`,
+      code: ERROR_CODES.NOTE_PARSING_FAILED,
+    })
+  }
+
   const match = pitchString.match(/^([A-G])([#b]?)(\d)$/)
   if (!match) {
-    const errorMsg = `Invalid pitch format: "${pitchString}". Expected format like "G#4" or "C5".`
-    throw new Error(errorMsg)
+    throw new AppError({
+      message: `Invalid pitch format: "${pitchString}". Expected format like "G#4" or "C5".`,
+      code: ERROR_CODES.NOTE_PARSING_FAILED,
+    })
   }
 
   const [, step, alter, octave] = match

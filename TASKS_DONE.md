@@ -44,13 +44,41 @@ Completed 3 critical P0 tasks from `TASKS.md` to improve runtime safety and doma
   - `pnpm typecheck` — passed
 - **Notes:** Ensures invalid exercises transition the store to an error state and prevent audio initialization.
 
-## Validation summary
+### 4. TASK-04 — Hacer que `parsePitch` rechace accidentales dobles
 
-- **Passed:** All unit and integration tests for the modified files passed. Full suite passed (with pre-existing warnings in unrelated areas).
-- **Failed:** None.
-- **Not run:** E2E tests were not run as these are core logic changes verified by unit/integration tests.
+- **Status:** Done
+- **Files changed:**
+  - `lib/exercises/utils.ts`
+  - `lib/exercises/utils.test.ts`
+- **What changed:** Updated `parsePitch` to explicitly reject `##` and `bb` using `AppError` and `ERROR_CODES.NOTE_PARSING_FAILED`.
+- **Validation:**
+  - `pnpm test:unit lib/exercises/utils.test.ts` — passed
+- **Notes:** Added specific test cases for double accidental rejection.
 
-## Follow-up recommendations
+### 5. TASK-05 — Añadir floor de 15 cents en `calculateCentsTolerance()`
 
-- Implement TASK-04 (Reject double accidentals in parsePitch) as it's a P1 priority.
-- Implement TASK-05 and TASK-06 to finalize adaptive difficulty logic.
+- **Status:** Done
+- **Files changed:**
+  - `stores/practice-store.ts`
+  - `__tests__/task-05.test.ts`
+- **What changed:** Implemented a 15 cents floor in the store's adaptive tolerance calculation.
+- **Validation:**
+  - `pnpm test:unit __tests__/task-05.test.ts` — passed
+- **Notes:** Exported `calculateCentsTolerance` as `@internal` for unit testing.
+
+### 6. TASK-06 — Conectar `perfectNoteStreak` real a `calculateAdaptiveDifficulty()`
+
+- **Status:** Done
+- **Files changed:**
+  - `lib/practice-engine/engine.ts`
+  - `__tests__/task-06.test.ts`
+- **What changed:** Connected the real-time streak to difficulty adjustments and unified the floor at 15 cents in the engine.
+- **Validation:**
+  - `pnpm test:unit __tests__/task-06.test.ts` — passed
+- **Notes:** Exported `calculateAdaptiveDifficulty` as `@internal` for unit testing.
+
+## Final Validation Summary
+
+- **Typecheck:** `pnpm typecheck` — passed
+- **Unit Tests:** `pnpm test:unit` — all 243 tests passed.
+- **Pre-commit:** All checks completed.
