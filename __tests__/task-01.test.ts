@@ -33,14 +33,12 @@ describe('mapMatchedEvent validation (TASK-01)', () => {
   } as any
 
   it('should throw TECHNIQUE_MISSING error when technique is missing', () => {
-    expect(() => mapMatchedEvent({})).toThrow(AppError)
-    try {
-      mapMatchedEvent({})
-    } catch (err) {
-      const error = err as AppError
-      expect(error.code).toBe(ERROR_CODES.TECHNIQUE_MISSING)
-      expect(error.message).toBe('NOTE_MATCHED event is missing technique analysis payload')
-    }
+    expect(() => mapMatchedEvent({})).toThrowError(
+      expect.objectContaining({
+        code: ERROR_CODES.TECHNIQUE_MISSING,
+        message: 'NOTE_MATCHED event is missing technique analysis payload',
+      }),
+    )
   })
 
   it('should correctly return NOTE_MATCHED event when technique is provided', () => {

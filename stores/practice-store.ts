@@ -148,6 +148,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         set((currentState) => ({
           ...currentState,
           error,
+          loadId: currentState.loadId + 1,
           state: transitions.error(error, exercise as Exercise),
         }))
       }

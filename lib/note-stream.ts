@@ -349,6 +349,7 @@ function createInitialTechnicalState(options: NoteStreamOptions): TechnicalAnaly
     prevSegment: undefined,
     currentSegmentStart: undefined,
     cumulativeStartTimes,
+    cachedBpm: options.exercise ? options.bpm : undefined,
   }
   return state
 }
