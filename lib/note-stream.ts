@@ -86,13 +86,16 @@ export interface PipelineContext {
 
 const DETECTION_PREFILTER_CENTS_TOLERANCE = 50
 
-const defaultOptions: NoteStreamOptions = {
+/** @internal */
+export const DEFAULT_NOTE_STREAM_OPTIONS: NoteStreamOptions = {
   minRms: 0.01,
   minConfidence: 0.85,
   centsTolerance: 25,
   requiredHoldTime: 500,
   bpm: 60,
 }
+
+const defaultOptions = DEFAULT_NOTE_STREAM_OPTIONS
 
 interface StreamState {
   queue: RawPitchEvent[]

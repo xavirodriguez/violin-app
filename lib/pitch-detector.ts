@@ -35,7 +35,9 @@ export class PitchDetector {
    * The minimum frequency we care about (in Hz).
    * For violin, the lowest note is G3 at ~196 Hz, but we go a bit lower for safety.
    */
-  private readonly MIN_FREQUENCY = 180
+  public static readonly DEFAULT_MIN_FREQUENCY = 180
+
+  private readonly MIN_FREQUENCY = PitchDetector.DEFAULT_MIN_FREQUENCY
 
   /**
    * The maximum frequency we care about (in Hz).
@@ -50,7 +52,9 @@ export class PitchDetector {
    * Higher values = more lenient (more detections, but less reliable)
    * 0.1 is a good balance for musical instruments.
    */
-  private readonly YIN_THRESHOLD = 0.1
+  public static readonly DEFAULT_YIN_THRESHOLD = 0.1
+
+  private readonly YIN_THRESHOLD = PitchDetector.DEFAULT_YIN_THRESHOLD
 
   /**
    * The default threshold for the Root Mean Square (RMS) calculation.
