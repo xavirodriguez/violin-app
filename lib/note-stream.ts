@@ -672,8 +672,6 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
   const frames = segment.frames
   const pitchedFrames = frames.filter((f): f is PitchedFrame => f.kind === 'pitched')
 
-  if (pitchedFrames.length === 0) return undefined
-
   const isMatched =
     currentTarget && isValidMatch({ target: currentTarget, segment, pitchedFrames, options })
   if (!isMatched) {
@@ -724,7 +722,14 @@ function createMatchedEvent(params: {
   return event
 }
 
-function isValidMatch(params: {
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+}
+
+export function isValidMatch(params: {
   target: TargetNote
   segment: NoteSegment
   pitchedFrames: PitchedFrame[]
@@ -747,6 +752,7 @@ function isValidMatch(params: {
   const isMatched = isMatch({ target, detected, tolerance: options.centsTolerance })
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
 
+  const isDurationValid = segment.durationMs >= options.requiredHoldTime
   const result = isMatched && isDurationValid
 
   pitchDebugBus.emit({
@@ -857,6 +863,7 @@ function getNoteClassFromPitch(pitchHz: number): MusicalNoteClass | undefined {
 function calculateRhythmExpectations(params: {
   state: TechnicalAnalysisState
   options: NoteStreamOptions
+  state: TechnicalAnalysisState
   currentIndex: number
   firstOnsetTime: number
 }) {
@@ -865,10 +872,33 @@ function calculateRhythmExpectations(params: {
     return { expectedStartTime: undefined, expectedDuration: undefined }
   }
 
+  ensureCumulativeStartTimes(state, options)
+
   const expectedDuration = calculateExpectedDuration({ options, currentIndex })
   const expectedStartTime = calculateExpectedStartTime({ state, currentIndex, firstOnsetTime })
 
   return { expectedStartTime, expectedDuration }
+}
+
+function ensureCumulativeStartTimes(state: TechnicalAnalysisState, options: NoteStreamOptions) {
+  const exercise = options.exercise
+  if (!exercise) return
+
+  const needsCalculation =
+    state.cumulativeStartTimes.length === 0 ||
+    state.cumulativeStartTimes.length !== exercise.notes.length ||
+    state.cachedBpm !== options.bpm
+
+  if (needsCalculation) {
+    let currentTotal = 0
+    const times = [0]
+    for (let i = 0; i < exercise.notes.length - 1; i++) {
+      currentTotal += getDurationMs(exercise.notes[i].duration, options.bpm)
+      times.push(currentTotal)
+    }
+    state.cumulativeStartTimes = times
+    state.cachedBpm = options.bpm
+  }
 }
 
 function calculateExpectedDuration(params: {
