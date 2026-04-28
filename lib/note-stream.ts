@@ -326,10 +326,13 @@ function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)):
 export function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
   /**
    * Invariant: minRms(note-stream) < minRms(NoteSegmenter)
-   * If the pipeline's minRms is 0.01, the segmenter should be slightly higher (e.g. 0.015)
-   * to ensure that only reasonably clear signals trigger onset/offset logic.
+   * Ensures the segmenter has a higher volume threshold than the general pipeline
+   * to prevent noise from triggering onset/offset logic.
+   *
+   * If the pipeline uses the default 0.01, we use 0.015 for the segmenter.
+   * For custom values, we maintain a small 0.001 margin.
    */
-  const segmenterMinRms = options.minRms === 0.01 ? 0.015 : options.minRms * 1.5
+  const segmenterMinRms = Math.max(options.minRms + 0.001, 0.015)
 
   const segmenterConfig = {
     minRms: segmenterMinRms,
@@ -688,7 +691,15 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
     return undefined
   }
 
-  return finalizeSegmentAnalysis({ segment, state, currentIndex, options, agent })
+  const representativeCents = median(pitchedFrames.map((f) => f.cents))
+  return finalizeSegmentAnalysis({
+    segment,
+    state,
+    currentIndex,
+    options,
+    agent,
+    representativeCents,
+  })
 }
 
 function median(values: readonly number[]): number {
@@ -704,8 +715,9 @@ function finalizeSegmentAnalysis(params: {
   currentIndex: number
   options: NoteStreamOptions
   agent: TechniqueAnalysisAgent
+  representativeCents: number
 }): PracticeEvent {
-  const { segment, state, currentIndex, options, agent } = params
+  const { segment, state, currentIndex, options, agent, representativeCents } = params
   const finalSegment = createFinalSegment({ segment, state, currentIndex, options })
   const technique = agent.analyzeSegment({
     segment: finalSegment,
@@ -713,21 +725,24 @@ function finalizeSegmentAnalysis(params: {
     prevSegment: state.prevSegment,
   })
 
+  const isPerfect = Math.abs(representativeCents) < 5 && Math.abs(technique.rhythm.onsetErrorMs) < 100
+
   updateStateAfterCompletion(state, finalSegment)
-  const result = createMatchedEvent({ technique, agent })
+  const result = createMatchedEvent({ technique, agent, isPerfect })
   return result
 }
 
 function createMatchedEvent(params: {
   technique: NoteTechnique
   agent: TechniqueAnalysisAgent
+  isPerfect: boolean
 }): PracticeEvent {
-  const { technique, agent } = params
+  const { technique, agent, isPerfect } = params
   const observations = agent.generateObservations(technique)
 
   const event: PracticeEvent = {
     type: 'NOTE_MATCHED',
-    payload: { technique, observations },
+    payload: { technique, observations, isPerfect },
   }
   return event
 }

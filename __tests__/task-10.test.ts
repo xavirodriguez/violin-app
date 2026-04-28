@@ -19,11 +19,11 @@ describe('TASK-10: minRms Invariant', () => {
     expect(segmenterOptions.minRms).toBeGreaterThan(baseOptions.minRms)
   })
 
-  it('should scale segmenter minRms when pipeline minRms is custom', () => {
+  it('should ensure segmenter minRms is higher than pipeline minRms for custom values', () => {
     const customOptions = { ...baseOptions, minRms: 0.02 }
     const segmenter = createSegmenter(customOptions)
     const segmenterOptions = (segmenter as any).options
-    expect(segmenterOptions.minRms).toBe(0.03) // 0.02 * 1.5
+    expect(segmenterOptions.minRms).toBe(0.021) // 0.02 + 0.001
     expect(segmenterOptions.minRms).toBeGreaterThan(customOptions.minRms)
   })
 })
