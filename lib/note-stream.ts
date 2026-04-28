@@ -243,8 +243,7 @@ interface TechnicalAnalysisState {
   firstNoteOnsetTime: number | undefined
   prevSegment: NoteSegment | undefined
   currentSegmentStart: number | undefined
-  cumulativeStartTimes: number[]
-  cachedBpm: number | undefined
+  cumulativeStartTimes: number[] | undefined
 }
 
 async function* technicalAnalysisWindow(params: {
@@ -310,7 +309,7 @@ function initializeAnalysisWindow(optionsOrGetter: NoteStreamOptions | (() => No
   const initialOptions = resolveOptions(optionsOrGetter)
   const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
-  const state = createInitialTechnicalState()
+  const state = createInitialTechnicalState(initialOptions)
 
   return { segmenter, agent, state }
 }
@@ -331,14 +330,24 @@ function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
   return new NoteSegmenter(segmenterConfig)
 }
 
-function createInitialTechnicalState(): TechnicalAnalysisState {
+function createInitialTechnicalState(options: NoteStreamOptions): TechnicalAnalysisState {
+  let cumulativeStartTimes: number[] | undefined = undefined
+
+  if (options.exercise) {
+    cumulativeStartTimes = [0]
+    let total = 0
+    for (let i = 0; i < options.exercise.notes.length - 1; i++) {
+      total += getDurationMs(options.exercise.notes[i].duration, options.bpm)
+      cumulativeStartTimes.push(total)
+    }
+  }
+
   const state: TechnicalAnalysisState = {
     lastGapFrames: [],
     firstNoteOnsetTime: undefined,
     prevSegment: undefined,
     currentSegmentStart: undefined,
-    cumulativeStartTimes: [],
-    cachedBpm: undefined,
+    cumulativeStartTimes,
   }
   return state
 }
@@ -672,6 +681,13 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
   return finalizeSegmentAnalysis({ segment, state, currentIndex, options, agent })
 }
 
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+}
+
 function finalizeSegmentAnalysis(params: {
   segment: NoteSegment
   state: TechnicalAnalysisState
@@ -733,11 +749,8 @@ export function isValidMatch(params: {
     confidence: lastFrame.confidence,
   }
 
-  const isMatched = isMatch({
-    target,
-    detected,
-    tolerance: options.centsTolerance,
-  })
+  const isMatched = isMatch({ target, detected, tolerance: options.centsTolerance })
+  const isDurationValid = segment.durationMs >= options.requiredHoldTime
 
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
   const result = isMatched && isDurationValid
@@ -766,8 +779,8 @@ function createFinalSegment(params: {
   const { segment, state, currentIndex, options } = params
   const firstOnsetTime = state.firstNoteOnsetTime ?? segment.startTime
   const expectations = calculateRhythmExpectations({
-    options,
     state,
+    options,
     currentIndex,
     firstOnsetTime,
   })
@@ -848,12 +861,13 @@ function getNoteClassFromPitch(pitchHz: number): MusicalNoteClass | undefined {
 }
 
 function calculateRhythmExpectations(params: {
+  state: TechnicalAnalysisState
   options: NoteStreamOptions
   state: TechnicalAnalysisState
   currentIndex: number
   firstOnsetTime: number
 }) {
-  const { options, state, currentIndex, firstOnsetTime } = params
+  const { state, options, currentIndex, firstOnsetTime } = params
   if (!options.exercise) {
     return { expectedStartTime: undefined, expectedDuration: undefined }
   }
@@ -861,7 +875,7 @@ function calculateRhythmExpectations(params: {
   ensureCumulativeStartTimes(state, options)
 
   const expectedDuration = calculateExpectedDuration({ options, currentIndex })
-  const expectedStartTime = firstOnsetTime + state.cumulativeStartTimes[currentIndex]
+  const expectedStartTime = calculateExpectedStartTime({ state, currentIndex, firstOnsetTime })
 
   return { expectedStartTime, expectedDuration }
 }
@@ -897,6 +911,19 @@ function calculateExpectedDuration(params: {
   return duration
 }
 
+function calculateExpectedStartTime(params: {
+  state: TechnicalAnalysisState
+  currentIndex: number
+  firstOnsetTime: number
+}): number {
+  const { state, currentIndex, firstOnsetTime } = params
+
+  if (state.cumulativeStartTimes && currentIndex < state.cumulativeStartTimes.length) {
+    return firstOnsetTime + state.cumulativeStartTimes[currentIndex]
+  }
+
+  return firstOnsetTime
+}
 
 /**
  * Creates a practice event processing pipeline with immutable context.

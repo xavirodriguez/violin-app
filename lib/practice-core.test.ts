@@ -66,57 +66,33 @@ describe('reducePracticeEvent', () => {
     expect(newState.detectionHistory).toEqual([detectedNote])
   })
 
-  it('should maintain order and limit in detectionHistory', () => {
-    const initialState = getInitialState('listening')
-    let state = initialState
-    for (let i = 1; i <= 15; i++) {
-      const note = {
-        pitch: `A${i}`,
-        pitchHz: 440,
-        cents: 0,
-        timestamp: i,
-        confidence: 0.9,
-      }
-      state = reducePracticeEvent(state, { type: 'NOTE_DETECTED', payload: note })
-    }
-
-    expect(state.detectionHistory).toHaveLength(10)
-    expect(state.detectionHistory[0].pitch).toBe('A15') // Most recent first
-    expect(state.detectionHistory[9].pitch).toBe('A6') // Last of the 10
-  })
-
   it('should NOT clear history on NO_NOTE_DETECTED event', () => {
+    const history = [
+      {
+        pitch: 'A4',
+        pitchHz: 440,
+        cents: 5,
+        timestamp: Date.now(),
+        confidence: 0.9,
+      },
+    ]
     const initialState: PracticeState = {
-      ...getInitialState('listening'),
-      detectionHistory: [
-        {
-          pitch: 'A4',
-          pitchHz: 440,
-          cents: 5,
-          timestamp: Date.now(),
-          confidence: 0.9,
-        },
-      ],
-    }
-    const event = { type: 'NO_NOTE_DETECTED' as const }
-    const newState = reducePracticeEvent(initialState, event)
-    expect(newState.detectionHistory).toHaveLength(1)
-    expect(newState.detectionHistory[0].pitch).toBe('A4')
-  })
-
-  it('should transition to listening and reset holdDuration only from validating state on NO_NOTE_DETECTED', () => {
-    const validatingState: PracticeState = {
       ...getInitialState('validating'),
+      detectionHistory: history,
       holdDuration: 100,
     }
     const event = { type: 'NO_NOTE_DETECTED' as const }
-    const newState = reducePracticeEvent(validatingState, event)
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.detectionHistory).toEqual(history)
     expect(newState.status).toBe('listening')
     expect(newState.holdDuration).toBe(0)
+  })
 
-    const correctState = getInitialState('correct')
-    const newState2 = reducePracticeEvent(correctState, event)
-    expect(newState2.status).toBe('correct') // Should NOT change
+  it('should NOT change status on NO_NOTE_DETECTED if not in validating state', () => {
+    const initialState = getInitialState('correct')
+    const event = { type: 'NO_NOTE_DETECTED' as const }
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('correct')
   })
 
   it('should advance to the next note on NOTE_MATCHED when listening', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { NoteSegmenter, SegmenterEvent } from './note-segmenter'
-import { TechniqueFrame, MusicalNoteName, TimestampMs, Hz, Cents } from './technique-types'
+import { TechniqueFrame, PitchedFrame, TimestampMs, Hz, Cents, MusicalNoteName } from './technique-types'
 
 describe('NoteSegmenter', () => {
   const options = {
@@ -162,34 +162,50 @@ describe('NoteSegmenter', () => {
 
   it('should generate deterministic segment IDs', () => {
     const segmenter = new NoteSegmenter({
-      onsetDebounceMs: 0,
-      offsetDebounceMs: 0,
+      onsetDebounceMs: 10,
+      offsetDebounceMs: 10,
       minRms: 0.01,
-      minConfidence: 0.5,
+      maxRmsSilence: 0.005,
     })
+    const frame: PitchedFrame = {
+      kind: 'pitched',
+      timestamp: 0 as TimestampMs,
+      noteName: 'A4' as MusicalNoteName,
+      pitchHz: 440 as Hz,
+      cents: 0 as Cents,
+      rms: 0.1,
+      confidence: 0.9,
+    }
 
-    const pitched = createPitchedFrame(0, 0.1, 0.9, 'A4')
-    const silence = createUnpitchedFrame(1, 0, 0)
+    segmenter.processFrame(frame)
+    const onset = segmenter.processFrame({ ...frame, timestamp: 10 as TimestampMs })
+    expect(onset?.type).toBe('ONSET')
 
-    // First frame starts above threshold timer
-    segmenter.processFrame(pitched)
-    // Next frame (same pitch, same time or slightly later) triggers ONSET because debounce is 0
-    // Actually ONSET needs elapsed >= onsetDebounceMs. 0-0 >= 0 is true.
-    segmenter.processFrame(createPitchedFrame(0, 0.1, 0.9, 'A4'))
+    // Start offset timer at 20ms
+    segmenter.processFrame({ ...frame, timestamp: 20 as TimestampMs, rms: 0 })
+    // Offset triggered at 30ms (20ms + 10ms debounce)
+    const offset = segmenter.processFrame({
+      ...frame,
+      timestamp: 30 as TimestampMs,
+      rms: 0,
+    }) as Extract<SegmenterEvent, { type: 'OFFSET' }>
 
-    // Silence starts below threshold timer
-    segmenter.processFrame(silence)
-    // Next silence triggers OFFSET
-    const event = segmenter.processFrame(silence) as Extract<SegmenterEvent, { type: 'OFFSET' }>
+    expect(offset?.type).toBe('OFFSET')
+    expect(offset.segment.segmentId).toBe('seg-0')
 
-    expect(event).toBeDefined()
-    expect(event.type).toBe('OFFSET')
-    expect(event.segment.segmentId).toBe('seg-0')
+    // Second segment
+    segmenter.processFrame({ ...frame, timestamp: 100 as TimestampMs })
+    const onset2 = segmenter.processFrame({ ...frame, timestamp: 110 as TimestampMs })
+    expect(onset2?.type).toBe('ONSET')
 
-    segmenter.processFrame(pitched)
-    segmenter.processFrame(createPitchedFrame(0, 0.1, 0.9, 'A4'))
-    segmenter.processFrame(silence)
-    const event2 = segmenter.processFrame(silence) as Extract<SegmenterEvent, { type: 'OFFSET' }>
-    expect(event2.segment.segmentId).toBe('seg-1')
+    // Start offset timer at 120ms
+    segmenter.processFrame({ ...frame, timestamp: 120 as TimestampMs, rms: 0 })
+    // Offset triggered at 130ms (120ms + 10ms debounce)
+    const offset2 = segmenter.processFrame({
+      ...frame,
+      timestamp: 130 as TimestampMs,
+      rms: 0,
+    }) as Extract<SegmenterEvent, { type: 'OFFSET' }>
+    expect(offset2.segment.segmentId).toBe('seg-1')
   })
 })
