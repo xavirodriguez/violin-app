@@ -166,4 +166,83 @@ describe('createPracticeEventPipeline', () => {
     const noteMatched = events.find((e) => e.type === 'NOTE_MATCHED')
     expect(noteMatched).toBeUndefined()
   })
+
+  it('should treat frame as unpitched if confidence is below minConfidence but above 0.1', async () => {
+    // Previously, confidence > 0.1 was enough for pitched frame in NoteSegmenter.
+    // Now it must pass isDetectionHighQuality (minConfidence: 0.85).
+    const rawEvents: RawPitchEvent[] = [{ pitchHz: 440, confidence: 0.5, rms: 0.02, timestamp: 0 }]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline({
+      rawPitchStream,
+      context: testContext,
+      options: testOptions,
+      signal: new AbortController().signal,
+    })
+    const events = await collectAsyncIterable(pipeline)
+
+    // Should emit NO_NOTE_DETECTED
+    expect(events).toContainEqual({ type: 'NO_NOTE_DETECTED' })
+
+    // If it were treated as pitched, it would likely eventually emit ONSET or NOTE_MATCHED
+    // if we provided more frames. But more importantly, we want to ensure it doesn't
+    // start a segment.
+    const noteMatched = events.find((e) => e.type === 'NOTE_MATCHED')
+    expect(noteMatched).toBeUndefined()
+  })
+
+  it('should match based on median cents even if last frame is out of tune', async () => {
+    const startTime = Date.now()
+    // Tolerance is 25. Median is 0. Last frame is 40.
+    const rawEvents = [
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime },
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime + 50 },
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 },
+      { pitchHz: 450, confidence: 0.9, rms: 0.02, timestamp: startTime + 150 }, // ~38.9 cents above A4
+      { delay: 200 },
+      { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 350 },
+      { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 510 },
+    ]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline({
+      rawPitchStream,
+      context: { ...testContext, sessionStartTime: startTime },
+      options: {
+        ...testOptions,
+        requiredHoldTime: 120,
+      },
+      signal: new AbortController().signal,
+    })
+    const events = await collectAsyncIterable(pipeline)
+
+    const noteMatchedCount = events.filter((e) => e.type === 'NOTE_MATCHED').length
+    expect(noteMatchedCount).toBe(1)
+  })
+
+  it('should NOT match if median cents is out of tune even if last frame is in tune', async () => {
+    const startTime = Date.now()
+    // Tolerance is 25. Median is ~30. Last frame is 0.
+    const rawEvents = [
+      { pitchHz: 448, confidence: 0.9, rms: 0.02, timestamp: startTime }, // ~31.2 cents
+      { pitchHz: 448, confidence: 0.9, rms: 0.02, timestamp: startTime + 50 },
+      { pitchHz: 448, confidence: 0.9, rms: 0.02, timestamp: startTime + 100 },
+      { pitchHz: 440, confidence: 0.9, rms: 0.02, timestamp: startTime + 150 }, // 0 cents
+      { delay: 200 },
+      { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 350 },
+      { pitchHz: 0, confidence: 0, rms: 0, timestamp: startTime + 510 },
+    ]
+    const rawPitchStream = createMockStream(rawEvents)
+    const pipeline = createPracticeEventPipeline({
+      rawPitchStream,
+      context: { ...testContext, sessionStartTime: startTime },
+      options: {
+        ...testOptions,
+        requiredHoldTime: 120,
+      },
+      signal: new AbortController().signal,
+    })
+    const events = await collectAsyncIterable(pipeline)
+
+    const noteMatchedCount = events.filter((e) => e.type === 'NOTE_MATCHED').length
+    expect(noteMatchedCount).toBe(0)
+  })
 })

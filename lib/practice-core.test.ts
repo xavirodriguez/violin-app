@@ -66,22 +66,33 @@ describe('reducePracticeEvent', () => {
     expect(newState.detectionHistory).toEqual([detectedNote])
   })
 
-  it('should clear history on NO_NOTE_DETECTED event', () => {
+  it('should NOT clear history on NO_NOTE_DETECTED event', () => {
+    const history = [
+      {
+        pitch: 'A4',
+        pitchHz: 440,
+        cents: 5,
+        timestamp: Date.now(),
+        confidence: 0.9,
+      },
+    ]
     const initialState: PracticeState = {
-      ...getInitialState('listening'),
-      detectionHistory: [
-        {
-          pitch: 'A4',
-          pitchHz: 440,
-          cents: 5,
-          timestamp: Date.now(),
-          confidence: 0.9,
-        },
-      ],
+      ...getInitialState('validating'),
+      detectionHistory: history,
+      holdDuration: 100,
     }
     const event = { type: 'NO_NOTE_DETECTED' as const }
     const newState = reducePracticeEvent(initialState, event)
-    expect(newState.detectionHistory).toEqual([])
+    expect(newState.detectionHistory).toEqual(history)
+    expect(newState.status).toBe('listening')
+    expect(newState.holdDuration).toBe(0)
+  })
+
+  it('should NOT change status on NO_NOTE_DETECTED if not in validating state', () => {
+    const initialState = getInitialState('correct')
+    const event = { type: 'NO_NOTE_DETECTED' as const }
+    const newState = reducePracticeEvent(initialState, event)
+    expect(newState.status).toBe('correct')
   })
 
   it('should advance to the next note on NOTE_MATCHED when listening', () => {

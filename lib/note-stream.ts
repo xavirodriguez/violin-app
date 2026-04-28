@@ -84,6 +84,8 @@ export interface PipelineContext {
   readonly sessionStartTime: number
 }
 
+const DETECTION_PREFILTER_CENTS_TOLERANCE = 50
+
 const defaultOptions: NoteStreamOptions = {
   minRms: 0.01,
   minConfidence: 0.85,
@@ -241,6 +243,7 @@ interface TechnicalAnalysisState {
   firstNoteOnsetTime: number | undefined
   prevSegment: NoteSegment | undefined
   currentSegmentStart: number | undefined
+  cumulativeStartTimes: number[] | undefined
 }
 
 async function* technicalAnalysisWindow(params: {
@@ -306,7 +309,7 @@ function initializeAnalysisWindow(optionsOrGetter: NoteStreamOptions | (() => No
   const initialOptions = resolveOptions(optionsOrGetter)
   const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
-  const state = createInitialTechnicalState()
+  const state = createInitialTechnicalState(initialOptions)
 
   return { segmenter, agent, state }
 }
@@ -327,12 +330,24 @@ function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
   return new NoteSegmenter(segmenterConfig)
 }
 
-function createInitialTechnicalState(): TechnicalAnalysisState {
+function createInitialTechnicalState(options: NoteStreamOptions): TechnicalAnalysisState {
+  let cumulativeStartTimes: number[] | undefined = undefined
+
+  if (options.exercise) {
+    cumulativeStartTimes = [0]
+    let total = 0
+    for (let i = 0; i < options.exercise.notes.length - 1; i++) {
+      total += getDurationMs(options.exercise.notes[i].duration, options.bpm)
+      cumulativeStartTimes.push(total)
+    }
+  }
+
   const state: TechnicalAnalysisState = {
     lastGapFrames: [],
     firstNoteOnsetTime: undefined,
     prevSegment: undefined,
     currentSegmentStart: undefined,
+    cumulativeStartTimes,
   }
   return state
 }
@@ -368,7 +383,7 @@ function* executeEventAnalysis(params: {
 
   yield* validateAndEmitDetections({ raw, noteName, cents, options })
 
-  const frame = convertToTechniqueFrame({ raw, noteName, cents })
+  const frame = convertToTechniqueFrame({ raw, noteName, cents, options })
   const subParams = { frame, state, segmenter, agent, context, options }
   yield* processFrameAndSegments(subParams)
 }
@@ -480,9 +495,10 @@ function convertToTechniqueFrame(params: {
   raw: RawPitchEvent
   noteName: string
   cents: number
+  options: NoteStreamOptions
 }): TechniqueFrame {
-  const { raw, noteName, cents } = params
-  const isPitched = noteName && raw.confidence > 0.1
+  const { raw, noteName, cents, options } = params
+  const isPitched = isDetectionHighQuality({ raw, noteName, cents, options })
 
   if (!isPitched) {
     return createUnpitchedFrame(raw)
@@ -616,7 +632,7 @@ function isDetectionHighQuality(params: {
   const { raw, noteName, cents, options } = params
   const hasRms = raw.rms >= options.minRms
   const hasConfidence = raw.confidence >= options.minConfidence
-  const isPitched = !!noteName && Math.abs(cents) <= 50
+  const isPitched = !!noteName && Math.abs(cents) <= DETECTION_PREFILTER_CENTS_TOLERANCE
 
   const result = hasRms && hasConfidence && isPitched
 
@@ -667,6 +683,13 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
   return finalizeSegmentAnalysis({ segment, state, currentIndex, options, agent })
 }
 
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+}
+
 function finalizeSegmentAnalysis(params: {
   segment: NoteSegment
   state: TechnicalAnalysisState
@@ -708,20 +731,20 @@ function isValidMatch(params: {
   options: NoteStreamOptions
 }): boolean {
   const { target, segment, pitchedFrames, options } = params
-  const lastFrame = pitchedFrames[pitchedFrames.length - 1]
-  if (!lastFrame) {
-    return false
-  }
+  if (pitchedFrames.length === 0) return false
 
-  const lastDetected: DetectedNote = {
+  const lastFrame = pitchedFrames[pitchedFrames.length - 1]
+  const representativeCents = median(pitchedFrames.map((frame) => frame.cents))
+
+  const detected: DetectedNote = {
     pitch: segment.targetPitch,
     pitchHz: lastFrame.pitchHz,
-    cents: lastFrame.cents,
+    cents: representativeCents,
     timestamp: segment.endTime,
     confidence: lastFrame.confidence,
   }
 
-  const isMatched = isMatch({ target, detected: lastDetected, tolerance: options.centsTolerance })
+  const isMatched = isMatch({ target, detected, tolerance: options.centsTolerance })
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
 
   const result = isMatched && isDurationValid
@@ -730,7 +753,7 @@ function isValidMatch(params: {
     stage: 'match_check',
     detectedNote: segment.targetPitch,
     targetNote: typeof target.pitch === 'string' ? target.pitch : JSON.stringify(target.pitch),
-    cents: lastFrame.cents,
+    cents: representativeCents,
     centsTolerance: options.centsTolerance,
     durationMs: segment.durationMs,
     requiredHoldTime: options.requiredHoldTime,
@@ -749,7 +772,12 @@ function createFinalSegment(params: {
 }): NoteSegment {
   const { segment, state, currentIndex, options } = params
   const firstOnsetTime = state.firstNoteOnsetTime ?? segment.startTime
-  const expectations = calculateRhythmExpectations({ options, currentIndex, firstOnsetTime })
+  const expectations = calculateRhythmExpectations({
+    state,
+    options,
+    currentIndex,
+    firstOnsetTime,
+  })
 
   const finalSegment: NoteSegment = {
     ...segment,
@@ -827,17 +855,18 @@ function getNoteClassFromPitch(pitchHz: number): MusicalNoteClass | undefined {
 }
 
 function calculateRhythmExpectations(params: {
+  state: TechnicalAnalysisState
   options: NoteStreamOptions
   currentIndex: number
   firstOnsetTime: number
 }) {
-  const { options, currentIndex, firstOnsetTime } = params
+  const { state, options, currentIndex, firstOnsetTime } = params
   if (!options.exercise) {
     return { expectedStartTime: undefined, expectedDuration: undefined }
   }
 
   const expectedDuration = calculateExpectedDuration({ options, currentIndex })
-  const expectedStartTime = calculateExpectedStartTime({ options, currentIndex, firstOnsetTime })
+  const expectedStartTime = calculateExpectedStartTime({ state, currentIndex, firstOnsetTime })
 
   return { expectedStartTime, expectedDuration }
 }
@@ -853,17 +882,17 @@ function calculateExpectedDuration(params: {
 }
 
 function calculateExpectedStartTime(params: {
-  options: NoteStreamOptions
+  state: TechnicalAnalysisState
   currentIndex: number
   firstOnsetTime: number
 }): number {
-  const { options, currentIndex, firstOnsetTime } = params
-  let startTime = firstOnsetTime
-  for (let i = 0; i < currentIndex; i++) {
-    const note = options.exercise!.notes[i]
-    startTime += getDurationMs(note.duration, options.bpm)
+  const { state, currentIndex, firstOnsetTime } = params
+
+  if (state.cumulativeStartTimes && currentIndex < state.cumulativeStartTimes.length) {
+    return firstOnsetTime + state.cumulativeStartTimes[currentIndex]
   }
-  return startTime
+
+  return firstOnsetTime
 }
 
 /**
