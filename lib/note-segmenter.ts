@@ -519,7 +519,7 @@ export class NoteSegmenter {
   }): NoteSegment {
     const { frames, startTime, endTime, durationMs, noteName } = params
     return {
-      segmentId: `seg-${Date.now()}-${this.segmentCount++}`,
+      segmentId: `seg-${this.segmentCount++}`,
       noteIndex: 0,
       targetPitch: noteName,
       startTime,
