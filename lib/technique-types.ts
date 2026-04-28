@@ -175,6 +175,24 @@ export interface AnalysisOptions {
    * @default 0.5
    */
   vibratoMinRegularity?: Ratio01
+
+  /**
+   * Threshold for the proportion of low-confidence frames to trigger wolf tone detection.
+   * @default 0.3
+   */
+  wolfLowConfRatioThreshold?: number
+
+  /**
+   * Threshold for RMS beating score to trigger wolf tone detection.
+   * @default 0.4
+   */
+  wolfRmsBeatingThreshold?: number
+
+  /**
+   * Multiplier applied to the RMS beating threshold for chaos-based detection.
+   * @default 1.5
+   */
+  wolfChaosMultiplier?: number
 }
 
 /**

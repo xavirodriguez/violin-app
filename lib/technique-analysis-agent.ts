@@ -24,6 +24,9 @@ const DEFAULT_OPTIONS: Required<AnalysisOptions> = {
   vibratoMaxRateHz: 10 as Hz,
   vibratoMinWidthCents: 10 as Cents,
   vibratoMinRegularity: 0.5 as Ratio01,
+  wolfLowConfRatioThreshold: 0.3,
+  wolfRmsBeatingThreshold: 0.4,
+  wolfChaosMultiplier: 1.5,
 }
 
 /**
@@ -428,8 +431,12 @@ export class TechniqueAnalysisAgent {
     pitchChaosScore: number
   }): boolean {
     const { lowConfRatio, rmsBeatingScore, pitchChaosScore } = params
-    const isConfInstability = lowConfRatio > 0.3 && rmsBeatingScore > 0.4
-    const isChaosInstability = rmsBeatingScore > 0.6 && pitchChaosScore > 20
+    const isConfInstability =
+      lowConfRatio > this.options.wolfLowConfRatioThreshold &&
+      rmsBeatingScore > this.options.wolfRmsBeatingThreshold
+    const isChaosInstability =
+      rmsBeatingScore > this.options.wolfRmsBeatingThreshold * this.options.wolfChaosMultiplier &&
+      pitchChaosScore > 20
 
     const isWolf = isConfInstability || isChaosInstability
     return isWolf
