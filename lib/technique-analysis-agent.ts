@@ -27,6 +27,7 @@ const DEFAULT_OPTIONS: Required<AnalysisOptions> = {
   wolfLowConfRatioThreshold: 0.3,
   wolfRmsBeatingThreshold: 0.4,
   wolfChaosMultiplier: 1.5,
+  wolfPitchChaosThreshold: 20,
 }
 
 /**
@@ -436,7 +437,7 @@ export class TechniqueAnalysisAgent {
       rmsBeatingScore > this.options.wolfRmsBeatingThreshold
     const isChaosInstability =
       rmsBeatingScore > this.options.wolfRmsBeatingThreshold * this.options.wolfChaosMultiplier &&
-      pitchChaosScore > 20
+      pitchChaosScore > this.options.wolfPitchChaosThreshold
 
     const isWolf = isConfInstability || isChaosInstability
     return isWolf

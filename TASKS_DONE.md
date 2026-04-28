@@ -19,7 +19,7 @@ Completed 3 robustness and technical feedback tasks from `TASKS.md` ensuring con
   - Implemented exhaustive unit tests in `__tests__/task-11.test.ts` to verify default behavior and custom threshold overrides.
 - **Validation:**
   - `pnpm test:unit __tests__/task-11.test.ts` — passed
-- **Notes:** Allows fine-tuning the resonance analysis for different violin qualities and acoustic environments.
+- **Notes:** Allows fine-tuning the resonance analysis for different violin qualities and acoustic environments. Added `wolfPitchChaosThreshold` following PR feedback.
 
 ### 2. TASK-08 — Documentar contrato de `WebAudioFrameAdapter.captureFrame()`
 
@@ -48,7 +48,7 @@ Completed 3 robustness and technical feedback tasks from `TASKS.md` ensuring con
   - Verified visibility change detection with automated tests in `__tests__/task-09.test.ts`.
 - **Validation:**
   - `pnpm test:unit __tests__/task-09.test.ts` — passed
-- **Notes:** Improves UX transparency regarding browser-level power saving features that pause the audio analysis loop.
+- **Notes:** Improves UX transparency regarding browser-level power saving features that pause the audio analysis loop. Updated following PR feedback to ensure the notification persists until dismissed by the user.
 
 ## Final Validation Summary
 

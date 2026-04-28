@@ -88,17 +88,30 @@ describe('TechniqueAnalysisAgent - Wolf Tone Configuration (TASK-11)', () => {
   it('should detect wolf tone via chaos instability with custom threshold', () => {
     const agent = new TechniqueAnalysisAgent({
       wolfRmsBeatingThreshold: 0.2,
-      wolfChaosMultiplier: 1.0
+      wolfChaosMultiplier: 1.0,
+      wolfPitchChaosThreshold: 40,
     })
     // RMS beating ~0.4 (threshold 0.2 * 1.0 = 0.2)
-    // Pitch chaos > 20
-    const frames = createFrames(
+    // Pitch chaos needs to be > 40
+
+    // Case 1: pitch chaos = ~30 (below 40)
+    const framesLow = createFrames(
       500,
       (t) => (t % 20 < 10 ? 30 : -30),
       (t) => 0.05 + 0.02 * Math.sin(2 * Math.PI * 8 * (t / 1000)),
-      () => 0.9, // High confidence to avoid isConfInstability
+      () => 0.9,
     )
-    const metrics = agent.analyzeSegment({ segment: createSegment(frames) })
-    expect(metrics.resonance.suspectedWolf).toBe(true)
+    const metricsLow = agent.analyzeSegment({ segment: createSegment(framesLow) })
+    expect(metricsLow.resonance.suspectedWolf).toBe(false)
+
+    // Case 2: pitch chaos = ~50 (above 40)
+    const framesHigh = createFrames(
+      500,
+      (t) => (t % 20 < 10 ? 50 : -50),
+      (t) => 0.05 + 0.02 * Math.sin(2 * Math.PI * 8 * (t / 1000)),
+      () => 0.9,
+    )
+    const metricsHigh = agent.analyzeSegment({ segment: createSegment(framesHigh) })
+    expect(metricsHigh.resonance.suspectedWolf).toBe(true)
   })
 })

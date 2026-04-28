@@ -193,6 +193,12 @@ export interface AnalysisOptions {
    * @default 1.5
    */
   wolfChaosMultiplier?: number
+
+  /**
+   * Threshold for pitch chaos score to trigger wolf tone detection.
+   * @default 20
+   */
+  wolfPitchChaosThreshold?: number
 }
 
 /**
