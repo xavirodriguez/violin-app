@@ -56,16 +56,16 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
   const [wasPaused, setWasPaused] = useState(false)
 
   useEffect(() => {
-    if (!isVisible && status === 'active') {
+    if (!isVisible && props.state.status === 'active') {
       setWasPaused(true)
     }
-  }, [isVisible, status])
+  }, [isVisible, props.state.status])
 
   const handleResume = () => {
     setWasPaused(false)
   }
 
-  const showPausedBanner = wasPaused && status === 'active'
+  const showPausedBanner = wasPaused && props.state.status === 'active'
 
   return (
     <>
