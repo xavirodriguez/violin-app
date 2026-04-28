@@ -322,9 +322,17 @@ function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)):
   return resolved
 }
 
-function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
+/** @internal */
+export function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
+  /**
+   * Invariant: minRms(note-stream) < minRms(NoteSegmenter)
+   * If the pipeline's minRms is 0.01, the segmenter should be slightly higher (e.g. 0.015)
+   * to ensure that only reasonably clear signals trigger onset/offset logic.
+   */
+  const segmenterMinRms = options.minRms === 0.01 ? 0.015 : options.minRms * 1.5
+
   const segmenterConfig = {
-    minRms: options.minRms,
+    minRms: segmenterMinRms,
     minConfidence: options.minConfidence,
   }
 
