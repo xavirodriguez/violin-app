@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { usePracticeStore } from '@/stores/practice-store'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import { transitions } from '@/lib/practice/practice-states'
-import { PracticeSessionRunner } from '@/lib/practice/session-runner'
+import type { PracticeSessionRunner } from '@/lib/practice/session-runner'
 
 // Mock dependencies
 vi.mock('@/lib/infrastructure/audio-manager', () => ({

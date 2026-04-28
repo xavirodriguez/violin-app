@@ -15,7 +15,7 @@ Completed 3 high-priority robustness tasks from `TASKS.md` ensuring system invar
   - `__tests__/invariants.test.ts`
 - **What changed:**
   - Exposed `DEFAULT_YIN_THRESHOLD` and `DEFAULT_MIN_FREQUENCY` as static constants in `PitchDetector`.
-  - Exported `DEFAULT_NOTE_STREAM_OPTIONS` in `lib/note-stream.ts`.
+  - Exported and **frozen** `DEFAULT_NOTE_STREAM_OPTIONS` in `lib/note-stream.ts`.
   - Implemented `__tests__/invariants.test.ts` to verify 12 critical system invariants, including YIN thresholds, frequency ranges, audio processing configuration, RMS coherency, and matching logic.
 - **Validation:**
   - `pnpm test:unit __tests__/invariants.test.ts` — passed
@@ -37,9 +37,11 @@ Completed 3 high-priority robustness tasks from `TASKS.md` ensuring system invar
 
 - **Status:** Done
 - **Files changed:**
+  - `stores/practice-store.ts`
   - `__tests__/task-15.test.ts`
 - **What changed:**
-  - Implemented tests for the `sessionToken` anti-stale mechanism in `PracticeStore`.
+  - Exported `createSafeSet` as `@internal` from `PracticeStore` for integration testing.
+  - Implemented tests for the `sessionToken` anti-stale mechanism using real store logic.
   - Verified that `consumePipelineEvents` correctly ignores events if the token has changed.
   - Verified the `safeSet` pattern correctly discards state updates from old session tokens.
 - **Validation:**

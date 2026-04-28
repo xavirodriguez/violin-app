@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { usePracticeStore } from '@/stores/practice-store'
+import { usePracticeStore, createSafeSet } from '@/stores/practice-store'
 import type { PracticeEvent } from '@/lib/practice-core'
 
 describe('TASK-15 · sessionToken anti-stale', () => {
@@ -38,42 +38,44 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     // Run the consumer
     await usePracticeStore.getState().consumePipelineEvents(eventGenerator())
 
-    // The first event should have been applied (updates detection history)
-    // The second event should be ignored.
-    // However, NOTE_DETECTED doesn't change currentIndex.
-    // Let's use a mock state change that is visible.
-
+    // The first event should have been applied
     const history = usePracticeStore.getState().practiceState?.detectionHistory
     expect(history).toHaveLength(1)
     expect(history?.[0].pitch).toBe('A4')
   })
 
-  it('should discard updates from the safeSet mechanism if the token is stale', () => {
-    // safeSet is internal but used by createRunnerDeps -> buildRunnerStoreInterface
-    // We can test resolveSafeUpdate or just the logic in createSafeSet indirectly
+  it('should discard updates from the actual createSafeSet mechanism if the token is stale', () => {
+    const staleToken = 'old-token'
+    const currentToken = 'new-token'
 
-    const tokenA = 'token-a'
-    const tokenB = 'token-b'
+    // Set current token in store
+    usePracticeStore.setState({ sessionToken: currentToken })
 
-    usePracticeStore.setState({ sessionToken: tokenA })
+    // Create a safeSet bound to the stale token using the real exported function
+    const safeSetStale = createSafeSet({
+      set: usePracticeStore.setState,
+      get: usePracticeStore.getState,
+      currentToken: staleToken
+    })
 
-    // Simulate what createSafeSet does
-    const get = usePracticeStore.getState
-    const set = usePracticeStore.setState
+    const initialState = usePracticeStore.getState().practiceState
 
-    const safeSetA = (partial: any) => {
-      const isStale = get().sessionToken !== tokenA
-      if (isStale) return
-      // simplified resolveSafeUpdate logic
-      set(partial)
-    }
+    // Try to update using safeSet with stale token
+    safeSetStale({ practiceState: { ...initialState, currentIndex: 99 } as any })
 
-    // Change token to B
-    usePracticeStore.setState({ sessionToken: tokenB })
-
-    // Try to update using safeSetA (which has tokenA)
-    safeSetA({ practiceState: { ...get().practiceState, currentIndex: 99 } })
-
+    // Should NOT have updated
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(0)
+
+    // Create a safeSet with the current token
+    const safeSetCurrent = createSafeSet({
+      set: usePracticeStore.setState,
+      get: usePracticeStore.getState,
+      currentToken: currentToken
+    })
+
+    safeSetCurrent({ practiceState: { ...initialState, currentIndex: 5 } as any })
+
+    // Should HAVE updated
+    expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(5)
   })
 })

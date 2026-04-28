@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import { DEFAULT_NOTE_STREAM_OPTIONS } from '@/lib/note-stream'
-import { DEFAULT_SEGMENTER_OPTIONS } from '@/lib/note-segmenter'
 import { calculateCentsTolerance } from '@/stores/practice-store'
 import { calculateAdaptiveDifficulty } from '@/lib/practice-engine/engine'
 import { validateExercise } from '@/lib/exercises/validation'
