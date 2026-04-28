@@ -244,6 +244,7 @@ interface TechnicalAnalysisState {
   prevSegment: NoteSegment | undefined
   currentSegmentStart: number | undefined
   cumulativeStartTimes: number[]
+  cachedBpm: number | undefined
 }
 
 async function* technicalAnalysisWindow(params: {
@@ -337,6 +338,7 @@ function createInitialTechnicalState(): TechnicalAnalysisState {
     prevSegment: undefined,
     currentSegmentStart: undefined,
     cumulativeStartTimes: [],
+    cachedBpm: undefined,
   }
   return state
 }
@@ -870,7 +872,8 @@ function ensureCumulativeStartTimes(state: TechnicalAnalysisState, options: Note
 
   const needsCalculation =
     state.cumulativeStartTimes.length === 0 ||
-    state.cumulativeStartTimes.length !== exercise.notes.length
+    state.cumulativeStartTimes.length !== exercise.notes.length ||
+    state.cachedBpm !== options.bpm
 
   if (needsCalculation) {
     let currentTotal = 0
@@ -880,6 +883,7 @@ function ensureCumulativeStartTimes(state: TechnicalAnalysisState, options: Note
       times.push(currentTotal)
     }
     state.cumulativeStartTimes = times
+    state.cachedBpm = options.bpm
   }
 }
 
