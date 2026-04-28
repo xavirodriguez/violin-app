@@ -37,6 +37,8 @@ export const ERROR_CODES = {
   STATE_INVALID_TRANSITION: 'STATE_INVALID_TRANSITION', // An illegal state transition was attempted.
   DATA_VALIDATION_ERROR: 'DATA_VALIDATION_ERROR', // Input data failed validation.
   NOTE_PARSING_FAILED: 'NOTE_PARSING_FAILED', // Failed to parse a musical note from a string.
+  TECHNIQUE_MISSING: 'TECHNIQUE_MISSING', // NOTE_MATCHED event is missing technique analysis payload.
+  INVALID_EXERCISE: 'INVALID_EXERCISE', // Exercise contains invalid semantic data.
 
   // --- Rendering & UI ---
   OSMD_INIT_FAILED: 'OSMD_INIT_FAILED', // OpenSheetMusicDisplay failed to initialize.

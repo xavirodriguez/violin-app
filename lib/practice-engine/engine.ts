@@ -11,6 +11,7 @@ import { EngineState, INITIAL_ENGINE_STATE } from './engine.state'
 import { PracticeReducer, engineReducer } from './engine.reducer'
 import { PracticeEvent, TargetNote } from '../practice-core'
 import { NoteTechnique, Observation } from '../technique-types'
+import { AppError, ERROR_CODES } from '../errors/app-error'
 
 /**
  * Configuration context for the {@link PracticeEngine}.
@@ -374,12 +375,20 @@ function mapPipelineEventToEngineEvent(event: PracticeEvent): PracticeEngineEven
   return result
 }
 
-function mapMatchedEvent(payload: {
+/** @internal */
+export function mapMatchedEvent(payload: {
   technique?: NoteTechnique
   observations?: Observation[]
   isPerfect?: boolean
 }): PracticeEngineEvent {
-  const technique = payload.technique!
+  if (!payload.technique) {
+    throw new AppError({
+      code: ERROR_CODES.TECHNIQUE_MISSING,
+      message: 'NOTE_MATCHED event is missing technique analysis payload',
+    })
+  }
+
+  const technique = payload.technique
   const observations = payload.observations ?? []
   const isPerfect = payload.isPerfect ?? false
 

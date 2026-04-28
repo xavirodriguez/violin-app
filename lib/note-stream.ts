@@ -244,6 +244,7 @@ interface TechnicalAnalysisState {
   prevSegment: NoteSegment | undefined
   currentSegmentStart: number | undefined
   cumulativeStartTimes: number[] | undefined
+  cachedBpm?: number
 }
 
 async function* technicalAnalysisWindow(params: {
@@ -348,6 +349,7 @@ function createInitialTechnicalState(options: NoteStreamOptions): TechnicalAnaly
     prevSegment: undefined,
     currentSegmentStart: undefined,
     cumulativeStartTimes,
+    cachedBpm: options.exercise ? options.bpm : undefined,
   }
   return state
 }
@@ -722,13 +724,6 @@ function createMatchedEvent(params: {
   return event
 }
 
-function median(values: readonly number[]): number {
-  const sorted = [...values].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
-}
-
 export function isValidMatch(params: {
   target: TargetNote
   segment: NoteSegment
@@ -750,8 +745,6 @@ export function isValidMatch(params: {
   }
 
   const isMatched = isMatch({ target, detected, tolerance: options.centsTolerance })
-  const isDurationValid = segment.durationMs >= options.requiredHoldTime
-
   const isDurationValid = segment.durationMs >= options.requiredHoldTime
   const result = isMatched && isDurationValid
 
@@ -863,7 +856,6 @@ function getNoteClassFromPitch(pitchHz: number): MusicalNoteClass | undefined {
 function calculateRhythmExpectations(params: {
   state: TechnicalAnalysisState
   options: NoteStreamOptions
-  state: TechnicalAnalysisState
   currentIndex: number
   firstOnsetTime: number
 }) {
@@ -885,7 +877,7 @@ function ensureCumulativeStartTimes(state: TechnicalAnalysisState, options: Note
   if (!exercise) return
 
   const needsCalculation =
-    state.cumulativeStartTimes.length === 0 ||
+    state.cumulativeStartTimes === undefined ||
     state.cumulativeStartTimes.length !== exercise.notes.length ||
     state.cachedBpm !== options.bpm
 
@@ -918,8 +910,13 @@ function calculateExpectedStartTime(params: {
 }): number {
   const { state, currentIndex, firstOnsetTime } = params
 
-  if (state.cumulativeStartTimes && currentIndex < state.cumulativeStartTimes.length) {
-    return firstOnsetTime + state.cumulativeStartTimes[currentIndex]
+  if (
+    state.cumulativeStartTimes !== undefined &&
+    currentIndex < state.cumulativeStartTimes.length
+  ) {
+    const times = state.cumulativeStartTimes as number[]
+    const offset = times[currentIndex] ?? 0
+    return firstOnsetTime + offset
   }
 
   return firstOnsetTime
