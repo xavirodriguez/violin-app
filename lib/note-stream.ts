@@ -86,13 +86,16 @@ export interface PipelineContext {
 
 const DETECTION_PREFILTER_CENTS_TOLERANCE = 50
 
-const defaultOptions: NoteStreamOptions = {
+/** @internal */
+export const DEFAULT_NOTE_STREAM_OPTIONS: NoteStreamOptions = Object.freeze({
   minRms: 0.01,
   minConfidence: 0.85,
   centsTolerance: 25,
   requiredHoldTime: 500,
   bpm: 60,
-}
+})
+
+const defaultOptions = DEFAULT_NOTE_STREAM_OPTIONS
 
 interface StreamState {
   queue: RawPitchEvent[]
@@ -322,20 +325,9 @@ function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)):
   return resolved
 }
 
-/** @internal */
-export function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
-  /**
-   * Invariant: minRms(note-stream) < minRms(NoteSegmenter)
-   * Ensures the segmenter has a higher volume threshold than the general pipeline
-   * to prevent noise from triggering onset/offset logic.
-   *
-   * If the pipeline uses the default 0.01, we use 0.015 for the segmenter.
-   * For custom values, we maintain a small 0.001 margin.
-   */
-  const segmenterMinRms = Math.max(options.minRms + 0.001, 0.015)
-
+function createSegmenter(options: NoteStreamOptions): NoteSegmenter {
   const segmenterConfig = {
-    minRms: segmenterMinRms,
+    minRms: options.minRms,
     minConfidence: options.minConfidence,
   }
 
@@ -691,15 +683,7 @@ function handleSegmentCompletion(params: CompletionParams): PracticeEvent | unde
     return undefined
   }
 
-  const representativeCents = median(pitchedFrames.map((f) => f.cents))
-  return finalizeSegmentAnalysis({
-    segment,
-    state,
-    currentIndex,
-    options,
-    agent,
-    representativeCents,
-  })
+  return finalizeSegmentAnalysis({ segment, state, currentIndex, options, agent })
 }
 
 function median(values: readonly number[]): number {
@@ -715,9 +699,8 @@ function finalizeSegmentAnalysis(params: {
   currentIndex: number
   options: NoteStreamOptions
   agent: TechniqueAnalysisAgent
-  representativeCents: number
 }): PracticeEvent {
-  const { segment, state, currentIndex, options, agent, representativeCents } = params
+  const { segment, state, currentIndex, options, agent } = params
   const finalSegment = createFinalSegment({ segment, state, currentIndex, options })
   const technique = agent.analyzeSegment({
     segment: finalSegment,
@@ -725,24 +708,21 @@ function finalizeSegmentAnalysis(params: {
     prevSegment: state.prevSegment,
   })
 
-  const isPerfect = Math.abs(representativeCents) < 5 && Math.abs(technique.rhythm.onsetErrorMs) < 100
-
   updateStateAfterCompletion(state, finalSegment)
-  const result = createMatchedEvent({ technique, agent, isPerfect })
+  const result = createMatchedEvent({ technique, agent })
   return result
 }
 
 function createMatchedEvent(params: {
   technique: NoteTechnique
   agent: TechniqueAnalysisAgent
-  isPerfect: boolean
 }): PracticeEvent {
-  const { technique, agent, isPerfect } = params
+  const { technique, agent } = params
   const observations = agent.generateObservations(technique)
 
   const event: PracticeEvent = {
     type: 'NOTE_MATCHED',
-    payload: { technique, observations, isPerfect },
+    payload: { technique, observations },
   }
   return event
 }

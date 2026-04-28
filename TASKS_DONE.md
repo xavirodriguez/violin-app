@@ -2,64 +2,54 @@
 
 ## Summary
 
-Completed 3 critical tasks from `TASKS.md` to improve engine robustness, verify system invariants, and ensure pipeline consistency.
+Completed 3 high-priority robustness tasks from `TASKS.md` ensuring system invariants, clean resource management, and session integrity.
 
 ## Tasks completed
 
-### 1. TASK-07 — Test de integración de dificultad adaptativa end-to-end
+### 1. TASK-20 — Crear suite de invariantes críticos
 
 - **Status:** Done
 - **Files changed:**
-  - `lib/practice-engine/engine.ts`
-  - `__tests__/task-07.test.ts`
-- **What changed:** Created a comprehensive integration test for adaptive difficulty. Exposed internal `updateState` and `getOptions` methods in `PracticeEngine` (as `@internal`) to allow state simulation in tests.
-- **Validation:**
-  - `pnpm test:unit __tests__/task-07.test.ts` — passed
-- **Notes:** Verified that tolerance decreases and hold time increases based on `perfectNoteStreak`, and respects system boundaries.
-
-### 2. TASK-20 — Crear suite de invariantes críticos
-
-- **Status:** Done
-- **Files changed:**
+  - `lib/pitch-detector.ts`
+  - `lib/note-stream.ts`
   - `__tests__/invariants.test.ts`
-- **What changed:** Implemented a dedicated test suite to protect critical system invariants, including `YIN_THRESHOLD`, `MIN_FREQUENCY`, strict pitch matching rules, and adaptive difficulty bounds.
+- **What changed:**
+  - Exposed `DEFAULT_YIN_THRESHOLD` and `DEFAULT_MIN_FREQUENCY` as static constants in `PitchDetector`.
+  - Exported and **frozen** `DEFAULT_NOTE_STREAM_OPTIONS` in `lib/note-stream.ts`.
+  - Implemented `__tests__/invariants.test.ts` to verify 12 critical system invariants, including YIN thresholds, frequency ranges, audio processing configuration, RMS coherency, and matching logic.
 - **Validation:**
   - `pnpm test:unit __tests__/invariants.test.ts` — passed
-- **Notes:** Ensures that future changes do not accidentally degrade the core engine logic or pedagogical fairness.
+- **Notes:** Ensures that any future changes to critical constants will be caught by automated tests.
 
-### 3. TASK-10 — Mantener coherencia entre `minRms` del pipeline y del segmenter
+### 2. TASK-14 — Test de `stop() → abort → cleanup`
 
 - **Status:** Done
 - **Files changed:**
-  - `lib/note-stream.ts`
-  - `__tests__/task-10.test.ts`
-- **What changed:** Updated `createSegmenter` to programmatically enforce the invariant `minRms(note-stream) < minRms(NoteSegmenter)`. Exported `createSegmenter` as `@internal` for verification.
+  - `__tests__/task-14.test.ts`
+- **What changed:**
+  - Implemented integration test verifying the full cancellation chain in `PracticeStore`.
+  - Confirmed that calling `stop()` aborts the active `AbortController`, cancels the `PracticeSessionRunner`, and calls `audioManager.cleanup()`.
 - **Validation:**
-  - `pnpm test:unit __tests__/task-10.test.ts` — passed
-- **Notes:** If pipeline `minRms` is 0.01, segmenter uses 0.015. For custom values, it uses a 1.5x multiplier.
+  - `pnpm test:unit __tests__/task-14.test.ts` — passed
+- **Notes:** Validates clean resource disposal and prevents leaking microphone handles or async loops.
 
-## Previous Tasks (Completed in earlier sessions)
+### 3. TASK-15 — Test anti-stale con `sessionToken`
 
-### TASK-01 — Eliminar non-null assertion en `mapMatchedEvent`
-- **What changed:** Replaced `payload.technique!` with explicit validation. Added `TECHNIQUE_MISSING` error code.
-
-### TASK-02 — Crear `validateExercise()` con validación semántica completa
-- **What changed:** Implemented `validateExercise` to check for empty notes, invalid accidentals, octave ranges, and durations. Added `INVALID_EXERCISE` error code.
-
-### TASK-03 — Integrar `validateExercise()` en `loadExercise()`
-- **What changed:** Updated `loadExercise` in `PracticeStore` to validate exercises before loading.
-
-### TASK-04 — Hacer que `parsePitch` rechace accidentales dobles
-- **What changed:** Updated `parsePitch` to explicitly reject `##` and `bb`.
-
-### TASK-05 — Añadir floor de 15 cents en `calculateCentsTolerance()`
-- **What changed:** Implemented a 15 cents floor in the store's adaptive tolerance calculation.
-
-### TASK-06 — Conectar `perfectNoteStreak` real a `calculateAdaptiveDifficulty()`
-- **What changed:** Connected the real-time streak to difficulty adjustments and unified the floor at 15 cents in the engine.
+- **Status:** Done
+- **Files changed:**
+  - `stores/practice-store.ts`
+  - `__tests__/task-15.test.ts`
+- **What changed:**
+  - Exported `createSafeSet` as `@internal` from `PracticeStore` for integration testing.
+  - Implemented tests for the `sessionToken` anti-stale mechanism using real store logic.
+  - Verified that `consumePipelineEvents` correctly ignores events if the token has changed.
+  - Verified the `safeSet` pattern correctly discards state updates from old session tokens.
+- **Validation:**
+  - `pnpm test:unit __tests__/task-15.test.ts` — passed
+- **Notes:** Protects against race conditions when exercises are loaded in rapid succession.
 
 ## Final Validation Summary
 
 - **Typecheck:** `pnpm typecheck` — passed
-- **Unit Tests:** `pnpm test:unit` — all 255 tests passed.
-- **Pre-commit:** All checks completed.
+- **Unit Tests:** `pnpm test:unit` — all 259 tests passed.
+- **Pre-commit:** All robustness checks completed.

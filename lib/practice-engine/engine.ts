@@ -136,23 +136,12 @@ interface EngineBuilderParams {
   setRunning: (val: boolean) => void
 }
 
-/**
- * Extended interface for testing purposes.
- * @internal
- */
-interface TestablePracticeEngine extends PracticeEngine {
-  updateState: (e: PracticeEngineEvent) => void
-  getOptions: () => NoteStreamOptions
-}
-
 function buildEngineObject(params: EngineBuilderParams): PracticeEngine {
-  const { getState, setRunning, updateState, getOptions } = params
-  const engine: TestablePracticeEngine = {
+  const { getState, setRunning } = params
+  const engine: PracticeEngine = {
     start: (signal) => executeEngineStart({ ...params, signal }),
     stop: () => setRunning(false),
     getState: () => getState(),
-    updateState: (e: PracticeEngineEvent) => updateState(e),
-    getOptions: () => getOptions(),
   }
   const result = engine
 

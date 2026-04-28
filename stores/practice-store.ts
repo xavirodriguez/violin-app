@@ -236,8 +236,9 @@ type PracticeEventPipeline = AsyncIterable<PracticeEvent>
 
 /**
  * Creates a safe state update function for the practice session.
+ * @internal
  */
-function createSafeSet(params: {
+export function createSafeSet(params: {
   set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void
   get: () => PracticeStore
   currentToken: string
