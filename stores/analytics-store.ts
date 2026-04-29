@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
+import { NoteResult, PracticeSession } from '@/lib/domain/practice-session'
 import type { Exercise } from '@/lib/domain/musical-types'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
@@ -8,34 +9,6 @@ import { analytics } from '@/lib/analytics-tracker'
 import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
 import { toast } from 'sonner'
 
-/**
- * Data model for a completed practice session.
- */
-export interface PracticeSession {
-  id: string
-  startTimeMs: number
-  endTimeMs: number
-  durationMs: number
-  exerciseId: string
-  exerciseName: string
-  mode: 'tuner' | 'practice'
-  notesAttempted: number
-  notesCompleted: number
-  accuracy: number
-  averageCents: number
-  noteResults: NoteResult[]
-}
-
-/** @internal */
-export interface NoteResult {
-  noteIndex: number
-  targetPitch: string
-  attempts: number
-  timeToCompleteMs: number
-  averageCents: number
-  wasInTune: boolean
-  technique?: NoteTechnique
-}
 
 /**
  * Long-term progress and skill model for the user.
@@ -86,7 +59,7 @@ export interface RecordAttemptParams {
 /** Parameters for recording a note completion. */
 export interface RecordCompletionParams {
   noteIndex: number
-  timeToCompleteMs: number
+  timeToCompleteMs?: number
   technique?: NoteTechnique
 }
 
@@ -713,7 +686,7 @@ function processSessionRhythm(session: PracticeSession, current: RhythmMetrics):
   let metrics = { ...current }
 
   for (const nr of session.noteResults) {
-    const onsetError = nr.technique?.rhythm.onsetErrorMs
+    const onsetError = nr.technique?.rhythm?.onsetErrorMs
     if (onsetError !== undefined) {
       metrics = applyNoteRhythm(onsetError, metrics)
     }

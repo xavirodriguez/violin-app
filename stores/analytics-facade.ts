@@ -1,4 +1,5 @@
-import { useSessionStore, PracticeSession } from './session.store'
+import { useSessionStore } from './session.store'
+import { PracticeSession } from '@/lib/domain/practice-session'
 import { useProgressStore, ProgressState } from './progress.store'
 import { useAchievementsStore, Achievement } from './achievements.store'
 import { useSessionHistoryStore } from './session-history.store'

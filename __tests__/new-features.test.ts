@@ -6,7 +6,7 @@ import {
 } from '@/lib/achievements/achievement-definitions'
 import { exportSessionsToCSV } from '@/lib/export/progress-exporter'
 import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
-import type { PracticeSession } from '@/stores/analytics-store'
+import type { PracticeSession } from '@/lib/domain/practice-session'
 
 // --- Helper to build default stats ---
 function makeStats(overrides: Partial<AchievementCheckStats> = {}): AchievementCheckStats {

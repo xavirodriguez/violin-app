@@ -23,7 +23,7 @@ import { PracticeState, DetectedNote } from '@/lib/practice-core'
 import { Observation } from '@/lib/technique-types'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { PracticeStoreState } from '@/lib/practice/practice-states'
-import { PracticeSession } from '@/stores/analytics-store'
+import { PracticeSession } from '@/lib/domain/practice-session'
 
 interface PracticeMainContentProps {
   state: PracticeStoreState
