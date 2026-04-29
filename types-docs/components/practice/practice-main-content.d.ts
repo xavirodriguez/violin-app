@@ -31,6 +31,7 @@ interface PracticeMainContentProps {
     start: () => void;
     stop: () => void;
     setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void;
+    setNoteIndex: (index: number) => void;
 }
 export declare function PracticeMainContent(props: PracticeMainContentProps): import("react/jsx-runtime").JSX.Element;
 export {};

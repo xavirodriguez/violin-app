@@ -27,6 +27,7 @@ export interface PracticeStore {
     isInitializing: boolean;
     sessionToken: string | undefined;
     sessionId: number;
+    loadId: number;
     loadExercise: (exercise: Exercise) => Promise<void>;
     setAutoStart: (enabled: boolean) => void;
     setNoteIndex: (index: number) => void;
@@ -36,4 +37,18 @@ export interface PracticeStore {
     reset: () => Promise<void>;
     consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>;
 }
+type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>;
+type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>);
 export declare const usePracticeStore: import("zustand").UseBoundStore<import("zustand").StoreApi<PracticeStore>>;
+/**
+ * Creates a safe state update function for the practice session.
+ * @internal
+ */
+export declare function createSafeSet(params: {
+    set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void;
+    get: () => PracticeStore;
+    currentToken: string;
+}): (partial: SafePartial) => void;
+/** @internal */
+export declare function calculateCentsTolerance(): number;
+export {};

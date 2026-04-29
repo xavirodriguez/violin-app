@@ -158,7 +158,7 @@ export declare const transitions: {
     /**
      * Transitions from ready to active, commencing the session execution.
      */
-    start: (state: ReadyState, runner: PracticeSessionRunner, abortController: AbortController) => ActiveState;
+    start: (state: ReadyState, runner: PracticeSessionRunner, abortController: AbortController, startIndex?: number) => ActiveState;
     /**
      * Transitions back to idle from active or ready, performing a graceful stop.
      */

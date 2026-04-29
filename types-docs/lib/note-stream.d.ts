@@ -5,6 +5,7 @@
  */
 import { type PracticeEvent, type TargetNote } from '@/lib/practice-core';
 import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port';
+import { NoteSegment, PitchedFrame } from './technique-types';
 import type { Exercise } from './exercises/types';
 /**
  * The raw data yielded from the pitch detector on each animation frame.
@@ -47,6 +48,8 @@ export interface PipelineContext {
     readonly currentIndex: number;
     readonly sessionStartTime: number;
 }
+/** @internal */
+export declare const DEFAULT_NOTE_STREAM_OPTIONS: NoteStreamOptions;
 /**
  * Creates an async iterable of raw pitch events using audio ports.
  */
@@ -55,6 +58,12 @@ export declare function createRawPitchStream(params: {
     detector: PitchDetectionPort;
     signal: AbortSignal;
 }): AsyncGenerator<RawPitchEvent>;
+export declare function isValidMatch(params: {
+    target: TargetNote;
+    segment: NoteSegment;
+    pitchedFrames: PitchedFrame[];
+    options: NoteStreamOptions;
+}): boolean;
 /**
  * Creates a practice event processing pipeline with immutable context.
  *

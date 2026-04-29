@@ -3,6 +3,7 @@ import { AudioLoopPort, PitchDetectorPort } from './engine.ports';
 import { Exercise } from '../exercises/types';
 import { EngineState } from './engine.state';
 import { PracticeReducer } from './engine.reducer';
+import { NoteTechnique, Observation } from '../technique-types';
 /**
  * Configuration context for the {@link PracticeEngine}.
  *
@@ -19,6 +20,8 @@ export interface PracticeEngineContext {
     reducer?: PracticeReducer;
     /** Optional cents tolerance override. */
     centsTolerance?: number;
+    /** The index of the note to start practicing from. */
+    initialNoteIndex?: number;
 }
 /**
  * Interface for the core musical practice engine.
@@ -50,3 +53,21 @@ export interface PracticeEngine {
  * @public
  */
 export declare function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine;
+/**
+ * Calculates adaptive difficulty parameters based on performance history.
+ *
+ * @param perfectNoteStreak - Current streak of perfect notes.
+ * @returns Object containing intonation tolerance and required hold duration.
+ * @internal
+ */
+/** @internal */
+export declare function calculateAdaptiveDifficulty(perfectNoteStreak: number): {
+    centsTolerance: number;
+    requiredHoldTime: number;
+};
+/** @internal */
+export declare function mapMatchedEvent(payload: {
+    technique?: NoteTechnique;
+    observations?: Observation[];
+    isPerfect?: boolean;
+}): PracticeEngineEvent;

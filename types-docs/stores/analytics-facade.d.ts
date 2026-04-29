@@ -51,9 +51,18 @@ export declare const useAnalyticsStore: (() => {
     /** Ends the current session and updates related stores. */
     endSession: () => PracticeSession | undefined;
     /** Records an attempt at a note. */
-    recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
+    recordNoteAttempt: (params: {
+        noteIndex: number;
+        pitch: string;
+        cents: number;
+        inTune: boolean;
+    }) => void;
     /** Records a completed note and checks for achievements. */
-    recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
+    recordNoteCompletion: (params: {
+        noteIndex: number;
+        timeMs: number;
+        technique?: NoteTechnique;
+    }) => void;
     /** Manually triggers an achievement check. */
     checkAndUnlockAchievements: () => Achievement[];
     /** Retrieves filtered session history. */
@@ -96,8 +105,17 @@ export declare const useAnalyticsStore: (() => {
         };
         currentPerfectStreak: number;
         startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
-        recordNoteAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
-        recordNoteCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
+        recordNoteAttempt: (params: {
+            noteIndex: number;
+            pitch: string;
+            cents: number;
+            inTune: boolean;
+        }) => void;
+        recordNoteCompletion: (params: {
+            noteIndex: number;
+            timeMs: number;
+            technique?: NoteTechnique;
+        }) => void;
         endSession: () => PracticeSession | undefined;
         checkAndUnlockAchievements: () => never[];
     };

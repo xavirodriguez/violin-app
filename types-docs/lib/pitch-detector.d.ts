@@ -29,11 +29,12 @@ export declare class PitchDetector {
      * The minimum frequency we care about (in Hz).
      * For violin, the lowest note is G3 at ~196 Hz, but we go a bit lower for safety.
      */
+    static readonly DEFAULT_MIN_FREQUENCY = 180;
     private readonly MIN_FREQUENCY;
     /**
      * The maximum frequency we care about (in Hz).
-     * For violin, the highest note is E7 at ~2637 Hz.
-     * We set this to 2637 Hz to cover the full standard violin range.
+     * For violin, the practical upper limit is E7 at ~2637 Hz.
+     * We set this to 3000 Hz by default to comfortably support the full professional range.
      */
     private MAX_FREQUENCY;
     /**
@@ -42,6 +43,7 @@ export declare class PitchDetector {
      * Higher values = more lenient (more detections, but less reliable)
      * 0.1 is a good balance for musical instruments.
      */
+    static readonly DEFAULT_YIN_THRESHOLD = 0.1;
     private readonly YIN_THRESHOLD;
     /**
      * The default threshold for the Root Mean Square (RMS) calculation.
@@ -53,7 +55,7 @@ export declare class PitchDetector {
      * Constructs a new PitchDetector instance.
      *
      * @param sampleRate - The sample rate of the audio context in which the detector will be used.
-     * @param maxFrequency - Optional maximum frequency threshold (defaults to 2637 Hz).
+     * @param maxFrequency - Optional maximum frequency threshold (defaults to 3000 Hz).
      * @throws Will throw an error if the sample rate is not a positive number.
      */
     constructor(sampleRate: number, maxFrequency?: number);

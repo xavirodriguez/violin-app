@@ -104,31 +104,27 @@ interface SessionActions {
      * This method updates the rolling average of cents deviation for the note using
      * the formula: `nextAvg = (currentAvg * count + newCents) / (count + 1)`.
      *
-     * **Frequency**: It is designed to be called at high frequency (60Hz+) from
-     * the audio pipeline. Updates are performed atomically using functional
-     * state updates to avoid race conditions.
-     *
-     * @param noteIndex - Index of the note in the exercise.
-     * @param pitch - Detected scientific pitch name (e.g., "G3").
-     * @param cents - Pitch deviation in cents from the target.
-     * @param inTune - Whether the attempt was within the current tolerance.
+     * @param params - Parameters for the note attempt.
      */
-    recordAttempt: (noteIndex: number, pitch: string, cents: number, inTune: boolean) => void;
+    recordAttempt: (params: {
+        noteIndex: number;
+        pitch: string;
+        cents: number;
+        inTune: boolean;
+    }) => void;
     /**
      * Records the successful completion of a note.
      *
      * @remarks
      * Updates the session progress and technical metrics.
      *
-     * **Perfect Streak**: Increments the `perfectNoteStreak` if the final average
-     * deviation for the note is strictly less than 5 cents. Otherwise, the
-     * streak is reset to zero.
-     *
-     * @param noteIndex - Index of the completed note.
-     * @param timeMs - Total time taken to complete the note (from first detection to match).
-     * @param technique - Optional pedagogical metrics (e.g., rhythm, vibrato).
+     * @param params - Parameters for the note completion.
      */
-    recordCompletion: (noteIndex: number, timeMs: number, technique?: NoteTechnique) => void;
+    recordCompletion: (params: {
+        noteIndex: number;
+        timeMs: number;
+        technique?: NoteTechnique;
+    }) => void;
 }
 /**
  * Zustand store for tracking real-time practice session metrics and history.

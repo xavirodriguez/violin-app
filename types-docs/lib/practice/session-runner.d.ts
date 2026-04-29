@@ -64,8 +64,17 @@ export interface RunnerStore {
  */
 export interface RunnerAnalytics {
     endSession: () => void;
-    recordNoteAttempt: (index: number, pitch: string, cents: number, inTune: boolean) => void;
-    recordNoteCompletion: (index: number, time: number, technique?: NoteTechnique) => void;
+    recordNoteAttempt: (params: {
+        index: number;
+        pitch: string;
+        cents: number;
+        inTune: boolean;
+    }) => void;
+    recordNoteCompletion: (params: {
+        index: number;
+        time: number;
+        technique?: NoteTechnique;
+    }) => void;
 }
 /**
  * Dependencies required by the {@link PracticeSessionRunnerImpl}.

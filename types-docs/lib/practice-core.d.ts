@@ -78,6 +78,9 @@ export interface PracticeState {
 /** Events that can modify the practice state. */
 export type PracticeEvent = {
     type: 'START';
+    payload?: {
+        startIndex?: number;
+    };
 } | {
     type: 'STOP';
 } | {

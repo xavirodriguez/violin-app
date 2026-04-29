@@ -33,13 +33,18 @@ export declare class WebAudioFrameAdapter implements AudioFramePort {
      * in the range [-1.0, 1.0]. The returned buffer is shared across calls
      * to minimize garbage collection pressure in high-frequency loops.
      *
+     * **Contract**:
+     * The returned buffer is a reference to an internal pre-allocated buffer.
+     * Consumers MUST read the data synchronously and MUST NOT store a reference
+     * to this buffer or attempt to use it across multiple calls (frames).
+     * If you need to preserve the audio data for long-term storage or asynchronous
+     * processing, you MUST explicitly clone it (e.g., using `.slice()`).
+     *
      * **Thread Safety**: This method is intended to be called from the main thread.
      * If the underlying {@link AudioContext} is suspended or closed, the buffer
      * will be filled with zeros.
      *
-     * @returns A {@link Float32Array} containing the audio samples. Note that
-     * this is a reference to the internal pre-allocated buffer; if you need to
-     * store the data across frames, you must copy it using `.slice()` or `set()`.
+     * @returns A {@link Float32Array} containing the audio samples.
      *
      * @throws This method does not throw, but will return silent data if the
      *         hardware is unavailable.
