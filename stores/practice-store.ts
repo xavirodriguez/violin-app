@@ -684,10 +684,12 @@ function getStartFailureUpdates(
   error: unknown,
 ): Partial<PracticeStore> {
   const appError = toAppError(error)
+  const exercise = currentState.state.exercise
   const updates = {
     ...currentState,
     error: appError,
     isStarting: false,
+    state: transitions.error(appError, exercise),
   }
 
   return updates

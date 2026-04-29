@@ -36,57 +36,68 @@ export function usePracticeViewState() {
 }
 
 export function PracticeMode() {
-  const store = usePracticeStore()
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
+  const state = usePracticeStore((s) => s.state)
+  const liveObservations = usePracticeStore((s) => s.liveObservations)
+  const loadExercise = usePracticeStore((s) => s.loadExercise)
+  const start = usePracticeStore((s) => s.start)
+  const stop = usePracticeStore((s) => s.stop)
+  const setAutoStart = usePracticeStore((s) => s.setAutoStart)
+  const setNoteIndex = usePracticeStore((s) => s.setNoteIndex)
+  const loadId = usePracticeStore((s) => s.loadId)
+
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
   const { state: viewState, actions: viewActions } = usePracticeViewState()
 
-  const xml = store.practiceState?.exercise.musicXML ?? ''
+  const xml = practiceState?.exercise.musicXML ?? ''
   const osmd = useOSMDSafe(xml)
-  const derived = derivePracticeState(store.practiceState)
+  const derived = derivePracticeState(practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
-    ...store,
+    practiceState,
+    loadExercise,
+    start,
+    stop,
     derived,
     setIsZen: viewActions.setIsZen,
     osmdHook: osmd,
-    autoStartEnabled: store.autoStartEnabled,
-    loadId: store.loadId,
+    autoStartEnabled,
+    loadId,
   }
   usePracticeLifecycle(lifecycleParams)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
-        <PracticeStatusHeader store={store} />
-        <PracticeControlsRow store={store} derived={derived} isZen={viewState.isZen} />
-        <PracticePreviewModal viewState={viewState} viewActions={viewActions} store={store} />
+        <PracticeStatusHeader />
+        <PracticeControlsRow derived={derived} isZen={viewState.isZen} />
+        <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
-          state={store.state}
-          practiceState={store.practiceState}
+          state={state}
+          practiceState={practiceState}
           status={derived.status}
           isZenModeEnabled={viewState.isZen}
-          autoStartEnabled={store.autoStartEnabled}
-          setAutoStart={store.setAutoStart}
+          autoStartEnabled={autoStartEnabled}
+          setAutoStart={setAutoStart}
           setPreviewExercise={viewActions.setPreview}
           currentNoteIndex={derived.currentNoteIndex}
           targetNote={derived.targetNote}
           targetPitchName={derived.targetPitchName}
           lastDetectedNote={derived.lastDetectedNote ?? undefined}
-          liveObservations={store.liveObservations}
+          liveObservations={liveObservations}
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
           osmdHook={osmd}
-          handleRestart={() =>
-            store.practiceState && store.loadExercise(store.practiceState.exercise)
-          }
+          handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
-          start={store.start}
-          stop={store.stop}
+          start={start}
+          stop={stop}
           setIsZenModeEnabled={viewActions.setIsZen}
-          setNoteIndex={store.setNoteIndex}
+          setNoteIndex={setNoteIndex}
         />
         <KeyboardShortcutsDialog />
       </div>
@@ -97,9 +108,10 @@ export function PracticeMode() {
 function PracticePreviewModal(params: {
   viewState: { preview: Exercise | undefined }
   viewActions: { setPreview: (ex: Exercise | undefined) => void }
-  store: PracticeStore
 }) {
-  const { viewState, viewActions, store } = params
+  const { viewState, viewActions } = params
+  const loadExercise = usePracticeStore((s) => s.loadExercise)
+  const start = usePracticeStore((s) => s.start)
   const isOpen = !!viewState.preview
 
   const handleOpenChange = (open: boolean) => {
@@ -108,11 +120,11 @@ function PracticePreviewModal(params: {
     }
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (viewState.preview) {
-      store.loadExercise(viewState.preview)
+      await loadExercise(viewState.preview)
       viewActions.setPreview(undefined)
-      store.start()
+      start()
     }
   }
 
@@ -126,8 +138,10 @@ function PracticePreviewModal(params: {
   )
 }
 
-function PracticeStatusHeader({ store }: { store: PracticeStore }) {
-  const { state, reset } = store
+function PracticeStatusHeader() {
+  const state = usePracticeStore((s) => s.state)
+  const reset = usePracticeStore((s) => s.reset)
+
   const isError = state.status === 'error'
   const isInitializing = state.status === 'initializing'
 
@@ -144,15 +158,18 @@ function PracticeStatusHeader({ store }: { store: PracticeStore }) {
 }
 
 function PracticeControlsRow({
-  store,
   derived,
   isZen,
 }: {
-  store: PracticeStore
   derived: DerivedPracticeState
   isZen: boolean
 }) {
-  const { state, start, stop, loadExercise } = store
+  const state = usePracticeStore((s) => s.state)
+  const start = usePracticeStore((s) => s.start)
+  const stop = usePracticeStore((s) => s.stop)
+  const loadExercise = usePracticeStore((s) => s.loadExercise)
+  const practiceState = usePracticeStore((s) => s.practiceState)
+
   const { status, progress, currentNoteIndex, totalNotes } = derived
 
   const isIdle = state.status === 'idle'
@@ -161,12 +178,12 @@ function PracticeControlsRow({
 
   if (!shouldShow) return <></>
 
-  const handleRestart = () => store.practiceState && loadExercise(store.practiceState.exercise)
+  const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
 
   return (
     <PracticeControls
       status={status}
-      hasExercise={!!store.practiceState}
+      hasExercise={!!practiceState}
       onStart={start}
       onStop={stop}
       onRestart={handleRestart}

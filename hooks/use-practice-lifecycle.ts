@@ -58,13 +58,16 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     }
   }, [loadExercise, practiceState])
 
+  const hasPracticeState = !!practiceState
+
   useEffect(() => {
     const isNewLoad = loadId !== lastAutoStartLoadId.current
-    const shouldAutoStart = autoStartEnabled && practiceState && derived.status === 'idle' && isNewLoad
+    const shouldAutoStart =
+      autoStartEnabled && hasPracticeState && derived.status === 'idle' && isNewLoad
 
     if (shouldAutoStart) {
       lastAutoStartLoadId.current = loadId
       start()
     }
-  }, [autoStartEnabled, practiceState, derived.status, start, loadId])
+  }, [autoStartEnabled, hasPracticeState, derived.status, start, loadId])
 }
