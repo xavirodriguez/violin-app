@@ -178,7 +178,7 @@ export function useOSMDSafe(
       },
       reset: resetCursor,
     }),
-    [isReady, resetCursor, highlightCurrentNote],
+    [isReady, resetCursor, advanceCursor, highlightCurrentNote],
   )
 
   return {
