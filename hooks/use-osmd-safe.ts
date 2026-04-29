@@ -5,8 +5,9 @@
 
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
@@ -59,6 +60,8 @@ export function useOSMDSafe(
   highlightCurrentNote: (noteIndex: number) => void
   /** Reference to the OSMD instance for advanced interactions */
   osmd: OpenSheetMusicDisplay | undefined
+  /** Implementation of the ScoreViewPort for decoupled visual control */
+  scoreView: ScoreViewPort
 } {
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
@@ -130,13 +133,14 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
-  const highlightCurrentNote = useCallback(() => {
-    if (!isReady || !osmdRef.current || !containerRef.current) return
+  const highlightCurrentNote = useCallback(
+    (noteIndex: number) => {
+      if (!isReady || !osmdRef.current || !containerRef.current) return
 
-    const highlighted = containerRef.current.querySelectorAll('.note-current')
-    highlighted.forEach((el) => el.classList.remove('note-current'))
+      const highlighted = containerRef.current.querySelectorAll('.note-current')
+      highlighted.forEach((el) => el.classList.remove('note-current'))
 
-    const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
+      const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {
         // @ts-expect-error - getSVGGElement exists at runtime for SVG backend
@@ -144,6 +148,38 @@ export function useOSMDSafe(
       })
     }
   }, [isReady])
+
+  const scoreView = useMemo<ScoreViewPort>(
+    () => ({
+      isReady,
+      sync: (noteIndex: number) => {
+        if (!isReady || !osmdRef.current) return
+
+        // 1. Move cursor
+        if (noteIndex === 0) {
+          resetCursor()
+        } else {
+          // Note: Incremental advance for now to match previous behavior
+          advanceCursor()
+        }
+
+        // 2. Highlight
+        highlightCurrentNote(noteIndex)
+
+        // 3. Scroll
+        const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
+        if (cursorElement) {
+          cursorElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center',
+          })
+        }
+      },
+      reset: resetCursor,
+    }),
+    [isReady, resetCursor, highlightCurrentNote],
+  )
 
   return {
     isReady,
@@ -153,5 +189,6 @@ export function useOSMDSafe(
     advanceCursor,
     highlightCurrentNote,
     osmd: osmdRef.current,
+    scoreView,
   }
 }
