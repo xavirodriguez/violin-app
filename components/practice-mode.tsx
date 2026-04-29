@@ -45,6 +45,7 @@ export function PracticeMode() {
   const stop = usePracticeStore((s) => s.stop)
   const setAutoStart = usePracticeStore((s) => s.setAutoStart)
   const setNoteIndex = usePracticeStore((s) => s.setNoteIndex)
+  const loadId = usePracticeStore((s) => s.loadId)
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -64,6 +65,7 @@ export function PracticeMode() {
     setIsZen: viewActions.setIsZen,
     osmdHook: osmd,
     autoStartEnabled,
+    loadId,
   }
   usePracticeLifecycle(lifecycleParams)
 
@@ -118,9 +120,9 @@ function PracticePreviewModal(params: {
     }
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (viewState.preview) {
-      loadExercise(viewState.preview)
+      await loadExercise(viewState.preview)
       viewActions.setPreview(undefined)
       start()
     }
