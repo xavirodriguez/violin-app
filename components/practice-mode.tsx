@@ -140,14 +140,13 @@ function PracticePreviewModal(params: {
 
 function PracticeStatusHeader() {
   const state = usePracticeStore((s) => s.state)
-  const error = usePracticeStore((s) => s.error)
   const reset = usePracticeStore((s) => s.reset)
 
   const isError = state.status === 'error'
   const isInitializing = state.status === 'initializing'
 
   if (isError) {
-    const message = error?.message ?? 'Unknown error'
+    const message = state.error?.message ?? 'Unknown error'
     return <ErrorDisplay error={message} onReset={reset} />
   }
 
