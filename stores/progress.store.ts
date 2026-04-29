@@ -304,7 +304,7 @@ function processSessionRhythm(
 ): RhythmMetricsAccumulator {
   const result = { ...acc }
   for (const nr of session.noteResults) {
-    const errorMs = nr.technique?.rhythm.onsetErrorMs
+    const errorMs = nr.technique?.rhythm?.onsetErrorMs
     if (errorMs !== undefined) {
       const { totalError, inWindowCount, totalCount } = updateRhythmFromNote(errorMs, result)
       result.totalError = totalError
@@ -346,7 +346,7 @@ function calculateRhythmScore(metrics: RhythmMetricsAccumulator): number {
 
 function calculateSessionRhythmError(session: PracticeSession): number {
   const totalError = session.noteResults.reduce((acc, nr) => {
-    return acc + (nr.technique?.rhythm.onsetErrorMs ?? 0)
+    return acc + (nr.technique?.rhythm?.onsetErrorMs ?? 0)
   }, 0)
   const count = session.noteResults.length || 1
   const avgError = totalError / count

@@ -59,7 +59,7 @@ export interface RecordAttemptParams {
 /** Parameters for recording a note completion. */
 export interface RecordCompletionParams {
   noteIndex: number
-  timeToCompleteMs: number
+  timeToCompleteMs?: number
   technique?: NoteTechnique
 }
 
@@ -686,7 +686,7 @@ function processSessionRhythm(session: PracticeSession, current: RhythmMetrics):
   let metrics = { ...current }
 
   for (const nr of session.noteResults) {
-    const onsetError = nr.technique?.rhythm.onsetErrorMs
+    const onsetError = nr.technique?.rhythm?.onsetErrorMs
     if (onsetError !== undefined) {
       metrics = applyNoteRhythm(onsetError, metrics)
     }
