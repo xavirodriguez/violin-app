@@ -47,7 +47,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     start,
     stop,
     setZenMode: setIsZen,
-    osmdHook,
+    scoreView: osmdHook.scoreView,
   })
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useOSMDSafe } from '@/hooks/use-osmd-safe'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 /**
  * Custom hook to manage keyboard shortcuts and cursor synchronization for the practice session.
@@ -14,16 +14,16 @@ export function usePracticeUIEffects(params: {
   start: () => void
   stop: () => void
   setZenMode: (v: (prev: boolean) => boolean) => void
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  scoreView: ScoreViewPort
 }) {
-  const { status, currentNoteIndex, start, stop, setZenMode, osmdHook } = params
+  const { status, currentNoteIndex, start, stop, setZenMode, scoreView } = params
 
   /**
    * Effect to sync the OSMD cursor and highlighting whenever the current note changes.
    */
   useEffect(() => {
-    syncCursorWithNote({ osmdHook, status, currentNoteIndex })
-  }, [currentNoteIndex, status, osmdHook])
+    syncCursorWithNote({ scoreView, status, currentNoteIndex })
+  }, [currentNoteIndex, status, scoreView])
 
   /**
    * Keyboard shortcuts effect.
@@ -56,42 +56,15 @@ export function usePracticeUIEffects(params: {
  * Synchronizes the sheet music cursor and highlighting with the current practice note.
  */
 function syncCursorWithNote(params: {
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  scoreView: ScoreViewPort
   status: string
   currentNoteIndex: number
 }) {
-  const { osmdHook, status, currentNoteIndex } = params
-  if (!osmdHook.isReady) return
+  const { scoreView, status, currentNoteIndex } = params
+  if (!scoreView.isReady) return
 
   const activeStatuses = ['listening', 'validating', 'correct']
   if (activeStatuses.includes(status)) {
-    updateCursorState(osmdHook, currentNoteIndex)
-    scrollToCurrentNote(osmdHook)
-    osmdHook.highlightCurrentNote(currentNoteIndex)
-  }
-}
-
-/**
- * Resets or advances the OSMD cursor based on the note index.
- */
-function updateCursorState(osmdHook: ReturnType<typeof useOSMDSafe>, currentNoteIndex: number) {
-  if (currentNoteIndex === 0) {
-    osmdHook.resetCursor()
-  } else {
-    osmdHook.advanceCursor()
-  }
-}
-
-/**
- * Performs smooth auto-scrolling to keep the current note centered in view.
- */
-function scrollToCurrentNote(osmdHook: ReturnType<typeof useOSMDSafe>) {
-  const cursorElement = osmdHook.containerRef.current?.querySelector('.osmd-cursor')
-  if (cursorElement) {
-    cursorElement.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'center',
-    })
+    scoreView.sync(currentNoteIndex)
   }
 }

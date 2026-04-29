@@ -5,8 +5,9 @@
 
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
@@ -56,9 +57,11 @@ export function useOSMDSafe(
   /** Safe to call anytime - no-op when !isReady */
   advanceCursor: () => void
   /** Highlights the note at the given index */
-  highlightCurrentNote: (noteIndex: number) => void
+  highlightCurrentNote: () => void
   /** Reference to the OSMD instance for advanced interactions */
   osmd: OpenSheetMusicDisplay | undefined
+  /** Implementation of the ScoreViewPort for decoupled visual control */
+  scoreView: ScoreViewPort
 } {
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
@@ -145,6 +148,38 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
+  const scoreView = useMemo<ScoreViewPort>(
+    () => ({
+      isReady,
+      sync: (noteIndex: number) => {
+        if (!isReady || !osmdRef.current) return
+
+        // 1. Move cursor
+        if (noteIndex === 0) {
+          resetCursor()
+        } else {
+          // Note: Incremental advance for now to match previous behavior
+          advanceCursor()
+        }
+
+        // 2. Scroll (Keep note visible)
+        const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
+        if (cursorElement) {
+          cursorElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center',
+          })
+        }
+
+        // 3. Highlight (depends on cursor position)
+        highlightCurrentNote()
+      },
+      reset: resetCursor,
+    }),
+    [isReady, resetCursor, highlightCurrentNote],
+  )
+
   return {
     isReady,
     error,
@@ -153,5 +188,6 @@ export function useOSMDSafe(
     advanceCursor,
     highlightCurrentNote,
     osmd: osmdRef.current,
+    scoreView,
   }
 }
