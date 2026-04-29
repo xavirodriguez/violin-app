@@ -57,7 +57,7 @@ export function useOSMDSafe(
   /** Safe to call anytime - no-op when !isReady */
   advanceCursor: () => void
   /** Highlights the note at the given index */
-  highlightCurrentNote: (noteIndex: number) => void
+  highlightCurrentNote: () => void
   /** Reference to the OSMD instance for advanced interactions */
   osmd: OpenSheetMusicDisplay | undefined
   /** Implementation of the ScoreViewPort for decoupled visual control */
@@ -133,14 +133,13 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
-  const highlightCurrentNote = useCallback(
-    (noteIndex: number) => {
-      if (!isReady || !osmdRef.current || !containerRef.current) return
+  const highlightCurrentNote = useCallback(() => {
+    if (!isReady || !osmdRef.current || !containerRef.current) return
 
-      const highlighted = containerRef.current.querySelectorAll('.note-current')
-      highlighted.forEach((el) => el.classList.remove('note-current'))
+    const highlighted = containerRef.current.querySelectorAll('.note-current')
+    highlighted.forEach((el) => el.classList.remove('note-current'))
 
-      const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
+    const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {
         // @ts-expect-error - getSVGGElement exists at runtime for SVG backend
@@ -163,10 +162,7 @@ export function useOSMDSafe(
           advanceCursor()
         }
 
-        // 2. Highlight
-        highlightCurrentNote(noteIndex)
-
-        // 3. Scroll
+        // 2. Scroll (Keep note visible)
         const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
         if (cursorElement) {
           cursorElement.scrollIntoView({
@@ -175,10 +171,13 @@ export function useOSMDSafe(
             inline: 'center',
           })
         }
+
+        // 3. Highlight (depends on cursor position)
+        highlightCurrentNote()
       },
       reset: resetCursor,
     }),
-    [isReady, resetCursor, advanceCursor, highlightCurrentNote],
+    [isReady, resetCursor, highlightCurrentNote],
   )
 
   return {
