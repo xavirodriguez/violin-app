@@ -37,7 +37,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     autoStartEnabled,
   } = params
   const loadedRef = useRef(false)
-  const lastAutoStartExerciseId = useRef<string | undefined>(practiceState?.exercise.id)
+  const lastPracticeStateRef = useRef<PracticeState | undefined>(practiceState)
 
   usePracticeUIEffects({
     status: derived.status,
@@ -57,14 +57,13 @@ export function usePracticeLifecycle(params: LifecycleParams) {
   }, [loadExercise, practiceState])
 
   useEffect(() => {
-    const currentExerciseId = practiceState?.exercise.id
-    const isNewLoad = currentExerciseId !== lastAutoStartExerciseId.current
+    const isNewLoad = practiceState !== lastPracticeStateRef.current
     const shouldAutoStart =
       autoStartEnabled && practiceState && derived.status === 'idle' && isNewLoad
 
     if (shouldAutoStart) {
-      lastAutoStartExerciseId.current = currentExerciseId
+      lastPracticeStateRef.current = practiceState
       start()
     }
-  }, [autoStartEnabled, practiceState?.exercise.id, derived.status, start])
+  }, [autoStartEnabled, practiceState, derived.status, start])
 }
