@@ -2,54 +2,56 @@
 
 ## Summary
 
-Completed 3 high-priority robustness tasks from `TASKS.md` ensuring system invariants, clean resource management, and session integrity.
+Completed 3 robustness and technical feedback tasks from `TASKS.md` ensuring configurable analysis thresholds, explicit audio capture contracts, and background-aware UX.
 
 ## Tasks completed
 
-### 1. TASK-20 — Crear suite de invariantes críticos
+### 1. TASK-11 — Hacer configurables los umbrales de wolf tone detector
 
 - **Status:** Done
 - **Files changed:**
-  - `lib/pitch-detector.ts`
-  - `lib/note-stream.ts`
-  - `__tests__/invariants.test.ts`
+  - `lib/technique-types.ts`
+  - `lib/technique-analysis-agent.ts`
+  - `__tests__/task-11.test.ts`
 - **What changed:**
-  - Exposed `DEFAULT_YIN_THRESHOLD` and `DEFAULT_MIN_FREQUENCY` as static constants in `PitchDetector`.
-  - Exported and **frozen** `DEFAULT_NOTE_STREAM_OPTIONS` in `lib/note-stream.ts`.
-  - Implemented `__tests__/invariants.test.ts` to verify 12 critical system invariants, including YIN thresholds, frequency ranges, audio processing configuration, RMS coherency, and matching logic.
+  - Added `wolfLowConfRatioThreshold`, `wolfRmsBeatingThreshold`, and `wolfChaosMultiplier` to `AnalysisOptions`.
+  - Refactored `TechniqueAnalysisAgent.detectWolfTone` to use these configurable thresholds instead of hardcoded values.
+  - Implemented exhaustive unit tests in `__tests__/task-11.test.ts` to verify default behavior and custom threshold overrides.
 - **Validation:**
-  - `pnpm test:unit __tests__/invariants.test.ts` — passed
-- **Notes:** Ensures that any future changes to critical constants will be caught by automated tests.
+  - `pnpm test:unit __tests__/task-11.test.ts` — passed
+- **Notes:** Allows fine-tuning the resonance analysis for different violin qualities and acoustic environments. Added `wolfPitchChaosThreshold` following PR feedback.
 
-### 2. TASK-14 — Test de `stop() → abort → cleanup`
+### 2. TASK-08 — Documentar contrato de `WebAudioFrameAdapter.captureFrame()`
 
 - **Status:** Done
 - **Files changed:**
-  - `__tests__/task-14.test.ts`
+  - `lib/adapters/web-audio.adapter.ts`
 - **What changed:**
-  - Implemented integration test verifying the full cancellation chain in `PracticeStore`.
-  - Confirmed that calling `stop()` aborts the active `AbortController`, cancels the `PracticeSessionRunner`, and calls `audioManager.cleanup()`.
+  - Updated JSDoc for `captureFrame()` to explicitly define the memory management contract.
+  - Added warnings about buffer reference sharing and the requirement for synchronous consumption.
+  - Documented the necessity of cloning (`.slice()`) for asynchronous or long-term data storage.
 - **Validation:**
-  - `pnpm test:unit __tests__/task-14.test.ts` — passed
-- **Notes:** Validates clean resource disposal and prevents leaking microphone handles or async loops.
+  - Typecheck passed.
+- **Notes:** Reduces the risk of data corruption in future pipeline extensions or asynchronous analysis modules.
 
-### 3. TASK-15 — Test anti-stale con `sessionToken`
+### 3. TASK-09 — Añadir indicador UI de sesión pausada por background tab
 
 - **Status:** Done
 - **Files changed:**
-  - `stores/practice-store.ts`
-  - `__tests__/task-15.test.ts`
+  - `hooks/use-page-visibility.ts`
+  - `components/practice/practice-main-content.tsx`
+  - `__tests__/task-09.test.ts`
 - **What changed:**
-  - Exported `createSafeSet` as `@internal` from `PracticeStore` for integration testing.
-  - Implemented tests for the `sessionToken` anti-stale mechanism using real store logic.
-  - Verified that `consumePipelineEvents` correctly ignores events if the token has changed.
-  - Verified the `safeSet` pattern correctly discards state updates from old session tokens.
+  - Created a new `usePageVisibility` hook to track `document.visibilityState`.
+  - Integrated the hook into `PracticeMainContent` to detect when an active practice session is moved to the background.
+  - Added a UI warning alert (using `Card` styling) that informs the user the session is effectively paused due to browser throttling of `requestAnimationFrame`.
+  - Verified visibility change detection with automated tests in `__tests__/task-09.test.ts`.
 - **Validation:**
-  - `pnpm test:unit __tests__/task-15.test.ts` — passed
-- **Notes:** Protects against race conditions when exercises are loaded in rapid succession.
+  - `pnpm test:unit __tests__/task-09.test.ts` — passed
+- **Notes:** Improves UX transparency regarding browser-level power saving features that pause the audio analysis loop. Updated following PR feedback to ensure the notification persists until dismissed by the user.
 
 ## Final Validation Summary
 
 - **Typecheck:** `pnpm typecheck` — passed
-- **Unit Tests:** `pnpm test:unit` — all 259 tests passed.
+- **Unit Tests:** `pnpm test:unit` — All tests passed (including 6 new tests).
 - **Pre-commit:** All robustness checks completed.

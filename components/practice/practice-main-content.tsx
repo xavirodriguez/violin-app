@@ -12,6 +12,11 @@ import { SelectionPrompt } from './selection-prompt'
 import { SheetMusicContainer } from './sheet-music-container'
 import { PracticeActiveView } from './practice-active-view'
 import { PracticeCompletion } from '@/components/practice-completion'
+import { usePageVisibility } from '@/hooks/use-page-visibility'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { PauseCircle, PlayCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { Exercise, Note } from '@/lib/exercises/types'
 import { PracticeState, DetectedNote } from '@/lib/practice-core'
@@ -47,10 +52,52 @@ interface PracticeMainContentProps {
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
   const { status } = props
+  const isVisible = usePageVisibility()
+  const [wasPaused, setWasPaused] = useState(false)
+
+  useEffect(() => {
+    if (!isVisible && props.state.status === 'active') {
+      setWasPaused(true)
+    }
+    if (props.state.status !== 'active') {
+      setWasPaused(false)
+    }
+  }, [isVisible, props.state.status])
+
+  const handleResume = () => {
+    setWasPaused(false)
+  }
+
+  const showPausedBanner = wasPaused && props.state.status === 'active'
+
   return (
     <>
       <PracticeIdleContent {...props} />
       {status === 'idle' && <SelectionPrompt />}
+      {showPausedBanner && (
+        <Card className="mb-6 border-yellow-500 bg-yellow-500/10 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <PauseCircle className="h-5 w-5 text-yellow-500" />
+              <div>
+                <h3 className="font-semibold text-yellow-700">Session Paused</h3>
+                <p className="text-sm text-yellow-600">
+                  The session was paused because the tab was in the background.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResume}
+              className="border-yellow-500 text-yellow-700 hover:bg-yellow-500/20"
+            >
+              <PlayCircle className="mr-2 h-4 w-4" />
+              Resume View
+            </Button>
+          </div>
+        </Card>
+      )}
       <SheetMusicContainer {...props} />
       <PracticeActiveViewContent {...props} />
       <PracticePostSessionContent {...props} />
