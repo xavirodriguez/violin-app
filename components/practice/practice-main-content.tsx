@@ -59,6 +59,9 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
     if (!isVisible && props.state.status === 'active') {
       setWasPaused(true)
     }
+    if (props.state.status !== 'active') {
+      setWasPaused(false)
+    }
   }, [isVisible, props.state.status])
 
   const handleResume = () => {
