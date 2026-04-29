@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { exportSessionsToCSV } from '@/lib/export/progress-exporter'
-import { PracticeSession } from '@/stores/analytics-store'
+import { PracticeSession } from '@/lib/domain/practice-session'
 
 describe('exportSessionsToCSV', () => {
   it('should generate a CSV with headers and data', () => {

@@ -1,66 +1,6 @@
 import { create } from 'zustand'
 import { NoteTechnique } from '../lib/technique-types'
-
-/**
- * Result of practicing a single note within a session.
- *
- * @remarks
- * This model tracks the cumulative performance of a user on a specific note,
- * including accuracy and timing metrics.
- *
- * @public
- */
-export interface NoteResult {
-  /** The index of the note in the exercise. */
-  noteIndex: number
-  /** The target scientific pitch name (e.g., "A4"). */
-  targetPitch: string
-  /** Total number of attempts/frames processed for this note. */
-  attempts: number
-  /** Time taken to successfully complete the note, in milliseconds. */
-  timeToCompleteMs?: number
-  /** Average pitch deviation in cents from the target. */
-  averageCents: number
-  /** Whether the note was eventually played correctly in tune. */
-  wasInTune: boolean
-  /** Detected technical details (e.g., rhythm, attack), if available. */
-  technique?: NoteTechnique
-}
-
-/**
- * Data model for a completed or active practice session.
- *
- * @remarks
- * Encapsulates all metadata and metrics for a discrete practice event.
- *
- * @public
- */
-export interface PracticeSession {
-  /** Unique session identifier, typically prefixed with `session_`. */
-  id: string
-  /** Unix timestamp when the session started. */
-  startTimeMs: number
-  /** Unix timestamp when the session ended. */
-  endTimeMs: number
-  /** Total session duration in milliseconds. */
-  durationMs: number
-  /** Identifier of the exercise practiced. */
-  exerciseId: string
-  /** Human-readable name of the exercise. */
-  exerciseName: string
-  /** The mode in which the session was conducted. */
-  mode: 'tuner' | 'practice'
-  /** Individual results for each note in the exercise. */
-  noteResults: NoteResult[]
-  /** Total number of note attempts (audio frames matched) across the whole session. */
-  notesAttempted: number
-  /** Total number of notes successfully completed/mastered. */
-  notesCompleted: number
-  /** Overall accuracy percentage (0-100). */
-  accuracy: number
-  /** Overall average pitch deviation in cents across all attempts. */
-  averageCents: number
-}
+import { NoteResult, PracticeSession } from '@/lib/domain/practice-session'
 
 /**
  * Internal state of the session store.
