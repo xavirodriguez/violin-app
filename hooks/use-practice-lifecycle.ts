@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { usePracticeUIEffects } from './use-practice-ui-effects'
 import { PracticeState } from '@/lib/practice-core'
-import { useOSMDSafe } from './use-osmd-safe'
+import { ScoreViewPort } from '@/lib/infrastructure/osmd/scoreViewPort'
 import { Exercise } from '@/lib/exercises/types'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 
@@ -19,8 +19,8 @@ interface LifecycleParams {
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
-  setIsZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  onToggleZenMode: () => void
+  scoreView: ScoreViewPort
   derived: DerivedPracticeState
   autoStartEnabled: boolean
   loadId: number
@@ -32,8 +32,8 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     loadExercise,
     start,
     stop,
-    setIsZen,
-    osmdHook,
+    onToggleZenMode,
+    scoreView,
     derived,
     autoStartEnabled,
     loadId,
@@ -46,8 +46,8 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     currentNoteIndex: derived.currentNoteIndex,
     start,
     stop,
-    setZenMode: setIsZen,
-    scoreView: osmdHook.scoreView,
+    onToggleZenMode,
+    scoreView,
   })
 
   useEffect(() => {

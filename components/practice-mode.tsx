@@ -56,14 +56,16 @@ export function PracticeMode() {
   const derived = derivePracticeState(practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
+  const onToggleZenMode = () => viewActions.setIsZen((v) => !v)
+
   const lifecycleParams = {
     practiceState,
     loadExercise,
     start,
     stop,
     derived,
-    setIsZen: viewActions.setIsZen,
-    osmdHook: osmd,
+    onToggleZenMode,
+    scoreView: osmd.scoreView,
     autoStartEnabled,
     loadId,
   }
@@ -91,12 +93,17 @@ export function PracticeMode() {
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
-          osmdHook={osmd}
+          osmd={{
+            isReady: osmd.isReady,
+            error: osmd.error,
+            containerRef: osmd.containerRef,
+            instance: osmd.osmd,
+          }}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
           start={start}
           stop={stop}
-          setIsZenModeEnabled={viewActions.setIsZen}
+          onToggleZenMode={onToggleZenMode}
           setNoteIndex={setNoteIndex}
         />
         <KeyboardShortcutsDialog />
