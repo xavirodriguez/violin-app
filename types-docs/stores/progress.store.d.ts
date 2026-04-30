@@ -1,4 +1,4 @@
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from './session.store';
 /**
  * Event representing a completed exercise within the progress history.
  *

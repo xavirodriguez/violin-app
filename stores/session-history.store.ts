@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { PracticeSession } from '@/lib/domain/practice-session'
+import { PracticeSession } from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
 

@@ -1,4 +1,4 @@
-import type { Exercise, Difficulty } from '@/lib/domain/musical-types'
+import type { Exercise, Difficulty } from '@/lib/domain/exercise'
 import type { AnalyticsStore } from '@/stores/analytics-store'
 
 /** Shorthand for user progress from the Analytics store. */

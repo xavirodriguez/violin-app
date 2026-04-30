@@ -5,7 +5,7 @@ import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Star, Clock, Zap } from 'lucide-react'
-import type { Exercise } from '@/lib/domain/musical-types'
+import type { Exercise } from '@/lib/domain/exercise'
 import { cn } from '@/lib/utils'
 
 interface ExerciseCardProps {

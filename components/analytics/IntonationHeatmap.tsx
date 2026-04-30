@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { type ExerciseStats } from '@/stores/analytics-store'
+import { ExerciseStats } from '@/lib/domain/practice'
 
 interface IntonationHeatmapProps {
   exerciseStats: Record<string, ExerciseStats>

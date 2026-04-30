@@ -5,3 +5,4 @@
  */
 
 export * from '@/lib/domain/musical-types'
+export * from '@/lib/domain/exercise'

@@ -6,7 +6,7 @@
 
 'use client'
 
-import { usePracticeStore, PracticeStore } from '@/stores/practice-store'
+import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
@@ -18,8 +18,8 @@ import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
-import { useState } from 'react'
-import { Exercise } from '@/lib/exercises/types'
+import { useState, useCallback } from 'react'
+import { Exercise } from '@/lib/domain/exercise'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -43,9 +43,8 @@ export function PracticeMode() {
   const loadExercise = usePracticeStore((s) => s.loadExercise)
   const start = usePracticeStore((s) => s.start)
   const stop = usePracticeStore((s) => s.stop)
-  const setAutoStart = usePracticeStore((s) => s.setAutoStart)
-  const setNoteIndex = usePracticeStore((s) => s.setNoteIndex)
-  const lastLoadedAt = usePracticeStore((s) => s.lastLoadedAt)
+  const toggleAutoStart = usePracticeStore((s) => s.toggleAutoStart)
+  const jumpToNote = usePracticeStore((s) => s.jumpToNote)
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -56,7 +55,7 @@ export function PracticeMode() {
   const derived = derivePracticeState(practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
-  const onToggleZenMode = () => viewActions.setIsZen((v) => !v)
+  const onToggleZenMode = useCallback(() => viewActions.setIsZen((v) => !v), [viewActions])
 
   const lifecycleParams = {
     practiceState,
@@ -66,8 +65,6 @@ export function PracticeMode() {
     derived,
     onToggleZenMode,
     scoreView: osmd.scoreView,
-    autoStartEnabled,
-    lastLoadedAt,
   }
   usePracticeLifecycle(lifecycleParams)
 
@@ -75,7 +72,7 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader />
-        <PracticeControlsRow derived={derived} isZen={viewState.isZen} />
+        <PracticeControlsRow derived={derived} isZenModeEnabled={viewState.isZen} />
         <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
           state={state}
@@ -83,7 +80,7 @@ export function PracticeMode() {
           status={derived.status}
           isZenModeEnabled={viewState.isZen}
           autoStartEnabled={autoStartEnabled}
-          setAutoStart={setAutoStart}
+          toggleAutoStart={toggleAutoStart}
           setPreviewExercise={viewActions.setPreview}
           currentNoteIndex={derived.currentNoteIndex}
           targetNote={derived.targetNote}
@@ -97,14 +94,14 @@ export function PracticeMode() {
             isReady: osmd.isReady,
             error: osmd.error,
             containerRef: osmd.containerRef,
-            instance: osmd.osmd,
           }}
+          scoreView={osmd.scoreView}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
           start={start}
           stop={stop}
           onToggleZenMode={onToggleZenMode}
-          setNoteIndex={setNoteIndex}
+          jumpToNote={jumpToNote}
         />
         <KeyboardShortcutsDialog />
       </div>
@@ -166,10 +163,10 @@ function PracticeStatusHeader() {
 
 function PracticeControlsRow({
   derived,
-  isZen,
+  isZenModeEnabled,
 }: {
   derived: DerivedPracticeState
-  isZen: boolean
+  isZenModeEnabled: boolean
 }) {
   const state = usePracticeStore((s) => s.state)
   const start = usePracticeStore((s) => s.start)
@@ -181,7 +178,7 @@ function PracticeControlsRow({
 
   const isIdle = state.status === 'idle'
   const hasExercise = !!state.exercise
-  const shouldShow = !isZen && (!isIdle || hasExercise)
+  const shouldShow = !isZenModeEnabled && (!isIdle || hasExercise)
 
   if (!shouldShow) return <></>
 

@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Achievement, useAnalyticsStore } from '@/stores/analytics-store'
+import { useAnalyticsStore } from '@/stores/analytics-store'
+import { Achievement } from '@/lib/domain/practice'
 import { Progress } from '@/components/ui/progress'
 import { ACHIEVEMENT_DEFINITIONS } from '@/lib/achievements/achievement-definitions'
 import { getAchievementProgress } from '@/lib/achievements/achievement-checker'

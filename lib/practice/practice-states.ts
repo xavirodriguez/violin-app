@@ -1,4 +1,4 @@
-import { PracticeState } from '../practice-core'
+import { PracticeState } from '../domain/practice'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { Exercise } from '../exercises/types'
 import { AppError } from '../errors/app-error'

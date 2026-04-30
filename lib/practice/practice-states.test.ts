@@ -3,7 +3,7 @@ import { transitions } from './practice-states'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import { PracticeSessionRunner } from './session-runner'
 import type { MockExercise } from '@/lib/testing/mock-types'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 import { AppError } from '@/lib/errors/app-error'
 
 describe('Practice state transitions', () => {

@@ -8,7 +8,7 @@ import type {
   MockAudioResources,
   GlobalThisWithCrypto,
 } from '@/lib/testing/mock-types'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 import { PracticeState } from '@/lib/practice-core'
 import { AudioResources } from '@/lib/infrastructure/audio-manager'
 
