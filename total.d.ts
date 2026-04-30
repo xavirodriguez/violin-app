@@ -1347,6 +1347,7 @@ interface LifecycleParams {
     osmdHook: ReturnType<typeof useOSMDSafe>;
     derived: DerivedPracticeState;
     autoStartEnabled: boolean;
+    lastLoadedAt: number;
 }
 export declare function usePracticeLifecycle(params: LifecycleParams): void;
 export {};
@@ -7084,6 +7085,7 @@ export interface PracticeStore {
     isInitializing: boolean;
     sessionToken: string | undefined;
     sessionId: number;
+    lastLoadedAt: number;
     loadExercise: (exercise: Exercise) => Promise<void>;
     setAutoStart: (enabled: boolean) => void;
     setNoteIndex: (index: number) => void;

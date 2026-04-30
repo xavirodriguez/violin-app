@@ -27,6 +27,7 @@ export interface PracticeStore {
     isInitializing: boolean;
     sessionToken: string | undefined;
     sessionId: number;
+    lastLoadedAt: number;
     loadExercise: (exercise: Exercise) => Promise<void>;
     setAutoStart: (enabled: boolean) => void;
     setNoteIndex: (index: number) => void;

@@ -16,6 +16,7 @@ interface LifecycleParams {
     osmdHook: ReturnType<typeof useOSMDSafe>;
     derived: DerivedPracticeState;
     autoStartEnabled: boolean;
+    lastLoadedAt: number;
 }
 export declare function usePracticeLifecycle(params: LifecycleParams): void;
 export {};
