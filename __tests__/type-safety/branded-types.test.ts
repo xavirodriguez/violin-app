@@ -1,6 +1,6 @@
 // Added for type safety verification
 import { describe, it, expect } from 'vitest'
-import { assertValidNoteName, MusicalNote, formatPitchName } from '@/lib/practice-core'
+import { assertValidNoteName, MusicalNote, formatPitchName } from '@/lib/domain/practice'
 import { AppError } from '@/lib/errors/app-error'
 
 describe('Branded Types Validation', () => {

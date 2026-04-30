@@ -6,7 +6,11 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ExerciseCard } from '@/components/exercise-card'
 import { useExerciseLibrary } from '@/hooks/use-exercise-library'
 import type { Exercise } from '@/lib/domain/exercise'
+<<<<<<< HEAD
+import { ExerciseStats } from '@/stores/progress.store'
+=======
 import { ExerciseStats } from '@/lib/domain/practice'
+>>>>>>> main
 
 interface ExerciseLibraryProps {
   selectedId?: string

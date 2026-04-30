@@ -58,8 +58,6 @@ export function useOSMDSafe(
   advanceCursor: () => void
   /** Highlights the note at the given index */
   highlightCurrentNote: () => void
-  /** Reference to the OSMD instance for advanced interactions */
-  osmd: OpenSheetMusicDisplay | undefined
   /** Implementation of the ScoreViewPort for decoupled visual control */
   scoreView: ScoreViewPort
 } {
@@ -176,7 +174,11 @@ export function useOSMDSafe(
         highlightCurrentNote()
       },
       reset: resetCursor,
+<<<<<<< HEAD
+      getCursorPosition: () => {
+=======
       getCursorCoordinates: (noteIndex: number) => {
+>>>>>>> main
         if (!isReady || !containerRef.current) return undefined
 
         const containerRect = containerRef.current.getBoundingClientRect()
@@ -201,7 +203,6 @@ export function useOSMDSafe(
     resetCursor,
     advanceCursor,
     highlightCurrentNote,
-    osmd: osmdRef.current,
     scoreView,
   }
 }

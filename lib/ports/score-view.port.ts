@@ -33,8 +33,18 @@ export interface ScoreViewPort {
   reset(): void
 
   /**
-   * Returns the relative coordinates (x, y) of the cursor for a given note index.
-   * Useful for overlaying visual annotations.
+   * Retrieves the current visual position of the cursor relative to the score container.
+   *
+   * @returns The {x, y} coordinates or undefined if not available.
    */
-  getCursorCoordinates(noteIndex: number): { x: number; y: number } | undefined
+  getCursorPosition(): { x: number; y: number } | undefined
+}
+
+/**
+ * Narrow interface for UI components that only need to display the score.
+ */
+export interface ScoreViewDisplay {
+  readonly containerRef: import('react').RefObject<HTMLDivElement | null>
+  readonly isReady: boolean
+  readonly error: string | undefined
 }

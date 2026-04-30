@@ -7,7 +7,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { MusicalNote, assertValidNoteName } from '@/lib/practice-core'
+import { MusicalNote, assertValidNoteName } from '@/lib/domain/practice'
 import { clamp } from '@/lib/ui-utils'
 import { logger } from '@/lib/observability/logger'
 

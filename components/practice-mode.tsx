@@ -17,8 +17,14 @@ import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
+import { usePracticeVisualSync } from '@/hooks/use-practice-visual-sync'
+import { usePracticeShortcuts } from '@/hooks/use-practice-shortcuts'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
+<<<<<<< HEAD
+import { useState } from 'react'
+=======
 import { useState, useCallback } from 'react'
+>>>>>>> main
 import { Exercise } from '@/lib/domain/exercise'
 
 /**
@@ -57,16 +63,20 @@ export function PracticeMode() {
 
   const onToggleZenMode = useCallback(() => viewActions.setIsZen((v) => !v), [viewActions])
 
-  const lifecycleParams = {
-    practiceState,
-    loadExercise,
+  usePracticeLifecycle({ practiceState, loadExercise })
+
+  usePracticeVisualSync({
+    status: derived.status,
+    currentNoteIndex: derived.currentNoteIndex,
+    scoreView: osmd.scoreView,
+  })
+
+  usePracticeShortcuts({
+    status: derived.status,
     start,
     stop,
-    derived,
     onToggleZenMode,
-    scoreView: osmd.scoreView,
-  }
-  usePracticeLifecycle(lifecycleParams)
+  })
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -94,6 +104,10 @@ export function PracticeMode() {
             isReady: osmd.isReady,
             error: osmd.error,
             containerRef: osmd.containerRef,
+<<<<<<< HEAD
+            scoreView: osmd.scoreView,
+=======
+>>>>>>> main
           }}
           scoreView={osmd.scoreView}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}

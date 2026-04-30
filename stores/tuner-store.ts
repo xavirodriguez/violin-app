@@ -7,12 +7,12 @@
  */
 
 import { create } from 'zustand'
-import { MusicalNote } from '@/lib/practice-core'
+import { MusicalNote } from '@/lib/domain/practice'
 import { PitchDetector } from '@/lib/pitch-detector'
 import { toAppError, ERROR_CODES, AppError } from '@/lib/errors/app-error'
 import { logger } from '@/lib/observability/logger'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import type { TunerStore } from '@/lib/domain/musical-types'
+import type { TunerStore } from '@/lib/domain/exercise'
 
 /**
  * Zustand hook for accessing the TunerStore.

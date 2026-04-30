@@ -7,13 +7,17 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PracticeState } from '@/lib/practice-core'
-import { Note } from '@/lib/domain/musical-types'
+import { PracticeState } from '@/lib/domain/practice'
+import { Note } from '@/lib/domain/exercise'
 import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
 import { SheetMusicView } from './sheet-music-view'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { ViewToggleButton } from './view-toggle-button'
+<<<<<<< HEAD
+=======
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
+>>>>>>> main
 
 interface SheetMusicContainerProps {
   status: string
@@ -24,6 +28,10 @@ interface SheetMusicContainerProps {
     isReady: boolean
     error: string | undefined
     containerRef: import('react').RefObject<HTMLDivElement | null>
+<<<<<<< HEAD
+    scoreView: ScoreViewPort
+=======
+>>>>>>> main
   }
   scoreView: ScoreViewPort
   currentNoteIndex: number
@@ -58,7 +66,12 @@ function SheetMusicScrollArea(props: SheetMusicContainerProps) {
         <SheetMusicAnnotations
           annotations={annotations}
           currentNoteIndex={currentNoteIndex}
+<<<<<<< HEAD
+          scoreView={osmd.scoreView}
+          containerRef={osmd.containerRef}
+=======
           scoreView={props.scoreView}
+>>>>>>> main
         />
       )}
     </div>
