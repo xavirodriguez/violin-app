@@ -24,7 +24,7 @@ vi.mock('@/hooks/use-osmd-safe', () => ({
       isReady: true,
       sync: vi.fn(),
       reset: vi.fn(),
-      getCursorPosition: vi.fn(() => ({ x: 100, y: 100 })),
+      getCursorCoordinates: vi.fn(),
     },
   })),
 }))
