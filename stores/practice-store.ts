@@ -60,6 +60,13 @@ export interface PracticeStore {
   detector: PitchDetectionPort | undefined
   isStarting: boolean
   isInitializing: boolean
+  /**
+   * Unique token for the current active practice session.
+   *
+   * @remarks
+   * Used to invalidate asynchronous events from stale pipelines or previously
+   * cancelled sessions, preventing race conditions during high-frequency audio processing.
+   */
   sessionToken: string | undefined
   sessionId: number
 

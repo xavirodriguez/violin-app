@@ -49,6 +49,18 @@ export class TechniqueAnalysisAgent {
 
   /**
    * Analyzes a `NoteSegment` and computes a comprehensive set of technique metrics.
+   *
+   * @remarks
+   * This is the core analysis engine that evaluates 6 key technical domains:
+   * 1. **Vibrato**: Rate (Hz), width (cents), and movement regularity.
+   * 2. **Pitch Stability**: Drift, standard deviation, and "in-tune" ratio.
+   * 3. **Attack/Release**: Response time and pitch scooping during onset.
+   * 4. **Resonance**: Detection of 'Wolf Tones' or tonal instability.
+   * 5. **Rhythm**: Onset timing and duration accuracy relative to BPM.
+   * 6. **Transition**: Glissando and landing error between notes.
+   *
+   * @param params - The note segment and context (silence gaps, previous note).
+   * @returns A structured {@link NoteTechnique} object with detailed metrics.
    */
   analyzeSegment(params: {
     segment: NoteSegment
@@ -177,6 +189,18 @@ export class TechniqueAnalysisAgent {
     }
   }
 
+  /**
+   * Detects vibrato by analyzing pitch periodicities in the 4-10Hz range.
+   *
+   * @remarks
+   * **Algorithm**:
+   * 1. **Stability Gate**: Skips analysis if the pitch is too chaotic (stdDev > 40 cents).
+   * 2. **Detrending**: Removes linear pitch drift to isolate the oscillation.
+   * 3. **Autocorrelation**: Finds the dominant period and regularity of the movement.
+   *
+   * @param frames - The pitched frames of the note.
+   * @internal
+   */
   private calculateVibrato(frames: PitchedFrame[]): VibratoMetrics {
     const isCandidate = this.isVibratoCandidate(frames)
     if (!isCandidate) {
@@ -426,6 +450,18 @@ export class TechniqueAnalysisAgent {
     return score
   }
 
+  /**
+   * Detects 'Wolf Tones' or significant tonal instability.
+   *
+   * @remarks
+   * A Wolf Tone is characterized by a "beating" sound caused by resonances in the instrument.
+   * Mathematically, we detect it as a combination of:
+   * - High RMS beating (amplitude modulation in the 4-12Hz range).
+   * - High Pitch Chaos (frequency instability).
+   * - Low Detection Confidence (phase cancellation/interference).
+   *
+   * @internal
+   */
   private detectWolfTone(params: {
     lowConfRatio: number
     rmsBeatingScore: number
