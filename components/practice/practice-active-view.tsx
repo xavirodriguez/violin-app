@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { PracticeFeedback } from '@/components/practice-feedback'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
-import type { TargetNote, DetectedNote } from '@/lib/practice-core'
+import type { TargetNote, DetectedNote } from '@/lib/domain/practice'
 import type { Observation } from '@/lib/technique-types'
 
 const DEFAULT_CENTS_TOLERANCE = 25

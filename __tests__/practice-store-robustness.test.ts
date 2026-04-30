@@ -8,8 +8,8 @@ import type {
   MockAudioResources,
   GlobalThisWithCrypto,
 } from '@/lib/testing/mock-types'
-import { Exercise } from '@/lib/exercises/types'
-import { PracticeState } from '@/lib/practice-core'
+import { Exercise } from '@/lib/domain/exercise'
+import { PracticeState } from '@/lib/domain/practice'
 import { AudioResources } from '@/lib/infrastructure/audio-manager'
 
 // Polyfill crypto for node environment

@@ -9,9 +9,9 @@
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { usePracticeUIEffects } from './use-practice-ui-effects'
-import { PracticeState } from '@/lib/practice-core'
-import { ScoreViewPort } from '@/lib/infrastructure/osmd/scoreViewPort'
-import { Exercise } from '@/lib/exercises/types'
+import { PracticeState } from '@/lib/domain/practice'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
+import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 
 interface LifecycleParams {

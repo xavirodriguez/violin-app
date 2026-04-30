@@ -1,10 +1,10 @@
-import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/practice-core'
+import { formatPitchName, type PracticeState, type PracticeEvent } from '@/lib/domain/practice'
 import { createPracticeEngine } from '../practice-engine/engine'
 import { PracticeEngineEvent } from '../practice-engine/engine.types'
 import { engineReducer } from '../practice-engine/engine.reducer'
 import { handlePracticeEvent } from './practice-event-sink'
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+import type { Exercise, Note as TargetNote } from '@/lib/domain/exercise'
 import { NoteTechnique, Observation } from '../technique-types'
 import { featureFlags } from '../feature-flags'
 

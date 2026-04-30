@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { PracticeSessionRunnerImpl, SessionRunnerDependencies } from './session-runner'
 import { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port'
 import type { MockExercise } from '@/lib/testing/mock-types'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 
 describe('PracticeSessionRunner', () => {
   const mockAudioLoop: AudioLoopPort = {

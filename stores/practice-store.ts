@@ -9,7 +9,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/practice-core'
+import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/domain/practice'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -42,7 +42,7 @@ import {
   handleRunnerFailure,
 } from './practice-store-helpers'
 
-import type { Exercise } from '@/lib/exercises/types'
+import type { Exercise } from '@/lib/domain/exercise'
 import { Observation } from '@/lib/technique-types'
 import { validateExercise } from '@/lib/exercises/validation'
 

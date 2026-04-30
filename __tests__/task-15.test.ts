@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { usePracticeStore, createSafeSet } from '@/stores/practice-store'
-import type { PracticeEvent } from '@/lib/practice-core'
+import type { PracticeEvent } from '@/lib/domain/practice'
 
 describe('TASK-15 · sessionToken anti-stale', () => {
   beforeEach(() => {

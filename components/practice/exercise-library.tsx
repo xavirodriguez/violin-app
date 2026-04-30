@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ExerciseCard } from '@/components/exercise-card'
 import { useExerciseLibrary } from '@/hooks/use-exercise-library'
-import type { Exercise } from '@/lib/domain/musical-types'
+import type { Exercise } from '@/lib/domain/exercise'
 import { ExerciseStats } from '@/stores/progress.store'
 
 interface ExerciseLibraryProps {

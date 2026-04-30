@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 import { ArrowUp, ArrowDown, AlertCircle } from 'lucide-react'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 /**
  * Visual metadata for a specific note on the sheet music.
@@ -49,10 +49,9 @@ interface SheetMusicAnnotationsProps {
   currentNoteIndex: number
 
   /**
-   * The active OpenSheetMusicDisplay (OSMD) instance.
-   * Required to calculate the precise SVG coordinates for each note.
+   * The port to interact with the visual score view.
    */
-  osmd: OpenSheetMusicDisplay | null | undefined
+  scoreView: ScoreViewPort
 
   /**
    * Reference to the container element holding the rendered SVG staff.
@@ -86,7 +85,7 @@ interface SheetMusicAnnotationsProps {
  * <SheetMusicAnnotations
  *   annotations={{ 0: { fingerNumber: 1 } }}
  *   currentNoteIndex={0}
- *   osmd={osmdInstance}
+ *   isReady={isReady}
  *   containerRef={ref}
  * />
  * ```
@@ -96,7 +95,7 @@ interface SheetMusicAnnotationsProps {
 export function SheetMusicAnnotations({
   annotations,
   currentNoteIndex,
-  osmd,
+  scoreView,
   containerRef,
 }: SheetMusicAnnotationsProps) {
   /** Stores calculated screen coordinates for each annotated note. */
@@ -106,7 +105,7 @@ export function SheetMusicAnnotations({
    * Effect to calculate and update visual coordinates.
    */
   useEffect(() => {
-    if (!osmd || !osmd.GraphicSheet || !containerRef.current) return
+    if (!scoreView.isReady || !containerRef.current) return
 
     /**
      * Updates the local coordinate map based on the current OSMD cursor position.
@@ -116,20 +115,13 @@ export function SheetMusicAnnotations({
      * correct absolute positioning.
      */
     const updateCoords = () => {
-      const newCoords: Record<number, { x: number; y: number }> = {}
-      const containerRect = containerRef.current?.getBoundingClientRect()
-      if (!containerRect) return
-
-      // Find the OSMD cursor element to get its bounding box
-      const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
-      if (cursorElement) {
-        const rect = cursorElement.getBoundingClientRect()
-        newCoords[currentNoteIndex] = {
-          x: rect.left - containerRect.left,
-          y: rect.top - containerRect.top,
-        }
+      const pos = scoreView.getCursorPosition()
+      if (pos) {
+        setCoords((prev) => ({
+          ...prev,
+          [currentNoteIndex]: pos,
+        }))
       }
-      setCoords(newCoords)
     }
 
     // Delay calculation slightly (100ms) to allow the OSMD engine to finish
@@ -144,7 +136,7 @@ export function SheetMusicAnnotations({
       clearTimeout(timeout)
       window.removeEventListener('resize', updateCoords)
     }
-  }, [osmd, currentNoteIndex, containerRef])
+  }, [scoreView, currentNoteIndex, containerRef])
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">

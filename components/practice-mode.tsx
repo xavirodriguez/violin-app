@@ -19,7 +19,7 @@ import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
 import { useState } from 'react'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -97,7 +97,7 @@ export function PracticeMode() {
             isReady: osmd.isReady,
             error: osmd.error,
             containerRef: osmd.containerRef,
-            instance: osmd.osmd,
+            scoreView: osmd.scoreView,
           }}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}

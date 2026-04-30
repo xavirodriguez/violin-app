@@ -14,10 +14,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { SheetMusic } from '@/components/sheet-music'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { Music, Play, Target, Volume2 } from 'lucide-react'
-import type { Exercise, Note } from '@/lib/domain/musical-types'
+import type { Exercise, Note } from '@/lib/domain/exercise'
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
-import { formatPitchName, MusicalNote } from '@/lib/practice-core'
+import { formatPitchName, MusicalNote } from '@/lib/domain/practice'
 import { useState } from 'react'
+import { ScoreViewDisplay } from '@/lib/ports/score-view.port'
 
 interface ExercisePreviewModalProps {
   exercise: Exercise | undefined
@@ -79,12 +80,12 @@ function PreviewScrollContent({
   osmdHook,
 }: {
   exercise: Exercise
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  osmdHook: ScoreViewDisplay
 }) {
   return (
     <ScrollArea className="flex-1 p-6 pt-2">
       <div className="space-y-8">
-        <SheetMusicSection osmdHook={osmdHook} />
+        <SheetMusicSection display={osmdHook} />
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <TechnicalGoalsSection exercise={exercise} />
           <FingerPositionSection />
@@ -94,7 +95,7 @@ function PreviewScrollContent({
   )
 }
 
-function SheetMusicSection({ osmdHook }: { osmdHook: ReturnType<typeof useOSMDSafe> }) {
+function SheetMusicSection({ display }: { display: ScoreViewDisplay }) {
   return (
     <section>
       <h4 className="mb-3 flex items-center gap-2 text-lg font-semibold">
@@ -103,9 +104,9 @@ function SheetMusicSection({ osmdHook }: { osmdHook: ReturnType<typeof useOSMDSa
       </h4>
       <div className="min-h-[300px] overflow-hidden rounded-xl border bg-white">
         <SheetMusic
-          containerRef={osmdHook.containerRef}
-          isReady={osmdHook.isReady}
-          error={osmdHook.error}
+          containerRef={display.containerRef}
+          isReady={display.isReady}
+          error={display.error}
         />
       </div>
     </section>

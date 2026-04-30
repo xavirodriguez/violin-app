@@ -31,4 +31,20 @@ export interface ScoreViewPort {
    * Resets the visual state to the beginning of the score.
    */
   reset(): void
+
+  /**
+   * Retrieves the current visual position of the cursor relative to the score container.
+   *
+   * @returns The {x, y} coordinates or undefined if not available.
+   */
+  getCursorPosition(): { x: number; y: number } | undefined
+}
+
+/**
+ * Narrow interface for UI components that only need to display the score.
+ */
+export interface ScoreViewDisplay {
+  readonly containerRef: import('react').RefObject<HTMLDivElement | null>
+  readonly isReady: boolean
+  readonly error: string | undefined
 }

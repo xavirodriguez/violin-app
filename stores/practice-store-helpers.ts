@@ -7,10 +7,10 @@ import {
   type PracticeEvent,
   reducePracticeEvent,
   formatPitchName,
-} from '@/lib/practice-core'
+} from '@/lib/domain/practice'
 import { toAppError } from '@/lib/errors/app-error'
 import { transitions, ReadyState, PracticeStoreState } from '@/lib/practice/practice-states'
-import type { Exercise } from '@/lib/exercises/types'
+import type { Exercise } from '@/lib/domain/exercise'
 import { Observation } from '@/lib/technique-types'
 import { PracticeStore } from './practice-store'
 import { calculateLiveObservations } from '@/lib/live-observations'

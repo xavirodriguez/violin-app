@@ -18,12 +18,12 @@ import { Button } from '@/components/ui/button'
 import { PauseCircle, PlayCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
-import { Exercise, Note } from '@/lib/exercises/types'
-import { PracticeState, DetectedNote } from '@/lib/practice-core'
+import { Exercise, Note } from '@/lib/domain/exercise'
+import { PracticeState, DetectedNote } from '@/lib/domain/practice'
 import { Observation } from '@/lib/technique-types'
 import { PracticeStoreState } from '@/lib/practice/practice-states'
-import { PracticeSession } from '@/lib/domain/practice-session'
-import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
+import { PracticeSession } from '@/lib/domain/practice'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 interface PracticeMainContentProps {
   state: PracticeStoreState
@@ -45,7 +45,7 @@ interface PracticeMainContentProps {
     isReady: boolean
     error: string | undefined
     containerRef: import('react').RefObject<HTMLDivElement | null>
-    instance: OpenSheetMusicDisplay | undefined
+    scoreView: ScoreViewPort
   }
   handleRestart: () => void
   sessions: PracticeSession[]

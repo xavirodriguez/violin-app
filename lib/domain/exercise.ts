@@ -79,8 +79,6 @@ export interface Note {
   }
 }
 
-// --- Metadata types ---
-
 /**
  * High-level categories for grouping musical exercises in the library.
  *
@@ -110,9 +108,9 @@ export interface ScoreMetadata {
   /** The time signature of the piece. */
   timeSignature: {
     /** Number of beats per measure (numerator). */
-    beats: number
+    beats: number;
     /** The note value that represents one beat (denominator). */
-    beatType: number
+    beatType: number;
   }
   /**
    * The key signature, represented as the number of sharps (positive) or flats (negative) in the circle of fifths.
@@ -180,208 +178,71 @@ export interface Exercise extends ExerciseData {
 }
 
 /**
- * Possible states for the Standalone Tuner.
+ * Lifetime statistics for an individual exercise.
  *
  * @remarks
- * Implements a Discriminated Union pattern to handle the complex lifecycle
- * of microphone acquisition and real-time pitch detection.
- *
- * **Lifecycle**:
- * 1. `IDLE`: Waiting for initialization.
- * 2. `INITIALIZING`: Requesting microphone access.
- * 3. `READY`: Audio pipeline is warm; listening.
- * 4. `DETECTED`: A stable pitch has been found.
- * 5. `ERROR`: Hardware or permission failure.
+ * These metrics are used by the `ExerciseRecommender` to determine mastery
+ * and suggest review cycles.
  *
  * @public
  */
+export interface ExerciseStats {
+  /** ID of the exercise. */
+  exerciseId: string
+  /** Total number of times this exercise was successfully completed. */
+  timesCompleted: number
+  /** Highest accuracy percentage ever recorded for this exercise. */
+  bestAccuracy: number
+  /** Rolling average of accuracy across all historical attempts. */
+  averageAccuracy: number
+  /** Fastest completion time ever recorded (ms). */
+  fastestCompletionMs: number
+  /** Unix timestamp of the most recent practice attempt. */
+  lastPracticedMs: number
+}
+
+/**
+ * Possible states for the Standalone Tuner.
+ */
 export type TunerState =
+  | { kind: 'IDLE' }
+  | { kind: 'INITIALIZING'; readonly sessionToken: number | string }
+  | { kind: 'READY'; readonly sessionToken: number | string }
+  | { kind: 'LISTENING'; readonly sessionToken: number | string }
   | {
-      /** Initial state before any action is taken. */
-      kind: 'IDLE'
-    }
-  | {
-      /** State while acquiring microphone and setting up audio graph. */
-      kind: 'INITIALIZING'
-      /** Unique token for the current initialization attempt to prevent race conditions. */
-      readonly sessionToken: number | string
-    }
-  | {
-      /** State when audio is ready but no analysis results have been received. */
-      kind: 'READY'
-      /** Unique token for the current session. */
-      readonly sessionToken: number | string
-    }
-  | {
-      /** State when the engine is actively listening but signal strength/confidence is low. */
-      kind: 'LISTENING'
-      /** Unique token for the current session. */
-      readonly sessionToken: number | string
-    }
-  | {
-      /** State when a clear, confident pitch has been detected and mapped to a note. */
       kind: 'DETECTED'
-      /** Detected frequency in Hz. */
       pitch: number
-      /** Scientific pitch name (e.g., "A4"). */
       note: string
-      /** Deviation in cents from the ideal frequency of the note. */
       cents: number
-      /** Detection confidence (0.0 to 1.0). */
       confidence: number
-      /** Unique token for the current session. */
       readonly sessionToken: number | string
     }
-  | {
-      /** Terminal or recoverable error state (e.g., permission denied). */
-      kind: 'ERROR'
-      /** Details of the application-level error encountered. */
-      error: AppError
-    }
+  | { kind: 'ERROR'; error: AppError }
 
 /**
  * States for microphone permission handling.
- *
- * @remarks
- * - `PROMPT`: Browser hasn't asked for permissions yet.
- * - `GRANTED`: Access allowed.
- * - `DENIED`: Access blocked by user or system.
- *
- * @public
  */
 export type PermissionState = 'PROMPT' | 'GRANTED' | 'DENIED'
 
 /**
  * Interface representing the tuner store's state and available actions.
- *
- * @remarks
- * This store manages the entire lifecycle of the standalone violin tuner.
- *
- * @public
  */
 export interface TunerStore {
-  /**
-   * Current reactive state with session tracking.
-   *
-   * @remarks
-   * States with `sessionToken` prevent stale updates from previous sessions
-   * during asynchronous initialization.
-   */
   state: TunerState
-
-  /**
-   * User's current microphone permission status.
-   */
   permissionState: PermissionState
-
-  /**
-   * The active pitch detection algorithm instance.
-   */
   detector: PitchDetector | undefined
-
-  /**
-   * List of audio input devices detected on the system.
-   */
   devices: MediaDeviceInfo[]
-
-  /**
-   * ID of the device currently used for input. `undefined` uses the default system device.
-   */
   deviceId: string | undefined
-
-  /**
-   * Sensitivity of the input (0-100).
-   *
-   * @remarks
-   * Maps to internal gain: `0 -\> 0x`, `50 -\> 1x`, `100 -\> 2x`.
-   */
   sensitivity: number
-
-  /**
-   * Web Audio AnalyserNode for real-time visualization (e.g., waveforms).
-   */
   analyser: AnalyserNode | undefined
-
-  /**
-   * Initializes the audio pipeline and requests hardware permissions.
-   *
-   * @remarks
-   * **Concurrency Safety**:
-   * - Multiple calls are idempotent: previous sessions are automatically invalidated.
-   * - Uses an internal `initToken` to ensure only the latest attempt updates the state.
-   *
-   * **Transitions**:
-   * - `IDLE` → `INITIALIZING` → `READY` (on success)
-   * - `IDLE` → `INITIALIZING` → `ERROR` (on failure)
-   *
-   * @returns A promise that resolves when initialization is complete.
-   */
   initialize: () => Promise<void>
-
-  /**
-   * Resets the current state and attempts to re-initialize the audio hardware.
-   *
-   * @returns A promise that resolves when re-initialization is complete.
-   */
   retry: () => Promise<void>
-
-  /**
-   * Stops the tuner, invalidates pending sessions, and releases hardware resources.
-   *
-   * @returns A promise that resolves when cleanup is complete.
-   */
   reset: () => Promise<void>
-
-  /**
-   * Processes a raw frequency/confidence pair from the detector and updates the store state.
-   *
-   * @remarks
-   * Implementation should include signal thresholding to filter out ambient noise.
-   *
-   * @param pitch - Detected frequency in Hz.
-   * @param confidence - Detection confidence (0.0 to 1.0).
-   */
   updatePitch: (pitch: number, confidence: number) => void
-
-  /**
-   * Internal handler for processing detected pitch and updating state.
-   * @internal
-   */
-  handleDetectedPitch: (params: {
-    pitch: number
-    confidence: number
-    token: number | string
-  }) => void
-
-  /**
-   * Transitions the tuner into the 'LISTENING' state.
-   */
+  handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => void
   startListening: () => void
-
-  /**
-   * Transitions the tuner back to 'READY', pausing input analysis.
-   */
   stopListening: () => void
-
-  /**
-   * Refreshes the list of available audio input hardware from the browser.
-   *
-   * @returns A promise that resolves when the device list is updated.
-   */
   loadDevices: () => Promise<void>
-
-  /**
-   * Switches the active input source to a different device.
-   *
-   * @param deviceId - Unique ID of the new device.
-   * @returns A promise that resolves when the switch is complete.
-   */
   setDeviceId: (deviceId: string) => Promise<void>
-
-  /**
-   * Adjusts the detector's input gain to improve sensitivity in quiet or noisy environments.
-   *
-   * @param sensitivity - Value from 0 to 100.
-   */
   setSensitivity: (sensitivity: number) => void
 }

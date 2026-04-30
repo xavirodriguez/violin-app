@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession } from '@/lib/domain/practice-session'
+import { NoteResult, PracticeSession } from '@/lib/domain/practice'
 
 /**
  * Internal state of the session store.
