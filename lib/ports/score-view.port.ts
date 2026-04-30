@@ -31,4 +31,10 @@ export interface ScoreViewPort {
    * Resets the visual state to the beginning of the score.
    */
   reset(): void
+
+  /**
+   * Returns the relative coordinates (x, y) of the cursor for a given note index.
+   * Useful for overlaying visual annotations.
+   */
+  getCursorCoordinates(noteIndex: number): { x: number; y: number } | undefined
 }

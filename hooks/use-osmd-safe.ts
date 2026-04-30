@@ -176,8 +176,22 @@ export function useOSMDSafe(
         highlightCurrentNote()
       },
       reset: resetCursor,
+      getCursorCoordinates: (noteIndex: number) => {
+        if (!isReady || !containerRef.current) return undefined
+
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const cursorElement = containerRef.current.querySelector('.osmd-cursor')
+        if (cursorElement) {
+          const rect = cursorElement.getBoundingClientRect()
+          return {
+            x: rect.left - containerRect.left,
+            y: rect.top - containerRect.top,
+          }
+        }
+        return undefined
+      },
     }),
-    [isReady, resetCursor, highlightCurrentNote],
+    [isReady, resetCursor, highlightCurrentNote, advanceCursor],
   )
 
   return {

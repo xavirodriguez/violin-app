@@ -3,7 +3,6 @@
  * A custom React hook for safely initializing and managing OpenSheetMusicDisplay (OSMD) instances.
  */
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
-import { ScoreViewPort } from '@/lib/ports/score-view.port';
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
  * Refactored for documented lifecycle behavior and null elimination.
@@ -49,9 +48,7 @@ export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
     /** Safe to call anytime - no-op when !isReady */
     advanceCursor: () => void;
     /** Highlights the note at the given index */
-    highlightCurrentNote: () => void;
+    highlightCurrentNote: (noteIndex: number) => void;
     /** Reference to the OSMD instance for advanced interactions */
     osmd: OpenSheetMusicDisplay | undefined;
-    /** Implementation of the ScoreViewPort for decoupled visual control */
-    scoreView: ScoreViewPort;
 };

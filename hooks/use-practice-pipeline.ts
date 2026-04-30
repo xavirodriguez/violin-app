@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import {
   createRawPitchStream,
   createPracticeEventPipeline,
@@ -100,7 +100,7 @@ export function usePracticePipeline({
     audioLoop,
     detector,
     consumePipelineEvents,
-    practiceState?.exercise?.id,
+    practiceState?.exercise,
   ])
 }
 

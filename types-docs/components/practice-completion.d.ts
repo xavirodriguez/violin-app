@@ -1,4 +1,4 @@
-import { type PracticeSession } from '@/lib/domain/practice-session';
+import { type PracticeSession } from '@/stores/analytics-store';
 interface PracticeCompletionProps {
     onRestart: () => void;
     sessionData: PracticeSession | undefined;
