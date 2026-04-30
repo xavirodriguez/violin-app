@@ -1,32 +1,6 @@
 import { NoteTechnique } from '../lib/technique-types';
+import { PracticeSession } from '@/lib/domain/practice-session';
 import type { Exercise } from '@/lib/domain/musical-types';
-/**
- * Data model for a completed practice session.
- */
-export interface PracticeSession {
-    id: string;
-    startTimeMs: number;
-    endTimeMs: number;
-    durationMs: number;
-    exerciseId: string;
-    exerciseName: string;
-    mode: 'tuner' | 'practice';
-    notesAttempted: number;
-    notesCompleted: number;
-    accuracy: number;
-    averageCents: number;
-    noteResults: NoteResult[];
-}
-/** @internal */
-export interface NoteResult {
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    timeToCompleteMs: number;
-    averageCents: number;
-    wasInTune: boolean;
-    technique?: NoteTechnique;
-}
 /**
  * Long-term progress and skill model for the user.
  */
@@ -72,7 +46,7 @@ export interface RecordAttemptParams {
 /** Parameters for recording a note completion. */
 export interface RecordCompletionParams {
     noteIndex: number;
-    timeToCompleteMs: number;
+    timeToCompleteMs?: number;
     technique?: NoteTechnique;
 }
 /**
