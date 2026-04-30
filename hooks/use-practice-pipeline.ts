@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   createRawPitchStream,
   createPracticeEventPipeline,
@@ -77,6 +77,9 @@ export function usePracticePipeline({
   detector: PitchDetectionPort | undefined
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }) {
+  const stateRef = useRef(practiceState)
+  stateRef.current = practiceState
+
   useEffect(() => {
     const isReady = practiceState?.status === 'listening' && audioLoop && detector
     if (!isReady) return
@@ -84,7 +87,7 @@ export function usePracticePipeline({
     const abortController = new AbortController()
     runPipelineSession({
       deps: {
-        state: practiceState!,
+        state: stateRef.current!,
         audioLoop: audioLoop!,
         detector: detector!,
         signal: abortController.signal,
@@ -100,7 +103,7 @@ export function usePracticePipeline({
     audioLoop,
     detector,
     consumePipelineEvents,
-    practiceState?.exercise,
+    practiceState?.exercise?.id,
   ])
 }
 

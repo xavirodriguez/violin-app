@@ -23,7 +23,6 @@ interface LifecycleParams {
   osmdHook: ReturnType<typeof useOSMDSafe>
   derived: DerivedPracticeState
   autoStartEnabled: boolean
-  loadId: number
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
@@ -36,10 +35,9 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     osmdHook,
     derived,
     autoStartEnabled,
-    loadId,
   } = params
   const loadedRef = useRef(false)
-  const lastAutoStartLoadId = useRef<number>(loadId)
+  const lastAutoStartExerciseId = useRef<string | undefined>(practiceState?.exercise.id)
 
   usePracticeUIEffects({
     status: derived.status,
@@ -61,13 +59,14 @@ export function usePracticeLifecycle(params: LifecycleParams) {
   const hasPracticeState = !!practiceState
 
   useEffect(() => {
-    const isNewLoad = loadId !== lastAutoStartLoadId.current
+    const currentExerciseId = practiceState?.exercise.id
+    const isNewLoad = currentExerciseId !== lastAutoStartExerciseId.current
     const shouldAutoStart =
       autoStartEnabled && hasPracticeState && derived.status === 'idle' && isNewLoad
 
     if (shouldAutoStart) {
-      lastAutoStartLoadId.current = loadId
+      lastAutoStartExerciseId.current = currentExerciseId
       start()
     }
-  }, [autoStartEnabled, hasPracticeState, derived.status, start, loadId])
+  }, [autoStartEnabled, hasPracticeState, derived.status, start, practiceState?.exercise.id])
 }

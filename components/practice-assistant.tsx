@@ -21,7 +21,7 @@ import { allExercises } from '@/lib/exercises'
  */
 export function PracticeAssistant() {
   const [open, setOpen] = useState(false)
-  const { loadExercise } = usePracticeStore()
+  const loadExercise = usePracticeStore((s) => s.loadExercise)
 
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {

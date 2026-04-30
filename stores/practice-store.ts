@@ -62,7 +62,6 @@ export interface PracticeStore {
   isInitializing: boolean
   sessionToken: string | undefined
   sessionId: number
-  loadId: number
 
   loadExercise: (exercise: Exercise) => Promise<void>
   setAutoStart: (enabled: boolean) => void
@@ -128,7 +127,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isInitializing: false,
     sessionToken: undefined,
     sessionId: 0,
-    loadId: 0,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -141,14 +139,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         set((currentState) => ({
           ...currentState,
           ...updates,
-          loadId: currentState.loadId + 1,
         }))
       } catch (err) {
         const error = toAppError(err)
         set((currentState) => ({
           ...currentState,
           error,
-          loadId: currentState.loadId + 1,
           state: transitions.error(error, exercise as Exercise),
         }))
       }
