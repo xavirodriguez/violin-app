@@ -49,9 +49,20 @@ interface SheetMusicAnnotationsProps {
   currentNoteIndex: number
 
   /**
+<<<<<<< HEAD
+   * The port to interact with the visual score view.
+   */
+  scoreView: ScoreViewPort
+
+  /**
+   * Reference to the container element holding the rendered SVG staff.
+   */
+  containerRef: React.RefObject<HTMLDivElement | null>
+=======
    * Implementation of the score view port to retrieve coordinates.
    */
   scoreView: ScoreViewPort
+>>>>>>> main
 }
 
 /**
@@ -80,7 +91,7 @@ interface SheetMusicAnnotationsProps {
  * <SheetMusicAnnotations
  *   annotations={{ 0: { fingerNumber: 1 } }}
  *   currentNoteIndex={0}
- *   osmd={osmdInstance}
+ *   isReady={isReady}
  *   containerRef={ref}
  * />
  * ```
@@ -91,6 +102,10 @@ export function SheetMusicAnnotations({
   annotations,
   currentNoteIndex,
   scoreView,
+<<<<<<< HEAD
+  containerRef,
+=======
+>>>>>>> main
 }: SheetMusicAnnotationsProps) {
   /** Stores calculated screen coordinates for each annotated note. */
   const [coords, setCoords] = useState<Record<number, { x: number; y: number }>>({})
@@ -99,7 +114,11 @@ export function SheetMusicAnnotations({
    * Effect to calculate and update visual coordinates.
    */
   useEffect(() => {
+<<<<<<< HEAD
+    if (!scoreView.isReady || !containerRef.current) return
+=======
     if (!scoreView.isReady) return
+>>>>>>> main
 
     /**
      * Updates the local coordinate map based on the current OSMD cursor position.
@@ -109,12 +128,20 @@ export function SheetMusicAnnotations({
      * correct absolute positioning.
      */
     const updateCoords = () => {
+<<<<<<< HEAD
+      const pos = scoreView.getCursorPosition()
+      if (pos) {
+        setCoords((prev) => ({
+          ...prev,
+          [currentNoteIndex]: pos,
+        }))
+=======
       const newCoords: Record<number, { x: number; y: number }> = {}
       const pos = scoreView.getCursorCoordinates(currentNoteIndex)
       if (pos) {
         newCoords[currentNoteIndex] = pos
+>>>>>>> main
       }
-      setCoords(newCoords)
     }
 
     // Delay calculation slightly (100ms) to allow the OSMD engine to finish
@@ -129,7 +156,11 @@ export function SheetMusicAnnotations({
       clearTimeout(timeout)
       window.removeEventListener('resize', updateCoords)
     }
+<<<<<<< HEAD
+  }, [scoreView, currentNoteIndex, containerRef])
+=======
   }, [currentNoteIndex, scoreView])
+>>>>>>> main
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession, ExerciseStats, Achievement } from '@/lib/domain/practice'
+import { NoteResult, PracticeSession } from '@/lib/domain/practice'
 import type { Exercise } from '@/lib/domain/exercise'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'

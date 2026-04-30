@@ -4,7 +4,7 @@ import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { calculateCentsTolerance } from '@/stores/practice-store'
 import { calculateAdaptiveDifficulty } from '@/lib/practice-engine/engine'
 import { validateExercise } from '@/lib/exercises/validation'
-import { isMatch, type DetectedNote, type TargetNote } from '@/lib/practice-core'
+import { isMatch, type DetectedNote, type TargetNote } from '@/lib/domain/practice'
 
 describe('System Invariants', () => {
   describe('Pitch Detection Invariants', () => {

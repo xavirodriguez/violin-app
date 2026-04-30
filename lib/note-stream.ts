@@ -10,7 +10,7 @@ import {
   type DetectedNote,
   isMatch,
   type TargetNote,
-} from '@/lib/practice-core'
+} from '@/lib/domain/practice'
 import { AudioLoopPort, PitchDetectionPort } from './ports/audio.port'
 import { NoteSegmenter, type SegmenterEvent } from './note-segmenter'
 import { pitchDebugBus } from './observability/pitch-debug'
