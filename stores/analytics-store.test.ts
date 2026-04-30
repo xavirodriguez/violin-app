@@ -35,7 +35,6 @@ describe('useAnalyticsStore', () => {
     const session = useAnalyticsStore.getState().currentSession
     expect(session).toBeDefined()
     expect(session?.startTimeMs).toBe(now)
-    expect(session?.endTimeMs).toBe(now)
     expect(session?.exerciseId).toBe('ex1')
   })
 

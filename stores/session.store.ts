@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession } from '@/lib/domain/practice'
+import { NoteResult, LivePracticeSession, CompletedPracticeSession } from '@/lib/domain/practice'
 
 /**
  * Internal state of the session store.
@@ -9,7 +9,7 @@ import { NoteResult, PracticeSession } from '@/lib/domain/practice'
  */
 interface SessionState {
   /** The current active session data, or undefined if no session is active. */
-  current: PracticeSession | undefined
+  current: LivePracticeSession | undefined
   /** Whether a session is currently being recorded. */
   isActive: boolean
   /** Current streak of notes played with high accuracy (`< 5` cents). */
@@ -40,9 +40,9 @@ interface SessionActions {
    * @remarks
    * This method calculates the final accuracy and duration before clearing the active session.
    *
-   * @returns The completed {@link PracticeSession} or undefined if no session was active.
+   * @returns The completed {@link CompletedPracticeSession} or undefined if no session was active.
    */
-  end: () => PracticeSession | undefined
+  end: () => CompletedPracticeSession | undefined
 
   /**
    * Records a single attempt (audio frame) at a specific note.
@@ -95,8 +95,6 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
       current: {
         id: `session_${nowMs}`,
         startTimeMs: nowMs,
-        endTimeMs: nowMs,
-        durationMs: 0,
         exerciseId,
         exerciseName,
         mode,
@@ -115,7 +113,7 @@ export const useSessionStore = create<SessionState & SessionActions>((set, get) 
     if (!current) return undefined
 
     const nowMs = Date.now()
-    const completed: PracticeSession = {
+    const completed: CompletedPracticeSession = {
       ...current,
       endTimeMs: nowMs,
       durationMs: nowMs - current.startTimeMs,

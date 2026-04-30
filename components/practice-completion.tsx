@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PracticeSummaryChart } from './practice-summary-chart'
 import { useAnalyticsStore } from '@/stores/analytics-store'
-import { type PracticeSession } from '@/lib/domain/practice'
+import { type CompletedPracticeSession } from '@/lib/domain/practice'
 import { generateAchievementImage } from '@/lib/achievement-image-generator'
 import confetti from 'canvas-confetti'
 import { cn } from '@/lib/utils'
 
 interface PracticeCompletionProps {
   onRestart: () => void
-  sessionData: PracticeSession | undefined
+  sessionData: CompletedPracticeSession | undefined
 }
 
 export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletionProps) {

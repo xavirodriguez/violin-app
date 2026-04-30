@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { PracticeSession } from '@/lib/domain/practice'
+import { CompletedPracticeSession } from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
 
@@ -9,7 +9,7 @@ import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
  */
 interface SessionHistoryState {
   /** Array of completed practice sessions, capped at 100. */
-  sessions: PracticeSession[]
+  sessions: CompletedPracticeSession[]
 }
 
 /**
@@ -21,15 +21,15 @@ interface SessionHistoryActions {
    *
    * @param session - The session to add.
    */
-  addSession: (session: PracticeSession) => void
+  addSession: (session: CompletedPracticeSession) => void
 
   /**
    * Retrieves sessions filtered by age.
    *
    * @param days - Number of days to look back.
-   * @returns Filtered array of {@link PracticeSession}.
+   * @returns Filtered array of {@link CompletedPracticeSession}.
    */
-  getHistory: (days?: number) => PracticeSession[]
+  getHistory: (days?: number) => CompletedPracticeSession[]
 }
 
 /**

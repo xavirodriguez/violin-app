@@ -1,62 +1,29 @@
 import { NoteTechnique, Observation } from '../technique-types'
 import { Exercise } from './exercise'
+import {
+  NoteTechniqueSummary,
+  NoteResult,
+  LivePracticeSession,
+  CompletedPracticeSession,
+  PracticeSession,
+  toPersistedSession
+} from './practice-session'
 
-/**
- * Summary of technical performance for a note, focused on MVP priorities.
- */
-export interface NoteTechniqueSummary {
-  pitchStability: {
-    settlingStdCents: number
-    globalStdCents: number
-  }
-  resonance: {
-    rmsBeatingScore: number
-  }
-  attackRelease?: {
-    attackTimeMs: number
-  }
-  rhythm?: {
-    onsetErrorMs: number
-  }
+export type {
+  NoteTechniqueSummary,
+  NoteResult,
+  LivePracticeSession,
+  CompletedPracticeSession,
+  PracticeSession
 }
 
-/**
- * Result of practicing a single note.
- * Can represent a note in progress or a completed one.
- */
-export interface NoteResult {
-  noteIndex: number
-  targetPitch: string
-  attempts: number
-  /** Optional because it's only available once the note is completed. */
-  timeToCompleteMs?: number
-  averageCents: number
-  wasInTune: boolean
-  /** Full technique data if available, or summary for persistence. */
-  technique?: NoteTechnique | NoteTechniqueSummary
-}
+export { toPersistedSession }
 
 /**
  * Canonical model for a practice session result.
- * Used for live tracking, analytics, and persistence.
+ * @deprecated Use CompletedPracticeSession or PracticeSession from ./practice-session
  */
-export interface PracticeResult {
-  id: string
-  startTimeMs: number
-  endTimeMs: number
-  durationMs: number
-  exerciseId: string
-  exerciseName: string
-  mode: 'tuner' | 'practice'
-  noteResults: NoteResult[]
-  notesAttempted: number
-  notesCompleted: number
-  accuracy: number
-  averageCents: number
-}
-
-/** Legacy alias to be phased out */
-export type PracticeSession = PracticeResult
+export type PracticeResult = CompletedPracticeSession
 
 /**
  * Lifetime statistics for an individual exercise.
