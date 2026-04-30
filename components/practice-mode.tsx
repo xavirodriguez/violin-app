@@ -45,7 +45,7 @@ export function PracticeMode() {
   const stop = usePracticeStore((s) => s.stop)
   const setAutoStart = usePracticeStore((s) => s.setAutoStart)
   const setNoteIndex = usePracticeStore((s) => s.setNoteIndex)
-  const loadId = usePracticeStore((s) => s.loadId)
+  const lastLoadedAt = usePracticeStore((s) => s.lastLoadedAt)
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -67,7 +67,7 @@ export function PracticeMode() {
     onToggleZenMode,
     scoreView: osmd.scoreView,
     autoStartEnabled,
-    loadId,
+    lastLoadedAt,
   }
   usePracticeLifecycle(lifecycleParams)
 

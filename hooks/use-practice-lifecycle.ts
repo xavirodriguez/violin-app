@@ -23,7 +23,7 @@ interface LifecycleParams {
   scoreView: ScoreViewPort
   derived: DerivedPracticeState
   autoStartEnabled: boolean
-  loadId: number
+  lastLoadedAt: number
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
@@ -36,10 +36,10 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     scoreView,
     derived,
     autoStartEnabled,
-    loadId,
+    lastLoadedAt,
   } = params
   const loadedRef = useRef(false)
-  const lastAutoStartLoadId = useRef<number>(loadId)
+  const lastAutoStartTimestamp = useRef<number>(lastLoadedAt)
 
   usePracticeUIEffects({
     status: derived.status,
@@ -61,13 +61,13 @@ export function usePracticeLifecycle(params: LifecycleParams) {
   const hasPracticeState = !!practiceState
 
   useEffect(() => {
-    const isNewLoad = loadId !== lastAutoStartLoadId.current
+    const isNewLoad = lastLoadedAt !== lastAutoStartTimestamp.current
     const shouldAutoStart =
       autoStartEnabled && hasPracticeState && derived.status === 'idle' && isNewLoad
 
     if (shouldAutoStart) {
-      lastAutoStartLoadId.current = loadId
+      lastAutoStartTimestamp.current = lastLoadedAt
       start()
     }
-  }, [autoStartEnabled, hasPracticeState, derived.status, start, loadId])
+  }, [autoStartEnabled, hasPracticeState, derived.status, start, lastLoadedAt])
 }
