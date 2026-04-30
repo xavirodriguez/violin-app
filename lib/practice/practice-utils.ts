@@ -4,8 +4,8 @@
  * Pure utility functions for the practice mode domain.
  */
 
-import { formatPitchName, PracticeState, DetectedNote, PracticeStatus } from '@/lib/practice-core'
-import { Note } from '@/lib/exercises/types'
+import { formatPitchName, PracticeState, DetectedNote, PracticeStatus } from '@/lib/domain/practice'
+import { Note } from '@/lib/domain/exercise'
 
 /**
  * Derived state used by UI components to represent the current progress

@@ -3,7 +3,7 @@
 import { Play, Square, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PracticeStatus } from '@/lib/practice-core'
+import { PracticeStatus } from '@/lib/domain/practice'
 
 interface PracticeControlsProps {
   status: PracticeStatus

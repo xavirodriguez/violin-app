@@ -1,4 +1,4 @@
-import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/practice-core'
+import { type PracticeState, reducePracticeEvent, type PracticeEvent } from '@/lib/domain/practice'
 
 /**
  * A type representing the core state management functions of a Zustand store,

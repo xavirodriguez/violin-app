@@ -9,7 +9,11 @@
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { usePracticeUIEffects } from './use-practice-ui-effects'
+<<<<<<< HEAD
+import { PracticeState } from '@/lib/domain/practice'
+=======
 import { PracticeState } from '@/lib/practice-core'
+>>>>>>> main
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'

@@ -6,8 +6,12 @@
  * data from external sources or persistence.
  */
 
+<<<<<<< HEAD
+import type { Note, Exercise, Pitch } from './exercise'
+=======
 import type { Note, Pitch } from './musical-types'
 import type { Exercise } from './exercise'
+>>>>>>> main
 
 /**
  * Validates if an unknown value is a Pitch object.

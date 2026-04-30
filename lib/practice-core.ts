@@ -7,16 +7,23 @@
 
 import { normalizeAccidental } from './domain/musical-domain'
 import { AppError, ERROR_CODES } from './errors/app-error'
-import type { Note as TargetNote } from '@/lib/domain/musical-types'
-import {
+import type { Exercise, Note as TargetNote } from '@/lib/domain/exercise'
+import type {
   DetectedNote,
-  MatchHysteresis,
-  PracticeEvent,
-  PracticeState,
   PracticeStatus,
-} from './domain/practice'
+  PracticeState,
+  PracticeEvent,
+  MatchHysteresis,
+} from '@/lib/domain/practice'
 
-export type { TargetNote, DetectedNote, MatchHysteresis, PracticeEvent, PracticeState, PracticeStatus }
+export type {
+  TargetNote,
+  DetectedNote,
+  PracticeStatus,
+  PracticeState,
+  PracticeEvent,
+  MatchHysteresis,
+}
 
 /**
  * A valid note name in scientific pitch notation.

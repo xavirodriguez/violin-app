@@ -18,7 +18,11 @@ import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
+<<<<<<< HEAD
+import { useState } from 'react'
+=======
 import { useState, useCallback } from 'react'
+>>>>>>> main
 import { Exercise } from '@/lib/domain/exercise'
 
 /**
@@ -94,6 +98,10 @@ export function PracticeMode() {
             isReady: osmd.isReady,
             error: osmd.error,
             containerRef: osmd.containerRef,
+<<<<<<< HEAD
+            scoreView: osmd.scoreView,
+=======
+>>>>>>> main
           }}
           scoreView={osmd.scoreView}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
