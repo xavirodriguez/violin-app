@@ -6,7 +6,8 @@
  * data from external sources or persistence.
  */
 
-import type { Note, Exercise, Pitch } from './musical-types'
+import type { Note, Pitch } from './musical-types'
+import type { Exercise } from './exercise'
 
 /**
  * Validates if an unknown value is a Pitch object.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getRecommendedExercise } from './exercise-recommender'
-import type { Exercise } from '@/lib/domain/musical-types'
+import type { Exercise } from '@/lib/domain/exercise'
 import type { AnalyticsStore } from '@/stores/analytics-store'
 
 type UserProgress = AnalyticsStore['progress']

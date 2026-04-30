@@ -6,7 +6,7 @@
 
 'use client'
 
-import { usePracticeStore, PracticeStore } from '@/stores/practice-store'
+import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
@@ -18,8 +18,8 @@ import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
-import { useState } from 'react'
-import { Exercise } from '@/lib/exercises/types'
+import { useState, useCallback } from 'react'
+import { Exercise } from '@/lib/domain/exercise'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -45,7 +45,6 @@ export function PracticeMode() {
   const stop = usePracticeStore((s) => s.stop)
   const setAutoStart = usePracticeStore((s) => s.setAutoStart)
   const setNoteIndex = usePracticeStore((s) => s.setNoteIndex)
-  const loadId = usePracticeStore((s) => s.loadId)
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -56,16 +55,16 @@ export function PracticeMode() {
   const derived = derivePracticeState(practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
+  const onToggleZenMode = useCallback(() => viewActions.setIsZen((v) => !v), [viewActions])
+
   const lifecycleParams = {
     practiceState,
     loadExercise,
     start,
     stop,
     derived,
-    setIsZen: viewActions.setIsZen,
-    osmdHook: osmd,
-    autoStartEnabled,
-    loadId,
+    onToggleZenMode,
+    scoreView: osmd.scoreView,
   }
   usePracticeLifecycle(lifecycleParams)
 
@@ -91,12 +90,17 @@ export function PracticeMode() {
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
-          osmdHook={osmd}
+          osmd={{
+            isReady: osmd.isReady,
+            error: osmd.error,
+            containerRef: osmd.containerRef,
+            instance: osmd.osmd,
+          }}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
           start={start}
           stop={stop}
-          setIsZenModeEnabled={viewActions.setIsZen}
+          onToggleZenMode={onToggleZenMode}
           setNoteIndex={setNoteIndex}
         />
         <KeyboardShortcutsDialog />

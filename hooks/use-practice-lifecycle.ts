@@ -10,8 +10,8 @@ import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { usePracticeUIEffects } from './use-practice-ui-effects'
 import { PracticeState } from '@/lib/practice-core'
-import { useOSMDSafe } from './use-osmd-safe'
-import { Exercise } from '@/lib/exercises/types'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
+import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 
 interface LifecycleParams {
@@ -19,35 +19,22 @@ interface LifecycleParams {
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
-  setIsZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  onToggleZenMode: () => void
+  scoreView: ScoreViewPort
   derived: DerivedPracticeState
-  autoStartEnabled: boolean
-  loadId: number
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
-  const {
-    practiceState,
-    loadExercise,
-    start,
-    stop,
-    setIsZen,
-    osmdHook,
-    derived,
-    autoStartEnabled,
-    loadId,
-  } = params
+  const { practiceState, loadExercise, start, stop, onToggleZenMode, scoreView, derived } = params
   const loadedRef = useRef(false)
-  const lastAutoStartLoadId = useRef<number>(loadId)
 
   usePracticeUIEffects({
     status: derived.status,
     currentNoteIndex: derived.currentNoteIndex,
     start,
     stop,
-    setZenMode: setIsZen,
-    scoreView: osmdHook.scoreView,
+    onToggleZenMode,
+    scoreView,
   })
 
   useEffect(() => {
@@ -57,17 +44,4 @@ export function usePracticeLifecycle(params: LifecycleParams) {
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
-
-  const hasPracticeState = !!practiceState
-
-  useEffect(() => {
-    const isNewLoad = loadId !== lastAutoStartLoadId.current
-    const shouldAutoStart =
-      autoStartEnabled && hasPracticeState && derived.status === 'idle' && isNewLoad
-
-    if (shouldAutoStart) {
-      lastAutoStartLoadId.current = loadId
-      start()
-    }
-  }, [autoStartEnabled, hasPracticeState, derived.status, start, loadId])
 }

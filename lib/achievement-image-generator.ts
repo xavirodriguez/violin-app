@@ -1,4 +1,4 @@
-import type { PracticeSession } from '@/lib/domain/practice-session'
+import type { PracticeSession } from '@/lib/domain/practice'
 
 /**
  * Generates a shareable image for exercise completion.

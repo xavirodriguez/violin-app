@@ -2,33 +2,10 @@ import { create } from 'zustand'
 import { z } from 'zod'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
+import { Achievement } from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { AchievementsStateSchema } from '@/lib/schemas/persistence.schema'
-
-/**
- * Represents a musical achievement or milestone unlocked by the user.
- *
- * @remarks
- * This model is used to reward consistency, accuracy, and technical growth.
- *
- * @public
- */
-export interface Achievement {
-  /**
-   * Unique identifier for the achievement (e.g., 'first-perfect-scale').
-   * Used as a key for translations and UI rendering.
-   */
-  id: string
-  /** Human-readable display name. */
-  name: string
-  /** Detailed description of the accomplishment required to unlock this achievement. */
-  description: string
-  /** Icon or emoji representation for visual feedback. */
-  icon: string
-  /** Unix timestamp of the exact moment the achievement was first unlocked. */
-  unlockedAtMs: number
-}
 
 /**
  * State structure for the achievements store.

@@ -3,7 +3,7 @@
  */
 import type { NoteDuration, Pitch, PitchName, Exercise } from './types'
 import { normalizeAccidental } from '../domain/musical-domain'
-import { ExerciseStats } from '@/stores/progress.store'
+import { ExerciseStats } from '@/lib/domain/practice'
 import { AppError, ERROR_CODES } from '../errors/app-error'
 
 const DURATION_BEATS: Record<NoteDuration, number> = {

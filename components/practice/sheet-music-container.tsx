@@ -10,16 +10,21 @@ import { cn } from '@/lib/utils'
 import { PracticeState } from '@/lib/practice-core'
 import { Note } from '@/lib/domain/musical-types'
 import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
-import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { SheetMusicView } from './sheet-music-view'
 import { ViewToggleButton } from './view-toggle-button'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 
 interface SheetMusicContainerProps {
   status: string
   sheetMusicView: 'focused' | 'full'
   setSheetMusicView: (v: 'focused' | 'full') => void
   practiceState: PracticeState | undefined
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  osmd: {
+    isReady: boolean
+    error: string | undefined
+    containerRef: import('react').RefObject<HTMLDivElement | null>
+    instance: OpenSheetMusicDisplay | undefined
+  }
   currentNoteIndex: number
 }
 
@@ -36,7 +41,7 @@ export function SheetMusicContainer(props: SheetMusicContainerProps) {
 }
 
 function SheetMusicScrollArea(props: SheetMusicContainerProps) {
-  const { sheetMusicView, practiceState, osmdHook, currentNoteIndex } = props
+  const { sheetMusicView, practiceState, osmd, currentNoteIndex } = props
   const heightClass = sheetMusicView === 'focused' ? 'max-h-[300px]' : 'max-h-[800px]'
   const annotations = practiceState ? mapAnnotations(practiceState.exercise.notes) : {}
 
@@ -44,16 +49,16 @@ function SheetMusicScrollArea(props: SheetMusicContainerProps) {
     <div className={cn('overflow-hidden transition-all duration-500', heightClass)}>
       <SheetMusicView
         musicXML={practiceState?.exercise.musicXML}
-        isReady={osmdHook.isReady}
-        error={osmdHook.error || undefined}
-        containerRef={osmdHook.containerRef}
+        isReady={osmd.isReady}
+        error={osmd.error || undefined}
+        containerRef={osmd.containerRef}
       />
       {practiceState && (
         <SheetMusicAnnotations
           annotations={annotations}
           currentNoteIndex={currentNoteIndex}
-          osmd={osmdHook.osmd || undefined}
-          containerRef={osmdHook.containerRef}
+          osmd={osmd.instance || undefined}
+          containerRef={osmd.containerRef}
         />
       )}
     </div>

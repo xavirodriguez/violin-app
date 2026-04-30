@@ -9,7 +9,7 @@ import {
 } from '@/lib/note-stream'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import type { PracticeState, PracticeEvent } from '@/lib/practice-core'
-import type { Exercise } from '@/lib/exercises/types'
+import type { Exercise } from '@/lib/domain/exercise'
 import { useProgressStore } from '@/stores/progress.store'
 
 interface PipelineDependencies {

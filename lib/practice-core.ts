@@ -5,12 +5,18 @@
  * Refactored for branded types and strict validation.
  */
 
-import { NoteTechnique, Observation } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { AppError, ERROR_CODES } from './errors/app-error'
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types'
+import type { Note as TargetNote } from '@/lib/domain/musical-types'
+import {
+  DetectedNote,
+  MatchHysteresis,
+  PracticeEvent,
+  PracticeState,
+  PracticeStatus,
+} from './domain/practice'
 
-export type { TargetNote }
+export type { TargetNote, DetectedNote, MatchHysteresis, PracticeEvent, PracticeState, PracticeStatus }
 
 /**
  * A valid note name in scientific pitch notation.
@@ -184,54 +190,6 @@ function assembleNoteComponents(match: RegExpMatchArray): NoteComponents {
     octave,
   }
 }
-
-// --- TYPE DEFINITIONS ---
-
-/**
- * Defines the tolerance boundaries for matching a note.
- */
-export interface MatchHysteresis {
-  enter: number
-  exit: number
-}
-
-/** Represents a note detected from the user's microphone input. */
-export interface DetectedNote {
-  pitch: string
-  pitchHz: number
-  cents: number
-  timestamp: number
-  confidence: number
-}
-
-/** The status of the practice session. */
-export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed'
-
-/** The complete, self-contained state of the practice session. */
-export interface PracticeState {
-  status: PracticeStatus
-  exercise: Exercise
-  currentIndex: number
-  detectionHistory: readonly DetectedNote[]
-  holdDuration?: number
-  lastObservations?: Observation[]
-  perfectNoteStreak: number
-}
-
-/** Events that can modify the practice state. */
-export type PracticeEvent =
-  | { type: 'START'; payload?: { startIndex?: number } }
-  | { type: 'STOP' }
-  | { type: 'RESET' }
-  | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  | { type: 'HOLDING_NOTE'; payload: { duration: number } }
-  // Fired by the pipeline only when a target note is held stable.
-  | {
-      type: 'NOTE_MATCHED'
-      payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
-    }
-  // Fired when the signal is lost.
-  | { type: 'NO_NOTE_DETECTED' }
 
 // --- PURE FUNCTIONS ---
 

@@ -1,4 +1,4 @@
-import { PracticeSession, NoteResult } from '@/lib/domain/practice-session'
+import { PracticeSession, NoteResult } from '@/lib/domain/practice'
 
 export function formatTime(seconds: number): string {
   const totalSeconds = seconds
