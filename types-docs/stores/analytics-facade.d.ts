@@ -1,4 +1,4 @@
-import { PracticeSession } from './session.store';
+import { PracticeSession } from '@/lib/domain/practice-session';
 import { ProgressState } from './progress.store';
 import { Achievement } from './achievements.store';
 import { NoteTechnique } from '@/lib/technique-types';

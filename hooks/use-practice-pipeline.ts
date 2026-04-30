@@ -77,9 +77,6 @@ export function usePracticePipeline({
   detector: PitchDetectionPort | undefined
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }) {
-  const stateRef = useRef(practiceState)
-  stateRef.current = practiceState
-
   useEffect(() => {
     const isReady = practiceState?.status === 'listening' && audioLoop && detector
     if (!isReady) return
@@ -87,7 +84,7 @@ export function usePracticePipeline({
     const abortController = new AbortController()
     runPipelineSession({
       deps: {
-        state: stateRef.current!,
+        state: practiceState!,
         audioLoop: audioLoop!,
         detector: detector!,
         signal: abortController.signal,

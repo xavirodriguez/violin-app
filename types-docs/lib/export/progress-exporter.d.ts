@@ -1,4 +1,4 @@
-import { PracticeSession } from '@/stores/analytics-store';
+import { PracticeSession } from '@/lib/domain/practice-session';
 /**
  * Generates a CSV string from an array of practice sessions.
  *

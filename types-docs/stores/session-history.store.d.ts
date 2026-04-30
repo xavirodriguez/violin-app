@@ -1,4 +1,4 @@
-import { PracticeSession } from './session.store';
+import { PracticeSession } from '@/lib/domain/practice-session';
 /**
  * Internal state for the session history store.
  */

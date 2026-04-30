@@ -1,4 +1,4 @@
-import type { PracticeSession } from '@/stores/analytics-store';
+import type { PracticeSession } from '@/lib/domain/practice-session';
 /**
  * Generates a shareable image for exercise completion.
  * Decomposed into focused helpers for Senior Software Craftsmanship.
