@@ -1,5 +1,4 @@
 import { NoteTechnique, Observation } from '../technique-types'
-<<<<<<< HEAD
 import { Exercise, Note as TargetNote } from './exercise'
 
 export type { TargetNote }
@@ -61,32 +60,7 @@ export type PracticeEvent =
  * Can represent a note in progress or a completed one.
  *
  * @public
-=======
-import { Exercise } from './exercise'
-
-/**
- * Summary of technical performance for a note, focused on MVP priorities.
- */
-export interface NoteTechniqueSummary {
-  pitchStability: {
-    settlingStdCents: number
-    globalStdCents: number
-  }
-  resonance: {
-    rmsBeatingScore: number
-  }
-  attackRelease?: {
-    attackTimeMs: number
-  }
-  rhythm?: {
-    onsetErrorMs: number
-  }
-}
-
-/**
- * Result of practicing a single note.
- * Can represent a note in progress or a completed one.
->>>>>>> main
+export { toPersistedSession }
  */
 export interface NoteResult {
   noteIndex: number
@@ -96,7 +70,6 @@ export interface NoteResult {
   timeToCompleteMs?: number
   averageCents: number
   wasInTune: boolean
-<<<<<<< HEAD
   /** Full technique data if available. */
   technique?: NoteTechnique
 }
@@ -108,17 +81,12 @@ export interface NoteResult {
  * @public
  */
 export interface PracticeSession {
-=======
-  /** Full technique data if available, or summary for persistence. */
-  technique?: NoteTechnique | NoteTechniqueSummary
-}
 
 /**
  * Canonical model for a practice session result.
- * Used for live tracking, analytics, and persistence.
+ * @deprecated Use CompletedPracticeSession or PracticeSession from ./practice-session
  */
-export interface PracticeResult {
->>>>>>> main
+export type PracticeResult = CompletedPracticeSession
   id: string
   startTimeMs: number
   endTimeMs: number
@@ -133,10 +101,6 @@ export interface PracticeResult {
   averageCents: number
 }
 
-<<<<<<< HEAD
-=======
-/** Legacy alias to be phased out */
-export type PracticeSession = PracticeResult
 
 /**
  * Lifetime statistics for an individual exercise.
@@ -161,7 +125,6 @@ export interface Achievement {
   unlockedAtMs: number
 }
 
->>>>>>> main
 /**
  * Defines the tolerance boundaries for matching a note.
  */
@@ -170,47 +133,9 @@ export interface MatchHysteresis {
   exit: number
 }
 
-<<<<<<< HEAD
 /**
  * Re-exporting pure functions from practice-core to domain for consolidation
  * while keeping practice-core as the implementation source.
  */
 export { formatPitchName, isMatch, reducePracticeEvent } from '../practice-core'
 export { MusicalNote, assertValidNoteName } from '../practice-core'
-=======
-/** Represents a note detected from the user's microphone input. */
-export interface DetectedNote {
-  pitch: string
-  pitchHz: number
-  cents: number
-  timestamp: number
-  confidence: number
-}
-
-/** The status of the practice session. */
-export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed'
-
-/** The complete, self-contained state of the practice session. */
-export interface PracticeState {
-  status: PracticeStatus
-  exercise: Exercise
-  currentIndex: number
-  detectionHistory: readonly DetectedNote[]
-  holdDuration?: number
-  lastObservations?: Observation[]
-  perfectNoteStreak: number
-}
-
-/** Events that can modify the practice state. */
-export type PracticeEvent =
-  | { type: 'START'; payload?: { startIndex?: number } }
-  | { type: 'STOP' }
-  | { type: 'RESET' }
-  | { type: 'NOTE_DETECTED'; payload: DetectedNote }
-  | { type: 'HOLDING_NOTE'; payload: { duration: number } }
-  | {
-      type: 'NOTE_MATCHED'
-      payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
-    }
-  | { type: 'NO_NOTE_DETECTED' }
->>>>>>> main

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { PracticeSession } from '@/lib/domain/practice'
+import { PracticeSession, CompletedPracticeSession, ExerciseStats } from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
@@ -120,7 +120,7 @@ interface ProgressActions {
    *
    * @param session - The completed session data to persist and analyze.
    */
-  addSession: (session: PracticeSession) => void
+  addSession: (session: CompletedPracticeSession) => void
 
   /**
    * Re-calculates domain-specific skill levels (intonation, rhythm).
@@ -131,7 +131,7 @@ interface ProgressActions {
    *
    * @param sessions - Recent session history to analyze.
    */
-  updateSkills: (sessions: PracticeSession[]) => void
+  updateSkills: (sessions: CompletedPracticeSession[]) => void
 }
 
 /**
@@ -181,12 +181,12 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
     (set, get) => ({
       ...DEFAULT_PROGRESS,
 
-      addSession: (session: PracticeSession) => {
+      addSession: (session: CompletedPracticeSession) => {
         const updates = assembleSessionUpdates({ session, get })
         set((state: ProgressState) => ({ ...state, ...updates }))
       },
 
-      updateSkills: (sessions: PracticeSession[]) => {
+      updateSkills: (sessions: CompletedPracticeSession[]) => {
         const intonationSkill = calculateIntonationSkill(sessions)
         const rhythmSkill = calculateRhythmSkill(sessions)
 

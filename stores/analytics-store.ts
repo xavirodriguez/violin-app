@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession } from '@/lib/domain/practice'
+import { NoteResult, PracticeSession, LivePracticeSession, CompletedPracticeSession, ExerciseStats, Achievement, toPersistedSession } from '@/lib/domain/practice'
 import type { Exercise } from '@/lib/domain/exercise'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
@@ -46,7 +46,7 @@ export interface RecordCompletionParams {
  * Interface for the Analytics Store, managing long-term progress and session history.
  */
 export interface AnalyticsStore {
-  currentSession: PracticeSession | undefined
+  currentSession: LivePracticeSession | undefined
   cleanOldSessions: (count?: number) => void
   sessions: PracticeSession[]
   progress: UserProgress
@@ -124,10 +124,11 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         if (isInactive) return
 
         const completedSession = finalizeSessionData(currentSession!)
-        const newSessions = [completedSession, ...sessions]
-        const newProgress = getUpdatedProgress({ progress, completedSession, sessions })
+        const persistedSession = toPersistedSession(completedSession)
+        const newSessions = [persistedSession as unknown as PracticeSession, ...sessions]
+        const newProgress = getUpdatedProgress({ progress, completedSession: persistedSession as unknown as PracticeSession, sessions })
 
-        handleSessionCompletion({ completedSession, sessions: newSessions, progress: newProgress })
+        handleSessionCompletion({ completedSession: persistedSession as unknown as PracticeSession, sessions: newSessions, progress: newProgress })
         checkStorageThresholds()
       },
 
@@ -220,14 +221,12 @@ function createInitialSession(params: {
   exerciseId: string
   exerciseName: string
   mode: 'tuner' | 'practice'
-}): PracticeSession {
+}): LivePracticeSession {
   const { exerciseId, exerciseName, mode } = params
   const nowMs = Date.now()
   const baseSession = {
     id: crypto.randomUUID(),
     startTimeMs: nowMs,
-    endTimeMs: nowMs,
-    durationMs: 0,
     exerciseId,
     exerciseName,
     mode,
@@ -282,10 +281,10 @@ function calculateDailyMetrics(sessions: PracticeSession[]) {
   }
 }
 
-function finalizeSessionData(session: PracticeSession): PracticeSession {
+function finalizeSessionData(session: LivePracticeSession): CompletedPracticeSession {
   const endTimeMs = Date.now()
   const durationMs = endTimeMs - session.startTimeMs
-  const finalized: PracticeSession = { ...session, endTimeMs, durationMs }
+  const finalized: CompletedPracticeSession = { ...session, endTimeMs, durationMs }
 
   return finalized
 }
@@ -628,7 +627,7 @@ function createInitialNoteResult(params: RecordAttemptParams): NoteResult {
     noteIndex,
     targetPitch,
     attempts: 1,
-    timeToCompleteMs: 0,
+    timeToCompleteMs: undefined,
     averageCents: cents,
     wasInTune,
   }
