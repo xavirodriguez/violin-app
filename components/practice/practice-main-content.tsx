@@ -21,9 +21,9 @@ import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { Exercise, Note } from '@/lib/exercises/types'
 import { PracticeState, DetectedNote } from '@/lib/practice-core'
 import { Observation } from '@/lib/technique-types'
-import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { PracticeStoreState } from '@/lib/practice/practice-states'
 import { PracticeSession } from '@/lib/domain/practice-session'
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
 
 interface PracticeMainContentProps {
   state: PracticeStoreState
@@ -41,12 +41,17 @@ interface PracticeMainContentProps {
   centsTolerance: number
   sheetMusicView: 'focused' | 'full'
   setSheetMusicView: (view: 'focused' | 'full') => void
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  osmd: {
+    isReady: boolean
+    error: string | undefined
+    containerRef: import('react').RefObject<HTMLDivElement | null>
+    instance: OpenSheetMusicDisplay | undefined
+  }
   handleRestart: () => void
   sessions: PracticeSession[]
   start: () => void
   stop: () => void
-  setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  onToggleZenMode: () => void
   setNoteIndex: (index: number) => void
 }
 
@@ -160,16 +165,8 @@ function PracticeActiveViewContent(props: PracticeMainContentProps) {
 }
 
 function PracticePostSessionContent(props: PracticeMainContentProps) {
-  const {
-    status,
-    handleRestart,
-    sessions,
-    practiceState,
-    start,
-    stop,
-    setIsZenModeEnabled,
-    isZenModeEnabled,
-  } = props
+  const { status, handleRestart, sessions, practiceState, start, stop, onToggleZenMode, isZenModeEnabled } =
+    props
   const isCompleted = status === 'completed'
   const isActive = status !== 'idle'
   const session =
@@ -183,7 +180,7 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
           status={status}
           start={start}
           stop={stop}
-          setZen={setIsZenModeEnabled}
+          onToggleZenMode={onToggleZenMode}
           isZen={isZenModeEnabled}
           practiceState={practiceState}
           setNoteIndex={props.setNoteIndex}
@@ -197,7 +194,7 @@ function QuickActionsView({
   status,
   start,
   stop,
-  setZen,
+  onToggleZenMode,
   isZen,
   practiceState,
   setNoteIndex,
@@ -205,13 +202,13 @@ function QuickActionsView({
   status: string
   start: () => void
   stop: () => void
-  setZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  onToggleZenMode: () => void
   isZen: boolean
   practiceState: PracticeState | undefined
   setNoteIndex: (index: number) => void
 }) {
   const onTogglePause = () => (status === 'listening' ? stop() : start())
-  const onToggleZen = () => setZen((prev: boolean) => !prev)
+  const onToggleZen = () => onToggleZenMode()
 
   const onRepeatNote = () => {
     if (practiceState) {

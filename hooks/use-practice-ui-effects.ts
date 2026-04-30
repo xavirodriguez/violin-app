@@ -13,10 +13,10 @@ export function usePracticeUIEffects(params: {
   currentNoteIndex: number
   start: () => void
   stop: () => void
-  setZenMode: (v: (prev: boolean) => boolean) => void
+  onToggleZenMode: () => void
   scoreView: ScoreViewPort
 }) {
-  const { status, currentNoteIndex, start, stop, setZenMode, scoreView } = params
+  const { status, currentNoteIndex, start, stop, onToggleZenMode, scoreView } = params
 
   /**
    * Effect to sync the OSMD cursor and highlighting whenever the current note changes.
@@ -31,7 +31,7 @@ export function usePracticeUIEffects(params: {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'z') {
-        setZenMode((v) => !v)
+        onToggleZenMode()
         return
       }
 
@@ -49,7 +49,7 @@ export function usePracticeUIEffects(params: {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [status, start, stop, setZenMode])
+  }, [status, start, stop, onToggleZenMode])
 }
 
 /**
