@@ -62,11 +62,10 @@ export interface PracticeStore {
   isInitializing: boolean
   sessionToken: string | undefined
   sessionId: number
-  lastLoadedAt: number
 
   loadExercise: (exercise: Exercise) => Promise<void>
-  setAutoStart: (enabled: boolean) => void
-  setNoteIndex: (index: number) => void
+  toggleAutoStart: (enabled: boolean) => void
+  jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
@@ -128,7 +127,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isInitializing: false,
     sessionToken: undefined,
     sessionId: 0,
-    lastLoadedAt: 0,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -141,26 +139,28 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         set((currentState) => ({
           ...currentState,
           ...updates,
-          lastLoadedAt: Date.now(),
         }))
+
+        if (get().autoStartEnabled) {
+          await get().start()
+        }
       } catch (err) {
         const error = toAppError(err)
         set((currentState) => ({
           ...currentState,
           error,
-          lastLoadedAt: Date.now(),
           state: transitions.error(error, exercise as Exercise),
         }))
       }
     },
 
-    setAutoStart: (enabled) => {
+    toggleAutoStart: (enabled) => {
       const nextValue = enabled
       const updates = { autoStartEnabled: nextValue }
       set((currentState) => ({ ...currentState, ...updates }))
     },
 
-    setNoteIndex: (index) => {
+    jumpToNote: (index) => {
       const state = get().practiceState
       if (!state || get().isStarting) return
 

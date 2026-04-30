@@ -27,27 +27,6 @@ export interface UserProgress {
   exerciseStats: Record<string, ExerciseStats>
 }
 
-/** @internal */
-export interface ExerciseStats {
-  exerciseId: string
-  timesCompleted: number
-  bestAccuracy: number
-  averageAccuracy: number
-  fastestCompletionMs: number
-  lastPracticedMs: number
-}
-
-/**
- * Represents a musical achievement or milestone earned by the user.
- */
-export interface Achievement {
-  id: string
-  name: string
-  description: string
-  icon: string
-  unlockedAtMs: number
-}
-
 /** Parameters for recording a note attempt. */
 export interface RecordAttemptParams {
   noteIndex: number

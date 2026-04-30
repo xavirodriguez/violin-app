@@ -9,7 +9,11 @@
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { usePracticeUIEffects } from './use-practice-ui-effects'
+<<<<<<< HEAD
 import { PracticeState } from '@/lib/domain/practice'
+=======
+import { PracticeState } from '@/lib/practice-core'
+>>>>>>> main
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
@@ -22,24 +26,11 @@ interface LifecycleParams {
   onToggleZenMode: () => void
   scoreView: ScoreViewPort
   derived: DerivedPracticeState
-  autoStartEnabled: boolean
-  lastLoadedAt: number
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
-  const {
-    practiceState,
-    loadExercise,
-    start,
-    stop,
-    onToggleZenMode,
-    scoreView,
-    derived,
-    autoStartEnabled,
-    lastLoadedAt,
-  } = params
+  const { practiceState, loadExercise, start, stop, onToggleZenMode, scoreView, derived } = params
   const loadedRef = useRef(false)
-  const lastAutoStartTimestamp = useRef<number>(lastLoadedAt)
 
   usePracticeUIEffects({
     status: derived.status,
@@ -57,17 +48,4 @@ export function usePracticeLifecycle(params: LifecycleParams) {
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])
-
-  const hasPracticeState = !!practiceState
-
-  useEffect(() => {
-    const isNewLoad = lastLoadedAt !== lastAutoStartTimestamp.current
-    const shouldAutoStart =
-      autoStartEnabled && hasPracticeState && derived.status === 'idle' && isNewLoad
-
-    if (shouldAutoStart) {
-      lastAutoStartTimestamp.current = lastLoadedAt
-      start()
-    }
-  }, [autoStartEnabled, hasPracticeState, derived.status, start, lastLoadedAt])
 }

@@ -14,7 +14,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { SheetMusic } from '@/components/sheet-music'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { Music, Play, Target, Volume2 } from 'lucide-react'
+<<<<<<< HEAD
 import type { Exercise, Note } from '@/lib/domain/exercise'
+=======
+import type { Exercise } from '@/lib/domain/exercise'
+import type { Note } from '@/lib/domain/musical-types'
+>>>>>>> main
 import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
 import { formatPitchName, MusicalNote } from '@/lib/domain/practice'
 import { useState } from 'react'

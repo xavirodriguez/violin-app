@@ -1,4 +1,4 @@
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from '@/stores/analytics-store';
 export declare function formatTime(seconds: number): string;
 export declare function getLast7DaysData(sessions: PracticeSession[]): {
     day: string;

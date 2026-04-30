@@ -18,12 +18,23 @@ import { Button } from '@/components/ui/button'
 import { PauseCircle, PlayCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
+<<<<<<< HEAD
 import { Exercise, Note } from '@/lib/domain/exercise'
 import { PracticeState, DetectedNote } from '@/lib/domain/practice'
+=======
+import { Exercise } from '@/lib/domain/exercise'
+import { Note } from '@/lib/domain/musical-types'
+import { PracticeState, DetectedNote } from '@/lib/practice-core'
+>>>>>>> main
 import { Observation } from '@/lib/technique-types'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { PracticeStoreState } from '@/lib/practice/practice-states'
 import { PracticeSession } from '@/lib/domain/practice'
+<<<<<<< HEAD
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
+=======
+import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay'
+>>>>>>> main
 
 interface PracticeMainContentProps {
   state: PracticeStoreState
@@ -31,7 +42,7 @@ interface PracticeMainContentProps {
   status: string
   isZenModeEnabled: boolean
   autoStartEnabled: boolean
-  setAutoStart: (enabled: boolean) => void
+  toggleAutoStart: (enabled: boolean) => void
   setPreviewExercise: (exercise: Exercise) => void
   currentNoteIndex: number
   targetNote: Note | undefined
@@ -45,14 +56,18 @@ interface PracticeMainContentProps {
     isReady: boolean
     error: string | undefined
     containerRef: import('react').RefObject<HTMLDivElement | null>
+<<<<<<< HEAD
     scoreView: ScoreViewPort
+=======
+>>>>>>> main
   }
+  scoreView: ScoreViewPort
   handleRestart: () => void
   sessions: PracticeSession[]
   start: () => void
   stop: () => void
   onToggleZenMode: () => void
-  setNoteIndex: (index: number) => void
+  jumpToNote: (index: number) => void
 }
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
@@ -115,7 +130,7 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
     state,
     isZenModeEnabled,
     autoStartEnabled,
-    setAutoStart,
+    toggleAutoStart,
     practiceState,
     setPreviewExercise,
   } = props
@@ -124,7 +139,7 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
   return (
     <div className="space-y-6">
       {!isZenModeEnabled && (
-        <PracticeSettings autoStartEnabled={autoStartEnabled} onAutoStartChange={setAutoStart} />
+        <PracticeSettings autoStartEnabled={autoStartEnabled} onAutoStartChange={toggleAutoStart} />
       )}
       <ExerciseLibrary
         selectedId={practiceState?.exercise.id}
@@ -183,7 +198,7 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
           onToggleZenMode={onToggleZenMode}
           isZen={isZenModeEnabled}
           practiceState={practiceState}
-          setNoteIndex={props.setNoteIndex}
+          jumpToNote={props.jumpToNote}
         />
       )}
     </>
@@ -197,7 +212,7 @@ function QuickActionsView({
   onToggleZenMode,
   isZen,
   practiceState,
-  setNoteIndex,
+  jumpToNote,
 }: {
   status: string
   start: () => void
@@ -205,14 +220,14 @@ function QuickActionsView({
   onToggleZenMode: () => void
   isZen: boolean
   practiceState: PracticeState | undefined
-  setNoteIndex: (index: number) => void
+  jumpToNote: (index: number) => void
 }) {
   const onTogglePause = () => (status === 'listening' ? stop() : start())
   const onToggleZen = () => onToggleZenMode()
 
   const onRepeatNote = () => {
     if (practiceState) {
-      setNoteIndex(practiceState.currentIndex)
+      jumpToNote(practiceState.currentIndex)
     }
   }
 
@@ -223,7 +238,7 @@ function QuickActionsView({
        * In future iterations, this will be updated to identify the start of the
        * current measure using OSMD/domain metadata if available.
        */
-      setNoteIndex(0)
+      jumpToNote(0)
     }
   }
 
@@ -234,7 +249,7 @@ function QuickActionsView({
        * Always increments the index relative to the current logical position.
        */
       const nextIndex = practiceState.currentIndex + 1
-      setNoteIndex(nextIndex)
+      jumpToNote(nextIndex)
     }
   }
 

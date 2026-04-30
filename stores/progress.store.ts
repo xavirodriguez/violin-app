@@ -58,29 +58,6 @@ export interface ProgressSnapshot {
   lastSessionId: string
 }
 
-/**
- * Lifetime statistics for an individual exercise.
- *
- * @remarks
- * These metrics are used by the `ExerciseRecommender` to determine mastery
- * and suggest review cycles.
- *
- * @public
- */
-export interface ExerciseStats {
-  /** ID of the exercise. */
-  exerciseId: string
-  /** Total number of times this exercise was successfully completed. */
-  timesCompleted: number
-  /** Highest accuracy percentage ever recorded for this exercise. */
-  bestAccuracy: number
-  /** Rolling average of accuracy across all historical attempts. */
-  averageAccuracy: number
-  /** Fastest completion time ever recorded (ms). */
-  fastestCompletionMs: number
-  /** Unix timestamp of the most recent practice attempt. */
-  lastPracticedMs: number
-}
 
 /**
  * State structure for the Progress Store.

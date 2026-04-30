@@ -1,4 +1,4 @@
-import { ScoreViewPort } from '@/lib/ports/score-view.port';
+import { useOSMDSafe } from '@/hooks/use-osmd-safe';
 /**
  * Custom hook to manage keyboard shortcuts and cursor synchronization for the practice session.
  *
@@ -10,5 +10,5 @@ export declare function usePracticeUIEffects(params: {
     start: () => void;
     stop: () => void;
     setZenMode: (v: (prev: boolean) => boolean) => void;
-    scoreView: ScoreViewPort;
+    osmdHook: ReturnType<typeof useOSMDSafe>;
 }): void;

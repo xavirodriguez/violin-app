@@ -5,7 +5,6 @@
  * Refactored for branded types and strict validation.
  */
 
-import { NoteTechnique, Observation } from './technique-types'
 import { normalizeAccidental } from './domain/musical-domain'
 import { AppError, ERROR_CODES } from './errors/app-error'
 import type { Exercise, Note as TargetNote } from '@/lib/domain/exercise'

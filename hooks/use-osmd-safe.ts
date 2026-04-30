@@ -174,7 +174,11 @@ export function useOSMDSafe(
         highlightCurrentNote()
       },
       reset: resetCursor,
+<<<<<<< HEAD
       getCursorPosition: () => {
+=======
+      getCursorCoordinates: (noteIndex: number) => {
+>>>>>>> main
         if (!isReady || !containerRef.current) return undefined
 
         const containerRect = containerRef.current.getBoundingClientRect()
@@ -189,7 +193,7 @@ export function useOSMDSafe(
         return undefined
       },
     }),
-    [isReady, resetCursor, highlightCurrentNote],
+    [isReady, resetCursor, highlightCurrentNote, advanceCursor],
   )
 
   return {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import {
   createRawPitchStream,
   createPracticeEventPipeline,
@@ -8,7 +8,11 @@ import {
   type NoteStreamOptions,
 } from '@/lib/note-stream'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
+<<<<<<< HEAD
 import type { PracticeState, PracticeEvent } from '@/lib/domain/practice'
+=======
+import type { PracticeState, PracticeEvent } from '@/lib/practice-core'
+>>>>>>> main
 import type { Exercise } from '@/lib/domain/exercise'
 import { useProgressStore } from '@/stores/progress.store'
 
@@ -100,7 +104,7 @@ export function usePracticePipeline({
     audioLoop,
     detector,
     consumePipelineEvents,
-    practiceState?.exercise?.id,
+    practiceState?.exercise,
   ])
 }
 

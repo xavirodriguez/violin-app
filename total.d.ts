@@ -119,17 +119,6 @@ export declare function AchievementToast({ achievement, onDismiss, autoHideDurat
 export declare function AchievementNotificationManager(): import("react/jsx-runtime").JSX.Element;
 export {};
 
-// ===== types-docs/components/analytics-dashboard.d.ts =====
-
-/**
- * AnalyticsDashboard
- */
-/**
- * Lean orchestration component for the analytics dashboard.
- * Refactored for Senior Software Craftsmanship compliance.
- */
-export declare function AnalyticsDashboard(): import("react/jsx-runtime").JSX.Element;
-
 // ===== types-docs/components/analytics/AchievementsSection.d.ts =====
 
 import { Achievement } from '@/stores/analytics-store';
@@ -207,7 +196,7 @@ export {};
 
 // ===== types-docs/components/analytics/utils.d.ts =====
 
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from '@/stores/analytics-store';
 export declare function formatTime(seconds: number): string;
 export declare function getLast7DaysData(sessions: PracticeSession[]): {
     day: string;
@@ -231,6 +220,17 @@ export declare function getHeatmapData(lastSession: PracticeSession | undefined)
     cents: number;
 }[];
 export {};
+
+// ===== types-docs/components/analytics-dashboard.d.ts =====
+
+/**
+ * AnalyticsDashboard
+ */
+/**
+ * Lean orchestration component for the analytics dashboard.
+ * Refactored for Senior Software Craftsmanship compliance.
+ */
+export declare function AnalyticsDashboard(): import("react/jsx-runtime").JSX.Element;
 
 // ===== types-docs/components/debug/PitchDebugPanel.d.ts =====
 
@@ -356,6 +356,182 @@ export declare function OnboardingFlow({ onComplete }: {
     onComplete: () => void;
 }): import("react/jsx-runtime").JSX.Element;
 
+// ===== types-docs/components/practice/error-display.d.ts =====
+
+/**
+ * Display for application-level errors during practice.
+ */
+export declare function ErrorDisplay({ error, onReset }: {
+    error: string;
+    onReset: () => void;
+}): import("react/jsx-runtime").JSX.Element;
+
+// ===== types-docs/components/practice/exercise-library.d.ts =====
+
+import type { Exercise } from '@/lib/domain/musical-types';
+interface ExerciseLibraryProps {
+    selectedId?: string;
+    onSelect: (exercise: Exercise) => void;
+    disabled: boolean;
+}
+/**
+ * Library component for browsing and selecting exercises.
+ */
+export declare function ExerciseLibrary(props: ExerciseLibraryProps): import("react/jsx-runtime").JSX.Element;
+export {};
+
+// ===== types-docs/components/practice/practice-active-view.d.ts =====
+
+import type { TargetNote, DetectedNote } from '@/lib/practice-core';
+import type { Observation } from '@/lib/technique-types';
+/**
+ * View displaying real-time feedback and fingerboard visualization during practice.
+ */
+export declare function PracticeActiveView({ status, targetNote, targetPitchName, lastDetectedNote, liveObservations, holdDuration, perfectNoteStreak, zenMode, centsTolerance, }: {
+    status: string;
+    targetNote: TargetNote | undefined;
+    targetPitchName: string | undefined;
+    lastDetectedNote: DetectedNote | undefined;
+    liveObservations?: Observation[];
+    holdDuration?: number;
+    perfectNoteStreak?: number;
+    zenMode: boolean;
+    centsTolerance?: number;
+}): import("react/jsx-runtime").JSX.Element;
+
+// ===== types-docs/components/practice/practice-controls.d.ts =====
+
+import { PracticeStatus } from '@/lib/practice-core';
+interface PracticeControlsProps {
+    status: PracticeStatus;
+    hasExercise: boolean;
+    onStart: () => void;
+    onStop: () => void;
+    onRestart: () => void;
+    progress: number;
+    currentNoteIndex: number;
+    totalNotes: number;
+}
+/**
+ * Control bar for starting, stopping, and monitoring practice progress.
+ */
+export declare function PracticeControls(props: PracticeControlsProps): import("react/jsx-runtime").JSX.Element;
+export {};
+
+// ===== types-docs/components/practice/practice-header.d.ts =====
+
+/**
+ * Header component for the practice mode, displaying the exercise name.
+ */
+export declare function PracticeHeader({ exerciseName }: {
+    exerciseName?: string;
+}): import("react/jsx-runtime").JSX.Element;
+
+// ===== types-docs/components/practice/practice-main-content.d.ts =====
+
+/**
+ * PracticeMainContent
+ *
+ * Orchestrates the main views of the practice mode: settings, library, and active session view.
+ */
+import { Exercise, Note } from '@/lib/exercises/types';
+import { PracticeState, DetectedNote } from '@/lib/practice-core';
+import { Observation } from '@/lib/technique-types';
+import { useOSMDSafe } from '@/hooks/use-osmd-safe';
+import { PracticeStoreState } from '@/lib/practice/practice-states';
+import { PracticeSession } from '@/stores/analytics-store';
+interface PracticeMainContentProps {
+    state: PracticeStoreState;
+    practiceState: PracticeState | undefined;
+    status: string;
+    isZenModeEnabled: boolean;
+    autoStartEnabled: boolean;
+    setAutoStart: (enabled: boolean) => void;
+    setPreviewExercise: (exercise: Exercise) => void;
+    currentNoteIndex: number;
+    targetNote: Note | undefined;
+    targetPitchName: string | undefined;
+    lastDetectedNote: DetectedNote | undefined;
+    liveObservations: Observation[];
+    centsTolerance: number;
+    sheetMusicView: 'focused' | 'full';
+    setSheetMusicView: (view: 'focused' | 'full') => void;
+    osmdHook: ReturnType<typeof useOSMDSafe>;
+    handleRestart: () => void;
+    sessions: PracticeSession[];
+    start: () => void;
+    stop: () => void;
+    setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void;
+    setNoteIndex: (index: number) => void;
+}
+export declare function PracticeMainContent(props: PracticeMainContentProps): import("react/jsx-runtime").JSX.Element;
+export {};
+
+// ===== types-docs/components/practice/practice-settings.d.ts =====
+
+interface PracticeSettingsProps {
+    autoStartEnabled: boolean;
+    onAutoStartChange: (enabled: boolean) => void;
+}
+/**
+ * UI component for practice-specific settings like auto-start.
+ */
+export declare function PracticeSettings({ autoStartEnabled, onAutoStartChange }: PracticeSettingsProps): import("react/jsx-runtime").JSX.Element;
+export {};
+
+// ===== types-docs/components/practice/selection-prompt.d.ts =====
+
+/**
+ * SelectionPrompt
+ *
+ * Encourages the user to select an exercise when none is active.
+ */
+export declare function SelectionPrompt(): import("react/jsx-runtime").JSX.Element;
+
+// ===== types-docs/components/practice/sheet-music-container.d.ts =====
+
+/**
+ * SheetMusicContainer
+ *
+ * Manages the display and annotations for the exercise sheet music.
+ */
+import { PracticeState } from '@/lib/practice-core';
+import { useOSMDSafe } from '@/hooks/use-osmd-safe';
+interface SheetMusicContainerProps {
+    status: string;
+    sheetMusicView: 'focused' | 'full';
+    setSheetMusicView: (v: 'focused' | 'full') => void;
+    practiceState: PracticeState | undefined;
+    osmdHook: ReturnType<typeof useOSMDSafe>;
+    currentNoteIndex: number;
+}
+export declare function SheetMusicContainer(props: SheetMusicContainerProps): import("react/jsx-runtime").JSX.Element;
+export {};
+
+// ===== types-docs/components/practice/sheet-music-view.d.ts =====
+
+/**
+ * Display for musical notation using OpenSheetMusicDisplay.
+ */
+export declare function SheetMusicView({ musicXML, isReady, error, containerRef, }: {
+    musicXML?: string;
+    isReady: boolean;
+    error: string | undefined;
+    containerRef: React.RefObject<HTMLDivElement | null>;
+}): import("react/jsx-runtime").JSX.Element;
+
+// ===== types-docs/components/practice/view-toggle-button.d.ts =====
+
+/**
+ * ViewToggleButton
+ *
+ * Allows toggling between focused and full views of the sheet music.
+ */
+export declare function ViewToggleButton({ view, onToggle, }: {
+    view: 'focused' | 'full';
+    onToggle: () => void;
+}): import("react/jsx-runtime").JSX.Element;
+
 // ===== types-docs/components/practice-assistant.d.ts =====
 
 /**
@@ -374,7 +550,7 @@ export declare function PracticeAssistant(): import("react/jsx-runtime").JSX.Ele
 
 // ===== types-docs/components/practice-completion.d.ts =====
 
-import { type PracticeSession } from '@/lib/domain/practice-session';
+import { type PracticeSession } from '@/stores/analytics-store';
 interface PracticeCompletionProps {
     onRestart: () => void;
     sessionData: PracticeSession | undefined;
@@ -475,182 +651,6 @@ interface PracticeSummaryChartProps {
 export declare function PracticeSummaryChart({ noteAttempts }: PracticeSummaryChartProps): import("react/jsx-runtime").JSX.Element;
 export {};
 
-// ===== types-docs/components/practice/error-display.d.ts =====
-
-/**
- * Display for application-level errors during practice.
- */
-export declare function ErrorDisplay({ error, onReset }: {
-    error: string;
-    onReset: () => void;
-}): import("react/jsx-runtime").JSX.Element;
-
-// ===== types-docs/components/practice/exercise-library.d.ts =====
-
-import type { Exercise } from '@/lib/domain/musical-types';
-interface ExerciseLibraryProps {
-    selectedId?: string;
-    onSelect: (exercise: Exercise) => void;
-    disabled: boolean;
-}
-/**
- * Library component for browsing and selecting exercises.
- */
-export declare function ExerciseLibrary(props: ExerciseLibraryProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
-// ===== types-docs/components/practice/practice-active-view.d.ts =====
-
-import type { TargetNote, DetectedNote } from '@/lib/practice-core';
-import type { Observation } from '@/lib/technique-types';
-/**
- * View displaying real-time feedback and fingerboard visualization during practice.
- */
-export declare function PracticeActiveView({ status, targetNote, targetPitchName, lastDetectedNote, liveObservations, holdDuration, perfectNoteStreak, zenMode, centsTolerance, }: {
-    status: string;
-    targetNote: TargetNote | undefined;
-    targetPitchName: string | undefined;
-    lastDetectedNote: DetectedNote | undefined;
-    liveObservations?: Observation[];
-    holdDuration?: number;
-    perfectNoteStreak?: number;
-    zenMode: boolean;
-    centsTolerance?: number;
-}): import("react/jsx-runtime").JSX.Element;
-
-// ===== types-docs/components/practice/practice-controls.d.ts =====
-
-import { PracticeStatus } from '@/lib/practice-core';
-interface PracticeControlsProps {
-    status: PracticeStatus;
-    hasExercise: boolean;
-    onStart: () => void;
-    onStop: () => void;
-    onRestart: () => void;
-    progress: number;
-    currentNoteIndex: number;
-    totalNotes: number;
-}
-/**
- * Control bar for starting, stopping, and monitoring practice progress.
- */
-export declare function PracticeControls(props: PracticeControlsProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
-// ===== types-docs/components/practice/practice-header.d.ts =====
-
-/**
- * Header component for the practice mode, displaying the exercise name.
- */
-export declare function PracticeHeader({ exerciseName }: {
-    exerciseName?: string;
-}): import("react/jsx-runtime").JSX.Element;
-
-// ===== types-docs/components/practice/practice-main-content.d.ts =====
-
-/**
- * PracticeMainContent
- *
- * Orchestrates the main views of the practice mode: settings, library, and active session view.
- */
-import { Exercise, Note } from '@/lib/exercises/types';
-import { PracticeState, DetectedNote } from '@/lib/practice-core';
-import { Observation } from '@/lib/technique-types';
-import { useOSMDSafe } from '@/hooks/use-osmd-safe';
-import { PracticeStoreState } from '@/lib/practice/practice-states';
-import { PracticeSession } from '@/lib/domain/practice-session';
-interface PracticeMainContentProps {
-    state: PracticeStoreState;
-    practiceState: PracticeState | undefined;
-    status: string;
-    isZenModeEnabled: boolean;
-    autoStartEnabled: boolean;
-    setAutoStart: (enabled: boolean) => void;
-    setPreviewExercise: (exercise: Exercise) => void;
-    currentNoteIndex: number;
-    targetNote: Note | undefined;
-    targetPitchName: string | undefined;
-    lastDetectedNote: DetectedNote | undefined;
-    liveObservations: Observation[];
-    centsTolerance: number;
-    sheetMusicView: 'focused' | 'full';
-    setSheetMusicView: (view: 'focused' | 'full') => void;
-    osmdHook: ReturnType<typeof useOSMDSafe>;
-    handleRestart: () => void;
-    sessions: PracticeSession[];
-    start: () => void;
-    stop: () => void;
-    setIsZenModeEnabled: (enabled: boolean | ((prev: boolean) => boolean)) => void;
-    setNoteIndex: (index: number) => void;
-}
-export declare function PracticeMainContent(props: PracticeMainContentProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
-// ===== types-docs/components/practice/practice-settings.d.ts =====
-
-interface PracticeSettingsProps {
-    autoStartEnabled: boolean;
-    onAutoStartChange: (enabled: boolean) => void;
-}
-/**
- * UI component for practice-specific settings like auto-start.
- */
-export declare function PracticeSettings({ autoStartEnabled, onAutoStartChange }: PracticeSettingsProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
-// ===== types-docs/components/practice/selection-prompt.d.ts =====
-
-/**
- * SelectionPrompt
- *
- * Encourages the user to select an exercise when none is active.
- */
-export declare function SelectionPrompt(): import("react/jsx-runtime").JSX.Element;
-
-// ===== types-docs/components/practice/sheet-music-container.d.ts =====
-
-/**
- * SheetMusicContainer
- *
- * Manages the display and annotations for the exercise sheet music.
- */
-import { PracticeState } from '@/lib/practice-core';
-import { useOSMDSafe } from '@/hooks/use-osmd-safe';
-interface SheetMusicContainerProps {
-    status: string;
-    sheetMusicView: 'focused' | 'full';
-    setSheetMusicView: (v: 'focused' | 'full') => void;
-    practiceState: PracticeState | undefined;
-    osmdHook: ReturnType<typeof useOSMDSafe>;
-    currentNoteIndex: number;
-}
-export declare function SheetMusicContainer(props: SheetMusicContainerProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
-// ===== types-docs/components/practice/sheet-music-view.d.ts =====
-
-/**
- * Display for musical notation using OpenSheetMusicDisplay.
- */
-export declare function SheetMusicView({ musicXML, isReady, error, containerRef, }: {
-    musicXML?: string;
-    isReady: boolean;
-    error: string | undefined;
-    containerRef: React.RefObject<HTMLDivElement | null>;
-}): import("react/jsx-runtime").JSX.Element;
-
-// ===== types-docs/components/practice/view-toggle-button.d.ts =====
-
-/**
- * ViewToggleButton
- *
- * Allows toggling between focused and full views of the sheet music.
- */
-export declare function ViewToggleButton({ view, onToggle, }: {
-    view: 'focused' | 'full';
-    onToggle: () => void;
-}): import("react/jsx-runtime").JSX.Element;
-
 // ===== types-docs/components/settings-dialog.d.ts =====
 
 /**
@@ -675,6 +675,32 @@ interface SettingsDialogProps {
  */
 declare const SettingsDialog: FC<SettingsDialogProps>;
 export default SettingsDialog;
+
+// ===== types-docs/components/sheet-music.d.ts =====
+
+/**
+ * SheetMusic
+ * A presentation component for rendering the OSMD sheet music container.
+ */
+import React from 'react';
+/**
+ * Props for the SheetMusic component.
+ */
+interface SheetMusicProps {
+    /**
+     * A ref to the div element where OSMD will render the score.
+     */
+    containerRef: React.RefObject<HTMLDivElement | null>;
+    /** Indicates if the sheet music has finished rendering. */
+    isReady: boolean;
+    /** Error message to display if rendering fails. */
+    error: string | undefined;
+}
+/**
+ * Renders the visual container and loading/error states for sheet music.
+ */
+export declare function SheetMusic({ containerRef, isReady, error }: SheetMusicProps): import("react/jsx-runtime").JSX.Element;
+export {};
 
 // ===== types-docs/components/sheet-music-annotations.d.ts =====
 
@@ -794,32 +820,6 @@ interface SheetMusicDisplayProps {
 export declare function SheetMusicDisplay({ musicXML, initialOptions }: SheetMusicDisplayProps): import("react/jsx-runtime").JSX.Element;
 export {};
 
-// ===== types-docs/components/sheet-music.d.ts =====
-
-/**
- * SheetMusic
- * A presentation component for rendering the OSMD sheet music container.
- */
-import React from 'react';
-/**
- * Props for the SheetMusic component.
- */
-interface SheetMusicProps {
-    /**
-     * A ref to the div element where OSMD will render the score.
-     */
-    containerRef: React.RefObject<HTMLDivElement | null>;
-    /** Indicates if the sheet music has finished rendering. */
-    isReady: boolean;
-    /** Error message to display if rendering fails. */
-    error: string | undefined;
-}
-/**
- * Renders the visual container and loading/error states for sheet music.
- */
-export declare function SheetMusic({ containerRef, isReady, error }: SheetMusicProps): import("react/jsx-runtime").JSX.Element;
-export {};
-
 // ===== types-docs/components/theme-provider.d.ts =====
 
 import { type ThemeProviderProps } from 'next-themes';
@@ -903,7 +903,7 @@ export declare function TunerMode(): import("react/jsx-runtime").JSX.Element;
 import * as React from 'react';
 import { type VariantProps } from 'class-variance-authority';
 declare const badgeVariants: (props?: ({
-    variant?: "default" | "outline" | "destructive" | "secondary" | null | undefined;
+    variant?: "default" | "destructive" | "outline" | "secondary" | null | undefined;
 } & import("class-variance-authority/types").ClassProp) | undefined) => string;
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
 }
@@ -915,7 +915,7 @@ export { Badge, badgeVariants };
 import * as React from 'react';
 import { type VariantProps } from 'class-variance-authority';
 declare const buttonVariants: (props?: ({
-    variant?: "default" | "link" | "outline" | "destructive" | "secondary" | "ghost" | null | undefined;
+    variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
     size?: "default" | "icon" | "sm" | "lg" | "icon-sm" | "icon-lg" | null | undefined;
 } & import("class-variance-authority/types").ClassProp) | undefined) => string;
 /**
@@ -1136,18 +1136,6 @@ declare function TabsTrigger({ className, ...props }: React.ComponentProps<typeo
 declare function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>): import("react/jsx-runtime").JSX.Element;
 export { Tabs, TabsList, TabsTrigger, TabsContent };
 
-// ===== types-docs/components/ui/toggle-group.d.ts =====
-
-import * as React from 'react';
-import { type VariantProps } from 'class-variance-authority';
-import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group';
-import { toggleVariants } from '@/components/ui/toggle';
-declare function ToggleGroup({ className, variant, size, spacing, children, ...props }: React.ComponentProps<typeof ToggleGroupPrimitive.Root> & VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-}): import("react/jsx-runtime").JSX.Element;
-declare function ToggleGroupItem({ className, children, variant, size, ...props }: React.ComponentProps<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>): import("react/jsx-runtime").JSX.Element;
-export { ToggleGroup, ToggleGroupItem };
-
 // ===== types-docs/components/ui/toggle.d.ts =====
 
 import * as React from 'react';
@@ -1159,6 +1147,18 @@ declare const toggleVariants: (props?: ({
 } & import("class-variance-authority/types").ClassProp) | undefined) => string;
 declare function Toggle({ className, variant, size, ...props }: React.ComponentProps<typeof TogglePrimitive> & VariantProps<typeof toggleVariants>): import("react/jsx-runtime").JSX.Element;
 export { Toggle, toggleVariants };
+
+// ===== types-docs/components/ui/toggle-group.d.ts =====
+
+import * as React from 'react';
+import { type VariantProps } from 'class-variance-authority';
+import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group';
+import { toggleVariants } from '@/components/ui/toggle';
+declare function ToggleGroup({ className, variant, size, spacing, children, ...props }: React.ComponentProps<typeof ToggleGroupPrimitive.Root> & VariantProps<typeof toggleVariants> & {
+    spacing?: number;
+}): import("react/jsx-runtime").JSX.Element;
+declare function ToggleGroupItem({ className, children, variant, size, ...props }: React.ComponentProps<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>): import("react/jsx-runtime").JSX.Element;
+export { ToggleGroup, ToggleGroupItem };
 
 // ===== types-docs/components/ui/tooltip.d.ts =====
 
@@ -1251,7 +1251,6 @@ export declare function useExerciseLibrary(): {
  * A custom React hook for safely initializing and managing OpenSheetMusicDisplay (OSMD) instances.
  */
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
-import { ScoreViewPort } from '@/lib/ports/score-view.port';
 /**
  * Hook for safely managing OpenSheetMusicDisplay instances.
  * Refactored for documented lifecycle behavior and null elimination.
@@ -1297,11 +1296,9 @@ export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
     /** Safe to call anytime - no-op when !isReady */
     advanceCursor: () => void;
     /** Highlights the note at the given index */
-    highlightCurrentNote: () => void;
+    highlightCurrentNote: (noteIndex: number) => void;
     /** Reference to the OSMD instance for advanced interactions */
     osmd: OpenSheetMusicDisplay | undefined;
-    /** Implementation of the ScoreViewPort for decoupled visual control */
-    scoreView: ScoreViewPort;
 };
 
 // ===== types-docs/hooks/use-osmd-safe.test.d.ts =====
@@ -1347,7 +1344,7 @@ interface LifecycleParams {
     osmdHook: ReturnType<typeof useOSMDSafe>;
     derived: DerivedPracticeState;
     autoStartEnabled: boolean;
-    lastLoadedAt: number;
+    loadId: number;
 }
 export declare function usePracticeLifecycle(params: LifecycleParams): void;
 export {};
@@ -1369,7 +1366,7 @@ export declare function usePracticePipeline({ practiceState, audioLoop, detector
 
 // ===== types-docs/hooks/use-practice-ui-effects.d.ts =====
 
-import { ScoreViewPort } from '@/lib/ports/score-view.port';
+import { useOSMDSafe } from '@/hooks/use-osmd-safe';
 /**
  * Custom hook to manage keyboard shortcuts and cursor synchronization for the practice session.
  *
@@ -1381,7 +1378,7 @@ export declare function usePracticeUIEffects(params: {
     start: () => void;
     stop: () => void;
     setZenMode: (v: (prev: boolean) => boolean) => void;
-    scoreView: ScoreViewPort;
+    osmdHook: ReturnType<typeof useOSMDSafe>;
 }): void;
 
 // ===== types-docs/hooks/use-window-size.d.ts =====
@@ -1393,7 +1390,7 @@ export declare function useWindowSize(): {
 
 // ===== types-docs/lib/achievement-image-generator.d.ts =====
 
-import type { PracticeSession } from '@/lib/domain/practice-session';
+import type { PracticeSession } from '@/stores/analytics-store';
 /**
  * Generates a shareable image for exercise completion.
  * Decomposed into focused helpers for Senior Software Craftsmanship.
@@ -1885,8 +1882,8 @@ export declare const PracticeContractV1: z.ZodObject<{
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -1910,8 +1907,8 @@ export declare const PracticeContractV1: z.ZodObject<{
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -1937,18 +1934,17 @@ export declare const PracticeContractV1: z.ZodObject<{
         accuracy: z.ZodNumber;
         averageCents: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -1969,24 +1965,24 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }, {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -2007,26 +2003,27 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }>;
 }, "strip", z.ZodTypeAny, {
+    schemaVersion: 1;
     session: {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -2047,27 +2044,27 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     };
-    schemaVersion: 1;
 }, {
+    schemaVersion: 1;
     session: {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -2088,13 +2085,13 @@ export declare const PracticeContractV1: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     };
-    schemaVersion: 1;
 }>;
 
 // ===== types-docs/lib/contracts/v1/progress.contract.d.ts =====
@@ -2799,61 +2796,6 @@ export interface TunerStore {
     setSensitivity: (sensitivity: number) => void;
 }
 
-// ===== types-docs/lib/domain/practice-session.d.ts =====
-
-import { NoteTechnique } from '../technique-types';
-/**
- * Summary of technical performance for a note, focused on MVP priorities.
- */
-export interface NoteTechniqueSummary {
-    pitchStability: {
-        settlingStdCents: number;
-        globalStdCents: number;
-    };
-    resonance: {
-        rmsBeatingScore: number;
-    };
-    attackRelease?: {
-        attackTimeMs: number;
-    };
-    rhythm?: {
-        onsetErrorMs: number;
-    };
-}
-/**
- * Result of practicing a single note.
- * Can represent a note in progress or a completed one.
- */
-export interface NoteResult {
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    /** Optional because it's only available once the note is completed. */
-    timeToCompleteMs?: number;
-    averageCents: number;
-    wasInTune: boolean;
-    /** Full technique data if available, or summary for persistence. */
-    technique?: NoteTechnique | NoteTechniqueSummary;
-}
-/**
- * Canonical model for a practice session.
- * Used for live tracking, analytics, and persistence.
- */
-export interface PracticeSession {
-    id: string;
-    startTimeMs: number;
-    endTimeMs: number;
-    durationMs: number;
-    exerciseId: string;
-    exerciseName: string;
-    mode: 'tuner' | 'practice';
-    noteResults: NoteResult[];
-    notesAttempted: number;
-    notesCompleted: number;
-    accuracy: number;
-    averageCents: number;
-}
-
 // ===== types-docs/lib/domain/type-guards.d.ts =====
 
 /**
@@ -3186,7 +3128,7 @@ export declare function validateExercise(exercise: unknown): Exercise;
 
 // ===== types-docs/lib/export/progress-exporter.d.ts =====
 
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from '@/stores/analytics-store';
 /**
  * Generates a CSV string from an array of practice sessions.
  *
@@ -4159,431 +4101,6 @@ export interface AudioLoopPort {
     start(onFrame: (frame: Float32Array) => void, signal: AbortSignal): Promise<void>;
 }
 
-// ===== types-docs/lib/ports/score-view.port.d.ts =====
-
-/**
- * Port for managing the visual representation of a musical score.
- *
- * @remarks
- * This interface abstracts the underlying sheet music rendering engine (e.g., OSMD, VexFlow, SVG),
- * allowing the application logic to control the visual state without being coupled to a specific
- * library's API or DOM structure.
- *
- * @public
- */
-export interface ScoreViewPort {
-    /**
-     * Indicates if the score view is initialized and ready for interaction.
-     */
-    readonly isReady: boolean;
-    /**
-     * Synchronizes the visual state of the score (cursor, highlights, scroll) with the current practice note.
-     *
-     * @param noteIndex - The index of the note in the exercise to highlight/focus.
-     *
-     * @remarks
-     * This method should encapsulate:
-     * 1. Moving the visual cursor to the correct position.
-     * 2. Highlighting the current note.
-     * 3. Ensuring the current note is visible in the viewport (scrolling).
-     */
-    sync(noteIndex: number): void;
-    /**
-     * Resets the visual state to the beginning of the score.
-     */
-    reset(): void;
-}
-
-// ===== types-docs/lib/practice-core.d.ts =====
-
-/**
- * This file contains the pure, side-effect-free core logic for the violin practice mode.
- * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
- * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
- * Refactored for branded types and strict validation.
- */
-import { NoteTechnique, Observation } from './technique-types';
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types';
-export type { TargetNote };
-/**
- * A valid note name in scientific pitch notation.
- *
- * @example "C4", "F#5", "Bb3"
- * @remarks Pattern: `^[A-G][#b]?[0-8]$`
- */
-export type NoteName = string & {
-    readonly __brand: unique symbol;
-};
-/**
- * Type guard to validate note name format.
- *
- * @param name - The string to validate.
- *
- * @remarks
- * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
- */
-export declare function assertValidNoteName(name: string): asserts name is NoteName;
-/**
- * Represents a musical note with properties derived from its frequency.
- */
-export declare class MusicalNote {
-    readonly frequency: number;
-    readonly midiNumber: number;
-    readonly noteName: string;
-    readonly octave: number;
-    readonly centsDeviation: number;
-    private constructor();
-    isEnharmonic(other: MusicalNote): boolean;
-    static fromFrequency(frequency: number): MusicalNote;
-    static fromMidi(midiNumber: number): MusicalNote;
-    /**
-     * Parses a note name in scientific pitch notation.
-     *
-     * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
-     * @returns A MusicalNote instance
-     * @throws {@link AppError} with code `NOTE_PARSING_FAILED` if format is invalid
-     */
-    static fromName(fullName: NoteName): MusicalNote;
-    get nameWithOctave(): NoteName;
-}
-/**
- * Defines the tolerance boundaries for matching a note.
- */
-export interface MatchHysteresis {
-    enter: number;
-    exit: number;
-}
-/** Represents a note detected from the user's microphone input. */
-export interface DetectedNote {
-    pitch: string;
-    pitchHz: number;
-    cents: number;
-    timestamp: number;
-    confidence: number;
-}
-/** The status of the practice session. */
-export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed';
-/** The complete, self-contained state of the practice session. */
-export interface PracticeState {
-    status: PracticeStatus;
-    exercise: Exercise;
-    currentIndex: number;
-    detectionHistory: readonly DetectedNote[];
-    holdDuration?: number;
-    lastObservations?: Observation[];
-    perfectNoteStreak: number;
-}
-/** Events that can modify the practice state. */
-export type PracticeEvent = {
-    type: 'START';
-    payload?: {
-        startIndex?: number;
-    };
-} | {
-    type: 'STOP';
-} | {
-    type: 'RESET';
-} | {
-    type: 'NOTE_DETECTED';
-    payload: DetectedNote;
-} | {
-    type: 'HOLDING_NOTE';
-    payload: {
-        duration: number;
-    };
-} | {
-    type: 'NOTE_MATCHED';
-    payload?: {
-        technique: NoteTechnique;
-        observations?: Observation[];
-        isPerfect?: boolean;
-    };
-} | {
-    type: 'NO_NOTE_DETECTED';
-};
-/**
- * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
- *
- * @param pitch - The pitch object from a `TargetNote`.
- * @returns A standardized branded note name string like `"C#4"`.
- */
-export declare function formatPitchName(pitch: TargetNote['pitch']): NoteName;
-/**
- * Checks if a detected note matches a target note within a specified tolerance.
- * Short-circuits if target or detected note is undefined.
- */
-export declare function isMatch(params: {
-    target: TargetNote | undefined;
-    detected: DetectedNote | undefined;
-    tolerance?: number | MatchHysteresis;
-    matchStatus?: 'initial' | 'maintaining';
-}): boolean;
-/**
- * Entry point for entering the matched state.
- */
-export declare function isNewMatch(params: {
-    target: TargetNote | undefined;
-    detected: DetectedNote | undefined;
-    tolerance?: number | MatchHysteresis;
-}): boolean;
-/**
- * Entry point for maintaining the matched state.
- */
-export declare function isStillMatched(params: {
-    target: TargetNote | undefined;
-    detected: DetectedNote | undefined;
-    tolerance?: number | MatchHysteresis;
-}): boolean;
-/**
- * The core reducer for the practice mode, handling all state transitions.
- */
-export declare function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState;
-
-// ===== types-docs/lib/practice-core.test.d.ts =====
-
-export {};
-
-// ===== types-docs/lib/practice-engine/engine.d.ts =====
-
-import { PracticeEngineEvent } from './engine.types';
-import { AudioLoopPort, PitchDetectorPort } from './engine.ports';
-import { Exercise } from '../exercises/types';
-import { EngineState } from './engine.state';
-import { PracticeReducer } from './engine.reducer';
-import { NoteTechnique, Observation } from '../technique-types';
-/**
- * Configuration context for the {@link PracticeEngine}.
- *
- * @public
- */
-export interface PracticeEngineContext {
-    /** Source of raw audio frames. */
-    audio: AudioLoopPort;
-    /** Algorithm used to detect pitch and confidence. */
-    pitch: PitchDetectorPort;
-    /** The musical exercise being practiced. */
-    exercise: Exercise;
-    /** Optional custom reducer for state transitions. Defaults to {@link engineReducer}. */
-    reducer?: PracticeReducer;
-    /** Optional cents tolerance override. */
-    centsTolerance?: number;
-    /** The index of the note to start practicing from. */
-    initialNoteIndex?: number;
-}
-/**
- * Interface for the core musical practice engine.
- *
- * @public
- */
-export interface PracticeEngine {
-    /**
-     * Starts the asynchronous engine loop.
-     *
-     * @param signal - An {@link AbortSignal} to terminate the loop.
-     * @returns An async iterator yielding musical events in real-time.
-     */
-    start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent>;
-    /**
-     * Immediately stops the engine and releases internal resources.
-     */
-    stop(): void;
-    /**
-     * Retrieves the current internal state of the engine.
-     */
-    getState(): EngineState;
-}
-/**
- * Factory function to create a new {@link PracticeEngine} instance.
- *
- * @param ctx - The execution context.
- * @returns A new PracticeEngine instance.
- * @public
- */
-export declare function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine;
-/**
- * Calculates adaptive difficulty parameters based on performance history.
- *
- * @param perfectNoteStreak - Current streak of perfect notes.
- * @returns Object containing intonation tolerance and required hold duration.
- * @internal
- */
-/** @internal */
-export declare function calculateAdaptiveDifficulty(perfectNoteStreak: number): {
-    centsTolerance: number;
-    requiredHoldTime: number;
-};
-/** @internal */
-export declare function mapMatchedEvent(payload: {
-    technique?: NoteTechnique;
-    observations?: Observation[];
-    isPerfect?: boolean;
-}): PracticeEngineEvent;
-
-// ===== types-docs/lib/practice-engine/engine.ports.d.ts =====
-
-import { EngineState } from './engine.state';
-import { AudioLoopPort as GlobalAudioLoopPort, PitchDetectionPort as GlobalPitchDetectionPort } from '../ports/audio.port';
-/**
- * Port for retrieving raw audio frames from an input source.
- *
- * @public
- */
-export type AudioLoopPort = GlobalAudioLoopPort;
-/**
- * Port for pitch detection and volume analysis.
- *
- * @public
- */
-export type PitchDetectorPort = GlobalPitchDetectionPort;
-/**
- * Interface for controlling sheet music visual feedback.
- *
- * @public
- */
-export interface ScoreCursorPort {
-    /** Moves the active cursor to the specified note index. */
-    moveTo(index: number): void;
-    /** Highlights the note at the specified index. */
-    highlight(index: number): void;
-}
-/**
- * State synchronization port for the engine.
- *
- * @public
- */
-export interface PracticeStatePort {
-    /** Retrieves the current persistent state. */
-    getState(): EngineState;
-    /** Atomically updates the state with a new value. */
-    update(next: EngineState): void;
-}
-
-// ===== types-docs/lib/practice-engine/engine.reducer.d.ts =====
-
-import { EngineState } from './engine.state';
-import { PracticeEngineEvent } from './engine.types';
-/**
- * Pure reducer function for the {@link PracticeEngine} state.
- *
- * @public
- */
-export type PracticeReducer = (state: EngineState, event: PracticeEngineEvent) => EngineState;
-/**
- * Reducer for the musical practice engine, handling transitions between states.
- *
- * @remarks
- * This implementation uses a record-based handler map to ensure the function
- * stays within the recommended line limit while being easily extensible.
- *
- * @param state - Current engine state.
- * @param event - The event to process.
- * @returns The next engine state.
- * @public
- */
-export declare const engineReducer: PracticeReducer;
-
-// ===== types-docs/lib/practice-engine/engine.state.d.ts =====
-
-import { EngineStatus, Observation, NoteTechnique } from './engine.types';
-/**
- * The complete, reactive state of a {@link PracticeEngine} session.
- *
- * @public
- */
-export interface EngineState {
-    /** The current status of the engine loop. */
-    status: EngineStatus;
-    /** The zero-based index of the note currently being practiced. */
-    currentNoteIndex: number;
-    /** The total number of notes in the active exercise. */
-    scoreLength: number;
-    /** High-frequency observations for the currently detected pitch. */
-    liveObservations: Observation[];
-    /** The technical metrics of the most recently matched note. */
-    lastTechnique?: NoteTechnique;
-    /** Number of consecutive notes that met the 'perfect' threshold. */
-    perfectNoteStreak: number;
-}
-/**
- * Default starting state for a new engine instance.
- *
- * @public
- */
-export declare const INITIAL_ENGINE_STATE: EngineState;
-
-// ===== types-docs/lib/practice-engine/engine.types.d.ts =====
-
-import { NoteTechnique, Observation } from '../technique-types';
-import { TargetNote, DetectedNote } from '../practice-core';
-import { RawPitchEvent } from '../note-stream';
-export type { NoteTechnique, Observation, TargetNote, RawPitchEvent, DetectedNote };
-/**
- * Valid statuses for the internal practice engine.
- *
- * @public
- */
-export type EngineStatus = 'idle' | 'ready' | 'active' | 'completed';
-/**
- * Payload for the NOTE_DETECTED event.
- *
- * @public
- */
-export type NoteDetectedPayload = DetectedNote;
-/**
- * Payload for the HOLDING_NOTE event.
- *
- * @public
- */
-export interface HoldingNotePayload {
-    /** The total duration in milliseconds the note has been held. */
-    duration: number;
-}
-/**
- * Payload for the NOTE_MATCHED event.
- *
- * @public
- */
-export interface NoteMatchedPayload {
-    /** Technical analysis of the matched note. */
-    technique: NoteTechnique;
-    /** Pedagogical observations generated from the analysis. */
-    observations: Observation[];
-    /** Whether the note met the 'perfect' threshold for streak counting. */
-    isPerfect: boolean;
-}
-/**
- * Discriminated union of all possible events emitted by the PracticeEngine.
- *
- * @public
- */
-export type PracticeEngineEvent = {
-    type: 'NOTE_DETECTED';
-    payload: NoteDetectedPayload;
-} | {
-    type: 'HOLDING_NOTE';
-    payload: HoldingNotePayload;
-} | {
-    type: 'NOTE_MATCHED';
-    payload: NoteMatchedPayload;
-} | {
-    type: 'NO_NOTE';
-} | {
-    type: 'SESSION_COMPLETED';
-};
-/**
- * Represents a note that has been fully processed and analyzed by the engine.
- *
- * @public
- */
-export interface CompletedNote {
-    /** The zero-based index of the note in the exercise. */
-    index: number;
-    /** The final technical metrics for this note. */
-    technique: NoteTechnique;
-    /** Any feedback observations for this note. */
-    observations: Observation[];
-}
-
 // ===== types-docs/lib/practice/practice-event-sink.d.ts =====
 
 import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
@@ -5008,6 +4525,396 @@ export declare function runPracticeSession(deps: SessionRunnerDependencies): Pro
 
 export {};
 
+// ===== types-docs/lib/practice-core.d.ts =====
+
+/**
+ * This file contains the pure, side-effect-free core logic for the violin practice mode.
+ * It defines the state, events, and a reducer function to handle state transitions in an immutable way.
+ * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
+ * Refactored for branded types and strict validation.
+ */
+import { NoteTechnique, Observation } from './technique-types';
+import type { Exercise, Note as TargetNote } from '@/lib/exercises/types';
+export type { TargetNote };
+/**
+ * A valid note name in scientific pitch notation.
+ *
+ * @example "C4", "F#5", "Bb3"
+ * @remarks Pattern: `^[A-G][#b]?[0-8]$`
+ */
+export type NoteName = string & {
+    readonly __brand: unique symbol;
+};
+/**
+ * Type guard to validate note name format.
+ *
+ * @param name - The string to validate.
+ *
+ * @remarks
+ * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
+ */
+export declare function assertValidNoteName(name: string): asserts name is NoteName;
+/**
+ * Represents a musical note with properties derived from its frequency.
+ */
+export declare class MusicalNote {
+    readonly frequency: number;
+    readonly midiNumber: number;
+    readonly noteName: string;
+    readonly octave: number;
+    readonly centsDeviation: number;
+    private constructor();
+    isEnharmonic(other: MusicalNote): boolean;
+    static fromFrequency(frequency: number): MusicalNote;
+    static fromMidi(midiNumber: number): MusicalNote;
+    /**
+     * Parses a note name in scientific pitch notation.
+     *
+     * @param fullName - A valid note name (e.g., "C4", "F#5", "Bb3")
+     * @returns A MusicalNote instance
+     * @throws {@link AppError} with code `NOTE_PARSING_FAILED` if format is invalid
+     */
+    static fromName(fullName: NoteName): MusicalNote;
+    get nameWithOctave(): NoteName;
+}
+/**
+ * Defines the tolerance boundaries for matching a note.
+ */
+export interface MatchHysteresis {
+    enter: number;
+    exit: number;
+}
+/** Represents a note detected from the user's microphone input. */
+export interface DetectedNote {
+    pitch: string;
+    pitchHz: number;
+    cents: number;
+    timestamp: number;
+    confidence: number;
+}
+/** The status of the practice session. */
+export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed';
+/** The complete, self-contained state of the practice session. */
+export interface PracticeState {
+    status: PracticeStatus;
+    exercise: Exercise;
+    currentIndex: number;
+    detectionHistory: readonly DetectedNote[];
+    holdDuration?: number;
+    lastObservations?: Observation[];
+    perfectNoteStreak: number;
+}
+/** Events that can modify the practice state. */
+export type PracticeEvent = {
+    type: 'START';
+    payload?: {
+        startIndex?: number;
+    };
+} | {
+    type: 'STOP';
+} | {
+    type: 'RESET';
+} | {
+    type: 'NOTE_DETECTED';
+    payload: DetectedNote;
+} | {
+    type: 'HOLDING_NOTE';
+    payload: {
+        duration: number;
+    };
+} | {
+    type: 'NOTE_MATCHED';
+    payload?: {
+        technique: NoteTechnique;
+        observations?: Observation[];
+        isPerfect?: boolean;
+    };
+} | {
+    type: 'NO_NOTE_DETECTED';
+};
+/**
+ * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
+ *
+ * @param pitch - The pitch object from a `TargetNote`.
+ * @returns A standardized branded note name string like `"C#4"`.
+ */
+export declare function formatPitchName(pitch: TargetNote['pitch']): NoteName;
+/**
+ * Checks if a detected note matches a target note within a specified tolerance.
+ * Short-circuits if target or detected note is undefined.
+ */
+export declare function isMatch(params: {
+    target: TargetNote | undefined;
+    detected: DetectedNote | undefined;
+    tolerance?: number | MatchHysteresis;
+    matchStatus?: 'initial' | 'maintaining';
+}): boolean;
+/**
+ * Entry point for entering the matched state.
+ */
+export declare function isNewMatch(params: {
+    target: TargetNote | undefined;
+    detected: DetectedNote | undefined;
+    tolerance?: number | MatchHysteresis;
+}): boolean;
+/**
+ * Entry point for maintaining the matched state.
+ */
+export declare function isStillMatched(params: {
+    target: TargetNote | undefined;
+    detected: DetectedNote | undefined;
+    tolerance?: number | MatchHysteresis;
+}): boolean;
+/**
+ * The core reducer for the practice mode, handling all state transitions.
+ */
+export declare function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState;
+
+// ===== types-docs/lib/practice-core.test.d.ts =====
+
+export {};
+
+// ===== types-docs/lib/practice-engine/engine.d.ts =====
+
+import { PracticeEngineEvent } from './engine.types';
+import { AudioLoopPort, PitchDetectorPort } from './engine.ports';
+import { Exercise } from '../exercises/types';
+import { EngineState } from './engine.state';
+import { PracticeReducer } from './engine.reducer';
+import { NoteTechnique, Observation } from '../technique-types';
+/**
+ * Configuration context for the {@link PracticeEngine}.
+ *
+ * @public
+ */
+export interface PracticeEngineContext {
+    /** Source of raw audio frames. */
+    audio: AudioLoopPort;
+    /** Algorithm used to detect pitch and confidence. */
+    pitch: PitchDetectorPort;
+    /** The musical exercise being practiced. */
+    exercise: Exercise;
+    /** Optional custom reducer for state transitions. Defaults to {@link engineReducer}. */
+    reducer?: PracticeReducer;
+    /** Optional cents tolerance override. */
+    centsTolerance?: number;
+    /** The index of the note to start practicing from. */
+    initialNoteIndex?: number;
+}
+/**
+ * Interface for the core musical practice engine.
+ *
+ * @public
+ */
+export interface PracticeEngine {
+    /**
+     * Starts the asynchronous engine loop.
+     *
+     * @param signal - An {@link AbortSignal} to terminate the loop.
+     * @returns An async iterator yielding musical events in real-time.
+     */
+    start(signal: AbortSignal): AsyncIterable<PracticeEngineEvent>;
+    /**
+     * Immediately stops the engine and releases internal resources.
+     */
+    stop(): void;
+    /**
+     * Retrieves the current internal state of the engine.
+     */
+    getState(): EngineState;
+}
+/**
+ * Factory function to create a new {@link PracticeEngine} instance.
+ *
+ * @param ctx - The execution context.
+ * @returns A new PracticeEngine instance.
+ * @public
+ */
+export declare function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine;
+/**
+ * Calculates adaptive difficulty parameters based on performance history.
+ *
+ * @param perfectNoteStreak - Current streak of perfect notes.
+ * @returns Object containing intonation tolerance and required hold duration.
+ * @internal
+ */
+/** @internal */
+export declare function calculateAdaptiveDifficulty(perfectNoteStreak: number): {
+    centsTolerance: number;
+    requiredHoldTime: number;
+};
+/** @internal */
+export declare function mapMatchedEvent(payload: {
+    technique?: NoteTechnique;
+    observations?: Observation[];
+    isPerfect?: boolean;
+}): PracticeEngineEvent;
+
+// ===== types-docs/lib/practice-engine/engine.ports.d.ts =====
+
+import { EngineState } from './engine.state';
+import { AudioLoopPort as GlobalAudioLoopPort, PitchDetectionPort as GlobalPitchDetectionPort } from '../ports/audio.port';
+/**
+ * Port for retrieving raw audio frames from an input source.
+ *
+ * @public
+ */
+export type AudioLoopPort = GlobalAudioLoopPort;
+/**
+ * Port for pitch detection and volume analysis.
+ *
+ * @public
+ */
+export type PitchDetectorPort = GlobalPitchDetectionPort;
+/**
+ * Interface for controlling sheet music visual feedback.
+ *
+ * @public
+ */
+export interface ScoreCursorPort {
+    /** Moves the active cursor to the specified note index. */
+    moveTo(index: number): void;
+    /** Highlights the note at the specified index. */
+    highlight(index: number): void;
+}
+/**
+ * State synchronization port for the engine.
+ *
+ * @public
+ */
+export interface PracticeStatePort {
+    /** Retrieves the current persistent state. */
+    getState(): EngineState;
+    /** Atomically updates the state with a new value. */
+    update(next: EngineState): void;
+}
+
+// ===== types-docs/lib/practice-engine/engine.reducer.d.ts =====
+
+import { EngineState } from './engine.state';
+import { PracticeEngineEvent } from './engine.types';
+/**
+ * Pure reducer function for the {@link PracticeEngine} state.
+ *
+ * @public
+ */
+export type PracticeReducer = (state: EngineState, event: PracticeEngineEvent) => EngineState;
+/**
+ * Reducer for the musical practice engine, handling transitions between states.
+ *
+ * @remarks
+ * This implementation uses a record-based handler map to ensure the function
+ * stays within the recommended line limit while being easily extensible.
+ *
+ * @param state - Current engine state.
+ * @param event - The event to process.
+ * @returns The next engine state.
+ * @public
+ */
+export declare const engineReducer: PracticeReducer;
+
+// ===== types-docs/lib/practice-engine/engine.state.d.ts =====
+
+import { EngineStatus, Observation, NoteTechnique } from './engine.types';
+/**
+ * The complete, reactive state of a {@link PracticeEngine} session.
+ *
+ * @public
+ */
+export interface EngineState {
+    /** The current status of the engine loop. */
+    status: EngineStatus;
+    /** The zero-based index of the note currently being practiced. */
+    currentNoteIndex: number;
+    /** The total number of notes in the active exercise. */
+    scoreLength: number;
+    /** High-frequency observations for the currently detected pitch. */
+    liveObservations: Observation[];
+    /** The technical metrics of the most recently matched note. */
+    lastTechnique?: NoteTechnique;
+    /** Number of consecutive notes that met the 'perfect' threshold. */
+    perfectNoteStreak: number;
+}
+/**
+ * Default starting state for a new engine instance.
+ *
+ * @public
+ */
+export declare const INITIAL_ENGINE_STATE: EngineState;
+
+// ===== types-docs/lib/practice-engine/engine.types.d.ts =====
+
+import { NoteTechnique, Observation } from '../technique-types';
+import { TargetNote, DetectedNote } from '../practice-core';
+import { RawPitchEvent } from '../note-stream';
+export type { NoteTechnique, Observation, TargetNote, RawPitchEvent, DetectedNote };
+/**
+ * Valid statuses for the internal practice engine.
+ *
+ * @public
+ */
+export type EngineStatus = 'idle' | 'ready' | 'active' | 'completed';
+/**
+ * Payload for the NOTE_DETECTED event.
+ *
+ * @public
+ */
+export type NoteDetectedPayload = DetectedNote;
+/**
+ * Payload for the HOLDING_NOTE event.
+ *
+ * @public
+ */
+export interface HoldingNotePayload {
+    /** The total duration in milliseconds the note has been held. */
+    duration: number;
+}
+/**
+ * Payload for the NOTE_MATCHED event.
+ *
+ * @public
+ */
+export interface NoteMatchedPayload {
+    /** Technical analysis of the matched note. */
+    technique: NoteTechnique;
+    /** Pedagogical observations generated from the analysis. */
+    observations: Observation[];
+    /** Whether the note met the 'perfect' threshold for streak counting. */
+    isPerfect: boolean;
+}
+/**
+ * Discriminated union of all possible events emitted by the PracticeEngine.
+ *
+ * @public
+ */
+export type PracticeEngineEvent = {
+    type: 'NOTE_DETECTED';
+    payload: NoteDetectedPayload;
+} | {
+    type: 'HOLDING_NOTE';
+    payload: HoldingNotePayload;
+} | {
+    type: 'NOTE_MATCHED';
+    payload: NoteMatchedPayload;
+} | {
+    type: 'NO_NOTE';
+} | {
+    type: 'SESSION_COMPLETED';
+};
+/**
+ * Represents a note that has been fully processed and analyzed by the engine.
+ *
+ * @public
+ */
+export interface CompletedNote {
+    /** The zero-based index of the note in the exercise. */
+    index: number;
+    /** The final technical metrics for this note. */
+    technique: NoteTechnique;
+    /** Any feedback observations for this note. */
+    observations: Observation[];
+}
+
 // ===== types-docs/lib/schemas/persistence.schema.d.ts =====
 
 import { z } from 'zod';
@@ -5191,8 +5098,8 @@ export declare const NoteResultSchema: z.ZodObject<{
     noteIndex: number;
     targetPitch: string;
     wasInTune: boolean;
-    attempts: number;
     averageCents: number;
+    attempts: number;
     timeToCompleteMs?: number | undefined;
     technique?: {
         vibrato: {
@@ -5216,8 +5123,8 @@ export declare const NoteResultSchema: z.ZodObject<{
     noteIndex: number;
     targetPitch: string;
     wasInTune: boolean;
-    attempts: number;
     averageCents: number;
+    attempts: number;
     timeToCompleteMs?: number | undefined;
     technique?: {
         vibrato: {
@@ -5344,8 +5251,8 @@ export declare const PracticeSessionSchema: z.ZodObject<{
         noteIndex: number;
         targetPitch: string;
         wasInTune: boolean;
-        attempts: number;
         averageCents: number;
+        attempts: number;
         timeToCompleteMs?: number | undefined;
         technique?: {
             vibrato: {
@@ -5369,8 +5276,8 @@ export declare const PracticeSessionSchema: z.ZodObject<{
         noteIndex: number;
         targetPitch: string;
         wasInTune: boolean;
-        attempts: number;
         averageCents: number;
+        attempts: number;
         timeToCompleteMs?: number | undefined;
         technique?: {
             vibrato: {
@@ -5396,18 +5303,17 @@ export declare const PracticeSessionSchema: z.ZodObject<{
     accuracy: z.ZodNumber;
     averageCents: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    durationMs: number;
     accuracy: number;
     id: string;
     exerciseId: string;
     exerciseName: string;
-    mode: "tuner" | "practice";
+    mode: "practice" | "tuner";
     noteResults: {
         noteIndex: number;
         targetPitch: string;
         wasInTune: boolean;
-        attempts: number;
         averageCents: number;
+        attempts: number;
         timeToCompleteMs?: number | undefined;
         technique?: {
             vibrato: {
@@ -5428,24 +5334,24 @@ export declare const PracticeSessionSchema: z.ZodObject<{
             };
         } | undefined;
     }[];
+    durationMs: number;
     endTimeMs: number;
     startTimeMs: number;
-    averageCents: number;
     notesAttempted: number;
     notesCompleted: number;
+    averageCents: number;
 }, {
-    durationMs: number;
     accuracy: number;
     id: string;
     exerciseId: string;
     exerciseName: string;
-    mode: "tuner" | "practice";
+    mode: "practice" | "tuner";
     noteResults: {
         noteIndex: number;
         targetPitch: string;
         wasInTune: boolean;
-        attempts: number;
         averageCents: number;
+        attempts: number;
         timeToCompleteMs?: number | undefined;
         technique?: {
             vibrato: {
@@ -5466,11 +5372,12 @@ export declare const PracticeSessionSchema: z.ZodObject<{
             };
         } | undefined;
     }[];
+    durationMs: number;
     endTimeMs: number;
     startTimeMs: number;
-    averageCents: number;
     notesAttempted: number;
     notesCompleted: number;
+    averageCents: number;
 }>;
 /**
  * Zod schema for validating lifetime statistics for an individual exercise.
@@ -5923,8 +5830,8 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -5948,8 +5855,8 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -5975,18 +5882,17 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
         accuracy: z.ZodNumber;
         averageCents: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -6007,24 +5913,24 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }, {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -6045,26 +5951,26 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     sessions: {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -6085,26 +5991,26 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }[];
 }, {
     sessions: {
-        durationMs: number;
         accuracy: number;
         id: string;
         exerciseId: string;
         exerciseName: string;
-        mode: "tuner" | "practice";
+        mode: "practice" | "tuner";
         noteResults: {
             noteIndex: number;
             targetPitch: string;
             wasInTune: boolean;
-            attempts: number;
             averageCents: number;
+            attempts: number;
             timeToCompleteMs?: number | undefined;
             technique?: {
                 vibrato: {
@@ -6125,11 +6031,12 @@ export declare const SessionHistoryStateSchema: z.ZodObject<{
                 };
             } | undefined;
         }[];
+        durationMs: number;
         endTimeMs: number;
         startTimeMs: number;
-        averageCents: number;
         notesAttempted: number;
         notesCompleted: number;
+        averageCents: number;
     }[];
 }>;
 /**
@@ -6644,7 +6551,7 @@ export declare function cn(...inputs: ClassValue[]): string;
 
 // ===== types-docs/playwright.config.d.ts =====
 
-declare const _default: import("playwright/test").PlaywrightTestConfig<{}, {}>;
+declare const _default: import("@playwright/test").PlaywrightTestConfig<{}, {}>;
 export default _default;
 
 // ===== types-docs/public/workers/audio-processor.worker.d.ts =====
@@ -6760,7 +6667,7 @@ export {};
 
 // ===== types-docs/stores/analytics-facade.d.ts =====
 
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from './session.store';
 import { ProgressState } from './progress.store';
 import { Achievement } from './achievements.store';
 import { NoteTechnique } from '@/lib/technique-types';
@@ -6895,8 +6802,34 @@ export {};
 // ===== types-docs/stores/analytics-store.d.ts =====
 
 import { NoteTechnique } from '../lib/technique-types';
-import { PracticeSession } from '@/lib/domain/practice-session';
 import type { Exercise } from '@/lib/domain/musical-types';
+/**
+ * Data model for a completed practice session.
+ */
+export interface PracticeSession {
+    id: string;
+    startTimeMs: number;
+    endTimeMs: number;
+    durationMs: number;
+    exerciseId: string;
+    exerciseName: string;
+    mode: 'tuner' | 'practice';
+    notesAttempted: number;
+    notesCompleted: number;
+    accuracy: number;
+    averageCents: number;
+    noteResults: NoteResult[];
+}
+/** @internal */
+export interface NoteResult {
+    noteIndex: number;
+    targetPitch: string;
+    attempts: number;
+    timeToCompleteMs: number;
+    averageCents: number;
+    wasInTune: boolean;
+    technique?: NoteTechnique;
+}
 /**
  * Long-term progress and skill model for the user.
  */
@@ -6942,7 +6875,7 @@ export interface RecordAttemptParams {
 /** Parameters for recording a note completion. */
 export interface RecordCompletionParams {
     noteIndex: number;
-    timeToCompleteMs?: number;
+    timeToCompleteMs: number;
     technique?: NoteTechnique;
 }
 /**
@@ -7011,6 +6944,63 @@ import { z } from 'zod';
  */
 export declare const validatedPersist: <T>(schema: z.ZodType<any>, config: StateCreator<T, [], []>, options: PersistOptions<T, unknown>) => StateCreator<T, [], []>;
 
+// ===== types-docs/stores/practice-store.d.ts =====
+
+/**
+ * PracticeStore
+ *
+ * Orchestrates a violin practice session, managing the lifecycle from exercise
+ * selection to completion. It coordinates audio resources, real-time analysis,
+ * and persistent progress tracking.
+ */
+import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
+import { AppError } from '@/lib/errors/app-error';
+import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port';
+import { PracticeStoreState } from '@/lib/practice/practice-states';
+import type { Exercise } from '@/lib/exercises/types';
+import { Observation } from '@/lib/technique-types';
+/**
+ * Main store for managing the practice mode lifecycle and real-time audio pipeline.
+ */
+export interface PracticeStore {
+    state: PracticeStoreState;
+    practiceState: PracticeState | undefined;
+    error: AppError | undefined;
+    liveObservations: Observation[];
+    autoStartEnabled: boolean;
+    analyser: AnalyserNode | undefined;
+    audioLoop: AudioLoopPort | undefined;
+    detector: PitchDetectionPort | undefined;
+    isStarting: boolean;
+    isInitializing: boolean;
+    sessionToken: string | undefined;
+    sessionId: number;
+    loadId: number;
+    loadExercise: (exercise: Exercise) => Promise<void>;
+    setAutoStart: (enabled: boolean) => void;
+    setNoteIndex: (index: number) => void;
+    initializeAudio: () => Promise<void>;
+    start: () => Promise<void>;
+    stop: () => Promise<void>;
+    reset: () => Promise<void>;
+    consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>;
+}
+type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>;
+type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>);
+export declare const usePracticeStore: import("zustand").UseBoundStore<import("zustand").StoreApi<PracticeStore>>;
+/**
+ * Creates a safe state update function for the practice session.
+ * @internal
+ */
+export declare function createSafeSet(params: {
+    set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void;
+    get: () => PracticeStore;
+    currentToken: string;
+}): (partial: SafePartial) => void;
+/** @internal */
+export declare function calculateCentsTolerance(): number;
+export {};
+
 // ===== types-docs/stores/practice-store-helpers.d.ts =====
 
 /**
@@ -7053,63 +7043,6 @@ export declare function handleRunnerFailure(params: {
     err: unknown;
     exercise: Exercise;
 }): void;
-
-// ===== types-docs/stores/practice-store.d.ts =====
-
-/**
- * PracticeStore
- *
- * Orchestrates a violin practice session, managing the lifecycle from exercise
- * selection to completion. It coordinates audio resources, real-time analysis,
- * and persistent progress tracking.
- */
-import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
-import { AppError } from '@/lib/errors/app-error';
-import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port';
-import { PracticeStoreState } from '@/lib/practice/practice-states';
-import type { Exercise } from '@/lib/exercises/types';
-import { Observation } from '@/lib/technique-types';
-/**
- * Main store for managing the practice mode lifecycle and real-time audio pipeline.
- */
-export interface PracticeStore {
-    state: PracticeStoreState;
-    practiceState: PracticeState | undefined;
-    error: AppError | undefined;
-    liveObservations: Observation[];
-    autoStartEnabled: boolean;
-    analyser: AnalyserNode | undefined;
-    audioLoop: AudioLoopPort | undefined;
-    detector: PitchDetectionPort | undefined;
-    isStarting: boolean;
-    isInitializing: boolean;
-    sessionToken: string | undefined;
-    sessionId: number;
-    lastLoadedAt: number;
-    loadExercise: (exercise: Exercise) => Promise<void>;
-    setAutoStart: (enabled: boolean) => void;
-    setNoteIndex: (index: number) => void;
-    initializeAudio: () => Promise<void>;
-    start: () => Promise<void>;
-    stop: () => Promise<void>;
-    reset: () => Promise<void>;
-    consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>;
-}
-type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>;
-type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>);
-export declare const usePracticeStore: import("zustand").UseBoundStore<import("zustand").StoreApi<PracticeStore>>;
-/**
- * Creates a safe state update function for the practice session.
- * @internal
- */
-export declare function createSafeSet(params: {
-    set: (fn: (s: PracticeStore) => Partial<PracticeStore>) => void;
-    get: () => PracticeStore;
-    currentToken: string;
-}): (partial: SafePartial) => void;
-/** @internal */
-export declare function calculateCentsTolerance(): number;
-export {};
 
 // ===== types-docs/stores/preferences-store.d.ts =====
 
@@ -7209,7 +7142,7 @@ export {};
 
 // ===== types-docs/stores/progress.store.d.ts =====
 
-import { PracticeSession } from '@/lib/domain/practice-session';
+import { PracticeSession } from './session.store';
 /**
  * Event representing a completed exercise within the progress history.
  *
@@ -7383,50 +7316,68 @@ export {};
 
 export {};
 
-// ===== types-docs/stores/session-history.store.d.ts =====
-
-import { PracticeSession } from '@/lib/domain/practice-session';
-/**
- * Internal state for the session history store.
- */
-interface SessionHistoryState {
-    /** Array of completed practice sessions, capped at 100. */
-    sessions: PracticeSession[];
-}
-/**
- * Actions for managing session history.
- */
-interface SessionHistoryActions {
-    /**
-     * Adds a completed session to the history.
-     *
-     * @param session - The session to add.
-     */
-    addSession: (session: PracticeSession) => void;
-    /**
-     * Retrieves sessions filtered by age.
-     *
-     * @param days - Number of days to look back.
-     * @returns Filtered array of {@link PracticeSession}.
-     */
-    getHistory: (days?: number) => PracticeSession[];
-}
-/**
- * Zustand store for persisting and retrieving practice session history.
- *
- * @remarks
- * This store provides a simple persistent log of recent practice activity.
- * It uses `validatedPersist` to ensure data integrity.
- *
- * @public
- */
-export declare const useSessionHistoryStore: import("zustand").UseBoundStore<import("zustand").StoreApi<SessionHistoryState & SessionHistoryActions>>;
-export {};
-
 // ===== types-docs/stores/session.store.d.ts =====
 
 import { NoteTechnique } from '../lib/technique-types';
-import { PracticeSession } from '@/lib/domain/practice-session';
+/**
+ * Result of practicing a single note within a session.
+ *
+ * @remarks
+ * This model tracks the cumulative performance of a user on a specific note,
+ * including accuracy and timing metrics.
+ *
+ * @public
+ */
+export interface NoteResult {
+    /** The index of the note in the exercise. */
+    noteIndex: number;
+    /** The target scientific pitch name (e.g., "A4"). */
+    targetPitch: string;
+    /** Total number of attempts/frames processed for this note. */
+    attempts: number;
+    /** Time taken to successfully complete the note, in milliseconds. */
+    timeToCompleteMs?: number;
+    /** Average pitch deviation in cents from the target. */
+    averageCents: number;
+    /** Whether the note was eventually played correctly in tune. */
+    wasInTune: boolean;
+    /** Detected technical details (e.g., rhythm, attack), if available. */
+    technique?: NoteTechnique;
+}
+/**
+ * Data model for a completed or active practice session.
+ *
+ * @remarks
+ * Encapsulates all metadata and metrics for a discrete practice event.
+ *
+ * @public
+ */
+export interface PracticeSession {
+    /** Unique session identifier, typically prefixed with `session_`. */
+    id: string;
+    /** Unix timestamp when the session started. */
+    startTimeMs: number;
+    /** Unix timestamp when the session ended. */
+    endTimeMs: number;
+    /** Total session duration in milliseconds. */
+    durationMs: number;
+    /** Identifier of the exercise practiced. */
+    exerciseId: string;
+    /** Human-readable name of the exercise. */
+    exerciseName: string;
+    /** The mode in which the session was conducted. */
+    mode: 'tuner' | 'practice';
+    /** Individual results for each note in the exercise. */
+    noteResults: NoteResult[];
+    /** Total number of note attempts (audio frames matched) across the whole session. */
+    notesAttempted: number;
+    /** Total number of notes successfully completed/mastered. */
+    notesCompleted: number;
+    /** Overall accuracy percentage (0-100). */
+    accuracy: number;
+    /** Overall average pitch deviation in cents across all attempts. */
+    averageCents: number;
+}
 /**
  * Internal state of the session store.
  *
@@ -7514,6 +7465,46 @@ interface SessionActions {
  * @public
  */
 export declare const useSessionStore: import("zustand").UseBoundStore<import("zustand").StoreApi<SessionState & SessionActions>>;
+export {};
+
+// ===== types-docs/stores/session-history.store.d.ts =====
+
+import { PracticeSession } from './session.store';
+/**
+ * Internal state for the session history store.
+ */
+interface SessionHistoryState {
+    /** Array of completed practice sessions, capped at 100. */
+    sessions: PracticeSession[];
+}
+/**
+ * Actions for managing session history.
+ */
+interface SessionHistoryActions {
+    /**
+     * Adds a completed session to the history.
+     *
+     * @param session - The session to add.
+     */
+    addSession: (session: PracticeSession) => void;
+    /**
+     * Retrieves sessions filtered by age.
+     *
+     * @param days - Number of days to look back.
+     * @returns Filtered array of {@link PracticeSession}.
+     */
+    getHistory: (days?: number) => PracticeSession[];
+}
+/**
+ * Zustand store for persisting and retrieving practice session history.
+ *
+ * @remarks
+ * This store provides a simple persistent log of recent practice activity.
+ * It uses `validatedPersist` to ensure data integrity.
+ *
+ * @public
+ */
+export declare const useSessionHistoryStore: import("zustand").UseBoundStore<import("zustand").StoreApi<SessionHistoryState & SessionHistoryActions>>;
 export {};
 
 // ===== types-docs/stores/tuner-store.d.ts =====
