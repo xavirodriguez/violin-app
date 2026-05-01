@@ -1,7 +1,19 @@
 /**
- * This file creates a declarative pipeline using `iter-tools` to process raw
- * pitch detection events into a stream of well-defined `PracticeEvent`s.
- * This decouples the audio input source from the state management logic.
+ * NoteStream Pipeline
+ *
+ * This module creates a declarative, asynchronous pipeline using `iter-tools`
+ * to transform raw audio data into high-level musical practice events.
+ *
+ * @remarks
+ * **Data Flow Architecture**:
+ * 1. **Capture**: `createRawPitchStream` pulls PCM buffers from the `AudioLoopPort`.
+ * 2. **Detection**: Each buffer is processed by `PitchDetectionPort` (YIN) into a `RawPitchEvent`.
+ * 3. **Segmentation**: `NoteSegmenter` identifies note boundaries (Onset/Offset).
+ * 4. **Analysis**: `TechniqueAnalysisAgent` evaluates the quality of each completed segment.
+ * 5. **Output**: The pipeline yields `PracticeEvent` objects (e.g., `NOTE_MATCHED`).
+ *
+ * This decoupling allows the application logic to remain agnostic of the high-frequency
+ * audio loop and the specific pitch detection algorithm used.
  */
 
 import {
@@ -239,7 +251,13 @@ function handleStreamError(error: unknown): void {
 }
 
 /**
- * A custom `iter-tools` operator that implements note stability validation and technical analysis.
+ * A stateful transformation window that applies musical logic to raw pitch events.
+ *
+ * @remarks
+ * This is the "brain" of the pipeline. It maintains a short-term memory of recent
+ * pitch frames to perform segment completion analysis and rhythm tracking.
+ *
+ * @internal
  */
 interface TechnicalAnalysisState {
   lastGapFrames: ReadonlyArray<TechniqueFrame>
