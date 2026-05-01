@@ -1,7 +1,14 @@
 /**
- * Type-safe persistence migration utilities.
+ * Persistence Migration System
+ *
+ * Provides utilities for handling versioned state updates in persistent storage.
+ * This ensures that when the application schema changes, existing user data is
+ * safely transformed to the new format without data loss.
  */
 
+/**
+ * A function that transforms state from one version to the next.
+ */
 export type MigrationFn<T = unknown> = (state: T) => T
 
 export interface MigratorConfig<T> {
@@ -45,7 +52,14 @@ function applyPendingMigrations<T>(params: {
 }
 
 /**
- * Creates a declarative migrator for Zustand's persist middleware.
+ * Creates a declarative migrator compatible with Zustand's `persist` middleware.
+ *
+ * @remarks
+ * The returned function will automatically detect the current version of the
+ * persisted state and apply all necessary migrations in sequence until the
+ * latest version is reached.
+ *
+ * @param config - A map of version numbers to their corresponding transformation functions.
  *
  * @example
  * ```ts
@@ -54,6 +68,8 @@ function applyPendingMigrations<T>(params: {
  *   2: (state) => ({ ...state, schemaVersion: 2 })
  * });
  * ```
+ *
+ * @public
  */
 export function createMigrator<T>(config: MigratorConfig<T>) {
   return (persistedState: unknown, version: number): T => {

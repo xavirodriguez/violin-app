@@ -45,11 +45,20 @@ export class AudioManager {
   private gainNode: GainNode | undefined = undefined
 
   /**
-   * Initializes the audio pipeline.
+   * Initializes the hardware audio pipeline and acquires microphone access.
    *
-   * @param deviceId - Optional ID of the microphone to use.
-   * @returns A promise that resolves to the initialized audio resources.
-   * @throws AppError if microphone access is denied or hardware fails.
+   * @remarks
+   * This is a critical operation that requires user interaction in most browsers.
+   * It performs the following steps:
+   * 1. **Cleanup**: Ensures any previous context or stream is fully released.
+   * 2. **Media Acquisition**: Requests a `MediaStream` with optimized constraints for instrument detection
+   *    (disabling echo cancellation, noise suppression, and AGC).
+   * 3. **Context Creation**: Instantiates a new `AudioContext` and `AnalyserNode`.
+   * 4. **Graph Construction**: Connects the source to gain and analyser nodes.
+   *
+   * @param deviceId - Optional ID of the specific microphone hardware to use.
+   * @returns A promise that resolves to the fully initialized {@link AudioResources}.
+   * @throws {@link AppError} with code `MIC_PERMISSION_DENIED` if access is refused.
    */
   async initialize(deviceId?: string): Promise<AudioResources> {
     await this.cleanup()
@@ -66,7 +75,13 @@ export class AudioManager {
   }
 
   /**
-   * Releases all audio resources and closes the context.
+   * Releases all hardware audio resources and safely closes the context.
+   *
+   * @remarks
+   * Proper cleanup is essential to prevent "microphone in use" indicators from
+   * persisting and to avoid memory leaks from orphan `AudioContext` instances.
+   * It stops all media tracks and disconnects every node in the graph before
+   * closing the context.
    */
   async cleanup(): Promise<void> {
     this.stopMediaTracks()

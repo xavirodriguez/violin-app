@@ -22,7 +22,13 @@ export interface NoteTechniqueSummary {
 
 /**
  * Result of practicing a single note.
- * Can represent a note in progress or a completed one.
+ *
+ * @remarks
+ * This model tracks the performance metrics for an individual note within a session,
+ * including intonation accuracy and technical execution. It supports both in-progress
+ * tracking and final summary.
+ *
+ * @public
  */
 export interface NoteResult {
   noteIndex: number
@@ -38,7 +44,12 @@ export interface NoteResult {
 
 /**
  * Canonical model for a practice session result.
- * Used for live tracking, analytics, and persistence.
+ *
+ * @remarks
+ * This is the primary data structure for persistent history. It aggregates all
+ * note-level results into a session summary used for analytics and skill calculation.
+ *
+ * @public
  */
 export interface PracticeResult {
   id: string
@@ -60,6 +71,12 @@ export type PracticeSession = PracticeResult
 
 /**
  * Lifetime statistics for an individual exercise.
+ *
+ * @remarks
+ * Aggregates performance data across multiple attempts of the same exercise
+ * to track student improvement over time.
+ *
+ * @public
  */
 export interface ExerciseStats {
   exerciseId: string
