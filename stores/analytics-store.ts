@@ -44,6 +44,16 @@ export interface RecordCompletionParams {
 
 /**
  * Interface for the Analytics Store, managing long-term progress and session history.
+ *
+ * @remarks
+ * This store acts as the primary repository for user performance data.
+ * It is responsible for:
+ * 1. **Session Management**: Tracking the lifecycle of individual practice sessions.
+ * 2. **Persistence**: Versioned storage of history using `localStorage` with automated migrations.
+ * 3. **Achievement Tracking**: Evaluating performance against technical milestones.
+ * 4. **Skill Evaluation**: Calculating long-term metrics for intonation and rhythm.
+ *
+ * @public
  */
 export interface AnalyticsStore {
   currentSession: PracticeSession | undefined

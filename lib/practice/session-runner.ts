@@ -89,8 +89,15 @@ export interface SessionRunnerDependencies {
 }
 
 /**
- * Implementation of {@link PracticeSessionRunner} that orchestrates the Practice Engine
- * and synchronizes with the application stores.
+ * Implementation of {@link PracticeSessionRunner} that orchestrates the Practice Engine.
+ *
+ * @remarks
+ * This class serves as the operational bridge between the high-frequency Practice Engine
+ * and the reactive UI stores. It is responsible for:
+ * 1. **Lifecycle Management**: Handling the startup, cancellation, and error states of a session.
+ * 2. **Dependency Injection**: Providing audio ports and analytics handlers to the engine.
+ * 3. **State Synchronization**: Dispatching engine events to the `PracticeStore` and `TunerStore`.
+ * 4. **Telemetry**: Logging accuracy data when specific feature flags are enabled.
  *
  * @public
  */
