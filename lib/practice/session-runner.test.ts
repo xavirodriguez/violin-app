@@ -48,6 +48,21 @@ describe('PracticeSessionRunner', () => {
     recordNoteCompletion: vi.fn(),
   }
 
+  const mockTechnique = {
+    pitchStability: {
+      averageCents: 5,
+      inTuneRatio: 0.8,
+      settlingStdCents: 2,
+      globalStdCents: 3,
+      driftCentsPerSec: 0.1,
+    },
+    vibrato: { present: false },
+    attackRelease: { attackTimeMs: 100, pitchScoopCents: 0, releaseStability: 0 },
+    resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
+    rhythm: { onsetErrorMs: 0 },
+    transition: { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 },
+  }
+
   const deps: SessionRunnerDependencies = {
     audioLoop: mockAudioLoop,
     detector: mockDetector,
@@ -70,6 +85,41 @@ describe('PracticeSessionRunner', () => {
     const result = await runPromise
     expect(result.completed).toBe(false)
     expect(result.reason).toBe('cancelled')
+  })
+
+  it('envía datos reales a analytics al completar una nota', async () => {
+    const runner = new PracticeSessionRunnerImpl(deps)
+    const signal = new AbortController().signal
+
+    // Mock engine events to simulate NOTE_MATCHED
+    const mockEvents = (async function* () {
+      yield {
+        type: 'NOTE_MATCHED',
+        payload: {
+          technique: mockTechnique,
+          observations: [],
+          isPerfect: true,
+        },
+      }
+      // Wait a bit to allow processing
+      await new Promise((r) => setTimeout(r, 10))
+    })()
+
+    // @ts-expect-error - overriding private method for testing
+    vi.spyOn(runner, 'initializeEngine').mockReturnValue({
+      start: () => mockEvents,
+      stop: vi.fn(),
+      getState: vi.fn(),
+    })
+
+    await runner.run(signal)
+
+    expect(mockAnalytics.recordNoteAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cents: 5,
+        inTune: true,
+      }),
+    )
   })
 
   it('permite múltiples runners independientes', async () => {

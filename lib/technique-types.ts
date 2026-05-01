@@ -79,6 +79,8 @@ export interface PitchStability {
   readonly settlingStdCents: Cents
   /** The overall standard deviation of pitch (in cents) for the entire note. */
   readonly globalStdCents: Cents
+  /** The average pitch deviation (in cents) for the entire note. */
+  readonly averageCents: Cents
   /** The rate of pitch change over time (cents per second). */
   readonly driftCentsPerSec: number
   /** The proportion of frames (0-1) within target intonation tolerance. */
