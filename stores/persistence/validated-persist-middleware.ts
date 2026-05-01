@@ -54,8 +54,7 @@ const createCompressedStorage = (_name: string): PersistStorage<unknown> => {
  * array types from Zustand's middleware.
  */
 export const validatedPersist = <T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: z.ZodType<any>,
+  schema: z.ZodType<Partial<T>>,
   config: StateCreator<T, [], []>,
   options: PersistOptions<T, unknown>,
 ): StateCreator<T, [], []> => {
@@ -69,8 +68,8 @@ export const validatedPersist = <T>(
       merge: (persistedState, currentState) => {
         return validateAndMerge(schema, persistedState, currentState, {
           name: options.name,
-          merge: options.merge,
-        })
+          merge: options.merge as unknown as (p: Partial<T>, c: Partial<T>) => Partial<T>,
+        }) as T
       },
     },
   ) as StateCreator<T, [], []>
