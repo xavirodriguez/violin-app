@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import type { CanonicalAccidental } from '@/lib/domain/musical-domain'
 import type { AppError } from '@/lib/errors/app-error'
 import type { PitchDetector } from '@/lib/pitch-detector'
@@ -80,13 +79,7 @@ export interface Note {
   }
 }
 
-<<<<<<<< HEAD:lib/domain/exercise.ts
 /**
-=======
-import { Note } from './musical-types'
-
-/**
->>>>>>> main
  * High-level categories for grouping musical exercises in the library.
  *
  * @public
@@ -115,15 +108,9 @@ export interface ScoreMetadata {
   /** The time signature of the piece. */
   timeSignature: {
     /** Number of beats per measure (numerator). */
-<<<<<<< HEAD
-    beats: number;
-    /** The note value that represents one beat (denominator). */
-    beatType: number;
-=======
     beats: number
     /** The note value that represents one beat (denominator). */
     beatType: number
->>>>>>> main
   }
   /**
    * The key signature, represented as the number of sharps (positive) or flats (negative) in the circle of fifths.
@@ -164,7 +151,7 @@ export interface ExerciseData {
   technicalGoals: string[]
   /** Human-readable estimated time to complete (e.g., "5 mins"). */
   estimatedDuration: string
-  /** The primary technique focus (e.g., "Legato", "Staccato", "Intonation"). */
+  /** El objetivo técnico principal (e.g., "Legato", "Staccato", "Intonation"). */
   technicalTechnique: string
   /** Whether this exercise is highlighted as a recommendation in the UI. */
   recommended?: boolean
@@ -189,10 +176,7 @@ export interface Exercise extends ExerciseData {
   /** The complete, generated MusicXML string for the exercise. */
   musicXML: string
 }
-<<<<<<< HEAD
 
-========
->>>>>>>> main:lib/domain/musical-types.ts
 /**
  * Lifetime statistics for an individual exercise.
  *
@@ -262,5 +246,3 @@ export interface TunerStore {
   setDeviceId: (deviceId: string) => Promise<void>
   setSensitivity: (sensitivity: number) => void
 }
-=======
->>>>>>> main
