@@ -141,7 +141,9 @@ export class TechniqueAnalysisAgent {
   }
 
   private computeStabilityMetrics(frames: PitchedFrame[]): PitchStability {
-    const globalStd = this.calculateStdDev(frames.map((f) => f.cents)) as Cents
+    const centsValues = frames.map((f) => f.cents)
+    const globalStd = this.calculateStdDev(centsValues) as Cents
+    const averageCents = (centsValues.reduce((a, b) => a + b, 0) / centsValues.length) as Cents
     const settlingStd = this.calculateSettlingStd(frames) as Cents
     const { slope: drift } = this.performLinearRegression(frames)
     const inTuneRatio = this.calculateInTuneRatio(frames)
@@ -149,6 +151,7 @@ export class TechniqueAnalysisAgent {
     const stability: PitchStability = {
       settlingStdCents: settlingStd,
       globalStdCents: globalStd,
+      averageCents,
       driftCentsPerSec: drift,
       inTuneRatio,
     }
@@ -184,6 +187,7 @@ export class TechniqueAnalysisAgent {
     return {
       settlingStdCents: zeroCents,
       globalStdCents: zeroCents,
+      averageCents: zeroCents,
       driftCentsPerSec: zeroDrift,
       inTuneRatio: zeroRatio,
     }

@@ -332,7 +332,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const pitch = formatPitchName(note.pitch)
     const analytics = this.environment.analytics
 
-    analytics.recordNoteAttempt({ index, pitch, cents: 0, inTune: true })
+    const cents = (technique?.pitchStability.averageCents ?? 0) as number
+    const inTune = (technique?.pitchStability.inTuneRatio ?? 0) >= 0.5
+
+    analytics.recordNoteAttempt({ index, pitch, cents, inTune })
     analytics.recordNoteCompletion({ index, time: duration, technique })
   }
 
