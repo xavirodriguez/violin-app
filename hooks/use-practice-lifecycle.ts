@@ -8,9 +8,7 @@
 
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
-import { PracticeState } from '@/lib/practice-core'
 import { PracticeState } from '@/lib/domain/practice'
-import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { Exercise } from '@/lib/domain/exercise'
 
 interface LifecycleParams {
