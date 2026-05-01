@@ -194,7 +194,7 @@ export class TechniqueAnalysisAgent {
    *
    * @remarks
    * **Algorithm**:
-   * 1. **Stability Gate**: Skips analysis if the pitch is too chaotic (stdDev > 40 cents).
+   * 1. **Stability Gate**: Skips analysis if the pitch is too chaotic (stdDev is higher than 40 cents).
    * 2. **Detrending**: Removes linear pitch drift to isolate the oscillation.
    * 3. **Autocorrelation**: Finds the dominant period and regularity of the movement.
    *

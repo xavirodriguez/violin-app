@@ -154,8 +154,8 @@ type SegmenterState = SilenceState | NoteState
  * pitch shifts or momentary signal dropouts.
  *
  * **State Machine Transitions**:
- * 1. **SILENCE** → (Signal > `minRms` for `onsetDebounceMs`) → **ONSET** (Note starts)
- * 2. **NOTE** → (Signal < `maxRmsSilence` for `offsetDebounceMs`) → **OFFSET** (Note ends)
+ * 1. **SILENCE** → (Signal is bigger than `minRms` for `onsetDebounceMs`) → **ONSET** (Note starts)
+ * 2. **NOTE** → (Signal is smaller than `maxRmsSilence` for `offsetDebounceMs`) → **OFFSET** (Note ends)
  * 3. **NOTE** → (Pitch changes for `noteChangeDebounceMs`) → **NOTE_CHANGE** (Legato transition)
  *
  * **Robustness Features**:
