@@ -14,18 +14,20 @@ describe('calculateCentsTolerance floor', () => {
   })
 
   it('should not go below 15 cents even with 100 skill', () => {
+    // @ts-expect-error - testing with partial progress state
     vi.mocked(useProgressStore.getState).mockReturnValue({
-        intonationSkill: 100
-    } as any)
+      intonationSkill: 100,
+    })
 
     const tolerance = calculateCentsTolerance()
     expect(tolerance).toBe(15)
   })
 
   it('should return 35 cents with 0 skill', () => {
+    // @ts-expect-error - testing with partial progress state
     vi.mocked(useProgressStore.getState).mockReturnValue({
-        intonationSkill: 0
-    } as any)
+      intonationSkill: 0,
+    })
 
     const tolerance = calculateCentsTolerance()
     expect(tolerance).toBe(35)
@@ -33,9 +35,10 @@ describe('calculateCentsTolerance floor', () => {
 
   it('should respect floor for intermediate skill that would go below 15', () => {
     // base (35) - skillBonus (0.9 * 25 = 22.5) = 12.5 -> 13 rounded.
+    // @ts-expect-error - testing with partial progress state
     vi.mocked(useProgressStore.getState).mockReturnValue({
-        intonationSkill: 90
-    } as any)
+      intonationSkill: 90,
+    })
 
     const tolerance = calculateCentsTolerance()
     expect(tolerance).toBe(15)

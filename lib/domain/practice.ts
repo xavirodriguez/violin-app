@@ -97,12 +97,12 @@ export interface PracticeSession {
 /**
  * Live session data for real-time tracking.
  */
-export interface LivePracticeSession extends Omit<PracticeSession, 'endTimeMs' | 'durationMs'> {}
+export type LivePracticeSession = Omit<PracticeSession, 'endTimeMs' | 'durationMs'>
 
 /**
  * Completed session data with final metrics.
  */
-export interface CompletedPracticeSession extends PracticeSession {}
+export type CompletedPracticeSession = PracticeSession
 
 /**
  * Lifetime statistics for an individual exercise.

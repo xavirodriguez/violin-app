@@ -33,8 +33,8 @@ export function validateExercise(exercise: unknown): Exercise {
   return exercise as Exercise
 }
 
-function validateNote(note: any, index: number): void {
-  const { pitch, duration } = note
+function validateNote(note: unknown, index: number): void {
+  const { pitch, duration } = note as { pitch: { alter: number; octave: number }; duration: number }
 
   if (pitch.alter < -1 || pitch.alter > 1) {
     throw new AppError({

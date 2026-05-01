@@ -162,7 +162,6 @@ function renderQuality(event: PitchDebugEvent) {
 
 function renderSegmenter(event: PitchDebugEvent) {
   if (event.stage === 'segmenter_frame') {
-    const isError = !event.isSignal && event.segmenterState === 'NOTE'
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className={`font-bold ${event.segmenterState === 'NOTE' ? 'text-blue-400' : 'text-slate-500'}`}>

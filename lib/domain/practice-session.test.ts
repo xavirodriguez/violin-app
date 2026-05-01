@@ -44,8 +44,10 @@ describe('practice-session domain', () => {
         onsetErrorMs: 10,
       },
     })
-    expect((summary as any).vibrato).toBeUndefined()
-    expect((summary as any).transition).toBeUndefined()
+    // @ts-expect-error - testing stripped fields
+    expect(summary.vibrato).toBeUndefined()
+    // @ts-expect-error - testing stripped fields
+    expect(summary.transition).toBeUndefined()
   })
 
   it('toPersistedSession should map a completed session to a persisted one', () => {
@@ -76,6 +78,7 @@ describe('practice-session domain', () => {
 
     const persisted = toPersistedSession(session)
     expect(persisted.noteResults[0].technique).toEqual(summarizeTechnique(fullTechnique))
-    expect((persisted.noteResults[0].technique as any).vibrato).toBeUndefined()
+    // @ts-expect-error - testing stripped fields
+    expect(persisted.noteResults[0].technique.vibrato).toBeUndefined()
   })
 })

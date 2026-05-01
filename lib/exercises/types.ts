@@ -1,7 +1,7 @@
 /**
  * ExerciseTypes
  * Shared type definitions for violin exercises.
- * @deprecated Use @/lib/domain/exercise instead.
+ * @deprecated Use \@/lib/domain/exercise instead.
  */
 
 export * from '@/lib/domain/exercise'

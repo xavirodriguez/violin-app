@@ -35,7 +35,8 @@ describe('PracticeStore loadExercise integration (TASK-03)', () => {
 
   it('should load a valid exercise correctly', async () => {
     const store = usePracticeStore.getState()
-    await store.loadExercise(baseExercise as any)
+    // @ts-expect-error - testing with partial exercise
+    await store.loadExercise(baseExercise)
 
     expect(usePracticeStore.getState().state.status).toBe('idle')
     expect(usePracticeStore.getState().state.exercise?.id).toBe('test-id')
@@ -49,7 +50,8 @@ describe('PracticeStore loadExercise integration (TASK-03)', () => {
     }
 
     const store = usePracticeStore.getState()
-    await store.loadExercise(invalidExercise as any)
+    // @ts-expect-error - testing with invalid exercise
+    await store.loadExercise(invalidExercise)
 
     const state = usePracticeStore.getState()
     expect(state.state.status).toBe('error')
@@ -64,7 +66,8 @@ describe('PracticeStore loadExercise integration (TASK-03)', () => {
     }
 
     const store = usePracticeStore.getState()
-    await store.loadExercise(invalidExercise as any)
+    // @ts-expect-error - testing with invalid exercise
+    await store.loadExercise(invalidExercise)
 
     const state = usePracticeStore.getState()
     expect(state.state.status).toBe('error')

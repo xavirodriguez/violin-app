@@ -35,7 +35,7 @@ export interface ScoreViewPort {
   /**
    * Retrieves the current visual position of the cursor relative to the score container.
    *
-   * @returns The {x, y} coordinates or undefined if not available.
+   * @returns The \{x, y\} coordinates or undefined if not available.
    */
   getCursorPosition(): { x: number; y: number } | undefined
 }

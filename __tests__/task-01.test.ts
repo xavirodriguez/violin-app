@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mapMatchedEvent } from '../lib/practice-engine/engine'
-import { AppError, ERROR_CODES } from '../lib/errors/app-error'
+import { ERROR_CODES } from '../lib/errors/app-error'
 import { NoteTechnique } from '../lib/technique-types'
 
 describe('mapMatchedEvent validation (TASK-01)', () => {
@@ -30,7 +30,7 @@ describe('mapMatchedEvent validation (TASK-01)', () => {
       landingErrorCents: 0,
       correctionCount: 0,
     },
-  } as any
+  } as unknown as NoteTechnique
 
   it('should throw TECHNIQUE_MISSING error when technique is missing', () => {
     expect(() => mapMatchedEvent({})).toThrowError(

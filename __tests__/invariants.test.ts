@@ -36,7 +36,8 @@ describe('System Invariants', () => {
   describe('Audio Infrastructure Invariants', () => {
     it('should disable browser audio processing', () => {
       // Accessing private method for invariant check
-      const constraints = (audioManager as any).getAudioConstraints()
+      // @ts-expect-error - testing private constraints
+      const constraints = audioManager.getAudioConstraints()
       const audioConfig = constraints.audio
       expect(audioConfig.echoCancellation).toBe(false)
       expect(audioConfig.noiseSuppression).toBe(false)
@@ -49,7 +50,7 @@ describe('System Invariants', () => {
       const { DEFAULT_NOTE_STREAM_OPTIONS } = await import('@/lib/note-stream')
       const { NoteSegmenter } = await import('@/lib/note-segmenter')
       const segmenter = new NoteSegmenter()
-      // @ts-ignore
+      // @ts-expect-error - testing private options
       const segmenterMinRms = segmenter.options.minRms
 
       expect(DEFAULT_NOTE_STREAM_OPTIONS.minRms).toBeLessThan(segmenterMinRms)
@@ -59,7 +60,7 @@ describe('System Invariants', () => {
       const { DEFAULT_NOTE_STREAM_OPTIONS } = await import('@/lib/note-stream')
       const { NoteSegmenter } = await import('@/lib/note-segmenter')
       const segmenter = new NoteSegmenter()
-      // @ts-ignore
+      // @ts-expect-error - testing private options
       const segmenterMinRms = segmenter.options.minRms
 
       expect(DEFAULT_NOTE_STREAM_OPTIONS.minRms).toBe(0.01)

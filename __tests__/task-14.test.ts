@@ -46,15 +46,16 @@ describe('TASK-14 · stop() -> abort -> cleanup chain', () => {
     } as unknown as PracticeSessionRunner
 
     // Manually set state to active to simulate a running session
+    // @ts-expect-error - testing with partial and mock state
     usePracticeStore.setState({
       state: {
         status: 'active',
-        exercise: mockExercise as any,
-        audioLoop: {} as any,
-        detector: {} as any,
+        exercise: mockExercise,
+        audioLoop: {},
+        detector: {},
         runner: mockRunner,
         abortController: mockAbortController,
-        practiceState: {} as any,
+        practiceState: {},
         error: undefined,
       },
     })
@@ -75,8 +76,15 @@ describe('TASK-14 · stop() -> abort -> cleanup chain', () => {
   })
 
   it('should call cleanup even if state is not active', async () => {
+    // @ts-expect-error - testing with partial and mock state
     usePracticeStore.setState({
-      state: { status: 'ready', exercise: mockExercise as any, audioLoop: {} as any, detector: {} as any, error: undefined },
+      state: {
+        status: 'ready',
+        exercise: mockExercise,
+        audioLoop: {},
+        detector: {},
+        error: undefined,
+      },
     })
 
     await usePracticeStore.getState().stop()

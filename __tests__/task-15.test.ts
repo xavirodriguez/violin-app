@@ -18,8 +18,6 @@ describe('TASK-15 · sessionToken anti-stale', () => {
   })
 
   it('should discard updates from consumePipelineEvents if the session token changes', async () => {
-    const store = usePracticeStore.getState()
-
     // Create an async generator that yields events
     async function* eventGenerator() {
       // First event is fine
@@ -61,7 +59,8 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     const initialState = usePracticeStore.getState().practiceState
 
     // Try to update using safeSet with stale token
-    safeSetStale({ practiceState: { ...initialState, currentIndex: 99 } as any })
+    // @ts-expect-error - testing with partial practice state
+    safeSetStale({ practiceState: { ...initialState, currentIndex: 99 } })
 
     // Should NOT have updated
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(0)
@@ -73,7 +72,8 @@ describe('TASK-15 · sessionToken anti-stale', () => {
       currentToken: currentToken
     })
 
-    safeSetCurrent({ practiceState: { ...initialState, currentIndex: 5 } as any })
+    // @ts-expect-error - testing with partial practice state
+    safeSetCurrent({ practiceState: { ...initialState, currentIndex: 5 } })
 
     // Should HAVE updated
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(5)
