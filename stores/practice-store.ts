@@ -9,7 +9,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/domain/practice'
+import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/practice-core'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -42,7 +42,7 @@ import {
   handleRunnerFailure,
 } from './practice-store-helpers'
 
-import type { Exercise } from '@/lib/domain/exercise'
+import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
 import { validateExercise } from '@/lib/exercises/validation'
 
@@ -60,19 +60,12 @@ export interface PracticeStore {
   detector: PitchDetectionPort | undefined
   isStarting: boolean
   isInitializing: boolean
-  /**
-   * Unique token for the current active practice session.
-   *
-   * @remarks
-   * Used to invalidate asynchronous events from stale pipelines or previously
-   * cancelled sessions, preventing race conditions during high-frequency audio processing.
-   */
   sessionToken: string | undefined
   sessionId: number
 
   loadExercise: (exercise: Exercise) => Promise<void>
-  toggleAutoStart: (enabled: boolean) => void
-  jumpToNote: (index: number) => void
+  setAutoStart: (enabled: boolean) => void
+  setNoteIndex: (index: number) => void
   initializeAudio: () => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
@@ -142,10 +135,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       try {
         await get().stop()
         const validated = validateExercise(exercise)
-
+        const updates = getExerciseLoadUpdates(validated)
         set((currentState) => ({
           ...currentState,
-          ...getExerciseLoadUpdates(validated),
+          ...updates,
         }))
 
         if (get().autoStartEnabled) {
@@ -161,11 +154,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       }
     },
 
-    toggleAutoStart: (autoStartEnabled) => {
-      set((currentState) => ({ ...currentState, autoStartEnabled }))
+    setAutoStart: (enabled) => {
+      const nextValue = enabled
+      const updates = { autoStartEnabled: nextValue }
+      set((currentState) => ({ ...currentState, ...updates }))
     },
 
-    jumpToNote: (index) => {
+    setNoteIndex: (index) => {
       const state = get().practiceState
       if (!state || get().isStarting) return
 
@@ -176,6 +171,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
         get()
           .stop()
           .then(() => {
+            // Re-check state if it changed during stop
             if (get().practiceState) {
               set((currentState) => ({ ...currentState, practiceState: updates }))
               return get().start()
@@ -188,7 +184,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
 
     initializeAudio: async () => {
-      if (!shouldInitialize(get().state, get().isInitializing)) return
+      const current = get()
+      const canInit = shouldInitialize(current.state, current.isInitializing)
+      if (!canInit) return
 
       beginAudioInitialization(set)
       await performAudioInitialization(set, get)
@@ -197,7 +195,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     start: async () => {
       set({ isStarting: true, error: undefined })
       try {
-        const ready = await ensureReadyState({ getState: get, initializeAudio: get().initializeAudio })
+        const readyParams = { getState: get, initializeAudio: get().initializeAudio }
+        const ready = await ensureReadyState(readyParams)
         await attemptToStart(ready, commenceSession, set)
       } catch (error) {
         set((currentState) => getStartFailureUpdates(currentState, error))
@@ -421,14 +420,29 @@ function cancelActiveRunner(state: PracticeStoreState) {
  * Returns the state updates required to return the store to an idle/ready state.
  */
 function getStopStateUpdates(currentState: PracticeStore): Partial<PracticeStore> {
-  const { state, practiceState } = currentState
-  const isCancellable = state.status === 'active' || state.status === 'ready'
+  const status = currentState.state.status
+  const isCancellable = status === 'active' || status === 'ready'
+  const nextState = isCancellable
+    ? transitions.stop(currentState.state as ActiveState | ReadyState)
+    : currentState.state
 
-  return {
-    state: isCancellable ? transitions.stop(state as ActiveState | ReadyState) : state,
-    practiceState: practiceState ? { ...practiceState, status: 'idle' } : undefined,
+  const result = {
+    state: nextState,
+    practiceState: getIdleDomainState(currentState.practiceState),
     ...getCleanedResourcesState(),
   }
+
+  return result
+}
+
+function getIdleDomainState(practiceState: PracticeState | undefined): PracticeState | undefined {
+  if (!practiceState) {
+    return undefined
+  }
+  const idleStatus: PracticeStatus = 'idle'
+  const result = { ...practiceState, status: idleStatus }
+
+  return result
 }
 
 function getCleanedResourcesState() {
@@ -457,10 +471,12 @@ function createAudioAdapters(params: {
   difficulty?: 'Beginner' | 'Intermediate' | 'Advanced'
 }) {
   const { resources, difficulty = 'Beginner' } = params
+  const sampleRate = resources.context.sampleRate
   const detector = new PitchDetectorAdapter(
-    createPitchDetectorForDifficulty(difficulty, resources.context.sampleRate),
+    createPitchDetectorForDifficulty(difficulty, sampleRate),
   )
-  const audioLoop = new WebAudioLoopAdapter(new WebAudioFrameAdapter(resources.analyser))
+  const frameAdapter = new WebAudioFrameAdapter(resources.analyser)
+  const audioLoop = new WebAudioLoopAdapter(frameAdapter)
 
   return { detector, audioLoop }
 }
@@ -475,13 +491,11 @@ function updateStateFromEvent(params: {
 }) {
   const { set, event, token } = params
   set((currentState) => {
-    if (currentState.sessionToken !== token || !currentState.practiceState) return currentState
+    const isStale = currentState.sessionToken !== token
+    if (isStale || !currentState.practiceState) return currentState
     const practiceState = updatePracticeState(currentState.practiceState, event)
-    return {
-      ...currentState,
-      practiceState,
-      liveObservations: practiceState ? getUpdatedLiveObservations(practiceState) : [],
-    }
+    const observations = practiceState ? getUpdatedLiveObservations(practiceState) : []
+    return { ...currentState, practiceState, liveObservations: observations }
   })
 }
 
@@ -639,14 +653,16 @@ function assembleResetState(state: PracticeState, index: number): PracticeState 
   return result
 }
 
-function getExerciseLoadUpdates(exercise: Exercise): Partial<PracticeStore> {
-  return {
+function getExerciseLoadUpdates(exercise: Exercise) {
+  const resetUpdates = {
     practiceState: getInitialPracticeState(exercise),
-    state: { status: 'idle', exercise, error: undefined },
+    state: { status: 'idle' as const, exercise, error: undefined },
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
   }
+
+  return resetUpdates
 }
 
 async function performAudioInitialization(
@@ -668,20 +684,40 @@ function getStartFailureUpdates(
   error: unknown,
 ): Partial<PracticeStore> {
   const appError = toAppError(error)
-  return {
+  const exercise = currentState.state.exercise
+  const updates = {
     ...currentState,
     error: appError,
     isStarting: false,
-    state: transitions.error(appError, currentState.state.exercise),
+    state: transitions.error(appError, exercise),
   }
+
+  return updates
 }
 
-function getResetUpdates(): Partial<PracticeStore> {
-  return {
-    state: { status: 'idle', exercise: undefined, error: undefined },
+function getResetUpdates() {
+  const idleState = createIdleStoreState()
+  const result = assembleResetUpdates(idleState)
+
+  return result
+}
+
+function createIdleStoreState(): PracticeStoreState {
+  const idle: PracticeStoreState = {
+    status: 'idle',
+    exercise: undefined,
+    error: undefined,
+  }
+  return idle
+}
+
+function assembleResetUpdates(idleState: PracticeStoreState) {
+  const updates = {
+    state: idleState,
     practiceState: undefined,
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
   }
+  return updates
 }
