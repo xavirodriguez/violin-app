@@ -25,7 +25,6 @@ interface SheetMusicContainerProps {
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
   }
-  scoreView: ScoreViewPort
   currentNoteIndex: number
 }
 

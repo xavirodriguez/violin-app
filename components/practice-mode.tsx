@@ -62,8 +62,8 @@ export function PracticeMode() {
     start,
     stop,
     derived,
-    setIsZen: viewActions.setIsZen,
-    osmdHook: osmd,
+    setZenMode: viewActions.setIsZen,
+    scoreView: osmd.scoreView,
     autoStartEnabled,
   }
   usePracticeLifecycle(lifecycleParams)
@@ -80,7 +80,7 @@ export function PracticeMode() {
           status={derived.status}
           isZenModeEnabled={viewState.isZen}
           autoStartEnabled={autoStartEnabled}
-          setAutoStart={setAutoStart}
+          toggleAutoStart={setAutoStart}
           setPreviewExercise={viewActions.setPreview}
           currentNoteIndex={derived.currentNoteIndex}
           targetNote={derived.targetNote}
@@ -90,13 +90,18 @@ export function PracticeMode() {
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
-          osmdHook={osmd}
+          osmd={{
+            isReady: osmd.isReady,
+            error: osmd.error,
+            containerRef: osmd.containerRef,
+            scoreView: osmd.scoreView,
+          }}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
           start={start}
           stop={stop}
-          setIsZenModeEnabled={viewActions.setIsZen}
-          setNoteIndex={setNoteIndex}
+          onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
+          jumpToNote={setNoteIndex}
         />
         <KeyboardShortcutsDialog />
       </div>

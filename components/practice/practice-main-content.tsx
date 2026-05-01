@@ -47,7 +47,6 @@ interface PracticeMainContentProps {
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
   }
-  scoreView: ScoreViewPort
   handleRestart: () => void
   sessions: PracticeSession[]
   start: () => void

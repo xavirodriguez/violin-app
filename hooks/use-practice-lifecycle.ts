@@ -8,19 +8,20 @@
 
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
-import { usePracticeUIEffects } from './use-practice-ui-effects'
 import { PracticeState } from '@/lib/practice-core'
-import { useOSMDSafe } from './use-osmd-safe'
 import { Exercise } from '@/lib/exercises/types'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
+import { ScoreViewPort } from '@/lib/ports/score-view.port'
+import { usePracticeShortcuts } from './use-practice-shortcuts'
+import { usePracticeVisualSync } from './use-practice-visual-sync'
 
 interface LifecycleParams {
   practiceState: PracticeState | undefined
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
-  setIsZen: (enabled: boolean | ((prev: boolean) => boolean)) => void
-  osmdHook: ReturnType<typeof useOSMDSafe>
+  setZenMode: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  scoreView: ScoreViewPort
   derived: DerivedPracticeState
   autoStartEnabled: boolean
 }
@@ -31,20 +32,26 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     loadExercise,
     start,
     stop,
-    setIsZen,
-    osmdHook,
+    setZenMode,
+    scoreView,
     derived,
     autoStartEnabled,
   } = params
   const loadedRef = useRef(false)
 
-  usePracticeUIEffects({
+  // Manage keyboard shortcuts
+  usePracticeShortcuts({
     status: derived.status,
-    currentNoteIndex: derived.currentNoteIndex,
     start,
     stop,
-    setZenMode: setIsZen,
-    osmdHook,
+    onToggleZenMode: () => setZenMode((prev) => !prev),
+  })
+
+  // Synchronize visual score
+  usePracticeVisualSync({
+    status: derived.status,
+    currentNoteIndex: derived.currentNoteIndex,
+    scoreView,
   })
 
   useEffect(() => {
