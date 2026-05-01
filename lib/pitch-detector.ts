@@ -85,8 +85,14 @@ export class PitchDetector {
    *
    * @remarks
    * This is the core method of the class. It processes a raw audio buffer and returns the
-   * detected frequency and a confidence level. For performance, it's recommended to use
-   * `detectPitchWithValidation` to avoid running the algorithm on silent buffers.
+   * detected frequency and a confidence level.
+   *
+   * **Algorithmic Steps**:
+   * 1. **Difference Function**: Measures how much the signal differs from itself when shifted by a lag (tau).
+   * 2. **Cumulative Mean Normalized Difference**: Normalizes the difference to prevent the algorithm
+   *    from biased towards low periods (high frequencies), reducing "octave errors".
+   * 3. **Absolute Threshold**: Finds the first lag where the normalized difference is below `YIN_THRESHOLD`.
+   * 4. **Parabolic Interpolation**: Refines the discrete lag estimate to achieve sub-sample precision.
    *
    * @param buffer - A `Float32Array` of raw audio data.
    * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
@@ -300,7 +306,12 @@ export class PitchDetector {
     return isInRange && isFinite
   }
 
-  /** Step 1: Difference function */
+  /**
+   * Step 1: Difference function.
+   *
+   * Calculates the squared difference between the signal and its delayed version for each lag (tau).
+   * Effectively a measure of "un-correlation".
+   */
   private difference(buffer: Float32Array, searchSize: number): Float32Array {
     const yinBuffer = new Float32Array(searchSize)
     for (let tau = 1; tau < searchSize; tau++) {
@@ -327,7 +338,13 @@ export class PitchDetector {
     return finalSum
   }
 
-  /** Step 2: Cumulative mean normalized difference function */
+  /**
+   * Step 2: Cumulative mean normalized difference function.
+   *
+   * This is the "magic" of YIN. It divides each difference by the average of all preceding
+   * differences. This prevents the search from getting stuck in a local minimum at tau=0
+   * and helps avoid detecting harmonics as the fundamental frequency.
+   */
   private cumulativeMeanNormalizedDifference(yinBuffer: Float32Array): void {
     let runningSum = 0
     yinBuffer[0] = 1
@@ -339,7 +356,12 @@ export class PitchDetector {
     }
   }
 
-  /** Step 3: Absolute threshold */
+  /**
+   * Step 3: Absolute threshold.
+   *
+   * Finds the first local minimum that falls below the `YIN_THRESHOLD`.
+   * If no such minimum exists, falls back to the global minimum (less reliable).
+   */
   private absoluteThreshold(yinBuffer: Float32Array): number {
     const thresholdTau = this.findFirstBelowThreshold(yinBuffer)
     const foundBelowThreshold = thresholdTau !== -1
@@ -394,7 +416,12 @@ export class PitchDetector {
     return resultTau
   }
 
-  /** Step 4: Parabolic interpolation */
+  /**
+   * Step 4: Parabolic interpolation.
+   *
+   * Refines the detected lag (tau) by fitting a parabola through the minimum and its neighbors.
+   * This allows the detector to find frequencies that don't align perfectly with the sample rate.
+   */
   private parabolicInterpolation(yinBuffer: Float32Array, tau: number): number {
     const isAtEdge = this.isAtSearchEdge(yinBuffer, tau)
     if (isAtEdge) {

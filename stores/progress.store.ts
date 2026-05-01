@@ -99,6 +99,11 @@ export interface ProgressState {
 /**
  * Actions available in the Progress Store for updating user performance.
  *
+ * @remarks
+ * Encapsulates the logic for aggregating raw session results into long-term
+ * technical metrics, ensuring that the student's progress is accurately
+ * reflected in their persistent profile.
+ *
  * @public
  */
 interface ProgressActions {

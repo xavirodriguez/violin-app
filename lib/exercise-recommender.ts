@@ -10,9 +10,9 @@ const DAY_MS = 86_400_000
  * Pedagogical exercise recommender engine.
  *
  * @remarks
- * This function implements a heuristic-based logic designed to optimize
- * the student's learning path based on historical performance. It acts as
- * an automated tutor, ensuring the student is neither bored nor overwhelmed.
+ * This function acts as an "Automated Tutor" that implements heuristic-based logic
+ * designed to optimize the student's learning path based on historical performance,
+ * ensuring the student is neither bored nor overwhelmed.
  *
  * **Recommendation Rules (in order of priority)**:
  * 1. **Persistence on Failure**: If the last exercise played had low accuracy (`< 80%`) and was attempted today, suggest trying it again to build muscle memory.

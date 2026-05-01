@@ -145,7 +145,25 @@ type NoteState = {
 type SegmenterState = SilenceState | NoteState
 
 /**
- * A stateful class that segments an audio stream into musical notes.
+ * A stateful class that segments a continuous audio stream into discrete musical notes.
+ *
+ * @remarks
+ * This class implements a state machine that handles the transition between silence
+ * and active notes. It uses a series of debounce timers and thresholds to ensure
+ * detection is stable and resistant to common audio artifacts like vibrato-induced
+ * pitch shifts or momentary signal dropouts.
+ *
+ * **State Machine Transitions**:
+ * 1. **SILENCE** → (Signal > `minRms` for `onsetDebounceMs`) → **ONSET** (Note starts)
+ * 2. **NOTE** → (Signal < `maxRmsSilence` for `offsetDebounceMs`) → **OFFSET** (Note ends)
+ * 3. **NOTE** → (Pitch changes for `noteChangeDebounceMs`) → **NOTE_CHANGE** (Legato transition)
+ *
+ * **Robustness Features**:
+ * - **Gap Buffer**: Collects frames of silence *before* the onset for transition analysis.
+ * - **Dropout Tolerance**: Prevents note termination if the pitch detector fails
+ *   momentarily but the volume (RMS) remains high.
+ *
+ * @public
  */
 export class NoteSegmenter {
   private readonly options: SegmenterOptions
@@ -163,6 +181,12 @@ export class NoteSegmenter {
     this.segmentCount = 0
   }
 
+  /**
+   * Processes a single audio frame and updates the internal state.
+   *
+   * @param frame - The latest pitch/amplitude data from the detector.
+   * @returns A {@link SegmenterEvent} if a transition (Onset/Offset/Change) was triggered, otherwise undefined.
+   */
   processFrame(frame: TechniqueFrame): SegmenterEvent | undefined {
     const isSignalPresent = this.isSignal(frame)
     const isSilence = frame.rms < this.options.maxRmsSilence

@@ -10,8 +10,17 @@ import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 
 /**
- * Hook for safely managing OpenSheetMusicDisplay instances.
- * Refactored for documented lifecycle behavior and null elimination.
+ * Hook for safely managing OpenSheetMusicDisplay (OSMD) instances in a React lifecycle.
+ *
+ * @remarks
+ * This hook encapsulates the complex initialization, rendering, and cleanup logic
+ * of the OSMD library. It ensures that the renderer is properly attached to the
+ * DOM and provides high-level methods for cursor control and note highlighting.
+ *
+ * **Memory & Performance**:
+ * - Automatically clears the OSMD instance on unmount to prevent memory leaks.
+ * - Uses a `loadTokenRef` to ensure that only the latest `musicXML` load request
+ *   updates the state, preventing race conditions during rapid re-renders.
  *
  * @param musicXML - Valid MusicXML 3.1 string
  * @param options - OSMD configuration
