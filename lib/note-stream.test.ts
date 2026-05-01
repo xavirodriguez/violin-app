@@ -2,12 +2,9 @@ import { describe, it, expect } from 'vitest'
 import {
   createPracticeEventPipeline,
   type RawPitchEvent,
-  isValidMatch,
-  type NoteStreamOptions,
 } from './note-stream'
 import type { TargetNote } from './practice-core'
 import { allExercises } from './exercises'
-import type { NoteSegment, PitchedFrame, TimestampMs, Hz, Cents } from './technique-types'
 
 // Helper to collect all events from an async iterable into an array
 async function collectAsyncIterable<T>(iterable: AsyncIterable<T>): Promise<T[]> {

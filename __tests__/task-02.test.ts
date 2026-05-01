@@ -93,8 +93,9 @@ describe('validateExercise semantic validation (TASK-02)', () => {
     }
     try {
       validateExercise(invalidExercise)
-    } catch (err: any) {
-      expect(err.code).toBe(ERROR_CODES.INVALID_EXERCISE)
+    } catch (err: unknown) {
+      const error = err as { code: string }
+      expect(error.code).toBe(ERROR_CODES.INVALID_EXERCISE)
     }
   })
 })

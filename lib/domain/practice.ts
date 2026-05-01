@@ -60,7 +60,6 @@ export type PracticeEvent =
  * Can represent a note in progress or a completed one.
  *
  * @public
-export { toPersistedSession }
  */
 export interface NoteResult {
   noteIndex: number
@@ -81,12 +80,6 @@ export interface NoteResult {
  * @public
  */
 export interface PracticeSession {
-
-/**
- * Canonical model for a practice session result.
- * @deprecated Use CompletedPracticeSession or PracticeSession from ./practice-session
- */
-export type PracticeResult = CompletedPracticeSession
   id: string
   startTimeMs: number
   endTimeMs: number
@@ -101,6 +94,15 @@ export type PracticeResult = CompletedPracticeSession
   averageCents: number
 }
 
+/**
+ * Live session data for real-time tracking.
+ */
+export type LivePracticeSession = Omit<PracticeSession, 'endTimeMs' | 'durationMs'>
+
+/**
+ * Completed session data with final metrics.
+ */
+export type CompletedPracticeSession = PracticeSession
 
 /**
  * Lifetime statistics for an individual exercise.

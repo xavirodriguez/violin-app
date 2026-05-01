@@ -7,7 +7,7 @@
 
 import { normalizeAccidental } from './domain/musical-domain'
 import { AppError, ERROR_CODES } from './errors/app-error'
-import type { Exercise, Note as TargetNote } from '@/lib/domain/exercise'
+import type { Note as TargetNote } from '@/lib/domain/exercise'
 import type {
   DetectedNote,
   PracticeStatus,

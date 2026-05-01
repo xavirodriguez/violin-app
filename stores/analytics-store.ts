@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession, LivePracticeSession, CompletedPracticeSession, ExerciseStats, Achievement, toPersistedSession } from '@/lib/domain/practice'
+import { NoteResult, PracticeSession, LivePracticeSession, CompletedPracticeSession, ExerciseStats, Achievement } from '@/lib/domain/practice'
 import type { Exercise } from '@/lib/domain/exercise'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
@@ -124,11 +124,10 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         if (isInactive) return
 
         const completedSession = finalizeSessionData(currentSession!)
-        const persistedSession = toPersistedSession(completedSession)
-        const newSessions = [persistedSession as unknown as PracticeSession, ...sessions]
-        const newProgress = getUpdatedProgress({ progress, completedSession: persistedSession as unknown as PracticeSession, sessions })
+        const newSessions = [completedSession as PracticeSession, ...sessions]
+        const newProgress = getUpdatedProgress({ progress, completedSession: completedSession as PracticeSession, sessions })
 
-        handleSessionCompletion({ completedSession: persistedSession as unknown as PracticeSession, sessions: newSessions, progress: newProgress })
+        handleSessionCompletion({ completedSession: completedSession as PracticeSession, sessions: newSessions, progress: newProgress })
         checkStorageThresholds()
       },
 
@@ -379,7 +378,7 @@ function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
   }
 
   const stats = assembleAchievementStats({
-    currentSession,
+    currentSession: currentSession as PracticeSession,
     currentPerfectStreak,
     sessions,
     progress,
@@ -858,9 +857,9 @@ function handleAttemptRecording(params: {
 }
 
 function assembleUpdatedSession(params: {
-  prevSession: PracticeSession
+  prevSession: LivePracticeSession
   nextNoteResults: NoteResult[]
-}): PracticeSession {
+}): LivePracticeSession {
   const { prevSession, nextNoteResults } = params
   const summary = calculateSessionSummary(nextNoteResults)
   return {
