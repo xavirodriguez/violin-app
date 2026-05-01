@@ -4,11 +4,11 @@ import { NoteTechnique } from '../technique-types'
  * Summary of technical performance for a note, focused on MVP priorities.
  */
 export interface NoteTechniqueSummary {
-  pitchStability?: {
+  pitchStability: {
     settlingStdCents: number
     globalStdCents: number
   }
-  resonance?: {
+  resonance: {
     rmsBeatingScore: number
   }
   attackRelease?: {
@@ -76,35 +76,23 @@ export type PracticeSession = CompletedPracticeSession
 
 /**
  * Maps a full NoteTechnique to a minimal summary for persistence.
- *
- * @remarks
- * Now supports partial technique objects for better flexibility in MVP and testing.
  */
-export function summarizeTechnique(technique: Partial<NoteTechnique>): NoteTechniqueSummary {
-  const summary: NoteTechniqueSummary = {}
-
-  if (technique.pitchStability) {
-    summary.pitchStability = {
+export function summarizeTechnique(technique: NoteTechnique): NoteTechniqueSummary {
+  return {
+    pitchStability: {
       settlingStdCents: technique.pitchStability.settlingStdCents,
       globalStdCents: technique.pitchStability.globalStdCents,
-    }
-  }
-
-  if (technique.resonance) {
-    summary.resonance = {
+    },
+    resonance: {
       rmsBeatingScore: technique.resonance.rmsBeatingScore,
-    }
+    },
+    attackRelease: {
+      attackTimeMs: technique.attackRelease.attackTimeMs,
+    },
+    rhythm: {
+      onsetErrorMs: technique.rhythm.onsetErrorMs,
+    },
   }
-
-  if (technique.attackRelease?.attackTimeMs !== undefined) {
-    summary.attackRelease = { attackTimeMs: technique.attackRelease.attackTimeMs }
-  }
-
-  if (technique.rhythm?.onsetErrorMs !== undefined) {
-    summary.rhythm = { onsetErrorMs: technique.rhythm.onsetErrorMs }
-  }
-
-  return summary
 }
 
 /**
@@ -113,20 +101,11 @@ export function summarizeTechnique(technique: Partial<NoteTechnique>): NoteTechn
 export function toPersistedSession(session: CompletedPracticeSession): PersistedPracticeSession {
   return {
     ...session,
-    noteResults: session.noteResults.map((nr) => {
-      if (!nr.technique) return { ...nr, technique: undefined }
-
-      // If it's already a summary (no 'vibrato' or 'transition'), we keep it as is
-      // but ensure it matches the summary structure if it was a full technique.
-      const isFullTechnique = 'vibrato' in nr.technique || 'transition' in nr.technique
-      const summarized = isFullTechnique
-        ? summarizeTechnique(nr.technique as NoteTechnique)
-        : (nr.technique as NoteTechniqueSummary)
-
-      return {
-        ...nr,
-        technique: summarized,
-      }
-    }),
+    noteResults: session.noteResults.map((nr) => ({
+      ...nr,
+      technique: nr.technique && 'pitchStability' in nr.technique ?
+        ( 'vibrato' in nr.technique ? summarizeTechnique(nr.technique) : nr.technique ) :
+        undefined,
+    })),
   }
 }

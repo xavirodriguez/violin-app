@@ -45,7 +45,7 @@ export function PracticeMode() {
   const start = usePracticeStore.getState().start
   const stop = usePracticeStore.getState().stop
   const setAutoStart = usePracticeStore.getState().setAutoStart
-  const setNoteIndex = usePracticeStore.getState().setNoteIndex
+  const jumpToNote = usePracticeStore.getState().jumpToNote
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -101,7 +101,7 @@ export function PracticeMode() {
           start={start}
           stop={stop}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
-          jumpToNote={setNoteIndex}
+          jumpToNote={jumpToNote}
         />
         <KeyboardShortcutsDialog />
       </div>

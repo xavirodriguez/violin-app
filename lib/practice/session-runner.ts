@@ -46,18 +46,7 @@ export interface PracticeSessionRunner {
  */
 export interface RunnerStore {
   getState: () => { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
-  setState: (
-    partial:
-      | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
-      | Partial<{ practiceState: PracticeState | undefined; liveObservations?: Observation[] }>
-      | ((state: { practiceState: PracticeState | undefined; liveObservations?: Observation[] }) =>
-          | { practiceState: PracticeState | undefined; liveObservations?: Observation[] }
-          | Partial<{
-              practiceState: PracticeState | undefined
-              liveObservations?: Observation[]
-            }>),
-    replace?: boolean,
-  ) => void
+  dispatch: (event: PracticeEvent) => void
   stop: () => Promise<void>
 }
 
@@ -280,15 +269,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
 
   private propagateToEventSink(event: PracticeEvent): void {
     const dependencies = this.environment
-    const onCompleted = () => void dependencies.store.stop()
-    const sinkParams = {
-      event,
-      store: dependencies.store,
-      onCompleted,
-      analytics: dependencies.analytics,
-    }
-
-    handlePracticeEvent(sinkParams)
+    dependencies.store.dispatch(event)
   }
 
   private logTelemetry(payload: {

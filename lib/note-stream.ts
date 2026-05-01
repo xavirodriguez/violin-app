@@ -1,7 +1,7 @@
 /**
  * NoteStream Pipeline
  *
- * This module creates a declarative, asynchronous pipeline using native async generators
+ * This module creates a declarative, asynchronous pipeline using `iter-tools`
  * to transform raw audio data into high-level musical practice events.
  *
  * @remarks
@@ -251,11 +251,11 @@ function handleStreamError(error: unknown): void {
 }
 
 /**
- * Async generator that performs note stability validation and technical analysis.
+ * A stateful transformation window that applies musical logic to raw pitch events.
  *
  * @remarks
- * Consumes pitch events from the upstream async iterable and emits higher-level
- * practice events once stability and analysis criteria are met.
+ * This is the "brain" of the pipeline. It maintains a short-term memory of recent
+ * pitch frames to perform segment completion analysis and rhythm tracking.
  *
  * @internal
  */
@@ -950,10 +950,7 @@ function calculateExpectedStartTime(params: {
  * @returns An `AsyncIterable` that yields `PracticeEvent` objects.
  *
  * @remarks
- * Uses an immutable context object to reduce accidental context drift across
- * async iteration steps. This mitigates accidental mutation between pipeline stages,
- * but concurrent pipelines should still be validated with dedicated runtime tests.
- *
+ * This design prevents context drift during async iteration.
  * When the exercise note changes, create a new pipeline.
  */
 export function createPracticeEventPipeline(params: {

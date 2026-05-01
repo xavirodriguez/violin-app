@@ -174,9 +174,9 @@ describe('PracticeStore Robustness', () => {
     const firstToken = usePracticeStore.getState().sessionToken
     expect(firstToken).not.toBeUndefined()
 
-    // Get a reference to safeSet (it's passed to runner)
+    // Get a reference to safeDispatch (it's passed to runner)
     const runnerArgs = vi.mocked(PracticeSessionRunnerImpl).mock.calls[0][0]
-    const safeSet = runnerArgs.store.setState
+    const safeDispatch = runnerArgs.store.dispatch
 
     // Stop and start new session
     await usePracticeStore.getState().stop()
@@ -184,12 +184,8 @@ describe('PracticeStore Robustness', () => {
     const secondToken = usePracticeStore.getState().sessionToken
     expect(secondToken).not.toEqual(firstToken)
 
-    // Attempt to update using the old safeSet
-    const oldPracticeState = {
-      ...usePracticeStore.getState().practiceState,
-      holdDuration: 999,
-    }
-    safeSet({ practiceState: oldPracticeState as PracticeState })
+    // Attempt to update using the old safeDispatch
+    safeDispatch({ type: 'HOLDING_NOTE', payload: { duration: 999 } })
 
     // Should NOT have updated because sessionToken in store is now different
     expect(usePracticeStore.getState().practiceState?.holdDuration).not.toBe(999)
