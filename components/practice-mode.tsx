@@ -6,7 +6,7 @@
 
 'use client'
 
-import { usePracticeStore } from '@/stores/practice-store'
+import { usePracticeStore, PracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
@@ -17,11 +17,9 @@ import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
-import { usePracticeVisualSync } from '@/hooks/use-practice-visual-sync'
-import { usePracticeShortcuts } from '@/hooks/use-practice-shortcuts'
 import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
-import { useState, useCallback } from 'react'
-import { Exercise } from '@/lib/domain/exercise'
+import { useState } from 'react'
+import { Exercise } from '@/lib/exercises/types'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -42,11 +40,12 @@ export function PracticeMode() {
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
   const state = usePracticeStore((s) => s.state)
   const liveObservations = usePracticeStore((s) => s.liveObservations)
-  const loadExercise = usePracticeStore((s) => s.loadExercise)
-  const start = usePracticeStore((s) => s.start)
-  const stop = usePracticeStore((s) => s.stop)
-  const toggleAutoStart = usePracticeStore((s) => s.toggleAutoStart)
-  const jumpToNote = usePracticeStore((s) => s.jumpToNote)
+
+  const loadExercise = usePracticeStore.getState().loadExercise
+  const start = usePracticeStore.getState().start
+  const stop = usePracticeStore.getState().stop
+  const setAutoStart = usePracticeStore.getState().setAutoStart
+  const setNoteIndex = usePracticeStore.getState().setNoteIndex
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -57,28 +56,23 @@ export function PracticeMode() {
   const derived = derivePracticeState(practiceState)
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
-  const onToggleZenMode = useCallback(() => viewActions.setIsZen((v) => !v), [viewActions])
-
-  usePracticeLifecycle({ practiceState, loadExercise })
-
-  usePracticeVisualSync({
-    status: derived.status,
-    currentNoteIndex: derived.currentNoteIndex,
-    scoreView: osmd.scoreView,
-  })
-
-  usePracticeShortcuts({
-    status: derived.status,
+  const lifecycleParams = {
+    practiceState,
+    loadExercise,
     start,
     stop,
-    onToggleZenMode,
-  })
+    derived,
+    setIsZen: viewActions.setIsZen,
+    osmdHook: osmd,
+    autoStartEnabled,
+  }
+  usePracticeLifecycle(lifecycleParams)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader />
-        <PracticeControlsRow derived={derived} isZenModeEnabled={viewState.isZen} />
+        <PracticeControlsRow derived={derived} isZen={viewState.isZen} />
         <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
           state={state}
@@ -86,7 +80,7 @@ export function PracticeMode() {
           status={derived.status}
           isZenModeEnabled={viewState.isZen}
           autoStartEnabled={autoStartEnabled}
-          toggleAutoStart={toggleAutoStart}
+          setAutoStart={setAutoStart}
           setPreviewExercise={viewActions.setPreview}
           currentNoteIndex={derived.currentNoteIndex}
           targetNote={derived.targetNote}
@@ -96,19 +90,13 @@ export function PracticeMode() {
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
-          osmd={{
-            isReady: osmd.isReady,
-            error: osmd.error,
-            containerRef: osmd.containerRef,
-            scoreView: osmd.scoreView,
-          }}
-          scoreView={osmd.scoreView}
+          osmdHook={osmd}
           handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
           start={start}
           stop={stop}
-          onToggleZenMode={onToggleZenMode}
-          jumpToNote={jumpToNote}
+          setIsZenModeEnabled={viewActions.setIsZen}
+          setNoteIndex={setNoteIndex}
         />
         <KeyboardShortcutsDialog />
       </div>
@@ -135,7 +123,6 @@ function PracticePreviewModal(params: {
     if (viewState.preview) {
       await loadExercise(viewState.preview)
       viewActions.setPreview(undefined)
-      start()
     }
   }
 
@@ -170,10 +157,10 @@ function PracticeStatusHeader() {
 
 function PracticeControlsRow({
   derived,
-  isZenModeEnabled,
+  isZen,
 }: {
   derived: DerivedPracticeState
-  isZenModeEnabled: boolean
+  isZen: boolean
 }) {
   const state = usePracticeStore((s) => s.state)
   const start = usePracticeStore((s) => s.start)
@@ -185,7 +172,7 @@ function PracticeControlsRow({
 
   const isIdle = state.status === 'idle'
   const hasExercise = !!state.exercise
-  const shouldShow = !isZenModeEnabled && (!isIdle || hasExercise)
+  const shouldShow = !isZen && (!isIdle || hasExercise)
 
   if (!shouldShow) return <></>
 
