@@ -44,7 +44,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     start,
     stop,
     setZenMode: setIsZen,
-    osmdHook,
+    osmd: osmdHook,
   })
 
   useEffect(() => {
