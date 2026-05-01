@@ -1,6 +1,8 @@
-import { useOSMDSafe } from './use-osmd-safe'
+'use client'
+
 import { usePracticeShortcuts } from './use-practice-shortcuts'
 import { usePracticeVisualSync } from './use-practice-visual-sync'
+import { useOSMDSafe } from './use-osmd-safe'
 
 /**
  * Custom hook to manage keyboard shortcuts and cursor synchronization for the practice session.
@@ -13,9 +15,9 @@ export function usePracticeUIEffects(params: {
   start: () => void
   stop: () => void
   setZenMode: (v: (prev: boolean) => boolean) => void
-  osmd: ReturnType<typeof useOSMDSafe>
+  osmdHook: ReturnType<typeof useOSMDSafe>
 }) {
-  const { status, currentNoteIndex, start, stop, setZenMode, osmd } = params
+  const { status, currentNoteIndex, start, stop, setZenMode, osmdHook } = params
 
   usePracticeShortcuts({
     status,
@@ -27,6 +29,6 @@ export function usePracticeUIEffects(params: {
   usePracticeVisualSync({
     status,
     currentNoteIndex,
-    scoreView: osmd.scoreView,
+    scoreView: osmdHook.scoreView,
   })
 }
