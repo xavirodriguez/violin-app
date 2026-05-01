@@ -82,12 +82,7 @@ export class MusicalNote {
   ) {}
 
   isEnharmonic(other: MusicalNote): boolean {
-    const selfMidi = this.midiNumber
-    const otherMidi = other.midiNumber
-    const isSamePitch = selfMidi === otherMidi
-
-    const result = isSamePitch
-    return result
+    return this.midiNumber === other.midiNumber
   }
 
   static fromFrequency(frequency: number): MusicalNote {
@@ -98,23 +93,19 @@ export class MusicalNote {
     const noteIndex = ((roundedMidi % 12) + 12) % 12
     const octave = Math.floor(roundedMidi / 12) - 1
     const noteName = NOTE_NAMES[noteIndex]
-    const note = new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
 
-    return note
+    return new MusicalNote(frequency, roundedMidi, noteName, octave, centsDeviation)
   }
 
   static fromMidi(midiNumber: number): MusicalNote {
-    const isNumberValid = Number.isFinite(midiNumber)
-    if (!isNumberValid) {
-      const errorMsg = `Invalid MIDI number: ${midiNumber}`
-      throw new Error(errorMsg)
+    if (!Number.isFinite(midiNumber)) {
+      throw new Error(`Invalid MIDI number: ${midiNumber}`)
     }
 
     const interval = (midiNumber - A4_MIDI) / 12
     const frequency = A4_FREQUENCY * Math.pow(2, interval)
-    const note = MusicalNote.fromFrequency(frequency)
 
-    return note
+    return MusicalNote.fromFrequency(frequency)
   }
 
   /**
@@ -125,8 +116,7 @@ export class MusicalNote {
    * @throws {@link AppError} with code `NOTE_PARSING_FAILED` if format is invalid
    */
   static fromName(fullName: NoteName): MusicalNote {
-    const components = parseNoteName(fullName)
-    const { step, accidental, octave } = components
+    const { step, accidental, octave } = parseNoteName(fullName)
     const stepValue = STEP_VALUES[step]
     const accidentalValue = ACCIDENTAL_MODIFIERS[accidental]
 
@@ -135,29 +125,20 @@ export class MusicalNote {
     }
 
     const midiNumber = (octave + 1) * 12 + stepValue + accidentalValue
-    const note = MusicalNote.fromMidi(midiNumber)
 
-    return note
+    return MusicalNote.fromMidi(midiNumber)
   }
 
   get nameWithOctave(): NoteName {
-    const namePart = this.noteName
-    const octavePart = this.octave
-    const result = `${namePart}${octavePart}`
-
+    const result = `${this.noteName}${this.octave}`
     assertValidNoteName(result)
     return result as NoteName
   }
 }
 
 function validateFrequency(frequency: number): void {
-  const isFinite = Number.isFinite(frequency)
-  const isPositive = frequency > 0
-  const isValid = isFinite && isPositive
-
-  if (!isValid) {
-    const errorPrefix = 'Invalid frequency'
-    throw new Error(`${errorPrefix}: ${frequency}`)
+  if (!Number.isFinite(frequency) || frequency <= 0) {
+    throw new Error(`Invalid frequency: ${frequency}`)
   }
 }
 
@@ -168,33 +149,18 @@ interface NoteComponents {
 }
 
 function parseNoteName(fullName: NoteName): NoteComponents {
-  const match = executeNoteParsing(fullName)
-  const components = assembleNoteComponents(match)
-  const result = components
-
-  return result
-}
-
-function executeNoteParsing(fullName: NoteName): RegExpMatchArray {
   const match = (fullName as string).match(/^([A-G])(b{1,2}|#{1,2})?([0-8])$/)
   if (!match) {
-    const errorMsg = `Invalid note name format: "${fullName}" (octave must be 0-8)`
     throw new AppError({
-      message: errorMsg,
+      message: `Invalid note name format: "${fullName}" (octave must be 0-8)`,
       code: ERROR_CODES.NOTE_PARSING_FAILED,
     })
   }
-  return match
-}
-
-function assembleNoteComponents(match: RegExpMatchArray): NoteComponents {
   const [, step, accidental = '', octaveStr] = match
-  const octave = parseInt(octaveStr, 10)
-
   return {
     step,
     accidental,
-    octave,
+    octave: parseInt(octaveStr, 10),
   }
 }
 
@@ -247,8 +213,7 @@ export function isMatch(params: {
     typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
   const actualTolerance = matchStatus === 'maintaining' ? hysteresis.exit : hysteresis.enter
 
-  const result = checkPitchAndTune({ target, detected, tolerance: actualTolerance })
-  return result
+  return checkPitchAndTune({ target, detected, tolerance: actualTolerance })
 }
 
 /**
@@ -261,17 +226,12 @@ function checkPitchAndTune(params: {
   tolerance: number
 }): boolean {
   const { target, detected, tolerance } = params
-  const targetNoteName = formatPitchName(target.pitch)
-  const targetNote = MusicalNote.fromName(targetNoteName)
-  const detectedNoteName = detected.pitch as NoteName
-  assertValidNoteName(detectedNoteName)
-  const detectedNote = MusicalNote.fromName(detectedNoteName)
+  const targetNote = MusicalNote.fromName(formatPitchName(target.pitch))
 
-  const isPitchMatch = targetNote.isEnharmonic(detectedNote)
-  const isInTune = Math.abs(detected.cents) < tolerance
-  const result = isPitchMatch && isInTune
+  assertValidNoteName(detected.pitch)
+  const detectedNote = MusicalNote.fromName(detected.pitch)
 
-  return result
+  return targetNote.isEnharmonic(detectedNote) && Math.abs(detected.cents) < tolerance
 }
 
 /**
@@ -308,10 +268,8 @@ export function isStillMatched(params: {
  * The core reducer for the practice mode, handling all state transitions.
  */
 export function reducePracticeEvent(state: PracticeState, event: PracticeEvent): PracticeState {
-  const handler = getEventHandler(event.type)
-  const resultState = handler ? handler(state, event) : state
-
-  return resultState
+  const handler = PRACTICE_EVENT_HANDLERS[event.type]
+  return handler ? handler(state, event) : state
 }
 
 const PRACTICE_EVENT_HANDLERS: Record<
@@ -321,73 +279,52 @@ const PRACTICE_EVENT_HANDLERS: Record<
   START: handleStart,
   STOP: handleStopReset,
   RESET: handleStopReset,
-  NOTE_DETECTED: (state, event) => {
-    const typed = event as Extract<PracticeEvent, { type: 'NOTE_DETECTED' }>
-    return handleNoteDetected(state, typed.payload)
-  },
-  HOLDING_NOTE: (state, event) => {
-    const typed = event as Extract<PracticeEvent, { type: 'HOLDING_NOTE' }>
-    return handleHoldingNote(state, typed.payload.duration)
-  },
-  NO_NOTE_DETECTED: (state, _event) => handleNoNoteDetected(state),
-  NOTE_MATCHED: (state, event) => {
-    const typed = event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>
-    return handleNoteMatched(state, typed.payload)
-  },
-}
-
-function getEventHandler(type: string) {
-  const handlerTable = PRACTICE_EVENT_HANDLERS
-  const eventHandler = handlerTable[type]
-  const finalHandler = eventHandler
-
-  return finalHandler
+  NOTE_DETECTED: (state, event) =>
+    handleNoteDetected(state, (event as Extract<PracticeEvent, { type: 'NOTE_DETECTED' }>).payload),
+  HOLDING_NOTE: (state, event) =>
+    handleHoldingNote(
+      state,
+      (event as Extract<PracticeEvent, { type: 'HOLDING_NOTE' }>).payload.duration,
+    ),
+  NO_NOTE_DETECTED: handleNoNoteDetected,
+  NOTE_MATCHED: (state, event) =>
+    handleNoteMatched(state, (event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>).payload),
 }
 
 function handleStart(state: PracticeState, event: PracticeEvent): PracticeState {
   const payload = (event as Extract<PracticeEvent, { type: 'START' }>).payload
-  const startIndex = payload?.startIndex ?? 0
 
-  const nextState = {
+  return {
     ...state,
-    status: 'listening' as PracticeStatus,
-    currentIndex: startIndex,
+    status: 'listening',
+    currentIndex: payload?.startIndex ?? 0,
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
     perfectNoteStreak: 0,
   }
-
-  return nextState
 }
 
 function handleStopReset(state: PracticeState): PracticeState {
-  const nextState = {
+  return {
     ...state,
-    status: 'idle' as PracticeStatus,
+    status: 'idle',
     currentIndex: 0,
     detectionHistory: [],
     holdDuration: 0,
     lastObservations: [],
     perfectNoteStreak: 0,
   }
-
-  return nextState
 }
 
 function handleNoteDetected(state: PracticeState, payload: DetectedNote): PracticeState {
   const status = getStatusAfterDetection(state.status)
-  const history = updateDetectionHistory(state.detectionHistory, payload)
-  const isListening = status === 'listening'
-  const duration = isListening ? 0 : state.holdDuration
-
-  const nextState = {
+  return {
     ...state,
-    detectionHistory: history,
+    detectionHistory: updateDetectionHistory(state.detectionHistory, payload),
     status,
-    holdDuration: duration,
+    holdDuration: status === 'listening' ? 0 : state.holdDuration,
   }
-  return nextState
 }
 
 function updateDetectionHistory(
@@ -407,17 +344,11 @@ function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus 
 }
 
 function handleHoldingNote(state: PracticeState, duration: number): PracticeState {
-  const isListening = state.status === 'listening'
-  const isValidating = state.status === 'validating'
-  const isEligible = isListening || isValidating
-
-  if (!isEligible) {
+  if (state.status !== 'listening' && state.status !== 'validating') {
     return state
   }
 
-  const nextState = { ...state, status: 'validating' as PracticeStatus, holdDuration: duration }
-
-  return nextState
+  return { ...state, status: 'validating', holdDuration: duration }
 }
 
 function handleNoNoteDetected(state: PracticeState): PracticeState {
@@ -435,74 +366,38 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
 
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
-  if (!canMatchNote(state.status)) {
+  if (state.status !== 'listening' && state.status !== 'validating') {
     return state
   }
 
-  const newStreak = calculateNewStreak(state, payload)
+  const streak = calculateNewStreak(state, payload)
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
+  const observations = payload?.observations ?? []
 
   if (isLastNote) {
-    return finalizePracticeSession({ state, payload, streak: newStreak })
+    return {
+      ...state,
+      status: 'completed',
+      holdDuration: 0,
+      lastObservations: observations,
+      perfectNoteStreak: streak,
+    }
   }
 
-  return advanceToNextNote({ state, payload, streak: newStreak })
-}
-
-function canMatchNote(status: PracticeStatus): boolean {
-  const isListening = status === 'listening'
-  const isValidating = status === 'validating'
-  const isMatchCandidate = isListening || isValidating
-
-  const isEligible = isMatchCandidate
-  return isEligible
+  return {
+    ...state,
+    currentIndex: state.currentIndex + 1,
+    status: 'correct',
+    detectionHistory: [],
+    holdDuration: 0,
+    lastObservations: observations,
+    perfectNoteStreak: streak,
+  }
 }
 
 function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): number {
-  const lastDetection = state.detectionHistory[0]
-  const isExtPerfect = payload?.isPerfect
-  const centsError = lastDetection ? Math.abs(lastDetection.cents) : 100
-  const isIntPerfect = centsError < 5
-  const isPerfect = isExtPerfect ?? isIntPerfect
-  const nextStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
+  const centsError = state.detectionHistory[0] ? Math.abs(state.detectionHistory[0].cents) : 100
+  const isPerfect = payload?.isPerfect ?? centsError < 5
 
-  return nextStreak
-}
-
-function finalizePracticeSession(params: {
-  state: PracticeState
-  payload: NoteMatchedPayload
-  streak: number
-}): PracticeState {
-  const { state, payload, streak } = params
-  const obs = payload?.observations ?? []
-  const resultState = {
-    ...state,
-    status: 'completed' as PracticeStatus,
-    holdDuration: 0,
-    lastObservations: obs,
-    perfectNoteStreak: streak,
-  }
-
-  return resultState
-}
-
-function advanceToNextNote(params: {
-  state: PracticeState
-  payload: NoteMatchedPayload
-  streak: number
-}): PracticeState {
-  const { state, payload, streak } = params
-  const obs = payload?.observations ?? []
-  const resultState = {
-    ...state,
-    currentIndex: state.currentIndex + 1,
-    status: 'correct' as PracticeStatus,
-    detectionHistory: [],
-    holdDuration: 0,
-    lastObservations: obs,
-    perfectNoteStreak: streak,
-  }
-
-  return resultState
+  return isPerfect ? state.perfectNoteStreak + 1 : 0
 }

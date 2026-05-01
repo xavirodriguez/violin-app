@@ -22,10 +22,5 @@ import { twMerge } from 'tailwind-merge'
  * ```
  */
 export function cn(...inputs: ClassValue[]) {
-  const incoming = inputs
-  const classList = clsx(incoming)
-  const merged = twMerge(classList)
-  const result = merged
-
-  return result
+  return twMerge(clsx(inputs))
 }
