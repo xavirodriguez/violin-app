@@ -80,11 +80,16 @@ function prepareAchievementCheckStats(): AchievementCheckStats {
 }
 
 /**
- * Temporary facade to maintain backward compatibility with the legacy analytics API.
+ * Analytics facade.
  *
  * @remarks
- * This object aggregates multiple stores (Session, Progress, Achievements, History)
- * into a single interface. New code should prefer using the individual stores directly.
+ * This module exposes both hook-oriented and imperative access patterns by aggregating
+ * multiple stores (Session, Progress, Achievements, History) into a single interface.
+ *
+ * **Note on Implementations**:
+ * Some imperative `getState()` methods are compatibility stubs and do not execute
+ * the full analytics pipeline. Prefer using the hook-backed implementation or
+ * concrete stores for real-time data.
  *
  * @deprecated Use individual stores (e.g., `useSessionStore`, `useProgressStore`) directly.
  * @public
@@ -156,7 +161,13 @@ export const useAnalyticsStore = Object.assign(
         const result = entry || undefined
         return result
       },
-      /** Returns summary stats for the current day. */
+      /**
+       * Stub implementation for the current day stats.
+       *
+       * @remarks
+       * Always returns zeroed stats: `{ duration: 0, accuracy: 0, sessionsCount: 0 }`.
+       * Use the hook-backed analytics facade or concrete stores when real data is required.
+       */
       getTodayStats: () => {
         const duration = 0
         const accuracy = 0
@@ -209,6 +220,14 @@ export const useAnalyticsStore = Object.assign(
           }
           return completed
         },
+        /**
+         * Stub implementation for the imperative facade.
+         *
+         * @remarks
+         * Does not perform achievement evaluation and always returns an empty array.
+         * Use the hook-backed facade or the concrete achievements store when actual
+         * unlock checks are required.
+         */
         checkAndUnlockAchievements: () => {
           return []
         },
