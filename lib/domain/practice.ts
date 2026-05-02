@@ -2,6 +2,16 @@ import { NoteTechnique, Observation } from '../technique-types'
 import { Exercise, Note as TargetNote } from './exercise'
 
 export type { TargetNote }
+export type {
+  NoteResult,
+  PracticeSession,
+  LivePracticeSession,
+  CompletedPracticeSession,
+  PersistedPracticeSession,
+  NoteTechniqueSummary
+} from './practice-session'
+
+export { summarizeTechnique, toPersistedSession } from './practice-session'
 
 /**
  * Represents a note detected from the user's microphone input.
@@ -55,55 +65,6 @@ export type PracticeEvent =
       payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
     }
   | { type: 'NO_NOTE_DETECTED' }
-
-/**
- * Result of practicing a single note.
- * Can represent a note in progress or a completed one.
- *
- * @public
- */
-export interface NoteResult {
-  noteIndex: number
-  targetPitch: string
-  attempts: number
-  /** Optional because it's only available once the note is completed. */
-  timeToCompleteMs?: number
-  averageCents: number
-  wasInTune: boolean
-  /** Full technique data if available. */
-  technique?: NoteTechnique
-}
-
-/**
- * Canonical model for a practice session.
- * Used for live tracking, analytics, and persistence.
- *
- * @public
- */
-export interface PracticeSession {
-  id: string
-  startTimeMs: number
-  endTimeMs: number
-  durationMs: number
-  exerciseId: string
-  exerciseName: string
-  mode: 'tuner' | 'practice'
-  noteResults: NoteResult[]
-  notesAttempted: number
-  notesCompleted: number
-  accuracy: number
-  averageCents: number
-}
-
-/**
- * Live session data for real-time tracking.
- */
-export type LivePracticeSession = Omit<PracticeSession, 'endTimeMs' | 'durationMs'>
-
-/**
- * Completed session data with final metrics.
- */
-export type CompletedPracticeSession = PracticeSession
 
 /**
  * Lifetime statistics for an individual exercise.

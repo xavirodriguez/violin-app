@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { PracticeSession, CompletedPracticeSession, ExerciseStats } from '@/lib/domain/practice'
+import { PracticeSession, CompletedPracticeSession, PersistedPracticeSession, ExerciseStats } from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
@@ -229,10 +229,11 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
  * @returns Skill score (0-100).
  * @internal
  */
-function calculateIntonationSkill(sessions: PracticeSession[]): number {
+function calculateIntonationSkill(sessions: PracticeSession[] | PersistedPracticeSession[]): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
-  const avgAccuracy = recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length
+  const totalAcc = recentSessions.reduce((sum: number, s) => sum + s.accuracy, 0)
+  const avgAccuracy = totalAcc / recentSessions.length
   const trend =
     recentSessions.length >= 5 ? recentSessions[0].accuracy - recentSessions[4].accuracy : 0
   return Math.min(100, Math.max(0, avgAccuracy + trend * 0.5))
@@ -253,7 +254,7 @@ function calculateIntonationSkill(sessions: PracticeSession[]): number {
  * @returns Skill score (0-100).
  * @internal
  */
-function calculateRhythmSkill(sessions: PracticeSession[]): number {
+function calculateRhythmSkill(sessions: PracticeSession[] | PersistedPracticeSession[]): number {
   const recentSessions = sessions.slice(0, 10)
   const hasSessions = recentSessions.length > 0
   if (!hasSessions) return 0
@@ -270,7 +271,7 @@ interface RhythmMetricsAccumulator {
   totalCount: number
 }
 
-function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetricsAccumulator {
+function accumulateRhythmMetrics(sessions: PracticeSession[] | PersistedPracticeSession[]): RhythmMetricsAccumulator {
   let metrics: RhythmMetricsAccumulator = { totalError: 0, inWindowCount: 0, totalCount: 0 }
 
   for (const session of sessions) {
@@ -281,7 +282,7 @@ function accumulateRhythmMetrics(sessions: PracticeSession[]): RhythmMetricsAccu
 }
 
 function processSessionRhythm(
-  session: PracticeSession,
+  session: PracticeSession | PersistedPracticeSession,
   acc: RhythmMetricsAccumulator,
 ): RhythmMetricsAccumulator {
   const result = { ...acc }
@@ -326,17 +327,18 @@ function calculateRhythmScore(metrics: RhythmMetricsAccumulator): number {
   return Math.round(score)
 }
 
-function calculateSessionRhythmError(session: PracticeSession): number {
-  const totalError = session.noteResults.reduce((acc, nr) => {
+function calculateSessionRhythmError(session: PracticeSession | PersistedPracticeSession): number {
+  const noteResults = session.noteResults as Array<{ technique?: { rhythm?: { onsetErrorMs?: number } } }>
+  const totalError = noteResults.reduce((acc: number, nr) => {
     return acc + (nr.technique?.rhythm?.onsetErrorMs ?? 0)
   }, 0)
-  const count = session.noteResults.length || 1
+  const count = noteResults.length || 1
   const avgError = totalError / count
 
   return avgError
 }
 
-function assembleProgressEvent(session: PracticeSession): ProgressEvent {
+function assembleProgressEvent(session: PracticeSession | PersistedPracticeSession): ProgressEvent {
   const avgRhythmError = calculateSessionRhythmError(session)
   const event: ProgressEvent = {
     ts: session.endTimeMs,
@@ -362,7 +364,7 @@ function manageEventBuffer(params: {
 
 function updateExerciseStatsMap(params: {
   exerciseId: string
-  session: PracticeSession
+  session: PracticeSession | PersistedPracticeSession
   statsMap: Record<string, ExerciseStats>
 }): Record<string, ExerciseStats> {
   const { exerciseId, session, statsMap } = params
@@ -377,7 +379,7 @@ function updateExerciseStatsMap(params: {
 
 function computeNextExerciseStats(
   existing: ExerciseStats | undefined,
-  session: PracticeSession,
+  session: PracticeSession | PersistedPracticeSession,
 ): ExerciseStats {
   const timesCompleted = (existing?.timesCompleted || 0) + 1
   const bestAccuracy = Math.max(existing?.bestAccuracy || 0, session.accuracy)
@@ -396,7 +398,7 @@ function computeNextExerciseStats(
 
 function calculateNewAverageAccuracy(
   existing: ExerciseStats | undefined,
-  session: PracticeSession,
+  session: PracticeSession | PersistedPracticeSession,
   nextCount: number,
 ): number {
   if (!existing) {
@@ -409,7 +411,7 @@ function calculateNewAverageAccuracy(
 
 function calculateNewFastestCompletion(
   existing: ExerciseStats | undefined,
-  session: PracticeSession,
+  session: PracticeSession | PersistedPracticeSession,
 ): number {
   const currentFastest = existing?.fastestCompletionMs ?? session.durationMs
   const sessionDuration = session.durationMs
@@ -420,7 +422,7 @@ function calculateNewFastestCompletion(
 
 function generateSnapshotIfDue(params: {
   counter: number
-  session: PracticeSession
+  session: PracticeSession | PersistedPracticeSession
   get: () => ProgressState
 }): ProgressSnapshot[] {
   const { counter, session, get } = params
@@ -435,7 +437,7 @@ function generateSnapshotIfDue(params: {
   return [snapshot, ...snapshots].slice(0, 10)
 }
 
-function assembleSnapshot(session: PracticeSession, get: () => ProgressState): ProgressSnapshot {
+function assembleSnapshot(session: PracticeSession | PersistedPracticeSession, get: () => ProgressState): ProgressSnapshot {
   const snapshot: ProgressSnapshot = {
     userId: 'anonymous',
     window: 'all',
@@ -450,7 +452,7 @@ function assembleSnapshot(session: PracticeSession, get: () => ProgressState): P
 }
 
 function assembleSessionUpdates(params: {
-  session: PracticeSession
+  session: PracticeSession | PersistedPracticeSession
   get: () => ProgressState
 }): Partial<ProgressState> {
   const { session, get } = params
@@ -477,7 +479,7 @@ function assembleSessionUpdates(params: {
 }
 
 function assembleStateUpdates(params: {
-  session: PracticeSession
+  session: PracticeSession | PersistedPracticeSession
   get: () => ProgressState
   exercisesCompleted: string[]
   nextStatsMap: Record<string, ExerciseStats>

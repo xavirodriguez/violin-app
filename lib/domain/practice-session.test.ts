@@ -33,6 +33,7 @@ describe('practice-session domain', () => {
       pitchStability: {
         settlingStdCents: 5,
         globalStdCents: 10,
+        inTuneRatio: 0.9,
       },
       resonance: {
         rmsBeatingScore: 0.1,

@@ -1,7 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { NoteTechnique } from '../lib/technique-types'
-import { NoteResult, PracticeSession, LivePracticeSession, CompletedPracticeSession, ExerciseStats, Achievement } from '@/lib/domain/practice'
+import {
+  NoteResult,
+  PracticeSession,
+  LivePracticeSession,
+  CompletedPracticeSession,
+  PersistedPracticeSession,
+  ExerciseStats,
+  Achievement,
+  toPersistedSession
+} from '@/lib/domain/practice'
 import type { Exercise } from '@/lib/domain/exercise'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
 import type { AchievementCheckStats } from '@/lib/achievements/achievement-definitions'
@@ -58,7 +67,7 @@ export interface RecordCompletionParams {
 export interface AnalyticsStore {
   currentSession: LivePracticeSession | undefined
   cleanOldSessions: (count?: number) => void
-  sessions: PracticeSession[]
+  sessions: PersistedPracticeSession[]
   progress: UserProgress
   onAchievementUnlocked?: (achievement: Achievement) => void
   currentPerfectStreak: number
@@ -72,7 +81,7 @@ export interface AnalyticsStore {
   recordNoteAttempt: (params: RecordAttemptParams) => void
   recordNoteCompletion: (params: RecordCompletionParams) => void
   checkAndUnlockAchievements: () => void
-  getSessionHistory: (days?: number) => PracticeSession[]
+  getSessionHistory: (days?: number) => PersistedPracticeSession[]
   getExerciseStats: (exerciseId: string) => ExerciseStats | undefined
   getTodayStats: () => { duration: number; accuracy: number; sessionsCount: number }
   getStreakInfo: () => { current: number; longest: number }
@@ -133,15 +142,17 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         if (currentSession === undefined) return
 
         const completedSession = finalizeSessionData(currentSession)
-        const newSessions = [completedSession, ...sessions]
+        const persistedSession = toPersistedSession(completedSession)
+
+        const newSessions = [persistedSession, ...sessions]
         const newProgress = getUpdatedProgress({
           progress,
           completedSession,
-          sessions,
+          sessions: sessions as unknown as PracticeSession[],
         })
 
         handleSessionCompletion({
-          completedSession,
+          completedSession: persistedSession,
           sessions: newSessions,
           progress: newProgress,
         })
@@ -833,8 +844,8 @@ function migrateExerciseStatsV1V2(stats: Record<string, unknown>): void {
 }
 
 function handleSessionCompletion(params: {
-  completedSession: PracticeSession
-  sessions: PracticeSession[]
+  completedSession: PersistedPracticeSession
+  sessions: PersistedPracticeSession[]
   progress: UserProgress
 }): void {
   const { completedSession, sessions, progress } = params
