@@ -66,9 +66,12 @@ export const validatedPersist = <T>(
       ...options,
       storage: options.storage || createCompressedStorage(options.name),
       merge: (persistedState, currentState) => {
+        const customMerge = options.merge as
+          | ((persisted: Partial<T>, current: Partial<T>) => Partial<T>)
+          | undefined
         return validateAndMerge(schema, persistedState, currentState, {
           name: options.name,
-          merge: options.merge as unknown as (p: Partial<T>, c: Partial<T>) => Partial<T>,
+          merge: customMerge as (p: Partial<T>, c: Partial<T>) => Partial<T>,
         }) as T
       },
     },

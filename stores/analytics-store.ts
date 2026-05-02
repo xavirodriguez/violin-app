@@ -130,14 +130,21 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       endSession: () => {
         const { currentSession, sessions, progress } = get()
-        const isInactive = currentSession === undefined
-        if (isInactive) return
+        if (currentSession === undefined) return
 
-        const completedSession = finalizeSessionData(currentSession!)
-        const newSessions = [completedSession as PracticeSession, ...sessions]
-        const newProgress = getUpdatedProgress({ progress, completedSession: completedSession as PracticeSession, sessions })
+        const completedSession = finalizeSessionData(currentSession)
+        const newSessions = [completedSession, ...sessions]
+        const newProgress = getUpdatedProgress({
+          progress,
+          completedSession,
+          sessions,
+        })
 
-        handleSessionCompletion({ completedSession: completedSession as PracticeSession, sessions: newSessions, progress: newProgress })
+        handleSessionCompletion({
+          completedSession,
+          sessions: newSessions,
+          progress: newProgress,
+        })
         checkStorageThresholds()
       },
 
@@ -388,7 +395,7 @@ function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
   }
 
   const stats = assembleAchievementStats({
-    currentSession: currentSession as PracticeSession,
+    currentSession,
     currentPerfectStreak,
     sessions,
     progress,
@@ -398,7 +405,7 @@ function buildAchievementStats(state: AnalyticsStore): AchievementCheckStats {
 }
 
 function assembleAchievementStats(params: {
-  currentSession: PracticeSession
+  currentSession: LivePracticeSession
   currentPerfectStreak: number
   sessions: PracticeSession[]
   progress: UserProgress
@@ -416,7 +423,7 @@ function assembleAchievementStats(params: {
 }
 
 function buildCurrentSessionStats(params: {
-  session: PracticeSession
+  session: LivePracticeSession
   streak: number
   durationMs: number
 }): AchievementCheckStats['currentSession'] {
@@ -452,7 +459,7 @@ function buildCheckStats(params: {
 
 function calculateTotalNotesCompleted(
   sessions: PracticeSession[],
-  current: PracticeSession,
+  current: LivePracticeSession,
 ): number {
   const pastCompleted = sessions.reduce((sum, s) => sum + s.notesCompleted, 0)
   const total = pastCompleted + current.notesCompleted
@@ -737,8 +744,12 @@ function assembleMigratedData(params: {
   return {
     ...persistedData,
     sessions,
-    progress: { ...progressData, achievements, exerciseStats },
-  } as AnalyticsStore
+    progress: {
+      ...(progressData as unknown as UserProgress),
+      achievements,
+      exerciseStats,
+    },
+  } as unknown as AnalyticsStore
 }
 
 function migrateSessions(sessions: unknown): PracticeSession[] {
@@ -747,11 +758,12 @@ function migrateSessions(sessions: unknown): PracticeSession[] {
   return sessions.map((s: unknown) => {
     const session = s as Record<string, unknown>
     const { startTime, endTime, ...rest } = session || {}
-    return {
+    const migrated = {
       ...rest,
       startTimeMs: toMs(session?.startTimeMs ?? startTime),
       endTimeMs: toMs(session?.endTimeMs ?? endTime),
-    } as unknown as PracticeSession
+    }
+    return migrated as unknown as PracticeSession
   })
 }
 
@@ -761,10 +773,11 @@ function migrateAchievements(achievements: unknown): Achievement[] {
   return achievements.map((a: unknown) => {
     const achievement = a as Record<string, unknown>
     const { unlockedAt, ...rest } = achievement || {}
-    return {
+    const migrated = {
       ...rest,
       unlockedAtMs: toMs(achievement?.unlockedAtMs ?? unlockedAt),
-    } as unknown as Achievement
+    }
+    return migrated as unknown as Achievement
   })
 }
 

@@ -34,7 +34,6 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     setIsZen,
     osmdHook,
     derived,
-    autoStartEnabled,
   } = params
   const loadedRef = useRef(false)
 
@@ -44,13 +43,14 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     start,
     stop,
     setZenMode: setIsZen,
-    osmd: osmdHook,
+    osmdHook: osmdHook,
   })
 
   useEffect(() => {
-    const shouldLoadFirst = !loadedRef.current && !practiceState && allExercises.length > 0
+    const firstExercise = allExercises[0]
+    const shouldLoadFirst = !loadedRef.current && !practiceState && !!firstExercise
     if (shouldLoadFirst) {
-      loadExercise(allExercises[0] as unknown as Exercise)
+      loadExercise(firstExercise)
       loadedRef.current = true
     }
   }, [loadExercise, practiceState])

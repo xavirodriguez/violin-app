@@ -71,7 +71,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * - `ERROR`: retry after a failed initialization.
      *
      * **State Transitions**:
-     * `IDLE | ERROR` -> `INITIALIZING` -> `READY` on success, or `ERROR` on failure.
+     * `IDLE | ERROR` -\> `INITIALIZING` -\> `READY` on success, or `ERROR` on failure.
      *
      * **Token-based Guard**: It implements a token-based guard to prevent stale
      * initialization results from being applied if a reset or another initialize
@@ -130,7 +130,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      *
      * @remarks
      * **Signal Processing**:
-     * - **Gating**: Treats a signal as valid when `confidence > 0.8` and `pitch > 0`.
+     * - **Gating**: Treats a signal as valid when `confidence \> 0.8` and `pitch \> 0`.
      *   This threshold belongs to the interactive tuner path and may intentionally
      *   differ from other audio pipelines, such as practice-mode detection (minConfidence: 0.85).
      * - **State Machine**: Processes samples only while the tuner is `LISTENING`
@@ -139,7 +139,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * - **Domain Mapping**: Maps the frequency to the closest musical note and
      *   computes the deviation in cents.
      *
-     * @param pitch - Detected frequency in Hz. Values <= 0 are treated as no signal.
+     * @param pitch - Detected frequency in Hz. Values \<= 0 are treated as no signal.
      * @param confidence - Detector confidence from 0.0 to 1.0.
      */
     updatePitch: (pitch: number, confidence: number) => {
