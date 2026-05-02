@@ -65,7 +65,7 @@ export function useOSMDSafe(
   resetCursor: () => void
   /** Safe to call anytime - no-op when !isReady */
   advanceCursor: () => void
-  /** Highlights the note at the given index */
+  /** Highlights the notes currently under the OSMD cursor. */
   highlightCurrentNote: () => void
   /** Implementation of the ScoreViewPort for decoupled visual control */
   scoreView: ScoreViewPort
@@ -140,6 +140,16 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
+  /**
+   * Highlights the notes currently under the OSMD cursor.
+   *
+   * @remarks
+   * This does not seek to an arbitrary note index. It reads the current cursor
+   * position from OSMD, removes previous `.note-current` markers, and applies the
+   * marker to the notes currently under the cursor.
+   *
+   * No-ops when OSMD is not ready or the container is unavailable.
+   */
   const highlightCurrentNote = useCallback(() => {
     if (!isReady || !osmdRef.current || !containerRef.current) return
 
@@ -158,6 +168,17 @@ export function useOSMDSafe(
   const scoreView = useMemo<ScoreViewPort>(
     () => ({
       isReady,
+      /**
+       * Keeps the OSMD cursor moving with the normal sequential practice flow.
+       *
+       * @remarks
+       * Resets the cursor when `noteIndex` is 0. For any other index, advances
+       * the cursor by exactly one step.
+       *
+       * This function does not seek to an arbitrary note index. If practice navigation
+       * starts supporting non-sequential jumps, this logic must be replaced with an
+       * explicit cursor-positioning strategy.
+       */
       sync: (noteIndex: number) => {
         if (!isReady || !osmdRef.current) return
 

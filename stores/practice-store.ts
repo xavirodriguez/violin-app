@@ -14,8 +14,8 @@ import {
   type PracticeState,
   type PracticeEvent,
   type PracticeStatus,
-} from '@/lib/practice-core'
-import { type PracticeUIEvent } from '@/lib/domain/practice'
+  type PracticeUIEvent,
+} from '@/lib/domain/practice'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
