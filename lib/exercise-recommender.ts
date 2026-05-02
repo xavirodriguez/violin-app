@@ -22,10 +22,6 @@ const DAY_MS = 86_400_000
  * 5. **Spaced Repetition**: Fallback to the oldest practiced exercise that wasn't played today.
  *
  * @param params - Recommendation input.
- * @param params.exercises - Candidate exercises.
- * @param params.userProgress - User progress used to score candidates.
- * @param params.lastPlayedId - Optional exercise id to avoid immediate repetition.
- * @param params.difficultyFilter - Optional difficulty constraint.
  * @returns The recommended {@link Exercise}, or the first available one as a fallback. Returns `undefined` if the library is empty.
  *
  * @example
