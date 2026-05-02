@@ -62,7 +62,7 @@ export function PracticeMode() {
     start,
     stop,
     derived,
-    setZenMode: viewActions.setIsZen,
+    onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
     autoStartEnabled,
   }

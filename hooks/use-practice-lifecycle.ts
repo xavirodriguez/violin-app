@@ -9,7 +9,7 @@
 import { useEffect, useRef } from 'react'
 import { allExercises } from '@/lib/exercises'
 import { PracticeState } from '@/lib/practice-core'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { usePracticeShortcuts } from './use-practice-shortcuts'
@@ -20,7 +20,7 @@ interface LifecycleParams {
   loadExercise: (exercise: Exercise) => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
-  setZenMode: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  onToggleZenMode: () => void
   scoreView: ScoreViewPort
   derived: DerivedPracticeState
   autoStartEnabled: boolean
@@ -32,7 +32,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     loadExercise,
     start,
     stop,
-    setZenMode,
+    onToggleZenMode,
     scoreView,
     derived,
   } = params
@@ -43,7 +43,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
     status: derived.status,
     start,
     stop,
-    onToggleZenMode: () => setZenMode((prev) => !prev),
+    onToggleZenMode,
   })
 
   // Synchronize visual score
