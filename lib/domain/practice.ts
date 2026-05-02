@@ -98,6 +98,18 @@ export interface MatchHysteresis {
 }
 
 /**
+ * Events triggered by the UI to interact with the practice session.
+ * @public
+ */
+export type PracticeUIEvent =
+  | { type: 'START_SESSION' }
+  | { type: 'STOP_SESSION' }
+  | { type: 'RESET_SESSION' }
+  | { type: 'TOGGLE_AUTO_START'; payload: { enabled: boolean } }
+  | { type: 'JUMP_TO_NOTE'; payload: { index: number } }
+  | { type: 'LOAD_EXERCISE'; payload: { exercise: Exercise } }
+
+/**
  * Re-exporting pure functions from practice-core to domain for consolidation
  * while keeping practice-core as the implementation source.
  */

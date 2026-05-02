@@ -6,21 +6,17 @@
 
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { allExercises } from '@/lib/exercises'
 import { PracticeState } from '@/lib/practice-core'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
+import { useEffect } from 'react'
 import { usePracticeShortcuts } from './use-practice-shortcuts'
-import { usePracticeVisualSync } from './use-practice-visual-sync'
+import { PracticeUIEvent } from '@/lib/domain/practice'
 
 interface LifecycleParams {
-  practiceState: PracticeState | undefined
-  loadExercise: (exercise: Exercise) => Promise<void>
-  start: () => Promise<void>
-  stop: () => Promise<void>
-  setZenMode: (enabled: boolean | ((prev: boolean) => boolean)) => void
+  dispatch: (event: PracticeUIEvent) => void
+  onToggleZenMode: () => void
   scoreView: ScoreViewPort
   derived: DerivedPracticeState
   autoStartEnabled: boolean
@@ -28,37 +24,23 @@ interface LifecycleParams {
 
 export function usePracticeLifecycle(params: LifecycleParams) {
   const {
-    practiceState,
-    loadExercise,
-    start,
-    stop,
-    setZenMode,
+    dispatch,
+    onToggleZenMode,
     scoreView,
     derived,
   } = params
-  const loadedRef = useRef(false)
 
   // Manage keyboard shortcuts
   usePracticeShortcuts({
     status: derived.status,
-    start,
-    stop,
-    onToggleZenMode: () => setZenMode((prev) => !prev),
+    dispatch,
+    onToggleZenMode,
   })
 
   // Synchronize visual score
-  usePracticeVisualSync({
-    status: derived.status,
-    currentNoteIndex: derived.currentNoteIndex,
-    scoreView,
-  })
-
   useEffect(() => {
-    const firstExercise = allExercises[0]
-    const shouldLoadFirst = !loadedRef.current && !practiceState && !!firstExercise
-    if (shouldLoadFirst) {
-      loadExercise(firstExercise)
-      loadedRef.current = true
+    if (scoreView.isReady) {
+      scoreView.sync(derived.currentNoteIndex)
     }
-  }, [loadExercise, practiceState])
+  }, [derived.currentNoteIndex, scoreView])
 }
