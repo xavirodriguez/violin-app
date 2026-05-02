@@ -24,20 +24,12 @@ import { Observation } from '@/lib/technique-types'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { PracticeStoreState } from '@/lib/practice/practice-states'
 import { PracticeSession } from '@/lib/domain/practice'
+import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 
 interface PracticeMainContentProps {
-  state: PracticeStoreState
-  practiceState: PracticeState | undefined
-  status: string
   isZenModeEnabled: boolean
   autoStartEnabled: boolean
-  toggleAutoStart: (enabled: boolean) => void
   setPreviewExercise: (exercise: Exercise) => void
-  currentNoteIndex: number
-  targetNote: Note | undefined
-  targetPitchName: string | undefined
-  lastDetectedNote: DetectedNote | undefined
-  liveObservations: Observation[]
   centsTolerance: number
   sheetMusicView: 'focused' | 'full'
   setSheetMusicView: (view: 'focused' | 'full') => void
@@ -47,33 +39,32 @@ interface PracticeMainContentProps {
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
   }
-  handleRestart: () => void
   sessions: PracticeSession[]
-  start: () => void
-  stop: () => void
   onToggleZenMode: () => void
-  jumpToNote: (index: number) => void
 }
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
-  const { status } = props
+  const state = usePracticeStore((s) => s.state)
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const derived = useDerivedPracticeState()
+  const { status } = derived
   const isVisible = usePageVisibility()
   const [wasPaused, setWasPaused] = useState(false)
 
   useEffect(() => {
-    if (!isVisible && props.state.status === 'active') {
+    if (!isVisible && state.status === 'active') {
       setWasPaused(true)
     }
-    if (props.state.status !== 'active') {
+    if (state.status !== 'active') {
       setWasPaused(false)
     }
-  }, [isVisible, props.state.status])
+  }, [isVisible, state.status])
 
   const handleResume = () => {
     setWasPaused(false)
   }
 
-  const showPausedBanner = wasPaused && props.state.status === 'active'
+  const showPausedBanner = wasPaused && state.status === 'active'
 
   return (
     <>
@@ -103,7 +94,12 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
           </div>
         </Card>
       )}
-      <SheetMusicContainer {...props} />
+      <SheetMusicContainer
+        {...props}
+        practiceState={practiceState}
+        status={status}
+        currentNoteIndex={derived.currentNoteIndex}
+      />
       <PracticeActiveViewContent {...props} />
       <PracticePostSessionContent {...props} />
     </>
@@ -111,12 +107,12 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 }
 
 function PracticeIdleContent(props: PracticeMainContentProps) {
+  const state = usePracticeStore((s) => s.state)
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const dispatch = usePracticeStore.getState().dispatch
   const {
-    state,
     isZenModeEnabled,
     autoStartEnabled,
-    toggleAutoStart,
-    practiceState,
     setPreviewExercise,
   } = props
   if (state.status !== 'idle') return <></>
@@ -124,7 +120,10 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
   return (
     <div className="space-y-6">
       {!isZenModeEnabled && (
-        <PracticeSettings autoStartEnabled={autoStartEnabled} onAutoStartChange={toggleAutoStart} />
+        <PracticeSettings
+          autoStartEnabled={autoStartEnabled}
+          onAutoStartChange={(enabled) => dispatch({ type: 'TOGGLE_AUTO_START', payload: { enabled } })}
+        />
       )}
       <ExerciseLibrary
         selectedId={practiceState?.exercise.id}
@@ -136,13 +135,10 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
 }
 
 function PracticeActiveViewContent(props: PracticeMainContentProps) {
+  const derived = useDerivedPracticeState()
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const liveObservations = usePracticeStore((s) => s.liveObservations)
   const {
-    status,
-    targetNote,
-    targetPitchName,
-    lastDetectedNote,
-    liveObservations,
-    practiceState,
     isZenModeEnabled,
     centsTolerance,
   } = props
@@ -151,10 +147,10 @@ function PracticeActiveViewContent(props: PracticeMainContentProps) {
 
   return (
     <PracticeActiveView
-      status={status}
-      targetNote={targetNote}
-      targetPitchName={targetPitchName}
-      lastDetectedNote={lastDetectedNote}
+      status={derived.status}
+      targetNote={derived.targetNote}
+      targetPitchName={derived.targetPitchName}
+      lastDetectedNote={derived.lastDetectedNote ?? undefined}
       liveObservations={liveObservations}
       holdDuration={hold}
       perfectNoteStreak={streak}
@@ -165,25 +161,28 @@ function PracticeActiveViewContent(props: PracticeMainContentProps) {
 }
 
 function PracticePostSessionContent(props: PracticeMainContentProps) {
-  const { status, handleRestart, sessions, practiceState, start, stop, onToggleZenMode, isZenModeEnabled } =
+  const derived = useDerivedPracticeState()
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const dispatch = usePracticeStore.getState().dispatch
+  const { status } = derived
+  const { sessions, onToggleZenMode, isZenModeEnabled } =
     props
   const isCompleted = status === 'completed'
   const isActive = status !== 'idle'
   const session =
     sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined
 
+  const handleRestartAction = () => practiceState && dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
+
   return (
     <>
-      {isCompleted && <PracticeCompletion onRestart={handleRestart} sessionData={session} />}
+      {isCompleted && <PracticeCompletion onRestart={handleRestartAction} sessionData={session} />}
       {isActive && (
         <QuickActionsView
           status={status}
-          start={start}
-          stop={stop}
           onToggleZenMode={onToggleZenMode}
           isZen={isZenModeEnabled}
           practiceState={practiceState}
-          jumpToNote={props.jumpToNote}
         />
       )}
     </>
@@ -192,27 +191,22 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
 
 function QuickActionsView({
   status,
-  start,
-  stop,
   onToggleZenMode,
   isZen,
   practiceState,
-  jumpToNote,
 }: {
   status: string
-  start: () => void
-  stop: () => void
   onToggleZenMode: () => void
   isZen: boolean
   practiceState: PracticeState | undefined
-  jumpToNote: (index: number) => void
 }) {
-  const onTogglePause = () => (status === 'listening' ? stop() : start())
+  const dispatch = usePracticeStore.getState().dispatch
+  const onTogglePause = () => (status === 'listening' ? dispatch({ type: 'STOP_SESSION' }) : dispatch({ type: 'START_SESSION' }))
   const onToggleZen = () => onToggleZenMode()
 
   const onRepeatNote = () => {
     if (practiceState) {
-      jumpToNote(practiceState.currentIndex)
+      dispatch({ type: 'JUMP_TO_NOTE', payload: { index: practiceState.currentIndex } })
     }
   }
 
@@ -223,7 +217,7 @@ function QuickActionsView({
        * In future iterations, this will be updated to identify the start of the
        * current measure using OSMD/domain metadata if available.
        */
-      jumpToNote(0)
+      dispatch({ type: 'JUMP_TO_NOTE', payload: { index: 0 } })
     }
   }
 
@@ -234,7 +228,7 @@ function QuickActionsView({
        * Always increments the index relative to the current logical position.
        */
       const nextIndex = practiceState.currentIndex + 1
-      jumpToNote(nextIndex)
+      dispatch({ type: 'JUMP_TO_NOTE', payload: { index: nextIndex } })
     }
   }
 

@@ -9,7 +9,13 @@
 'use client'
 
 import { create } from 'zustand'
-import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/practice-core'
+import { allExercises } from '@/lib/exercises'
+import {
+  type PracticeState,
+  type PracticeEvent,
+  type PracticeStatus,
+} from '@/lib/practice-core'
+import { type PracticeUIEvent } from '@/lib/domain/practice'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -45,6 +51,7 @@ import {
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
 import { validateExercise } from '@/lib/exercises/validation'
+import { derivePracticeState } from '@/lib/practice/practice-utils'
 
 /**
  * Main store for managing the practice mode lifecycle and real-time audio pipeline.
@@ -67,9 +74,11 @@ export interface PracticeStore {
   setAutoStart: (enabled: boolean) => void
   jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
+  initialize: () => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
   reset: () => Promise<void>
+  dispatch: (event: PracticeUIEvent) => Promise<void>
   consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }
 
@@ -189,6 +198,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       await performAudioInitialization(set, get)
     },
 
+    initialize: async () => {
+      const { practiceState, loadExercise } = get()
+      if (!practiceState && allExercises.length > 0) {
+        await loadExercise(allExercises[0])
+      }
+    },
+
     start: async () => {
       set({ isStarting: true, error: undefined })
       try {
@@ -216,6 +232,29 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       set((currentState) => ({ ...currentState, ...getResetUpdates() }))
     },
 
+    dispatch: async (event: PracticeUIEvent) => {
+      switch (event.type) {
+        case 'START_SESSION':
+          await get().start()
+          break
+        case 'STOP_SESSION':
+          await get().stop()
+          break
+        case 'RESET_SESSION':
+          await get().reset()
+          break
+        case 'TOGGLE_AUTO_START':
+          get().setAutoStart(event.payload.enabled)
+          break
+        case 'JUMP_TO_NOTE':
+          get().jumpToNote(event.payload.index)
+          break
+        case 'LOAD_EXERCISE':
+          await get().loadExercise(event.payload.exercise)
+          break
+      }
+    },
+
     consumePipelineEvents: async (pipeline: PracticeEventPipeline) => {
       const currentToken = get().sessionToken
       for await (const event of pipeline) {
@@ -228,6 +267,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     },
   }
 })
+
+/**
+ * Selector hook to access derived practice state.
+ */
+export const useDerivedPracticeState = () => {
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  return derivePracticeState(practiceState)
+}
 
 type PracticeEventPipeline = AsyncIterable<PracticeEvent>
 

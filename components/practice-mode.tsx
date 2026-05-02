@@ -6,7 +6,7 @@
 
 'use client'
 
-import { usePracticeStore } from '@/stores/practice-store'
+import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
@@ -17,8 +17,7 @@ import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
-import { derivePracticeState, DerivedPracticeState } from '@/lib/practice/practice-utils'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Exercise } from '@/lib/exercises/types'
 
 /**
@@ -38,14 +37,13 @@ export function usePracticeViewState() {
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
-  const state = usePracticeStore((s) => s.state)
-  const liveObservations = usePracticeStore((s) => s.liveObservations)
 
-  const loadExercise = usePracticeStore.getState().loadExercise
-  const start = usePracticeStore.getState().start
-  const stop = usePracticeStore.getState().stop
-  const setAutoStart = usePracticeStore.getState().setAutoStart
-  const jumpToNote = usePracticeStore.getState().jumpToNote
+  const initialize = usePracticeStore.getState().initialize
+  const dispatch = usePracticeStore.getState().dispatch
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   const { sessions } = useAnalyticsStore()
   const { intonationSkill } = useProgressStore()
@@ -53,14 +51,11 @@ export function PracticeMode() {
 
   const xml = practiceState?.exercise.musicXML ?? ''
   const osmd = useOSMDSafe(xml)
-  const derived = derivePracticeState(practiceState)
+  const derived = useDerivedPracticeState()
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
-    practiceState,
-    loadExercise,
-    start,
-    stop,
+    dispatch,
     derived,
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
@@ -72,21 +67,12 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader />
-        <PracticeControlsRow derived={derived} isZen={viewState.isZen} />
+        <PracticeControlsRow isZen={viewState.isZen} />
         <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
-          state={state}
-          practiceState={practiceState}
-          status={derived.status}
           isZenModeEnabled={viewState.isZen}
           autoStartEnabled={autoStartEnabled}
-          toggleAutoStart={setAutoStart}
           setPreviewExercise={viewActions.setPreview}
-          currentNoteIndex={derived.currentNoteIndex}
-          targetNote={derived.targetNote}
-          targetPitchName={derived.targetPitchName}
-          lastDetectedNote={derived.lastDetectedNote ?? undefined}
-          liveObservations={liveObservations}
           centsTolerance={cents}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
@@ -96,12 +82,8 @@ export function PracticeMode() {
             containerRef: osmd.containerRef,
             scoreView: osmd.scoreView,
           }}
-          handleRestart={() => practiceState && loadExercise(practiceState.exercise)}
           sessions={sessions}
-          start={start}
-          stop={stop}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
-          jumpToNote={jumpToNote}
         />
         <KeyboardShortcutsDialog />
       </div>
@@ -160,16 +142,13 @@ function PracticeStatusHeader() {
 }
 
 function PracticeControlsRow({
-  derived,
   isZen,
 }: {
-  derived: DerivedPracticeState
   isZen: boolean
 }) {
   const state = usePracticeStore((s) => s.state)
-  const start = usePracticeStore((s) => s.start)
-  const stop = usePracticeStore((s) => s.stop)
-  const loadExercise = usePracticeStore((s) => s.loadExercise)
+  const derived = useDerivedPracticeState()
+  const dispatch = usePracticeStore.getState().dispatch
   const practiceState = usePracticeStore((s) => s.practiceState)
 
   const { status, progress, currentNoteIndex, totalNotes } = derived
@@ -180,14 +159,14 @@ function PracticeControlsRow({
 
   if (!shouldShow) return <></>
 
-  const handleRestart = () => practiceState && loadExercise(practiceState.exercise)
+  const handleRestart = () => practiceState && dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
 
   return (
     <PracticeControls
       status={status}
       hasExercise={!!practiceState}
-      onStart={start}
-      onStop={stop}
+      onStart={() => dispatch({ type: 'START_SESSION' })}
+      onStop={() => dispatch({ type: 'STOP_SESSION' })}
       onRestart={handleRestart}
       progress={progress}
       currentNoteIndex={currentNoteIndex}

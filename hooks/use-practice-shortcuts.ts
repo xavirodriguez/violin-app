@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
+import { PracticeUIEvent } from '@/lib/domain/practice'
 
 interface UsePracticeShortcutsParams {
   status: string
-  start: () => void
-  stop: () => void
+  dispatch: (event: PracticeUIEvent) => void
   onToggleZenMode: () => void
 }
 
@@ -13,7 +13,7 @@ interface UsePracticeShortcutsParams {
  * Hook to manage keyboard shortcuts for the practice session.
  */
 export function usePracticeShortcuts(params: UsePracticeShortcutsParams) {
-  const { status, start, stop, onToggleZenMode } = params
+  const { status, dispatch, onToggleZenMode } = params
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -27,14 +27,14 @@ export function usePracticeShortcuts(params: UsePracticeShortcutsParams) {
       if (e.key.toLowerCase() === ' ') {
         e.preventDefault()
         if (status === 'listening') {
-          stop()
+          dispatch({ type: 'STOP_SESSION' })
         } else {
-          start()
+          dispatch({ type: 'START_SESSION' })
         }
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [status, start, stop, onToggleZenMode])
+  }, [status, dispatch, onToggleZenMode])
 }
