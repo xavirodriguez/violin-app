@@ -28,14 +28,11 @@ const DAY_MS = 86_400_000
  *
  * @example
  * ```ts
- * const rec = getRecommendedExercise(allExercises, progress, lastId);
- * if (rec) console.log(`We recommend: ${rec.name}`);
- * ```
- *
- * @example
- * ```ts
- * const nextExercise = getRecommendedExercise(allExercises, progress, "scale_c_major");
- * console.log(`Recommended: ${nextExercise.name}`);
+ * const nextExercise = getRecommendedExercise({
+ *   exercises: allExercises,
+ *   userProgress: progress,
+ *   lastPlayedId: "scale_c_major",
+ * });
  * ```
  *
  * @public
