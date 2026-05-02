@@ -6,7 +6,7 @@
 
 'use client'
 
-import { usePracticeStore, PracticeStore } from '@/stores/practice-store'
+import { usePracticeStore } from '@/stores/practice-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
@@ -115,7 +115,6 @@ function PracticePreviewModal(params: {
 }) {
   const { viewState, viewActions } = params
   const loadExercise = usePracticeStore((s) => s.loadExercise)
-  const start = usePracticeStore((s) => s.start)
   const isOpen = !!viewState.preview
 
   const handleOpenChange = (open: boolean) => {
