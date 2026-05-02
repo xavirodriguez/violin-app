@@ -21,16 +21,21 @@ const DAY_MS = 86_400_000
  * 4. **Discovery**: Suggest the first unplayed exercise in the current target difficulty.
  * 5. **Spaced Repetition**: Fallback to the oldest practiced exercise that wasn't played today.
  *
- * @param params - Recommendation input.
+ * @param exercises - Array of all available exercises in the library.
+ * @param userProgress - The user's historical progress, including attempt counts and best scores.
+ * @param lastPlayedId - ID of the exercise practiced in the previous session for continuity.
  * @returns The recommended {@link Exercise}, or the first available one as a fallback. Returns `undefined` if the library is empty.
  *
  * @example
  * ```ts
- * const nextExercise = getRecommendedExercise({
- *   exercises: allExercises,
- *   userProgress: progress,
- *   lastPlayedId: "scale_c_major",
- * });
+ * const rec = getRecommendedExercise(allExercises, progress, lastId);
+ * if (rec) console.log(`We recommend: ${rec.name}`);
+ * ```
+ *
+ * @example
+ * ```ts
+ * const nextExercise = getRecommendedExercise(allExercises, progress, "scale_c_major");
+ * console.log(`Recommended: ${nextExercise.name}`);
  * ```
  *
  * @public

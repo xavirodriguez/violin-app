@@ -65,7 +65,7 @@ export interface PracticeStore {
 
   loadExercise: (exercise: Exercise) => Promise<void>
   setAutoStart: (enabled: boolean) => void
-  setNoteIndex: (index: number) => void
+  jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
   start: () => Promise<void>
   stop: () => Promise<void>
@@ -160,26 +160,23 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       set((currentState) => ({ ...currentState, ...updates }))
     },
 
-    setNoteIndex: (index) => {
+    jumpToNote: (index) => {
       const state = get().practiceState
       if (!state || get().isStarting) return
 
       const wasActive = get().state.status === 'active'
-      const updates = getResetStateForIndex(state, index)
+      const jumpEvent: PracticeEvent = { type: 'JUMP_TO_NOTE', payload: { index } }
 
       if (wasActive) {
         get()
           .stop()
           .then(() => {
-            // Re-check state if it changed during stop
-            if (get().practiceState) {
-              set((currentState) => ({ ...currentState, practiceState: updates }))
-              return get().start()
-            }
+            updateStateFromEvent({ set, event: jumpEvent, token: get().sessionToken })
+            return get().start()
           })
           .catch((err) => console.error('[PracticeStore] Failed to restart after index change:', err))
       } else {
-        set((currentState) => ({ ...currentState, practiceState: updates }))
+        updateStateFromEvent({ set, event: jumpEvent, token: get().sessionToken })
       }
     },
 
@@ -346,7 +343,23 @@ function buildRunnerStoreInterface(
       practiceState: get().practiceState,
       liveObservations: get().liveObservations,
     }),
-    setState: (partial: SafePartial) => safeSet(partial),
+    dispatch: (event: PracticeEvent) => {
+      const currentToken = get().sessionToken
+      updateStateFromEvent({
+        set: (fn) => safeSet(fn as any),
+        event,
+        token: currentToken,
+      })
+
+      // Handle completion side effects
+      const state = get().practiceState
+      if (state?.status === 'completed') {
+        finalizeAnalyticsSession()
+        get()
+          .stop()
+          .catch((err) => console.error('[PracticeStore] Failed to stop after completion:', err))
+      }
+    },
     stop: async () => {
       await get().stop()
     },
@@ -627,31 +640,6 @@ function getStartStateUpdates(params: {
   }
 }
 
-function getResetStateForIndex(state: PracticeState, index: number): PracticeState {
-  const clamped = clampIndex(index, state.exercise.notes.length)
-  const result = assembleResetState(state, clamped)
-
-  return result
-}
-
-function clampIndex(index: number, total: number): number {
-  const min = 0
-  const max = total - 1
-  const clamped = Math.max(min, Math.min(index, max))
-
-  return clamped
-}
-
-function assembleResetState(state: PracticeState, index: number): PracticeState {
-  const result = {
-    ...state,
-    currentIndex: index,
-    status: 'listening' as PracticeStatus,
-    holdDuration: 0,
-    detectionHistory: [],
-  }
-  return result
-}
 
 function getExerciseLoadUpdates(exercise: Exercise) {
   const resetUpdates = {

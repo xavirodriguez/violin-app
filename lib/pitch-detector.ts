@@ -47,12 +47,10 @@ export class PitchDetector {
   private MAX_FREQUENCY = 3000
 
   /**
-   * Practical YIN threshold heuristic.
-   *
-   * @remarks
-   * Lower values usually require stronger periodicity before accepting a pitch.
-   * The current value is intended as a pragmatic default, not a benchmark-proven
-   * optimum for every instrument or recording environment.
+   * The threshold for the YIN algorithm.
+   * Lower values = more strict (fewer false positives, might miss quiet notes)
+   * Higher values = more lenient (more detections, but less reliable)
+   * 0.1 is a good balance for musical instruments.
    */
   public static readonly DEFAULT_YIN_THRESHOLD = 0.1
 

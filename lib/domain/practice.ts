@@ -47,6 +47,7 @@ export type PracticeEvent =
   | { type: 'START'; payload?: { startIndex?: number } }
   | { type: 'STOP' }
   | { type: 'RESET' }
+  | { type: 'JUMP_TO_NOTE'; payload: { index: number } }
   | { type: 'NOTE_DETECTED'; payload: DetectedNote }
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   | {

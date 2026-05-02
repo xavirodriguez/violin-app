@@ -63,19 +63,20 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Initializes the tuner audio pipeline.
+     * Initializes the microphone and audio pipeline for tuning.
      *
      * @remarks
-     * **Valid start states**:
-     * - `IDLE`: first initialization.
-     * - `ERROR`: retry after a failed initialization.
-     *
-     * **State Transitions**:
-     * `IDLE | ERROR` -\> `INITIALIZING` -\> `READY` on success, or `ERROR` on failure.
+     * This method:
+     * 1. Requests user permissions via the `audioManager`.
+     * 2. Sets up the Web Audio context and analyzer.
+     * 3. Instantiates the `PitchDetector` algorithm.
      *
      * **Token-based Guard**: It implements a token-based guard to prevent stale
      * initialization results from being applied if a reset or another initialize
      * call occurs during the async process.
+     *
+     * **State Transitions**:
+     * `IDLE` -\> `INITIALIZING` -\> `READY` (success) or `ERROR` (failure).
      *
      * @returns A promise that resolves when initialization is complete.
      * @throws AppError - If microphone access is denied or hardware fails.
@@ -126,21 +127,20 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Updates the tuner with the latest detected pitch sample.
+     * Processes a raw pitch/confidence pair and updates the detected note state.
      *
      * @remarks
      * **Signal Processing**:
-     * - **Gating**: Treats a signal as valid when `confidence \> 0.8` and `pitch \> 0`.
-     *   This threshold belongs to the interactive tuner path and may intentionally
-     *   differ from other audio pipelines, such as practice-mode detection (minConfidence: 0.85).
-     * - **State Machine**: Processes samples only while the tuner is `LISTENING`
-     *   or already `DETECTED`. Automatically transitions to `DETECTED` when a valid
-     *   signal is found, and reverts to `LISTENING` when signal is lost.
-     * - **Domain Mapping**: Maps the frequency to the closest musical note and
-     *   computes the deviation in cents.
+     * - **Gating**: Implements a strict confidence threshold (0.85) to filter out
+     *   ambient noise and low-energy signals.
+     * - **State Machine**: Automatically transitions the store kind to `DETECTED`
+     *   when a valid signal is found, and reverts to `LISTENING` when the signal
+     *   is lost or falls below the threshold.
+     * - **Domain Mapping**: Uses scientific pitch notation (via {@link MusicalNote})
+     *   to determine the closest chromatic note and its deviation in cents.
      *
-     * @param pitch - Detected frequency in Hz. Values \<= 0 are treated as no signal.
-     * @param confidence - Detector confidence from 0.0 to 1.0.
+     * @param pitch - The detected frequency in Hz.
+     * @param confidence - The detector's confidence (0.0 to 1.0).
      */
     updatePitch: (pitch: number, confidence: number) => {
       const { state } = get()
@@ -206,16 +206,12 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     },
 
     /**
-     * Loads available audio input devices.
+     * Enumerates available audio input devices and updates the `devices` list.
      *
      * @remarks
-     * **Permission Handling**: If permissions are still pending (`PROMPT`) and the
-     * tuner is `IDLE`, this method performs a brief initialize/reset cycle so device
-     * labels can become available.
-     *
-     * This permission warm-up is intentionally skipped while the tuner is already
-     * active (`READY`, `LISTENING`, `DETECTED`, etc.) to avoid interrupting an
-     * ongoing audio session.
+     * **Permission Handling**: Triggers a brief initialization cycle if permissions
+     * are missing to ensure device labels can be read (browsers hide labels for
+     * un-authorized hardware).
      *
      * @returns A promise that resolves when the device list is updated.
      */

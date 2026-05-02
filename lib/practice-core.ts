@@ -289,6 +289,8 @@ const PRACTICE_EVENT_HANDLERS: Record<
   NO_NOTE_DETECTED: handleNoNoteDetected,
   NOTE_MATCHED: (state, event) =>
     handleNoteMatched(state, (event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>).payload),
+  JUMP_TO_NOTE: (state, event) =>
+    handleJumpToNote(state, (event as Extract<PracticeEvent, { type: 'JUMP_TO_NOTE' }>).payload.index),
 }
 
 function handleStart(state: PracticeState, event: PracticeEvent): PracticeState {
@@ -400,4 +402,17 @@ function calculateNewStreak(state: PracticeState, payload: NoteMatchedPayload): 
   const isPerfect = payload?.isPerfect ?? centsError < 5
 
   return isPerfect ? state.perfectNoteStreak + 1 : 0
+}
+
+function handleJumpToNote(state: PracticeState, index: number): PracticeState {
+  const totalNotes = state.exercise.notes.length
+  const clampedIndex = Math.max(0, Math.min(index, totalNotes - 1))
+
+  return {
+    ...state,
+    currentIndex: clampedIndex,
+    status: state.status === 'completed' ? 'listening' : state.status,
+    holdDuration: 0,
+    detectionHistory: [],
+  }
 }

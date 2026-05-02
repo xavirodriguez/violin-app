@@ -39,7 +39,7 @@ describe('PracticeSessionRunner', () => {
         detectionHistory: [],
       },
     })),
-    setState: vi.fn(),
+    dispatch: vi.fn(),
     stop: vi.fn(),
   }
 
