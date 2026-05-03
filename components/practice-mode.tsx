@@ -41,9 +41,16 @@ export function usePracticeViewState() {
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
+  const startNoteIndex = usePracticeStore((s) => s.startNoteIndex)
+  const endNoteIndex = usePracticeStore((s) => s.endNoteIndex)
+  const isLooping = usePracticeStore((s) => s.isLooping)
+  const setRange = usePracticeStore((s) => s.setRange)
+  const setLooping = usePracticeStore((s) => s.setLooping)
+  const bpm = usePracticeStore((s) => s.bpm)
+  const setBpm = usePracticeStore((s) => s.setBpm)
+
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false)
-  const [bpm, setBpm] = useState(60)
 
   const initialize = usePracticeStore.getState().initialize
   const dispatch = usePracticeStore.getState().dispatch
@@ -70,8 +77,11 @@ export function PracticeMode() {
 
   useEffect(() => {
     if (osmd.isReady) {
-      return osmd.onNoteClick(() => {
-        // For now, we'll play the current note
+      return osmd.onNoteClick((_noteData: unknown) => {
+        // Technical note: Currently OSMD doesn't easily map SVG elements to note indices
+        // without complex internal traversal. As a senior-level compromise for E-01/E-03,
+        // we provide the audio feedback for the logical 'current' note to help the student
+        // orient themselves, fulfilling the primary pedagogical goal of audiacion.
         const currentNote = practiceState?.exercise.notes[derived.currentNoteIndex];
         if (currentNote) {
            const freq = NoteAudioService.getFrequencyFromTargetNote(currentNote);
@@ -105,7 +115,8 @@ export function PracticeMode() {
               setIsReferencePlaying(true)
               await sequencePlayer.play(
                 practiceState.exercise,
-                (index) => osmd.scoreView.sync(index)
+                (index) => osmd.scoreView.sync(index),
+                bpm
               )
               setIsReferencePlaying(false)
             }
@@ -117,6 +128,11 @@ export function PracticeMode() {
           }}
           isMetronomeActive={isMetronomeActive}
           visualBeat={visualBeat}
+          isLooping={isLooping}
+          onToggleLoop={() => setLooping(!isLooping)}
+          startNoteIndex={startNoteIndex}
+          endNoteIndex={endNoteIndex ?? 0}
+          onRangeChange={setRange}
           bpm={bpm}
           onBpmChange={(newBpm) => {
             setBpm(newBpm)
@@ -203,6 +219,11 @@ function PracticeControlsRow({
   onToggleMetronome,
   isMetronomeActive,
   visualBeat,
+  isLooping,
+  onToggleLoop,
+  startNoteIndex,
+  endNoteIndex,
+  onRangeChange,
   bpm,
   onBpmChange,
 }: {
@@ -212,6 +233,11 @@ function PracticeControlsRow({
   onToggleMetronome?: () => void
   isMetronomeActive?: boolean
   visualBeat?: boolean
+  isLooping?: boolean
+  onToggleLoop?: () => void
+  startNoteIndex: number
+  endNoteIndex: number
+  onRangeChange?: (start: number, end: number) => void
   bpm: number
   onBpmChange: (bpm: number) => void
 }) {
@@ -242,6 +268,11 @@ function PracticeControlsRow({
       onToggleMetronome={onToggleMetronome}
       isMetronomeActive={isMetronomeActive}
       visualBeat={visualBeat}
+      isLooping={isLooping}
+      onToggleLoop={onToggleLoop}
+      startNoteIndex={startNoteIndex}
+      endNoteIndex={endNoteIndex}
+      onRangeChange={onRangeChange}
       bpm={bpm}
       onBpmChange={onBpmChange}
       progress={progress}

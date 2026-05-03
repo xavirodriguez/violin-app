@@ -1,6 +1,6 @@
 'use client'
 
-import { Play, Square, RotateCcw, Volume2, Timer } from 'lucide-react'
+import { Play, Square, RotateCcw, Volume2, Timer, Repeat } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PracticeStatus } from '@/lib/domain/practice'
@@ -16,6 +16,11 @@ interface PracticeControlsProps {
   onToggleMetronome?: () => void
   isMetronomeActive?: boolean
   visualBeat?: boolean
+  isLooping?: boolean
+  onToggleLoop?: () => void
+  startNoteIndex: number
+  endNoteIndex: number
+  onRangeChange?: (start: number, end: number) => void
   bpm: number
   onBpmChange: (bpm: number) => void
   progress: number
@@ -37,6 +42,12 @@ export function PracticeControls(props: PracticeControlsProps) {
     isReferencePlaying,
     onToggleMetronome,
     isMetronomeActive,
+    visualBeat,
+    isLooping,
+    onToggleLoop,
+    startNoteIndex,
+    endNoteIndex,
+    onRangeChange,
     bpm,
     onBpmChange,
     progress,
@@ -58,40 +69,74 @@ export function PracticeControls(props: PracticeControlsProps) {
             isReferencePlaying={isReferencePlaying}
             onToggleMetronome={onToggleMetronome}
             isMetronomeActive={isMetronomeActive}
+            visualBeat={visualBeat}
           />
           {hasExercise && (
             <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
           )}
         </div>
-        <div className="flex items-center gap-4 border-t pt-4">
+        <div className="flex items-center gap-8 border-t pt-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Tempo:</span>
-            <input
-              type="range"
-              min="40"
-              max="200"
-              value={bpm}
-              onChange={(e) => onBpmChange(parseInt(e.target.value))}
-              className="h-1.5 w-32 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
-            />
-            <span className="min-w-[3rem] text-sm font-bold">{bpm} BPM</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tempo</span>
+            <div className="flex items-center gap-3 bg-muted/30 px-3 py-1.5 rounded-md border border-border/50">
+              <input
+                type="range"
+                min="40"
+                max="200"
+                value={bpm}
+                onChange={(e) => onBpmChange(parseInt(e.target.value))}
+                className="h-1.5 w-24 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
+              />
+              <span className="min-w-[3rem] text-sm font-bold tabular-nums">{bpm} BPM</span>
+            </div>
           </div>
+
+          {hasExercise && (
+            <div className="flex items-center gap-4">
+               <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Range</span>
+                <div className="flex items-center gap-2 bg-muted/30 px-3 py-1 rounded-md border border-border/50">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground leading-none">Start</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalNotes}
+                      value={startNoteIndex + 1}
+                      onChange={(e) => onRangeChange?.(parseInt(e.target.value) - 1, endNoteIndex)}
+                      className="w-12 bg-transparent text-sm font-bold focus:outline-none"
+                    />
+                  </div>
+                  <div className="h-6 w-px bg-border/50" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground leading-none">End</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalNotes}
+                      value={endNoteIndex + 1}
+                      onChange={(e) => onRangeChange?.(startNoteIndex, parseInt(e.target.value) - 1)}
+                      className="w-12 bg-transparent text-sm font-bold focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant={isLooping ? "default" : "outline"}
+                size="sm"
+                onClick={onToggleLoop}
+                className="h-9 gap-2 px-4 transition-all"
+              >
+                <Repeat className="h-4 w-4" />
+                {isLooping ? 'Looping On' : 'Loop Off'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Card>
   )
-}
-
-interface SessionActionsProps {
-  status: PracticeStatus
-  disabled: boolean
-  onStart: () => void
-  onStop: () => void
-  onRestart: () => void
-  onPlayReference?: () => void
-  isReferencePlaying?: boolean
-  onToggleMetronome?: () => void
-  isMetronomeActive?: boolean
 }
 
 interface SessionActionsProps {

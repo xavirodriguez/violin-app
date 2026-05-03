@@ -31,6 +31,12 @@ export interface PracticeEngineContext {
   centsTolerance?: number
   /** The index of the note to start practicing from. */
   initialNoteIndex?: number
+  /** The ending index for the practice range. */
+  endNoteIndex?: number
+  /** Whether automatic looping is enabled. */
+  isLooping?: boolean
+  /** Beats per minute for rhythm analysis. */
+  bpm?: number
 }
 
 /**
@@ -121,7 +127,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 function createEngineCore(ctx: PracticeEngineContext) {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
-  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex)
+  let state = getInitialEngineState(ctx)
 
   const core = {
     getState: () => state,
@@ -174,12 +180,18 @@ async function* executeEngineStart(
   }
 }
 
-function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): EngineState {
+function getInitialEngineState(ctx: PracticeEngineContext): EngineState {
+  const { exercise, initialNoteIndex = 0, endNoteIndex, isLooping = false } = ctx
   const noteCount = exercise.notes.length
+  const finalEndIndex = endNoteIndex ?? noteCount - 1
+
   const initialState: EngineState = {
     ...INITIAL_ENGINE_STATE,
     scoreLength: noteCount,
     currentNoteIndex: initialNoteIndex,
+    startNoteIndex: initialNoteIndex,
+    endNoteIndex: finalEndIndex,
+    isLooping,
   }
 
   const result = initialState
@@ -194,7 +206,7 @@ function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): No
   const difficulty = calculateAdaptiveDifficulty(perfectNoteStreak)
   const options: NoteStreamOptions = {
     exercise: ctx.exercise,
-    bpm: 60,
+    bpm: ctx.bpm ?? 60,
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
     requiredHoldTime: difficulty.requiredHoldTime,
     minRms: 0.01,
@@ -246,7 +258,13 @@ async function* executeNoteLoop(
   },
 ): AsyncGenerator<PracticeEngineEvent> {
   const { getState, signal } = params
-  while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
+  const shouldContinue = () => {
+    const state = getState()
+    const isWithinBounds = state.currentNoteIndex <= state.endNoteIndex
+    return isWithinBounds && !signal.aborted
+  }
+
+  while (shouldContinue()) {
     yield* iterateScoreNotes(params)
   }
 }
@@ -444,8 +462,8 @@ function shouldTerminatePipeline(params: {
  */
 function isTerminalEvent(event: PracticeEngineEvent, state: EngineState): boolean {
   const isMatch = event.type === 'NOTE_MATCHED'
-  const isLastNote = state.currentNoteIndex >= state.scoreLength
-  const isTerminal = isMatch && isLastNote
+  const isEndOfRange = state.currentNoteIndex > state.endNoteIndex
+  const isTerminal = isMatch && isEndOfRange && !state.isLooping
   const result = isTerminal
 
   return result

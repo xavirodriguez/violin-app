@@ -69,10 +69,17 @@ export interface PracticeStore {
   isInitializing: boolean
   sessionToken: string | undefined
   sessionId: number
+  startNoteIndex: number
+  endNoteIndex: number | undefined
+  isLooping: boolean
+  bpm: number
 
   loadExercise: (exercise: Exercise) => Promise<void>
   setAutoStart: (enabled: boolean) => void
   jumpToNote: (index: number) => void
+  setRange: (start: number, end: number | undefined) => void
+  setLooping: (enabled: boolean) => void
+  setBpm: (bpm: number) => void
   initializeAudio: () => Promise<void>
   initialize: () => Promise<void>
   start: () => Promise<void>
@@ -136,6 +143,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isInitializing: false,
     sessionToken: undefined,
     sessionId: 0,
+    startNoteIndex: 0,
+    endNoteIndex: undefined,
+    isLooping: false,
+    bpm: 60,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -167,6 +178,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       const nextValue = enabled
       const updates = { autoStartEnabled: nextValue }
       set((currentState) => ({ ...currentState, ...updates }))
+    },
+
+    setRange: (start, end) => {
+      set({ startNoteIndex: start, endNoteIndex: end })
+    },
+
+    setLooping: (enabled) => {
+      set({ isLooping: enabled })
+    },
+
+    setBpm: (bpm) => {
+      set({ bpm })
     },
 
     jumpToNote: (index) => {
@@ -356,6 +379,7 @@ function createRunnerDeps(params: {
 }): SessionRunnerDependencies {
   const { get, safeSet, storeState } = params
   const tolerance = calculateCentsTolerance()
+  const { startNoteIndex, endNoteIndex, isLooping, bpm } = get()
   const deps: SessionRunnerDependencies = {
     audioLoop: storeState.audioLoop,
     detector: storeState.detector,
@@ -365,6 +389,10 @@ function createRunnerDeps(params: {
     analytics: buildRunnerAnalyticsInterface(),
     updatePitch: (p, c) => useTunerStore.getState().updatePitch(p, c),
     centsTolerance: tolerance,
+    startNoteIndex,
+    endNoteIndex,
+    isLooping,
+    bpm,
   }
 
   return deps
@@ -695,6 +723,8 @@ function getExerciseLoadUpdates(exercise: Exercise) {
     error: undefined,
     liveObservations: [],
     sessionToken: undefined,
+    startNoteIndex: 0,
+    endNoteIndex: exercise.notes.length - 1,
   }
 
   return resetUpdates

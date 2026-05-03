@@ -73,6 +73,10 @@ export interface SessionRunnerDependencies {
   analytics: RunnerAnalytics
   updatePitch?: (pitch: number, confidence: number) => void
   centsTolerance?: number
+  startNoteIndex?: number
+  endNoteIndex?: number
+  isLooping?: boolean
+  bpm?: number
 }
 
 /**
@@ -191,7 +195,10 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       exercise: context.exercise,
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
-      initialNoteIndex: storeState.practiceState?.currentIndex ?? 0,
+      initialNoteIndex: context.startNoteIndex ?? storeState.practiceState?.currentIndex ?? 0,
+      endNoteIndex: context.endNoteIndex,
+      isLooping: context.isLooping,
+      bpm: context.bpm,
     })
 
     return engine

@@ -18,6 +18,12 @@ export interface EngineState {
   lastTechnique?: NoteTechnique
   /** Number of consecutive notes that met the 'perfect' threshold. */
   perfectNoteStreak: number
+  /** The starting note index for the practice range. */
+  startNoteIndex: number
+  /** The ending note index for the practice range. */
+  endNoteIndex: number
+  /** Whether automatic looping is enabled. */
+  isLooping: boolean
 }
 
 /**
@@ -31,4 +37,7 @@ export const INITIAL_ENGINE_STATE: EngineState = {
   scoreLength: 0,
   liveObservations: [],
   perfectNoteStreak: 0,
+  startNoteIndex: 0,
+  endNoteIndex: 0,
+  isLooping: false,
 }

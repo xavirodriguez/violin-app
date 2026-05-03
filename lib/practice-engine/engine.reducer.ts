@@ -33,7 +33,14 @@ const HANDLERS: Record<
   NOTE_MATCHED: (state, event) => {
     const typedEvent = event as Extract<PracticeEngineEvent, { type: 'NOTE_MATCHED' }>
     const { technique, isPerfect } = typedEvent.payload
-    const nextIndex = state.currentNoteIndex + 1
+
+    let nextIndex = state.currentNoteIndex + 1
+    const isRangeComplete = nextIndex > state.endNoteIndex
+
+    if (isRangeComplete && state.isLooping) {
+      nextIndex = state.startNoteIndex
+    }
+
     const nextStreak = isPerfect ? state.perfectNoteStreak + 1 : 0
 
     return {
