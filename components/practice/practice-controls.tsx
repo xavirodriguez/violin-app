@@ -4,6 +4,9 @@ import { Play, Square, RotateCcw, Volume2, Timer } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PracticeStatus } from '@/lib/domain/practice'
+import { MetronomeControl } from '@/components/ui/metronome-control'
+import { ReferencePlayer } from '@/components/ui/reference-player'
+import { LoopSelector } from '@/components/ui/loop-selector'
 
 interface PracticeControlsProps {
   status: PracticeStatus
@@ -45,38 +48,29 @@ export function PracticeControls(props: PracticeControlsProps) {
   } = props
 
   return (
-    <Card className="p-4">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <SessionActions
-            status={status}
-            disabled={!hasExercise}
-            onStart={onStart}
-            onStop={onStop}
-            onRestart={onRestart}
-            onPlayReference={onPlayReference}
-            isReferencePlaying={isReferencePlaying}
-            onToggleMetronome={onToggleMetronome}
-            isMetronomeActive={isMetronomeActive}
-          />
+    <Card className="p-4 space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <SessionActions
+          status={status}
+          disabled={!hasExercise}
+          onStart={onStart}
+          onStop={onStop}
+          onRestart={onRestart}
+        />
+
+        <div className="flex items-center gap-4">
           {hasExercise && (
-            <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+            <>
+              <ReferencePlayer />
+              <LoopSelector />
+            </>
           )}
+          <MetronomeControl />
         </div>
-        <div className="flex items-center gap-4 border-t pt-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Tempo:</span>
-            <input
-              type="range"
-              min="40"
-              max="200"
-              value={bpm}
-              onChange={(e) => onBpmChange(parseInt(e.target.value))}
-              className="h-1.5 w-32 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
-            />
-            <span className="min-w-[3rem] text-sm font-bold">{bpm} BPM</span>
-          </div>
-        </div>
+
+        {hasExercise && (
+          <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+        )}
       </div>
     </Card>
   )

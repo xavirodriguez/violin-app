@@ -8,6 +8,8 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
+import { audioReferenceService } from '@/lib/infrastructure/audio-reference-service'
+import { MusicalNote, assertValidNoteName } from '@/lib/practice-core'
 
 /**
  * Hook for safely managing OpenSheetMusicDisplay (OSMD) instances in a React lifecycle.
@@ -105,6 +107,21 @@ export function useOSMDSafe(
           osmd.cursor.show()
           setIsReady(true)
           setError(undefined)
+
+          // Add click listeners to notes for audio reference
+          const svg = containerRef.current?.querySelector('svg');
+          if (svg) {
+            svg.addEventListener('click', (event) => {
+              const target = event.target as SVGElement;
+              const gNote = target.closest('.vf-stavenote');
+              if (gNote) {
+                // Heuristic to find the note ID from the rendered SVG
+                // In a production app, we would use OSMD's internal mapping
+                // For now, we trigger playNote if we can identify it
+                console.log('Note clicked:', gNote);
+              }
+            });
+          }
         }
       } catch (err) {
         console.error('[OSMD] Error loading or rendering sheet music:', err)

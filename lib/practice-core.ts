@@ -14,6 +14,7 @@ import type {
   PracticeState,
   PracticeEvent,
   MatchHysteresis,
+  LoopRegion,
 } from '@/lib/domain/practice'
 
 export type {
@@ -23,6 +24,7 @@ export type {
   PracticeState,
   PracticeEvent,
   MatchHysteresis,
+  LoopRegion,
 }
 
 /**
@@ -373,8 +375,25 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   }
 
   const streak = calculateNewStreak(state, payload)
-  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
   const observations = payload?.observations ?? []
+
+  // Loop logic
+  if (state.loopRegion?.isEnabled) {
+    const isAtEndOfLoop = state.currentIndex >= state.loopRegion.endNoteIndex
+    if (isAtEndOfLoop) {
+      return {
+        ...state,
+        currentIndex: state.loopRegion.startNoteIndex,
+        status: 'correct',
+        detectionHistory: [],
+        holdDuration: 0,
+        lastObservations: observations,
+        perfectNoteStreak: streak,
+      }
+    }
+  }
+
+  const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
   if (isLastNote) {
     return {
