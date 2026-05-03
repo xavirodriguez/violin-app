@@ -71,7 +71,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * - `ERROR`: retry after a failed initialization.
      *
      * State transitions:
-     * `IDLE | ERROR` -> `INITIALIZING` -> `READY` on success, or `ERROR` on failure.
+     * `IDLE | ERROR` -\> `INITIALIZING` -\> `READY` on success, or `ERROR` on failure.
      *
      * @returns A promise that resolves when initialization is complete.
      * @throws AppError - If microphone access is denied or hardware fails.
@@ -134,7 +134,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * - **Domain Mapping**: Maps the frequency to the closest musical note and
      *   computes the deviation in cents.
      *
-     * @param pitch - Detected frequency in Hz. Values <= 0 are treated as no signal.
+     * @param pitch - Detected frequency in Hz. Values `<= 0` are treated as no signal.
      * @param confidence - Detector confidence from 0.0 to 1.0.
      */
     updatePitch: (pitch: number, confidence: number) => {
