@@ -22,7 +22,7 @@ import { useMetronome } from '@/hooks/use-metronome'
 import { NoteAudioService } from '@/lib/note-audio.service'
 import { SequencePlayer } from '@/lib/sequence-player'
 import { useState, useEffect, useMemo } from 'react'
-import { Exercise } from '@/lib/exercises/types'
+import { Exercise } from '@/lib/domain/exercise'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -84,10 +84,10 @@ export function PracticeMode() {
 
   const lifecycleParams = {
     dispatch,
-    derived,
+    status: derived.status,
+    currentNoteIndex: derived.currentNoteIndex,
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
-    autoStartEnabled,
   }
   usePracticeLifecycle(lifecycleParams)
 

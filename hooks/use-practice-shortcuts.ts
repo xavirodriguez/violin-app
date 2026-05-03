@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import { PracticeUIEvent } from '@/lib/domain/practice'
+import { PracticeUIEvent, PracticeStatus } from '@/lib/domain/practice'
 
 interface UsePracticeShortcutsParams {
-  status: string
+  status: PracticeStatus
   dispatch: (event: PracticeUIEvent) => void
   onToggleZenMode: () => void
 }

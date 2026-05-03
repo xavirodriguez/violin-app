@@ -6,31 +6,25 @@
 
 'use client'
 
-import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { useEffect } from 'react'
 import { usePracticeShortcuts } from './use-practice-shortcuts'
-import { PracticeUIEvent } from '@/lib/domain/practice'
+import { PracticeUIEvent, PracticeStatus } from '@/lib/domain/practice'
 
 interface LifecycleParams {
   dispatch: (event: PracticeUIEvent) => void
   onToggleZenMode: () => void
   scoreView: ScoreViewPort
-  derived: DerivedPracticeState
-  autoStartEnabled: boolean
+  status: PracticeStatus
+  currentNoteIndex: number
 }
 
 export function usePracticeLifecycle(params: LifecycleParams) {
-  const {
-    dispatch,
-    onToggleZenMode,
-    scoreView,
-    derived,
-  } = params
+  const { dispatch, onToggleZenMode, scoreView, status, currentNoteIndex } = params
 
   // Manage keyboard shortcuts
   usePracticeShortcuts({
-    status: derived.status,
+    status,
     dispatch,
     onToggleZenMode,
   })
@@ -38,7 +32,7 @@ export function usePracticeLifecycle(params: LifecycleParams) {
   // Synchronize visual score
   useEffect(() => {
     if (scoreView.isReady) {
-      scoreView.sync(derived.currentNoteIndex)
+      scoreView.sync(currentNoteIndex)
     }
-  }, [derived.currentNoteIndex, scoreView])
+  }, [currentNoteIndex, scoreView])
 }
