@@ -15,7 +15,8 @@ import {
   type PracticeEvent,
   type PracticeStatus,
 } from '@/lib/practice-core'
-import { type PracticeUIEvent } from '@/lib/domain/practice'
+import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice'
+import { type TempoConfig } from '@/lib/domain/audio'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
@@ -69,8 +70,12 @@ export interface PracticeStore {
   isInitializing: boolean
   sessionToken: string | undefined
   sessionId: number
+  loopRegion: LoopRegion | undefined
+  tempoConfig: TempoConfig
 
   loadExercise: (exercise: Exercise) => Promise<void>
+  setLoopRegion: (region: LoopRegion | undefined) => void
+  setTempoConfig: (config: TempoConfig) => void
   setAutoStart: (enabled: boolean) => void
   jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
@@ -136,6 +141,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isInitializing: false,
     sessionToken: undefined,
     sessionId: 0,
+    loopRegion: undefined,
+    tempoConfig: { bpm: 60, scale: 1.0 },
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -167,6 +174,15 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       const nextValue = enabled
       const updates = { autoStartEnabled: nextValue }
       set((currentState) => ({ ...currentState, ...updates }))
+    },
+
+    setLoopRegion: (region) => {
+      set({ loopRegion: region })
+    },
+
+    setTempoConfig: (config) => {
+      set({ tempoConfig: config })
+      // Sync with audio store if needed, though audio store has its own setBpm
     },
 
     jumpToNote: (index) => {

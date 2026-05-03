@@ -46,6 +46,7 @@ export interface PracticeState {
   holdDuration?: number
   lastObservations?: Observation[]
   perfectNoteStreak: number
+  loopRegion?: LoopRegion
 }
 
 /**
@@ -95,6 +96,15 @@ export interface Achievement {
 export interface MatchHysteresis {
   enter: number
   exit: number
+}
+
+/**
+ * Represents a region of the exercise selected for looping.
+ */
+export interface LoopRegion {
+  startNoteIndex: number
+  endNoteIndex: number
+  isEnabled: boolean
 }
 
 /**

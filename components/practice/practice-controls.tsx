@@ -4,6 +4,9 @@ import { Play, Square, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PracticeStatus } from '@/lib/domain/practice'
+import { MetronomeControl } from '@/components/ui/metronome-control'
+import { ReferencePlayer } from '@/components/ui/reference-player'
+import { LoopSelector } from '@/components/ui/loop-selector'
 
 interface PracticeControlsProps {
   status: PracticeStatus
@@ -32,8 +35,8 @@ export function PracticeControls(props: PracticeControlsProps) {
   } = props
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
+    <Card className="p-4 space-y-4">
+      <div className="flex items-center justify-between gap-4">
         <SessionActions
           status={status}
           disabled={!hasExercise}
@@ -41,6 +44,17 @@ export function PracticeControls(props: PracticeControlsProps) {
           onStop={onStop}
           onRestart={onRestart}
         />
+
+        <div className="flex items-center gap-4">
+          {hasExercise && (
+            <>
+              <ReferencePlayer />
+              <LoopSelector />
+            </>
+          )}
+          <MetronomeControl />
+        </div>
+
         {hasExercise && (
           <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
         )}
