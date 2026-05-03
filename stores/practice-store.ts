@@ -72,10 +72,15 @@ export interface PracticeStore {
   sessionId: number
   loopRegion: LoopRegion | undefined
   tempoConfig: TempoConfig
+  listenImitateActive: boolean
+  isListeningPhase: boolean
+  listenIteration: number
+  countdown: number | null
 
   loadExercise: (exercise: Exercise) => Promise<void>
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: TempoConfig) => void
+  setListenImitateActive: (active: boolean) => void
   setAutoStart: (enabled: boolean) => void
   jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
@@ -99,6 +104,42 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
   const commenceSession = async (ready: ReadyState) => {
     const token = crypto.randomUUID()
     const safeSet = createSafeSet({ set, get, currentToken: token })
+
+    if (get().listenImitateActive) {
+      set({ isListeningPhase: true, listenIteration: 1 })
+
+      // En un entorno real, obtendríamos la URL del ExerciseAudioMap
+      // Por ahora usamos una URL placeholder
+      const mockAudioUrl = '/audio/placeholders/exercise_reference.mp3'
+
+      try {
+        // Activar metrónomo si está configurado
+        const { tempoConfig } = get()
+        // Nota: asumiendo que audioStore.toggleMetronome o similar debería usarse aquí
+        // pero por simplicidad en este MVP de la feature:
+
+        // Reproducir 2 veces (default)
+        for (let i = 1; i <= 2; i++) {
+          set({ listenIteration: i })
+          // await audioReferenceService.playPassage(mockAudioUrl)
+          // MOCK: simulate playback time since asset doesn't exist
+          await new Promise(r => setTimeout(r, 2000))
+          if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
+        }
+
+        // Cuenta atrás
+        for (let i = 3; i >= 1; i--) {
+          set({ countdown: i })
+          await new Promise(r => setTimeout(r, 1000))
+          if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
+        }
+      } catch (err) {
+        console.warn('[PracticeStore] Listen phase failed or cancelled', err)
+      } finally {
+        set({ isListeningPhase: false, countdown: null })
+      }
+    }
+
     const deps = createRunnerDeps({ get, safeSet, storeState: ready })
     const runner = new PracticeSessionRunnerImpl(deps)
     const abort = new AbortController()
@@ -143,6 +184,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     sessionId: 0,
     loopRegion: undefined,
     tempoConfig: { bpm: 60, scale: 1.0 },
+    listenImitateActive: false,
+    isListeningPhase: false,
+    listenIteration: 0,
+    countdown: null,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -183,6 +228,10 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     setTempoConfig: (config) => {
       set({ tempoConfig: config })
       // Sync with audio store if needed, though audio store has its own setBpm
+    },
+
+    setListenImitateActive: (active) => {
+      set({ listenImitateActive: active })
     },
 
     jumpToNote: (index) => {

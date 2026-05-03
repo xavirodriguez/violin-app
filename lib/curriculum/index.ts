@@ -7,6 +7,16 @@ export const initialCurriculum: CurriculumUnit[] = [
     description: 'Learn the basics of violin playing.',
     order: 1,
     isCompleted: false,
+    level: 0,
+    prerequisites: [],
+    learningObjectives: [
+      { id: 'intonation_basic', label: 'Afinación básica', metrics: ['centsDeviation'], masteryThreshold: 0.8 }
+    ],
+    whyThisMatters: {
+      title: 'Los fundamentos del sonido',
+      description: 'Dominar las cuerdas al aire es esencial para desarrollar un arco estable y una afinación sólida.',
+      tips: ['Mantén el arco paralelo al puente', 'Escucha la resonancia de la caja']
+    },
     lessons: [
       {
         id: 'lesson-1',

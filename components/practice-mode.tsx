@@ -41,6 +41,10 @@ export function usePracticeViewState() {
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
+  const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
+  const listenIteration = usePracticeStore((s) => s.listenIteration)
+  const countdown = usePracticeStore((s) => s.countdown)
+
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false)
   const [bpm, setBpm] = useState(60)
@@ -92,7 +96,36 @@ export function PracticeMode() {
   usePracticeLifecycle(lifecycleParams)
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-8 relative">
+      {isListeningPhase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="text-center text-white">
+            <h2 className="mb-4 text-4xl font-bold">Escuchando referencia...</h2>
+            <p className="text-2xl">Iteración {listenIteration} / 2</p>
+            <div className="mt-8 flex justify-center space-x-2">
+              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.3s]"></div>
+              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.15s]"></div>
+              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500"></div>
+            </div>
+            <button
+              onClick={() => usePracticeStore.getState().stop()}
+              className="mt-12 rounded-full border border-white/30 bg-white/10 px-6 py-2 transition-colors hover:bg-white/20"
+            >
+              Cancelar y tocar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {countdown !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
+          <div className="text-center text-white">
+            <h2 className="mb-4 text-2xl font-semibold uppercase tracking-widest text-amber-400">Prepárate</h2>
+            <div className="animate-ping-once text-9xl font-black">{countdown}</div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         <PracticeStatusHeader />
         <PracticeControlsRow
