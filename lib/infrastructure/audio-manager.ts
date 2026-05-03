@@ -137,6 +137,16 @@ export class AudioManager {
     return isCurrentlyActive
   }
 
+  /**
+   * Resumes the audio context if it is suspended.
+   * Required for playback initiated by user interaction.
+   */
+  async resume(): Promise<void> {
+    if (this.context && this.context.state === 'suspended') {
+      await this.context.resume()
+    }
+  }
+
   private async acquireMicStream(deviceId?: string): Promise<MediaStream> {
     const constraints = this.getAudioConstraints(deviceId)
     const stream = await navigator.mediaDevices.getUserMedia(constraints)

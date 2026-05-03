@@ -9,7 +9,6 @@ import type {
   GlobalThisWithCrypto,
 } from '@/lib/testing/mock-types'
 import { Exercise } from '@/lib/domain/exercise'
-import { PracticeState } from '@/lib/domain/practice'
 import { AudioResources } from '@/lib/infrastructure/audio-manager'
 
 // Polyfill crypto for node environment

@@ -409,7 +409,7 @@ function buildRunnerStoreInterface(
     dispatch: (event: PracticeEvent) => {
       const currentToken = get().sessionToken
       updateStateFromEvent({
-        set: (fn) => safeSet(fn as any),
+        set: (fn) => safeSet(fn),
         event,
         token: currentToken,
       })
@@ -568,10 +568,10 @@ function updateStateFromEvent(params: {
   const { set, event, token } = params
   set((currentState) => {
     const isStale = currentState.sessionToken !== token
-    if (isStale || !currentState.practiceState) return currentState
+    if (isStale || !currentState.practiceState) return {}
     const practiceState = updatePracticeState(currentState.practiceState, event)
     const observations = practiceState ? getUpdatedLiveObservations(practiceState) : []
-    return { ...currentState, practiceState, liveObservations: observations }
+    return { practiceState, liveObservations: observations }
   })
 }
 

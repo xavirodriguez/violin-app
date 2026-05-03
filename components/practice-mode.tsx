@@ -17,7 +17,11 @@ import { ErrorDisplay } from './practice/error-display'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
-import { useState, useEffect } from 'react'
+import { useAudioPlayer } from '@/hooks/use-audio-player'
+import { useMetronome } from '@/hooks/use-metronome'
+import { NoteAudioService } from '@/lib/note-audio.service'
+import { SequencePlayer } from '@/lib/sequence-player'
+import { useState, useEffect, useMemo } from 'react'
 import { Exercise } from '@/lib/exercises/types'
 
 /**
@@ -37,6 +41,9 @@ export function usePracticeViewState() {
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
+  const [isReferencePlaying, setIsReferencePlaying] = useState(false)
+  const [isMetronomeActive, setIsMetronomeActive] = useState(false)
+  const [bpm, setBpm] = useState(60)
 
   const initialize = usePracticeStore.getState().initialize
   const dispatch = usePracticeStore.getState().dispatch
@@ -51,7 +58,28 @@ export function PracticeMode() {
 
   const xml = practiceState?.exercise.musicXML ?? ''
   const osmd = useOSMDSafe(xml)
+  const player = useAudioPlayer()
+  const [visualBeat, setVisualBeat] = useState(false)
+  const metronome = useMetronome(() => {
+    setVisualBeat(true)
+    setTimeout(() => setVisualBeat(false), 100)
+  })
   const derived = useDerivedPracticeState()
+
+  const sequencePlayer = useMemo(() => new SequencePlayer(player), [player])
+
+  useEffect(() => {
+    if (osmd.isReady) {
+      return osmd.onNoteClick(() => {
+        // For now, we'll play the current note
+        const currentNote = practiceState?.exercise.notes[derived.currentNoteIndex];
+        if (currentNote) {
+           const freq = NoteAudioService.getFrequencyFromTargetNote(currentNote);
+           player.playNote(freq, 1500);
+        }
+      });
+    }
+  }, [osmd.isReady, practiceState?.exercise, derived.currentNoteIndex, player]);
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
@@ -67,7 +95,34 @@ export function PracticeMode() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="space-y-6">
         <PracticeStatusHeader />
-        <PracticeControlsRow isZen={viewState.isZen} />
+        <PracticeControlsRow
+          isZen={viewState.isZen}
+          onPlayReference={async () => {
+            if (isReferencePlaying) {
+              sequencePlayer.stop()
+              setIsReferencePlaying(false)
+            } else if (practiceState) {
+              setIsReferencePlaying(true)
+              await sequencePlayer.play(
+                practiceState.exercise,
+                (index) => osmd.scoreView.sync(index)
+              )
+              setIsReferencePlaying(false)
+            }
+          }}
+          isReferencePlaying={isReferencePlaying}
+          onToggleMetronome={async () => {
+            await metronome.toggle(bpm)
+            setIsMetronomeActive(metronome.isActive())
+          }}
+          isMetronomeActive={isMetronomeActive}
+          visualBeat={visualBeat}
+          bpm={bpm}
+          onBpmChange={(newBpm) => {
+            setBpm(newBpm)
+            metronome.setBpm(newBpm)
+          }}
+        />
         <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
           isZenModeEnabled={viewState.isZen}
@@ -143,8 +198,22 @@ function PracticeStatusHeader() {
 
 function PracticeControlsRow({
   isZen,
+  onPlayReference,
+  isReferencePlaying,
+  onToggleMetronome,
+  isMetronomeActive,
+  visualBeat,
+  bpm,
+  onBpmChange,
 }: {
   isZen: boolean
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+  visualBeat?: boolean
+  bpm: number
+  onBpmChange: (bpm: number) => void
 }) {
   const state = usePracticeStore((s) => s.state)
   const derived = useDerivedPracticeState()
@@ -168,6 +237,13 @@ function PracticeControlsRow({
       onStart={() => dispatch({ type: 'START_SESSION' })}
       onStop={() => dispatch({ type: 'STOP_SESSION' })}
       onRestart={handleRestart}
+      onPlayReference={onPlayReference}
+      isReferencePlaying={isReferencePlaying}
+      onToggleMetronome={onToggleMetronome}
+      isMetronomeActive={isMetronomeActive}
+      visualBeat={visualBeat}
+      bpm={bpm}
+      onBpmChange={onBpmChange}
       progress={progress}
       currentNoteIndex={currentNoteIndex}
       totalNotes={totalNotes}

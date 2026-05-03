@@ -1,6 +1,6 @@
 'use client'
 
-import { Play, Square, RotateCcw } from 'lucide-react'
+import { Play, Square, RotateCcw, Volume2, Timer } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PracticeStatus } from '@/lib/domain/practice'
@@ -14,6 +14,13 @@ interface PracticeControlsProps {
   onStart: () => void
   onStop: () => void
   onRestart: () => void
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+  visualBeat?: boolean
+  bpm: number
+  onBpmChange: (bpm: number) => void
   progress: number
   currentNoteIndex: number
   totalNotes: number
@@ -29,6 +36,12 @@ export function PracticeControls(props: PracticeControlsProps) {
     onStart,
     onStop,
     onRestart,
+    onPlayReference,
+    isReferencePlaying,
+    onToggleMetronome,
+    isMetronomeActive,
+    bpm,
+    onBpmChange,
     progress,
     currentNoteIndex,
     totalNotes,
@@ -69,10 +82,38 @@ interface SessionActionsProps {
   onStart: () => void
   onStop: () => void
   onRestart: () => void
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+}
+
+interface SessionActionsProps {
+  status: PracticeStatus
+  disabled: boolean
+  onStart: () => void
+  onStop: () => void
+  onRestart: () => void
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+  visualBeat?: boolean
 }
 
 function SessionActions(props: SessionActionsProps) {
-  const { status, disabled, onStart, onStop, onRestart } = props
+  const {
+    status,
+    disabled,
+    onStart,
+    onStop,
+    onRestart,
+    onPlayReference,
+    isReferencePlaying,
+    onToggleMetronome,
+    isMetronomeActive,
+    visualBeat,
+  } = props
 
   if (status === 'listening') {
     return (
@@ -91,9 +132,31 @@ function SessionActions(props: SessionActionsProps) {
   }
 
   return (
-    <Button onClick={onStart} size="lg" className="gap-2" disabled={disabled}>
-      <Play className="h-4 w-4" /> Start Practice
-    </Button>
+    <div className="flex gap-2">
+      <Button onClick={onStart} size="lg" className="gap-2" disabled={disabled}>
+        <Play className="h-4 w-4" /> Start Practice
+      </Button>
+      <Button
+        onClick={onPlayReference}
+        size="lg"
+        variant="outline"
+        className="gap-2"
+        disabled={disabled}
+      >
+        <Volume2 className={isReferencePlaying ? 'animate-pulse text-primary' : 'h-4 w-4'} />
+        {isReferencePlaying ? 'Stop Reference' : 'Listen Reference'}
+      </Button>
+      <Button
+        onClick={onToggleMetronome}
+        size="lg"
+        variant="outline"
+        className={`gap-2 transition-colors duration-100 ${visualBeat ? 'bg-primary/20 border-primary' : ''}`}
+        disabled={disabled}
+      >
+        <Timer className={isMetronomeActive ? 'animate-spin text-primary' : 'h-4 w-4'} />
+        {isMetronomeActive ? 'Stop Metronome' : 'Metronome'}
+      </Button>
+    </div>
   )
 }
 

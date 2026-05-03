@@ -19,6 +19,7 @@ vi.mock('@/hooks/use-osmd-safe', () => ({
     resetCursor: vi.fn(),
     advanceCursor: vi.fn(),
     highlightCurrentNote: vi.fn(),
+    onNoteClick: vi.fn(),
     osmd: null,
     scoreView: {
       isReady: true,
