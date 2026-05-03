@@ -6,8 +6,6 @@
 
 'use client'
 
-import { PracticeState } from '@/lib/practice-core'
-import { Exercise } from '@/lib/domain/exercise'
 import { DerivedPracticeState } from '@/lib/practice/practice-utils'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { useEffect } from 'react'
