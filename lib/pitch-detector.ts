@@ -37,7 +37,7 @@ export class PitchDetector {
    */
   public static readonly DEFAULT_MIN_FREQUENCY = 180
 
-  private readonly MIN_FREQUENCY = PitchDetector.DEFAULT_MIN_FREQUENCY
+  private MIN_FREQUENCY = PitchDetector.DEFAULT_MIN_FREQUENCY
 
   /**
    * The maximum frequency we care about (in Hz).
@@ -74,13 +74,19 @@ export class PitchDetector {
    * @param maxFrequency - Optional maximum frequency threshold (defaults to 3000 Hz).
    * @throws Will throw an error if the sample rate is not a positive number.
    */
-  constructor(sampleRate: number, maxFrequency?: number) {
+  constructor(sampleRate: number, maxFrequency?: number, minFrequency?: number) {
     if (sampleRate <= 0) {
-      throw new Error(`Invalid sample rate: ${sampleRate}. Must be > 0`)
+      throw new AppError({
+        message: `Invalid sample rate: ${sampleRate}. Must be > 0`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
     }
     this.sampleRate = sampleRate
     if (maxFrequency !== undefined) {
       this.setMaxFrequency(maxFrequency)
+    }
+    if (minFrequency !== undefined) {
+      this.setMinFrequency(minFrequency)
     }
   }
 
@@ -271,6 +277,22 @@ export class PitchDetector {
       })
     }
     this.MAX_FREQUENCY = maxHz
+  }
+
+  /**
+   * Updates the minimum frequency threshold for pitch detection.
+   *
+   * @param minHz - Minimum frequency in Hz (must be > 20 and < MAX_FREQUENCY)
+   * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
+   */
+  setMinFrequency(minHz: number): void {
+    if (minHz < 20 || minHz >= this.MAX_FREQUENCY) {
+      throw new AppError({
+        message: `Invalid min frequency: ${minHz}. Must be >= 20 and < ${this.MAX_FREQUENCY}`,
+        code: ERROR_CODES.DATA_VALIDATION_ERROR,
+      })
+    }
+    this.MIN_FREQUENCY = minHz
   }
 
   private calculateSearchSize(bufferSize: number): number {
