@@ -78,6 +78,8 @@ export interface SessionRunnerDependencies {
   analytics: RunnerAnalytics
   updatePitch?: (pitch: number, confidence: number) => void
   centsTolerance?: number
+  bpm?: number
+  loopRegion?: import('@/lib/domain/practice').LoopRegion
 }
 
 /**
@@ -197,6 +199,8 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       reducer: engineReducer,
       centsTolerance: context.centsTolerance ?? 25,
       initialNoteIndex: storeState.practiceState?.currentIndex ?? 0,
+      bpm: context.bpm,
+      loopRegion: context.loopRegion,
     })
 
     return engine
@@ -219,6 +223,16 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
     const isMatch = type === 'NOTE_MATCHED'
     if (isMatch) {
       return { type: 'NOTE_MATCHED', payload: event.payload }
+    }
+
+    const isJump = type === 'JUMP_TO_INDEX'
+    if (isJump) {
+      return { type: 'JUMP_TO_NOTE', payload: { index: event.payload.index } }
+    }
+
+    const isDrill = type === 'DRILL_ATTEMPT_COMPLETED'
+    if (isDrill) {
+      return { type: 'DRILL_ATTEMPT_COMPLETED', payload: event.payload }
     }
 
     const fallback: PracticeEvent = { type: 'NO_NOTE_DETECTED' }

@@ -13,6 +13,7 @@ import { SheetMusicAnnotations } from '@/components/sheet-music-annotations'
 import { SheetMusicView } from './sheet-music-view'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { ViewToggleButton } from './view-toggle-button'
+import { PrecisionHeatmap } from './heatmap/precision-heatmap'
 
 interface SheetMusicContainerProps {
   status: string
@@ -24,6 +25,7 @@ interface SheetMusicContainerProps {
     error: string | undefined
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
+    applyHeatmap?: (precisionMap: Record<number, number>) => void
   }
   currentNoteIndex: number
 }
@@ -59,6 +61,14 @@ function SheetMusicScrollArea(props: SheetMusicContainerProps) {
           currentNoteIndex={currentNoteIndex}
           scoreView={osmd.scoreView}
           containerRef={osmd.containerRef}
+        />
+      )}
+      {practiceState && osmd.applyHeatmap && status === 'idle' && (
+        <PrecisionHeatmap
+          exerciseId={practiceState.exercise.id}
+          scoreView={osmd.scoreView}
+          containerRef={osmd.containerRef}
+          applyHeatmap={osmd.applyHeatmap}
         />
       )}
     </div>

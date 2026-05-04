@@ -1,7 +1,9 @@
 'use client'
 
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Info, HelpCircle } from 'lucide-react'
 import { Observation } from '@/lib/technique-types'
+import { translateObservation } from '@/lib/curriculum/observation-translator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 /**
  * Props for the {@link PracticeFeedback} component.
@@ -241,16 +243,39 @@ function LiveObservationsList({ observations }: { observations: Observation[] })
 }
 
 function ObservationItem({ observation }: { observation: Observation }) {
-  const { severity, message, tip } = observation
+  const translated = translateObservation(observation)
+  const { severity, friendlyTitle, friendlyDescription, remedyTip, visualAidUrl } = translated
   const styles = getObservationStyles(severity)
 
   return (
-    <div className={`rounded-lg border p-3 ${styles.container}`}>
+    <div className={`rounded-lg border p-3 transition-all duration-300 ${styles.container}`}>
       <div className="flex items-start gap-3">
         <AlertTriangle className={`h-5 w-5 flex-shrink-0 ${styles.icon}`} />
         <div className="flex-1">
-          <div className="text-sm font-bold">{message}</div>
-          <div className="text-muted-foreground text-xs">{tip}</div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-bold">{friendlyTitle}</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground">
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px]">
+                  <p>{friendlyDescription}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="text-muted-foreground text-xs mt-1 italic">{remedyTip}</div>
+
+          {visualAidUrl && (
+             <div className="mt-2 overflow-hidden rounded-md border border-black/5 bg-black/5 p-1">
+               <div className="flex items-center justify-center py-4 text-[10px] text-muted-foreground uppercase tracking-widest">
+                  Visual Aid Placeholder
+               </div>
+             </div>
+          )}
         </div>
       </div>
     </div>

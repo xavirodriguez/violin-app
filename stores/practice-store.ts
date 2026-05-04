@@ -428,6 +428,8 @@ function createRunnerDeps(params: {
     analytics: buildRunnerAnalyticsInterface(),
     updatePitch: (p, c) => useTunerStore.getState().updatePitch(p, c),
     centsTolerance: tolerance,
+    bpm: get().tempoConfig.bpm,
+    loopRegion: get().loopRegion,
   }
 
   return deps

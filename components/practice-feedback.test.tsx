@@ -99,6 +99,8 @@ describe('PracticeFeedback', () => {
       />,
     )
     expect(screen.getByText('Live Feedback')).toBeDefined()
-    expect(screen.getByText('Consistently sharp')).toBeDefined()
+    // The translator should have mapped 'Consistently sharp' to 'Pitch a bit sharp'
+    expect(screen.getByText('Pitch a bit sharp')).toBeDefined()
+    expect(screen.getByText(/Slide your finger/)).toBeDefined()
   })
 })
