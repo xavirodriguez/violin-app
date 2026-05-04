@@ -39,6 +39,7 @@ export const songsExercises: ExerciseData[] = [
     technicalGoals: [],
     estimatedDuration: '2 min',
     technicalTechnique: 'General',
+    indicatedBpm: 60,
     notes: [
       { pitch: parsePitch('G3'), duration: 4 },
       { pitch: parsePitch('G3'), duration: 4 },
@@ -106,6 +107,7 @@ export const songsExercises: ExerciseData[] = [
     technicalGoals: [],
     estimatedDuration: '1 min',
     technicalTechnique: 'General',
+    indicatedBpm: 80,
     notes: [
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
@@ -123,6 +125,7 @@ export const songsExercises: ExerciseData[] = [
     technicalGoals: [],
     estimatedDuration: '2 min',
     technicalTechnique: 'General',
+    indicatedBpm: 100,
     notes: [
       { pitch: parsePitch('B4'), duration: 4 },
       { pitch: parsePitch('B4'), duration: 4 },
@@ -173,6 +176,7 @@ export const songsExercises: ExerciseData[] = [
     technicalGoals: [],
     estimatedDuration: '1.5 min',
     technicalTechnique: 'General',
+    indicatedBpm: 80,
     notes: [
       { pitch: parsePitch('E4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },
@@ -219,6 +223,7 @@ export const songsExercises: ExerciseData[] = [
     technicalGoals: [],
     estimatedDuration: '2 min',
     technicalTechnique: 'General',
+    indicatedBpm: 80,
     notes: [
       { pitch: parsePitch('C4'), duration: 4 },
       { pitch: parsePitch('D4'), duration: 4 },

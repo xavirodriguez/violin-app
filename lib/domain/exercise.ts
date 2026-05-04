@@ -162,6 +162,8 @@ export interface ExerciseData {
     /** Maximum tempo in BPM. */
     max: number
   }
+  /** Indicated tempo for the exercise in BPM. */
+  indicatedBpm?: number
 }
 
 /**

@@ -57,6 +57,13 @@ const HANDLERS: Record<
 
     return result
   },
+  JUMP_TO_INDEX: (state, event) => {
+    const typedEvent = event as Extract<PracticeEngineEvent, { type: 'JUMP_TO_INDEX' }>
+    return {
+      ...state,
+      currentNoteIndex: typedEvent.payload.index,
+    }
+  },
 }
 
 /**
