@@ -53,7 +53,12 @@ interface SessionActions {
    *
    * @param params - Parameters for the note attempt.
    */
-  recordAttempt: (params: { noteIndex: number; pitch: string; cents: number; inTune: boolean }) => void
+  recordAttempt: (params: {
+    noteIndex: number
+    pitch: string
+    cents: number
+    inTune: boolean
+  }) => void
 
   /**
    * Records the successful completion of a note.
@@ -63,7 +68,11 @@ interface SessionActions {
    *
    * @param params - Parameters for the note completion.
    */
-  recordCompletion: (params: { noteIndex: number; timeMs: number; technique?: NoteTechnique }) => void
+  recordCompletion: (params: {
+    noteIndex: number
+    timeMs: number
+    technique?: NoteTechnique
+  }) => void
 }
 
 /**

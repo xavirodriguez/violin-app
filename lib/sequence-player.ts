@@ -1,6 +1,6 @@
-import { AudioPlayerPort } from './ports/audio-player.port';
-import { Exercise } from '@/lib/domain/exercise';
-import { NoteAudioService } from './note-audio.service';
+import { AudioPlayerPort } from './ports/audio-player.port'
+import { Exercise } from '@/lib/domain/exercise'
+import { NoteAudioService } from './note-audio.service'
 
 /**
  * Service for playing a sequence of notes (e.g., an entire exercise).
@@ -8,12 +8,12 @@ import { NoteAudioService } from './note-audio.service';
  * @public
  */
 export class SequencePlayer {
-  private player: AudioPlayerPort;
-  private isPlaying: boolean = false;
-  private abortController: AbortController | undefined;
+  private player: AudioPlayerPort
+  private isPlaying: boolean = false
+  private abortController: AbortController | undefined
 
   constructor(player: AudioPlayerPort) {
-    this.player = player;
+    this.player = player
   }
 
   /**
@@ -26,49 +26,49 @@ export class SequencePlayer {
   async play(
     exercise: Exercise,
     onNoteStart?: (index: number) => void,
-    bpm: number = 60
+    bpm: number = 60,
   ): Promise<void> {
-    this.stop();
-    this.isPlaying = true;
-    this.abortController = new AbortController();
-    const signal = this.abortController.signal;
+    this.stop()
+    this.isPlaying = true
+    this.abortController = new AbortController()
+    const signal = this.abortController.signal
 
     try {
       for (let i = 0; i < exercise.notes.length; i++) {
-        if (signal.aborted) break;
+        if (signal.aborted) break
 
-        const note = exercise.notes[i];
-        onNoteStart?.(i);
+        const note = exercise.notes[i]
+        onNoteStart?.(i)
 
-        const freq = NoteAudioService.getFrequencyFromTargetNote(note);
+        const freq = NoteAudioService.getFrequencyFromTargetNote(note)
         // Calculate duration based on note duration (beats) and BPM
         // 4 beats = 1 whole note
         // In OSMD/MusicXML, duration is often in divisions.
         // For simplicity, we'll assume note.duration is in quarter notes if not specified.
-        const beatDurationMs = (60 / bpm) * 1000;
-        const noteDurationMs = note.duration * beatDurationMs;
+        const beatDurationMs = (60 / bpm) * 1000
+        const noteDurationMs = note.duration * beatDurationMs
 
-        await this.player.playNote(freq, noteDurationMs);
+        await this.player.playNote(freq, noteDurationMs)
 
         // Wait for the note to finish before playing the next one
         await new Promise((resolve) => {
-          const timeout = setTimeout(resolve, noteDurationMs);
+          const timeout = setTimeout(resolve, noteDurationMs)
           signal.addEventListener('abort', () => {
-            clearTimeout(timeout);
-            resolve(undefined);
-          });
-        });
+            clearTimeout(timeout)
+            resolve(undefined)
+          })
+        })
       }
     } finally {
-      this.isPlaying = false;
+      this.isPlaying = false
     }
   }
 
   stop(): void {
     if (this.isPlaying) {
-      this.abortController?.abort();
-      this.player.stopAll();
-      this.isPlaying = false;
+      this.abortController?.abort()
+      this.player.stopAll()
+      this.isPlaying = false
     }
   }
 }

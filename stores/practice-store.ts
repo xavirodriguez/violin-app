@@ -10,11 +10,7 @@
 
 import { create } from 'zustand'
 import { allExercises } from '@/lib/exercises'
-import {
-  type PracticeState,
-  type PracticeEvent,
-  type PracticeStatus,
-} from '@/lib/practice-core'
+import { type PracticeState, type PracticeEvent, type PracticeStatus } from '@/lib/practice-core'
 import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice'
 import { type TempoConfig } from '@/lib/domain/audio'
 import { toAppError, AppError } from '@/lib/errors/app-error'
@@ -123,14 +119,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
           set({ listenIteration: i })
           // await audioReferenceService.playPassage(mockAudioUrl)
           // MOCK: simulate playback time since asset doesn't exist
-          await new Promise(r => setTimeout(r, 2000))
+          await new Promise((r) => setTimeout(r, 2000))
           if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
         }
 
         // Cuenta atrás
         for (let i = 3; i >= 1; i--) {
           set({ countdown: i })
-          await new Promise(r => setTimeout(r, 1000))
+          await new Promise((r) => setTimeout(r, 1000))
           if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
         }
       } catch (err) {
@@ -248,7 +244,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
             updateStateFromEvent({ set, event: jumpEvent, token: get().sessionToken })
             return get().start()
           })
-          .catch((err) => console.error('[PracticeStore] Failed to restart after index change:', err))
+          .catch((err) =>
+            console.error('[PracticeStore] Failed to restart after index change:', err),
+          )
       } else {
         updateStateFromEvent({ set, event: jumpEvent, token: get().sessionToken })
       }
@@ -751,7 +749,6 @@ function getStartStateUpdates(params: {
     error: undefined,
   }
 }
-
 
 function getExerciseLoadUpdates(exercise: Exercise) {
   const resetUpdates = {

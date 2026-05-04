@@ -1,20 +1,20 @@
-import { create } from 'zustand';
-import { audioReferenceService } from '@/lib/infrastructure/audio-reference-service';
-import { MetronomeEngine } from '@/lib/infrastructure/metronome-engine';
+import { create } from 'zustand'
+import { audioReferenceService } from '@/lib/infrastructure/audio-reference-service'
+import { MetronomeEngine } from '@/lib/infrastructure/metronome-engine'
 
 interface AudioStore {
-  isPlaying: boolean;
-  metronomeEnabled: boolean;
-  bpm: number;
-  volume: number;
-  metronomeEngine: MetronomeEngine | null;
+  isPlaying: boolean
+  metronomeEnabled: boolean
+  bpm: number
+  volume: number
+  metronomeEngine: MetronomeEngine | null
 
-  toggleMetronome: () => void;
-  setBpm: (bpm: number) => void;
-  setVolume: (volume: number) => void;
-  playReference: (noteId: string) => void;
-  stopAll: () => void;
-  initialize: () => void;
+  toggleMetronome: () => void
+  setBpm: (bpm: number) => void
+  setVolume: (volume: number) => void
+  playReference: (noteId: string) => void
+  stopAll: () => void
+  initialize: () => void
 }
 
 export const useAudioStore = create<AudioStore>((set, get) => ({
@@ -25,50 +25,50 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   metronomeEngine: null,
 
   initialize: () => {
-    if (get().metronomeEngine) return;
+    if (get().metronomeEngine) return
 
     const engine = new MetronomeEngine((_event) => {
       // Visual sync event could be dispatched here
       // console.log('Tick:', _event.beat);
-    });
-    set({ metronomeEngine: engine });
+    })
+    set({ metronomeEngine: engine })
   },
 
   toggleMetronome: () => {
-    const { metronomeEnabled, metronomeEngine, bpm } = get();
-    if (!metronomeEngine) return;
+    const { metronomeEnabled, metronomeEngine, bpm } = get()
+    if (!metronomeEngine) return
 
     if (metronomeEnabled) {
-      metronomeEngine.stop();
+      metronomeEngine.stop()
     } else {
-      metronomeEngine.start(bpm);
+      metronomeEngine.start(bpm)
     }
-    set({ metronomeEnabled: !metronomeEnabled });
+    set({ metronomeEnabled: !metronomeEnabled })
   },
 
   setBpm: (bpm: number) => {
-    const { metronomeEngine } = get();
+    const { metronomeEngine } = get()
     if (metronomeEngine) {
-      metronomeEngine.setTempo(bpm);
+      metronomeEngine.setTempo(bpm)
     }
-    set({ bpm });
+    set({ bpm })
   },
 
   setVolume: (volume: number) => {
-    set({ volume });
+    set({ volume })
     // In a real implementation, we would connect this to a master gain node
   },
 
   playReference: (noteId: string) => {
-    audioReferenceService.playNote(noteId);
+    audioReferenceService.playNote(noteId)
   },
 
   stopAll: () => {
-    audioReferenceService.stop();
-    const { metronomeEngine } = get();
+    audioReferenceService.stop()
+    const { metronomeEngine } = get()
     if (metronomeEngine) {
-      metronomeEngine.stop();
+      metronomeEngine.stop()
     }
-    set({ metronomeEnabled: false, isPlaying: false });
+    set({ metronomeEnabled: false, isPlaying: false })
   },
-}));
+}))

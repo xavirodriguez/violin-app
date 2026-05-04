@@ -17,15 +17,15 @@ export interface AudioPlayerPort {
    * @param volume - The volume level (0.0 to 1.0).
    * @returns A promise that resolves when the note starts playing or finishes.
    */
-  playNote(frequency: number, durationMs: number, volume?: number): Promise<void>;
+  playNote(frequency: number, durationMs: number, volume?: number): Promise<void>
 
   /**
    * Stops all currently playing audio.
    */
-  stopAll(): void;
+  stopAll(): void
 
   /**
    * Cleans up any resources used by the player.
    */
-  cleanup(): Promise<void>;
+  cleanup(): Promise<void>
 }

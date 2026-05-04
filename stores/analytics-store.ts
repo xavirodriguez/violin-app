@@ -9,7 +9,7 @@ import {
   PersistedPracticeSession,
   ExerciseStats,
   Achievement,
-  toPersistedSession
+  toPersistedSession,
 } from '@/lib/domain/practice'
 import type { Exercise } from '@/lib/domain/exercise'
 import { checkAchievements } from '@/lib/achievements/achievement-checker'
@@ -17,7 +17,6 @@ import type { AchievementCheckStats } from '@/lib/achievements/achievement-defin
 import { analytics } from '@/lib/analytics-tracker'
 import { estimateLocalStorageUsagePercent } from '@/lib/storage/storage-monitor'
 import { toast } from 'sonner'
-
 
 /**
  * Long-term progress and skill model for the user.

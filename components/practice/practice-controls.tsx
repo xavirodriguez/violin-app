@@ -46,7 +46,7 @@ export function PracticeControls(props: PracticeControlsProps) {
   } = props
 
   return (
-    <Card className="p-4 space-y-4">
+    <Card className="space-y-4 p-4">
       <div className="flex items-center justify-between gap-4">
         <SessionActions
           status={status}
@@ -133,7 +133,7 @@ function SessionActions(props: SessionActionsProps) {
         className="gap-2"
         disabled={disabled}
       >
-        <Volume2 className={isReferencePlaying ? 'animate-pulse text-primary' : 'h-4 w-4'} />
+        <Volume2 className={isReferencePlaying ? 'text-primary animate-pulse' : 'h-4 w-4'} />
         {isReferencePlaying ? 'Stop Reference' : 'Listen Reference'}
       </Button>
       <Button
@@ -143,7 +143,7 @@ function SessionActions(props: SessionActionsProps) {
         className={`gap-2 transition-colors duration-100 ${visualBeat ? 'bg-primary/20 border-primary' : ''}`}
         disabled={disabled}
       >
-        <Timer className={isMetronomeActive ? 'animate-spin text-primary' : 'h-4 w-4'} />
+        <Timer className={isMetronomeActive ? 'text-primary animate-spin' : 'h-4 w-4'} />
         {isMetronomeActive ? 'Stop Metronome' : 'Metronome'}
       </Button>
     </div>

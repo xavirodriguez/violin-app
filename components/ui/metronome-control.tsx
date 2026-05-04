@@ -1,25 +1,25 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { useAudioStore } from '@/stores/audio-store';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Play, Pause } from 'lucide-react';
+import React from 'react'
+import { useAudioStore } from '@/stores/audio-store'
+import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
+import { Play, Pause } from 'lucide-react'
 
 export function MetronomeControl() {
-  const { metronomeEnabled, bpm, setBpm, toggleMetronome, initialize } = useAudioStore();
+  const { metronomeEnabled, bpm, setBpm, toggleMetronome, initialize } = useAudioStore()
 
   React.useEffect(() => {
-    initialize();
-  }, [initialize]);
+    initialize()
+  }, [initialize])
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-secondary rounded-lg shadow-sm">
+    <div className="bg-secondary flex items-center gap-4 rounded-lg p-4 shadow-sm">
       <Button
-        variant={metronomeEnabled ? "default" : "outline"}
+        variant={metronomeEnabled ? 'default' : 'outline'}
         size="icon"
         onClick={toggleMetronome}
-        aria-label={metronomeEnabled ? "Disable metronome" : "Enable metronome"}
+        aria-label={metronomeEnabled ? 'Disable metronome' : 'Enable metronome'}
       >
         {metronomeEnabled ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </Button>
@@ -39,5 +39,5 @@ export function MetronomeControl() {
         />
       </div>
     </div>
-  );
+  )
 }

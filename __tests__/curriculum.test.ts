@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useCurriculumStore } from '../stores/curriculum-store';
+import { describe, it, expect, beforeEach } from 'vitest'
+import { useCurriculumStore } from '../stores/curriculum-store'
 
 describe('CurriculumStore', () => {
   const mockUnits = [
@@ -30,25 +30,25 @@ describe('CurriculumStore', () => {
         },
       ],
     },
-  ];
+  ]
 
   beforeEach(() => {
-    useCurriculumStore.getState().initializeCurriculum(mockUnits);
-  });
+    useCurriculumStore.getState().initializeCurriculum(mockUnits)
+  })
 
   it('should complete a lesson and unlock the next one', () => {
-    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-1');
+    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-1')
 
-    const units = useCurriculumStore.getState().units;
-    expect(units[0].lessons[0].isCompleted).toBe(true);
-    expect(units[0].lessons[1].isUnlocked).toBe(true);
-  });
+    const units = useCurriculumStore.getState().units
+    expect(units[0].lessons[0].isCompleted).toBe(true)
+    expect(units[0].lessons[1].isUnlocked).toBe(true)
+  })
 
   it('should mark unit as completed when all lessons are done', () => {
-    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-1');
-    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-2');
+    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-1')
+    useCurriculumStore.getState().completeLesson('unit-1', 'lesson-2')
 
-    const units = useCurriculumStore.getState().units;
-    expect(units[0].isCompleted).toBe(true);
-  });
-});
+    const units = useCurriculumStore.getState().units
+    expect(units[0].isCompleted).toBe(true)
+  })
+})

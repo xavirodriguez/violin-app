@@ -121,7 +121,9 @@ describe('System Invariants', () => {
         ...baseExercise,
         notes: [],
       }
-      expect(() => validateExercise(emptyExercise)).toThrow('Exercise must contain at least one note')
+      expect(() => validateExercise(emptyExercise)).toThrow(
+        'Exercise must contain at least one note',
+      )
     })
 
     it('should enforce alter ∈ {-1, 0, 1}', () => {

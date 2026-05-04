@@ -8,7 +8,7 @@ export type {
   LivePracticeSession,
   CompletedPracticeSession,
   PersistedPracticeSession,
-  NoteTechniqueSummary
+  NoteTechniqueSummary,
 } from './practice-session'
 
 export { summarizeTechnique, toPersistedSession } from './practice-session'
@@ -105,20 +105,20 @@ export interface LoopRegion {
   startNoteIndex: number
   endNoteIndex: number
   isEnabled: boolean
-  tempoMultiplier: number;       // 0.4 – 1.25
+  tempoMultiplier: number // 0.4 – 1.25
   drillTarget?: {
-    precisionGoal: number;         // 0.70 | 0.80 | 0.90 | 0.95
-    consecutiveRequired: number;   // 1 | 2 | 3
-    currentStreak: number;
-  };
-  history: AttemptResult[];
+    precisionGoal: number // 0.70 | 0.80 | 0.90 | 0.95
+    consecutiveRequired: number // 1 | 2 | 3
+    currentStreak: number
+  }
+  history: AttemptResult[]
 }
 
 export interface AttemptResult {
-  timestamp: number;
-  precision: number;
-  tempo: number;
-  notes: any[]; // Result of notes in this attempt
+  timestamp: number
+  precision: number
+  tempo: number
+  notes: any[] // Result of notes in this attempt
 }
 
 /**

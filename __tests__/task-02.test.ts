@@ -42,36 +42,34 @@ describe('validateExercise semantic validation (TASK-02)', () => {
   it('should reject invalid alter', () => {
     const invalidExercise = {
       ...baseExercise,
-      notes: [
-        { pitch: { step: 'C', octave: 4, alter: 2 }, duration: 4 },
-      ],
+      notes: [{ pitch: { step: 'C', octave: 4, alter: 2 }, duration: 4 }],
     }
-    expect(() => validateExercise(invalidExercise)).toThrow(/invalid accidental alter=2 at note index 0/i)
+    expect(() => validateExercise(invalidExercise)).toThrow(
+      /invalid accidental alter=2 at note index 0/i,
+    )
 
     const invalidExercise2 = {
-        ...baseExercise,
-        notes: [
-          { pitch: { step: 'C', octave: 4, alter: 0 }, duration: 4 },
-          { pitch: { step: 'D', octave: 4, alter: -2 }, duration: 4 },
-        ],
-      }
-      expect(() => validateExercise(invalidExercise2)).toThrow(/invalid accidental alter=-2 at note index 1/i)
+      ...baseExercise,
+      notes: [
+        { pitch: { step: 'C', octave: 4, alter: 0 }, duration: 4 },
+        { pitch: { step: 'D', octave: 4, alter: -2 }, duration: 4 },
+      ],
+    }
+    expect(() => validateExercise(invalidExercise2)).toThrow(
+      /invalid accidental alter=-2 at note index 1/i,
+    )
   })
 
   it('should reject invalid octave', () => {
     const invalidExercise = {
       ...baseExercise,
-      notes: [
-        { pitch: { step: 'C', octave: 2, alter: 0 }, duration: 4 },
-      ],
+      notes: [{ pitch: { step: 'C', octave: 2, alter: 0 }, duration: 4 }],
     }
     expect(() => validateExercise(invalidExercise)).toThrow(/invalid octave=2 at note index 0/i)
 
     const invalidExercise2 = {
       ...baseExercise,
-      notes: [
-        { pitch: { step: 'C', octave: 8, alter: 0 }, duration: 4 },
-      ],
+      notes: [{ pitch: { step: 'C', octave: 8, alter: 0 }, duration: 4 }],
     }
     expect(() => validateExercise(invalidExercise2)).toThrow(/invalid octave=8 at note index 0/i)
   })
@@ -79,9 +77,7 @@ describe('validateExercise semantic validation (TASK-02)', () => {
   it('should reject invalid duration', () => {
     const invalidExercise = {
       ...baseExercise,
-      notes: [
-        { pitch: { step: 'C', octave: 4, alter: 0 }, duration: 5 },
-      ],
+      notes: [{ pitch: { step: 'C', octave: 4, alter: 0 }, duration: 5 }],
     }
     expect(() => validateExercise(invalidExercise)).toThrow(/invalid duration=5 at note index 0/i)
   })

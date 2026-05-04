@@ -1,4 +1,3 @@
-
 Actúa como senior TypeScript engineer especializado en audio real-time, state machines y testing.
 
 Necesito que implementes una serie de mejoras en el pipeline de detección/práctica musical. Trabaja con especial cuidado porque hay interacción entre `note-stream.ts`, `note-segmenter.ts` y `practice-core.ts`.
@@ -7,6 +6,7 @@ Objetivo general:
 Corregir incoherencias entre detección de nota, segmentación técnica y estado de práctica. El sistema actualmente puede emitir `NO_NOTE_DETECTED` para un frame y, al mismo tiempo, enviarlo al `NoteSegmenter` como frame pitched. Además, un dropout momentáneo puede borrar el historial de detecciones, y el match de una nota depende solo del último frame del segmento.
 
 Archivos principales a revisar:
+
 - `lib/note-stream.ts`
 - `lib/practice-core.ts`
 - `lib/note-segmenter.ts`
@@ -26,15 +26,15 @@ Problema:
 En `executeEventAnalysis`, primero se llama a:
 
 ```ts
-yield* validateAndEmitDetections({ raw, noteName, cents, options })
-````
+yield * validateAndEmitDetections({ raw, noteName, cents, options })
+```
 
 Esta validación usa `isDetectionHighQuality`, que comprueba:
 
-* `raw.rms >= options.minRms`
-* `raw.confidence >= options.minConfidence`
-* `!!noteName`
-* `Math.abs(cents) <= 50`
+- `raw.rms >= options.minRms`
+- `raw.confidence >= options.minConfidence`
+- `!!noteName`
+- `Math.abs(cents) <= 50`
 
 Pero después el mismo frame se convierte con:
 
@@ -52,10 +52,10 @@ Esto genera una contradicción: un frame puede emitir `NO_NOTE_DETECTED` y aun a
 
 Cambio requerido:
 
-* Modifica `convertToTechniqueFrame` para que reciba `options: NoteStreamOptions`.
-* Haz que use exactamente el mismo criterio que `isDetectionHighQuality`.
-* Reutiliza `isDetectionHighQuality` en vez de duplicar lógica.
-* Cambia la llamada en `executeEventAnalysis` a:
+- Modifica `convertToTechniqueFrame` para que reciba `options: NoteStreamOptions`.
+- Haz que use exactamente el mismo criterio que `isDetectionHighQuality`.
+- Reutiliza `isDetectionHighQuality` en vez de duplicar lógica.
+- Cambia la llamada en `executeEventAnalysis` a:
 
 ```ts
 const frame = convertToTechniqueFrame({ raw, noteName, cents, options })
@@ -63,37 +63,34 @@ const frame = convertToTechniqueFrame({ raw, noteName, cents, options })
 
 Además:
 
-* Extrae el valor mágico `50` a una constante con nombre claro, por ejemplo:
+- Extrae el valor mágico `50` a una constante con nombre claro, por ejemplo:
 
 ```ts
 const DETECTION_PREFILTER_CENTS_TOLERANCE = 50
 ```
 
-* No cambies el comportamiento del umbral de 50 cents todavía; solo nómbralo.
+- No cambies el comportamiento del umbral de 50 cents todavía; solo nómbralo.
 
 Resultado esperado:
 
-* Si un frame no pasa `isDetectionHighQuality`, debe emitirse `NO_NOTE_DETECTED` y también debe convertirse en un frame unpitched para el `NoteSegmenter`.
-* Si un frame sí pasa `isDetectionHighQuality`, debe emitirse `NOTE_DETECTED` y convertirse en pitched.
+- Si un frame no pasa `isDetectionHighQuality`, debe emitirse `NO_NOTE_DETECTED` y también debe convertirse en un frame unpitched para el `NoteSegmenter`.
+- Si un frame sí pasa `isDetectionHighQuality`, debe emitirse `NOTE_DETECTED` y convertirse en pitched.
 
 Tests requeridos:
 Añade o actualiza tests para cubrir:
 
 1. Frame con `confidence` inferior a `options.minConfidence`, pero superior a `0.1`:
-
-   * Debe emitir `NO_NOTE_DETECTED`.
-   * Debe tratarse como unpitched para segmentación.
-   * No debe disparar `ONSET`.
+   - Debe emitir `NO_NOTE_DETECTED`.
+   - Debe tratarse como unpitched para segmentación.
+   - No debe disparar `ONSET`.
 
 2. Frame con `rms` inferior a `options.minRms`:
-
-   * Debe emitir `NO_NOTE_DETECTED`.
-   * Debe tratarse como unpitched para segmentación.
+   - Debe emitir `NO_NOTE_DETECTED`.
+   - Debe tratarse como unpitched para segmentación.
 
 3. Frame con cents fuera del prefiltro de 50:
-
-   * Debe emitir `NO_NOTE_DETECTED`.
-   * Debe tratarse como unpitched.
+   - Debe emitir `NO_NOTE_DETECTED`.
+   - Debe tratarse como unpitched.
 
 ---
 
@@ -106,9 +103,9 @@ Eso es demasiado agresivo porque `NO_NOTE_DETECTED` representa un frame individu
 
 Cambio requerido:
 
-* `NO_NOTE_DETECTED` no debe borrar `detectionHistory`.
-* No debe degradar cualquier estado a `'listening'`.
-* Debe ser conservador con la máquina de estados.
+- `NO_NOTE_DETECTED` no debe borrar `detectionHistory`.
+- No debe degradar cualquier estado a `'listening'`.
+- Debe ser conservador con la máquina de estados.
 
 Implementación recomendada:
 
@@ -155,22 +152,20 @@ Esto puede causar falsos negativos si el último frame tiene vibrato, ruido, rel
 
 Cambio requerido:
 
-* Añade una función helper local para calcular la mediana:
+- Añade una función helper local para calcular la mediana:
 
 ```ts
 function median(values: readonly number[]): number {
   const sorted = [...values].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
 
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) / 2
-    : sorted[mid]
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
 }
 ```
 
-* Cambia `isValidMatch` para usar la mediana de `pitchedFrames.map(frame => frame.cents)` como `cents` representativo.
-* Mantén `lastFrame.pitchHz`, `lastFrame.confidence` y `segment.endTime` como metadatos representativos, salvo que encuentres una razón clara para hacer algo mejor.
-* Añade una guard clause:
+- Cambia `isValidMatch` para usar la mediana de `pitchedFrames.map(frame => frame.cents)` como `cents` representativo.
+- Mantén `lastFrame.pitchHz`, `lastFrame.confidence` y `segment.endTime` como metadatos representativos, salvo que encuentres una razón clara para hacer algo mejor.
+- Añade una guard clause:
 
 ```ts
 if (pitchedFrames.length === 0) return false
@@ -216,19 +211,16 @@ Tests requeridos:
 Añade tests para:
 
 1. Último frame fuera de tolerancia, pero la mediana dentro:
-
-   * Ejemplo cents: `[2, 3, 1, 4, 40]`, tolerancia `25`.
-   * Debe matchear.
+   - Ejemplo cents: `[2, 3, 1, 4, 40]`, tolerancia `25`.
+   - Debe matchear.
 
 2. Mayoría/mediana fuera de tolerancia aunque el último frame esté bien:
-
-   * Ejemplo cents: `[30, 32, 35, 28, 2]`, tolerancia `25`.
-   * No debe matchear.
+   - Ejemplo cents: `[30, 32, 35, 28, 2]`, tolerancia `25`.
+   - No debe matchear.
 
 3. `pitchedFrames` vacío:
-
-   * Debe devolver `false`.
-   * No debe lanzar excepción.
+   - Debe devolver `false`.
+   - No debe lanzar excepción.
 
 ---
 
@@ -239,7 +231,7 @@ Actualmente crea un `FixedRingBuffer` nuevo en cada frame, solo para conservar l
 
 Además, el orden esperado por el resto del código es:
 
-* `detectionHistory[0]` = detección más reciente.
+- `detectionHistory[0]` = detección más reciente.
 
 Cambio requerido:
 Reemplaza la implementación por:
@@ -256,7 +248,7 @@ function updateDetectionHistory(
 No uses:
 
 ```ts
-[...history, payload].slice(-10)
+;[...history, payload].slice(-10)
 ```
 
 porque invierte la semántica esperada.
@@ -300,15 +292,15 @@ segmentId: `seg-${this.instanceId}-${this.segmentCount++}`
 
 Preferencia:
 
-* Usa `seg-${this.segmentCount++}` si los segmentos solo viven dentro de una instancia/pipeline.
-* Usa `seg-${this.instanceId}-${this.segmentCount++}` si hay riesgo real de colisión entre instancias.
+- Usa `seg-${this.segmentCount++}` si los segmentos solo viven dentro de una instancia/pipeline.
+- Usa `seg-${this.instanceId}-${this.segmentCount++}` si hay riesgo real de colisión entre instancias.
 
 Tests requeridos:
 Actualiza tests que dependan indirectamente del formato del ID, si existen.
 Añade un test básico si es sencillo:
 
-* Primer segmento generado por una instancia debe tener ID determinista.
-* Segundo segmento debe incrementar el contador.
+- Primer segmento generado por una instancia debe tener ID determinista.
+- Segundo segmento debe incrementar el contador.
 
 No rompas tests existentes por un contador estático compartido entre tests. Si eliges la opción con `static nextInstanceId`, asegúrate de que los tests no dependan de valores globales frágiles.
 
@@ -332,8 +324,8 @@ Esto es O(n²) a lo largo de un ejercicio.
 
 Cambio deseado, pero secundario:
 
-* Precalcula `cumulativeStartTimes` una vez cuando se crea el pipeline o cuando se inicializan las opciones del ejercicio.
-* Usa ese array para calcular:
+- Precalcula `cumulativeStartTimes` una vez cuando se crea el pipeline o cuando se inicializan las opciones del ejercicio.
+- Usa ese array para calcular:
 
 ```ts
 return firstOnsetTime + cumulativeStartTimes[currentIndex]
@@ -341,15 +333,15 @@ return firstOnsetTime + cumulativeStartTimes[currentIndex]
 
 Importante:
 
-* No introduzcas una refactorización grande si el pipeline actual hace difícil pasar ese array.
-* Si `bpm` puede cambiar durante una sesión, el array debe recalcularse cuando cambie `bpm`.
-* Si el cambio ensucia demasiado el código, déjalo sin implementar y explícame por qué.
+- No introduzcas una refactorización grande si el pipeline actual hace difícil pasar ese array.
+- Si `bpm` puede cambiar durante una sesión, el array debe recalcularse cuando cambie `bpm`.
+- Si el cambio ensucia demasiado el código, déjalo sin implementar y explícame por qué.
 
 Tests recomendados:
 
-* Verificar que los expected start times son iguales antes y después.
-* Verificar diferentes duraciones de nota.
-* Verificar que `currentIndex = 0` devuelve `firstOnsetTime`.
+- Verificar que los expected start times son iguales antes y después.
+- Verificar diferentes duraciones de nota.
+- Verificar que `currentIndex = 0` devuelve `firstOnsetTime`.
 
 ---
 
@@ -420,20 +412,21 @@ Antes de entregar:
 
 Al terminar, el sistema debe cumplir:
 
-* Un frame rechazado por calidad no puede entrar como pitched al `NoteSegmenter`.
-* `NO_NOTE_DETECTED` no borra el historial útil por un dropout de un frame.
-* El match de una nota sostenida no depende únicamente del último frame.
-* El historial de detecciones mantiene orden más-reciente-primero sin crear un `FixedRingBuffer` por frame.
-* Los IDs de segmentos son deterministas.
-* Las optimizaciones de ritmo se implementan solo si no complican el diseño.
-* Los tests cubren los casos de regresión principales.
+- Un frame rechazado por calidad no puede entrar como pitched al `NoteSegmenter`.
+- `NO_NOTE_DETECTED` no borra el historial útil por un dropout de un frame.
+- El match de una nota sostenida no depende únicamente del último frame.
+- El historial de detecciones mantiene orden más-reciente-primero sin crear un `FixedRingBuffer` por frame.
+- Los IDs de segmentos son deterministas.
+- Las optimizaciones de ritmo se implementan solo si no complican el diseño.
+- Los tests cubren los casos de regresión principales.
 
 Entrega un resumen final con:
 
-* Archivos modificados.
-* Tests añadidos o actualizados.
-* Comandos ejecutados.
-* Cualquier mejora que hayas decidido no implementar y el motivo.
+- Archivos modificados.
+- Tests añadidos o actualizados.
+- Comandos ejecutados.
+- Cualquier mejora que hayas decidido no implementar y el motivo.
 
 ```
+
 ```

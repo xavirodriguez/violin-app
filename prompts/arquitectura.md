@@ -25,11 +25,11 @@ Quiero avanzar hacia esta arquitectura:
 - Un flujo unidireccional:
 
   input externo / UI
-    → eventos semánticos
-    → reducer o state machine
-    → nuevo estado
-    → efectos derivados del estado
-    → adaptadores externos como OSMD
+  → eventos semánticos
+  → reducer o state machine
+  → nuevo estado
+  → efectos derivados del estado
+  → adaptadores externos como OSMD
 
 - Hooks que no controlen simultáneamente lectura, escritura y efectos sobre el mismo estado.
 - OSMD encapsulado detrás de un puerto/adaptador, por ejemplo `ScoreViewPort`.
@@ -38,6 +38,7 @@ Quiero avanzar hacia esta arquitectura:
 - Contratos estrechos entre módulos: cada hook debe recibir solo las capacidades que usa.
 
 Principios obligatorios:
+
 1. No propongas un big-bang rewrite.
 2. Trabaja en pasos pequeños, seguros e incrementales.
 3. Prioriza cambios que reduzcan complejidad estructural sin romper comportamiento.
@@ -65,6 +66,7 @@ Analiza el fragmento de código que te entregue y clasifica cada pieza en una de
 - UI: componentes React, efectos visuales, hotkeys, modo zen, presentación.
 
 Luego identifica:
+
 - qué responsabilidad tiene cada función/hook,
 - qué estado lee,
 - qué estado escribe,
@@ -88,6 +90,7 @@ Busca explícitamente estos defectos:
 - reducer ausente o transiciones dispersas.
 
 Para cada defecto, dame:
+
 - severidad: alta, media o baja,
 - por qué importa,
 - qué riesgo introduce,
@@ -121,9 +124,10 @@ Cambio mínimo:
 `<qué archivo o fragmento tocar>`
 
 Antes:
+
 ```ts
 // código actual relevante
-````
+```
 
 Después:
 
@@ -133,11 +137,11 @@ Después:
 
 Verificación:
 
-* TypeScript compila.
-* Tests existentes pasan.
-* El comportamiento visible no cambia.
-* Añadir test si aplica.
-* Cómo validar manualmente en la UI.
+- TypeScript compila.
+- Tests existentes pasan.
+- El comportamiento visible no cambia.
+- Añadir test si aplica.
+- Cómo validar manualmente en la UI.
 
 Riesgo:
 `<qué podría romperse>`
@@ -160,13 +164,13 @@ Cuando hayas identificado el siguiente cambio seguro, detente y espera mi siguie
 
 Estilo de respuesta:
 
-* Sé directo.
-* No des explicaciones genéricas.
-* No repitas teoría salvo que sirva para justificar una decisión concreta.
-* Habla como un revisor senior de arquitectura.
-* Usa lenguaje preciso de ingeniería: acoplamiento, cohesión, ownership, dependencia, contrato, estado, transición, efecto, adaptador, reducer, evento semántico.
-* Señala trade-offs.
-* Si una solución es demasiado grande para el paso actual, márcala como “arquitectura objetivo”, no como cambio inmediato.
+- Sé directo.
+- No des explicaciones genéricas.
+- No repitas teoría salvo que sirva para justificar una decisión concreta.
+- Habla como un revisor senior de arquitectura.
+- Usa lenguaje preciso de ingeniería: acoplamiento, cohesión, ownership, dependencia, contrato, estado, transición, efecto, adaptador, reducer, evento semántico.
+- Señala trade-offs.
+- Si una solución es demasiado grande para el paso actual, márcala como “arquitectura objetivo”, no como cambio inmediato.
 
 Primera tarea:
 Voy a darte un archivo, hook o fragmento de código.
@@ -241,3 +245,4 @@ No propongas más de un cambio principal por respuesta.
 No hagas big-bang rewrite.
 No introduzcas abstracciones nuevas salvo que reduzcan una dependencia concreta.
 No conviertas todo en patrones por estética.
+````

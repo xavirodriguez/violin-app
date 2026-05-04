@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  createPracticeEventPipeline,
-  type RawPitchEvent,
-} from './note-stream'
+import { createPracticeEventPipeline, type RawPitchEvent } from './note-stream'
 import type { TargetNote } from './practice-core'
 import { allExercises } from './exercises'
 

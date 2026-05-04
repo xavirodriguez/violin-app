@@ -125,7 +125,7 @@ export function toPersistedSession(session: CompletedPracticeSession): Persisted
     ...session,
     noteResults: session.noteResults.map((nr) => ({
       ...nr,
-      technique: mapToSummary(nr.technique)
+      technique: mapToSummary(nr.technique),
     })),
   }
 }
@@ -134,7 +134,9 @@ export function toPersistedSession(session: CompletedPracticeSession): Persisted
  * Internal helper to ensure we always get a summary.
  * @internal
  */
-function mapToSummary(technique?: NoteTechnique | NoteTechniqueSummary): NoteTechniqueSummary | undefined {
+function mapToSummary(
+  technique?: NoteTechnique | NoteTechniqueSummary,
+): NoteTechniqueSummary | undefined {
   if (!technique) return undefined
 
   // If it has 'vibrato', it's the full NoteTechnique, so summarize it.

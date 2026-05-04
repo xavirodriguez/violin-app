@@ -358,4 +358,3 @@ export const useAnalyticsStore = Object.assign(
     },
   },
 )
-

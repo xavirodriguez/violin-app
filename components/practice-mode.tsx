@@ -76,14 +76,14 @@ export function PracticeMode() {
     if (osmd.isReady) {
       return osmd.onNoteClick(() => {
         // For now, we'll play the current note
-        const currentNote = practiceState?.exercise.notes[derived.currentNoteIndex];
+        const currentNote = practiceState?.exercise.notes[derived.currentNoteIndex]
         if (currentNote) {
-           const freq = NoteAudioService.getFrequencyFromTargetNote(currentNote);
-           player.playNote(freq, 1500);
+          const freq = NoteAudioService.getFrequencyFromTargetNote(currentNote)
+          player.playNote(freq, 1500)
         }
-      });
+      })
     }
-  }, [osmd.isReady, practiceState?.exercise, derived.currentNoteIndex, player]);
+  }, [osmd.isReady, practiceState?.exercise, derived.currentNoteIndex, player])
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
@@ -96,7 +96,7 @@ export function PracticeMode() {
   usePracticeLifecycle(lifecycleParams)
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 relative">
+    <div className="relative mx-auto max-w-6xl px-4 py-8">
       {isListeningPhase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="text-center text-white">
@@ -120,7 +120,9 @@ export function PracticeMode() {
       {countdown !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
           <div className="text-center text-white">
-            <h2 className="mb-4 text-2xl font-semibold uppercase tracking-widest text-amber-400">Prepárate</h2>
+            <h2 className="mb-4 text-2xl font-semibold tracking-widest text-amber-400 uppercase">
+              Prepárate
+            </h2>
             <div className="animate-ping-once text-9xl font-black">{countdown}</div>
           </div>
         </div>
@@ -136,9 +138,8 @@ export function PracticeMode() {
               setIsReferencePlaying(false)
             } else if (practiceState) {
               setIsReferencePlaying(true)
-              await sequencePlayer.play(
-                practiceState.exercise,
-                (index) => osmd.scoreView.sync(index)
+              await sequencePlayer.play(practiceState.exercise, (index) =>
+                osmd.scoreView.sync(index),
               )
               setIsReferencePlaying(false)
             }
@@ -261,7 +262,9 @@ function PracticeControlsRow({
 
   if (!shouldShow) return <></>
 
-  const handleRestart = () => practiceState && dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
+  const handleRestart = () =>
+    practiceState &&
+    dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
 
   return (
     <PracticeControls

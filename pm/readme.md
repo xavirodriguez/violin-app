@@ -9,4 +9,3 @@ Visualizar analytics: heatmaps, métricas, práctica semanal, skills.
 Recomendar ejercicios.
 Exportar progreso en CSV.
 Gestionar preferencias, dificultad, sensibilidad y audio input.
-

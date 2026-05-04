@@ -5,20 +5,20 @@ import { loadWavAsFloat32 } from './audio/decode-wav'
 import { loadMp3AsFloat32 } from './audio/decode-mp3'
 
 const WAV_NOTES = [
-  { file: 'a4.wav',       expectedHz: 440.0,  label: 'A4' },
-  { file: 'b4.wav',       expectedHz: 493.88, label: 'B4' },
-  { file: 'c5.wav',       expectedHz: 523.25, label: 'C5' },
-  { file: 'e5.wav',       expectedHz: 659.25, label: 'E5' },
-  { file: 'f4.wav',       expectedHz: 349.23, label: 'F4' },
-  { file: 'gsharp4.wav',  expectedHz: 415.30, label: 'G#4' },
-  { file: 'c6.wav',       expectedHz: 1046.5, label: 'C6' },
-  { file: 'fsharp6.wav',  expectedHz: 1479.98,label: 'F#6' },
+  { file: 'a4.wav', expectedHz: 440.0, label: 'A4' },
+  { file: 'b4.wav', expectedHz: 493.88, label: 'B4' },
+  { file: 'c5.wav', expectedHz: 523.25, label: 'C5' },
+  { file: 'e5.wav', expectedHz: 659.25, label: 'E5' },
+  { file: 'f4.wav', expectedHz: 349.23, label: 'F4' },
+  { file: 'gsharp4.wav', expectedHz: 415.3, label: 'G#4' },
+  { file: 'c6.wav', expectedHz: 1046.5, label: 'C6' },
+  { file: 'fsharp6.wav', expectedHz: 1479.98, label: 'F#6' },
 ]
 
 const MP3_NOTES = [
-  { file: 'g2.mp3',         expectedHz: 98.00,  label: 'G2' },
-  { file: 'g2-vibrato.mp3', expectedHz: 98.00,  label: 'G2 (Vibrato)' },
-  { file: 'g3.mp3',         expectedHz: 196.00, label: 'G3' },
+  { file: 'g2.mp3', expectedHz: 98.0, label: 'G2' },
+  { file: 'g2-vibrato.mp3', expectedHz: 98.0, label: 'G2 (Vibrato)' },
+  { file: 'g3.mp3', expectedHz: 196.0, label: 'G3' },
 ]
 
 function getMedian(values: number[]): number {

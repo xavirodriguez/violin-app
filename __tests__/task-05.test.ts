@@ -4,8 +4,8 @@ import { calculateCentsTolerance } from '../stores/practice-store'
 
 vi.mock('../stores/progress.store', () => ({
   useProgressStore: {
-    getState: vi.fn()
-  }
+    getState: vi.fn(),
+  },
 }))
 
 describe('calculateCentsTolerance floor', () => {

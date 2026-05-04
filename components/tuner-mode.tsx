@@ -178,7 +178,7 @@ export function TunerMode() {
           {/* ACTIVE States: Tuning interface */}
           {isActive && (
             <div className="space-y-6">
-              { /** Missing nice interface for tunner */}
+              {/** Missing nice interface for tunner */}
               <div className="flex justify-center gap-2">
                 <Button onClick={reset} variant="outline" className="gap-2 bg-transparent">
                   <MicOff className="h-4 w-4" />

@@ -101,7 +101,8 @@ function createStabilityObservation(stdDev: number): Observation {
     confidence: 0.85 as Ratio01,
     message: 'Pitch is wavering',
     tip: 'Apply steady finger pressure and keep your hand relaxed',
-    friendlyTranslation: 'La afinación está oscilando. Mantén una presión constante con el dedo y relaja la mano.',
+    friendlyTranslation:
+      'La afinación está oscilando. Mantén una presión constante con el dedo y relaja la mano.',
     evidence: { stdDev },
   }
 }
@@ -150,7 +151,8 @@ function createToneObservation(avgConfidence: number): Observation {
     confidence: 0.7 as Ratio01,
     message: 'Weak or unclear tone',
     tip: 'Apply more bow pressure and check contact point',
-    friendlyTranslation: 'El sonido es débil o poco claro. Aplica un poco más de presión con el arco.',
+    friendlyTranslation:
+      'El sonido es débil o poco claro. Aplica un poco más de presión con el arco.',
     evidence: { avgConfidence },
   }
 }

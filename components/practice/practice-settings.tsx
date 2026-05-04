@@ -17,7 +17,7 @@ export function PracticeSettings({
   autoStartEnabled,
   onAutoStartChange,
   listenImitateEnabled,
-  onListenImitateChange
+  onListenImitateChange,
 }: PracticeSettingsProps) {
   return (
     <div className="bg-muted/20 flex flex-wrap items-center justify-end gap-6 rounded-xl border p-4">

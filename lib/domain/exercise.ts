@@ -239,7 +239,11 @@ export interface TunerStore {
   retry: () => Promise<void>
   reset: () => Promise<void>
   updatePitch: (pitch: number, confidence: number) => void
-  handleDetectedPitch: (params: { pitch: number; confidence: number; token: number | string }) => void
+  handleDetectedPitch: (params: {
+    pitch: number
+    confidence: number
+    token: number | string
+  }) => void
   startListening: () => void
   stopListening: () => void
   loadDevices: () => Promise<void>

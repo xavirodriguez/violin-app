@@ -1,22 +1,22 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Lesson } from '@/lib/domain/curriculum';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Lock, CheckCircle, PlayCircle } from 'lucide-react';
+import React from 'react'
+import { Lesson } from '@/lib/domain/curriculum'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Lock, CheckCircle, PlayCircle } from 'lucide-react'
 
 interface LessonViewProps {
-  lesson: Lesson;
-  onStart: (lesson: Lesson) => void;
+  lesson: Lesson
+  onStart: (lesson: Lesson) => void
 }
 
 export function LessonView({ lesson, onStart }: LessonViewProps) {
   return (
     <Card className={`relative ${!lesson.isUnlocked ? 'opacity-60' : ''}`}>
       {!lesson.isUnlocked && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[1px] z-10 rounded-lg">
-          <Lock className="h-8 w-8 text-muted-foreground" />
+        <div className="bg-background/20 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[1px]">
+          <Lock className="text-muted-foreground h-8 w-8" />
         </div>
       )}
       <CardHeader>
@@ -28,19 +28,13 @@ export function LessonView({ lesson, onStart }: LessonViewProps) {
       <CardContent className="space-y-4">
         <p className="text-muted-foreground">{lesson.description}</p>
         {lesson.conceptExplanation && (
-          <div className="p-3 bg-muted rounded-md text-sm italic">
-            {lesson.conceptExplanation}
-          </div>
+          <div className="bg-muted rounded-md p-3 text-sm italic">{lesson.conceptExplanation}</div>
         )}
-        <Button
-          className="w-full"
-          disabled={!lesson.isUnlocked}
-          onClick={() => onStart(lesson)}
-        >
-          <PlayCircle className="h-4 w-4 mr-2" />
+        <Button className="w-full" disabled={!lesson.isUnlocked} onClick={() => onStart(lesson)}>
+          <PlayCircle className="mr-2 h-4 w-4" />
           {lesson.isCompleted ? 'Review Lesson' : 'Start Lesson'}
         </Button>
       </CardContent>
     </Card>
-  );
+  )
 }

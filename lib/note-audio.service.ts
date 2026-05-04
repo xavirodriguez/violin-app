@@ -1,5 +1,5 @@
-import { MusicalNote, formatPitchName, NoteName } from './practice-core';
-import { Note as TargetNote } from '@/lib/domain/exercise';
+import { MusicalNote, formatPitchName, NoteName } from './practice-core'
+import { Note as TargetNote } from '@/lib/domain/exercise'
 
 /**
  * Service to map musical notes to audio frequencies.
@@ -14,8 +14,8 @@ export const NoteAudioService = {
    * @returns The frequency in Hz.
    */
   getFrequencyFromTargetNote(targetNote: TargetNote): number {
-    const noteName = formatPitchName(targetNote.pitch);
-    return MusicalNote.fromName(noteName).frequency;
+    const noteName = formatPitchName(targetNote.pitch)
+    return MusicalNote.fromName(noteName).frequency
   },
 
   /**
@@ -25,6 +25,6 @@ export const NoteAudioService = {
    * @returns The frequency in Hz.
    */
   getFrequencyFromNoteName(noteName: string): number {
-    return MusicalNote.fromName(noteName as NoteName).frequency;
-  }
-};
+    return MusicalNote.fromName(noteName as NoteName).frequency
+  },
+}

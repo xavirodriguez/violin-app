@@ -1,23 +1,23 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MetronomeEngine } from '../lib/infrastructure/metronome-engine';
-import { audioManager } from '../lib/infrastructure/audio-manager';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { MetronomeEngine } from '../lib/infrastructure/metronome-engine'
+import { audioManager } from '../lib/infrastructure/audio-manager'
 
 // Mock audioManager
 vi.mock('../lib/infrastructure/audio-manager', () => ({
   audioManager: {
     getContext: vi.fn(),
   },
-}));
+}))
 
 describe('MetronomeEngine', () => {
-  let metronome: MetronomeEngine;
+  let metronome: MetronomeEngine
   let mockContext: {
-    currentTime: number;
-    createOscillator: ReturnType<typeof vi.fn>;
-    createGain: ReturnType<typeof vi.fn>;
-    destination: object;
-  };
-  const onTick = vi.fn();
+    currentTime: number
+    createOscillator: ReturnType<typeof vi.fn>
+    createGain: ReturnType<typeof vi.fn>
+    destination: object
+  }
+  const onTick = vi.fn()
 
   beforeEach(() => {
     mockContext = {
@@ -36,35 +36,35 @@ describe('MetronomeEngine', () => {
         connect: vi.fn(),
       }),
       destination: {},
-    };
-    vi.mocked(audioManager.getContext).mockReturnValue(mockContext as unknown as AudioContext);
-    metronome = new MetronomeEngine(onTick);
-  });
+    }
+    vi.mocked(audioManager.getContext).mockReturnValue(mockContext as unknown as AudioContext)
+    metronome = new MetronomeEngine(onTick)
+  })
 
   afterEach(() => {
-    metronome.stop();
-    vi.clearAllMocks();
-  });
+    metronome.stop()
+    vi.clearAllMocks()
+  })
 
   it('should start and schedule ticks', () => {
-    vi.useFakeTimers();
-    metronome.start(60);
+    vi.useFakeTimers()
+    metronome.start(60)
 
     // Fast-forward time
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(100)
 
-    expect(onTick).toHaveBeenCalled();
-    expect(mockContext.createOscillator).toHaveBeenCalled();
-  });
+    expect(onTick).toHaveBeenCalled()
+    expect(mockContext.createOscillator).toHaveBeenCalled()
+  })
 
   it('should stop and clear timers', () => {
-    vi.useFakeTimers();
-    metronome.start(60);
-    metronome.stop();
+    vi.useFakeTimers()
+    metronome.start(60)
+    metronome.stop()
 
-    const tickCount = onTick.mock.calls.length;
-    vi.advanceTimersByTime(1000);
+    const tickCount = onTick.mock.calls.length
+    vi.advanceTimersByTime(1000)
 
-    expect(onTick.mock.calls.length).toBe(tickCount);
-  });
-});
+    expect(onTick.mock.calls.length).toBe(tickCount)
+  })
+})

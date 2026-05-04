@@ -1,4 +1,4 @@
-import { CurriculumUnit } from '@/lib/domain/curriculum';
+import { CurriculumUnit } from '@/lib/domain/curriculum'
 
 export const initialCurriculum: CurriculumUnit[] = [
   {
@@ -10,12 +10,18 @@ export const initialCurriculum: CurriculumUnit[] = [
     level: 0,
     prerequisites: [],
     learningObjectives: [
-      { id: 'intonation_basic', label: 'Afinación básica', metrics: ['centsDeviation'], masteryThreshold: 0.8 }
+      {
+        id: 'intonation_basic',
+        label: 'Afinación básica',
+        metrics: ['centsDeviation'],
+        masteryThreshold: 0.8,
+      },
     ],
     whyThisMatters: {
       title: 'Los fundamentos del sonido',
-      description: 'Dominar las cuerdas al aire es esencial para desarrollar un arco estable y una afinación sólida.',
-      tips: ['Mantén el arco paralelo al puente', 'Escucha la resonancia de la caja']
+      description:
+        'Dominar las cuerdas al aire es esencial para desarrollar un arco estable y una afinación sólida.',
+      tips: ['Mantén el arco paralelo al puente', 'Escucha la resonancia de la caja'],
     },
     lessons: [
       {
@@ -26,7 +32,7 @@ export const initialCurriculum: CurriculumUnit[] = [
         isUnlocked: true,
         isCompleted: false,
         order: 1,
-        conceptExplanation: 'The G string is the lowest string on the violin.'
+        conceptExplanation: 'The G string is the lowest string on the violin.',
       },
       {
         id: 'lesson-2',
@@ -36,8 +42,8 @@ export const initialCurriculum: CurriculumUnit[] = [
         isUnlocked: false,
         isCompleted: false,
         order: 2,
-        conceptExplanation: 'The D string is the second lowest string.'
-      }
-    ]
-  }
-];
+        conceptExplanation: 'The D string is the second lowest string.',
+      },
+    ],
+  },
+]

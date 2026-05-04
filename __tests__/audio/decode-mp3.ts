@@ -6,7 +6,9 @@ import { MPEGDecoder } from 'mpg123-decoder'
  * MP3 decoder for tests using mpg123-decoder.
  * Decodes MP3 to Float32Array PCM.
  */
-export async function loadMp3AsFloat32(filename: string): Promise<{ samples: Float32Array; sampleRate: number }> {
+export async function loadMp3AsFloat32(
+  filename: string,
+): Promise<{ samples: Float32Array; sampleRate: number }> {
   const filePath = join(process.cwd(), '__tests__/audio', filename)
   const buffer = readFileSync(filePath)
 

@@ -107,18 +107,18 @@ export function useOSMDSafe(
           setError(undefined)
 
           // Add click listeners to notes for audio reference
-          const svg = containerRef.current?.querySelector('svg');
+          const svg = containerRef.current?.querySelector('svg')
           if (svg) {
             svg.addEventListener('click', (event) => {
-              const target = event.target as SVGElement;
-              const gNote = target.closest('.vf-stavenote');
+              const target = event.target as SVGElement
+              const gNote = target.closest('.vf-stavenote')
               if (gNote) {
                 // Heuristic to find the note ID from the rendered SVG
                 // In a production app, we would use OSMD's internal mapping
                 // For now, we trigger playNote if we can identify it
-                console.log('Note clicked:', gNote);
+                console.log('Note clicked:', gNote)
               }
-            });
+            })
           }
         }
       } catch (err) {
@@ -157,28 +157,31 @@ export function useOSMDSafe(
     }
   }, [isReady])
 
-  const onNoteClick = useCallback((handler: (note: unknown) => void) => {
-    if (isReady && osmdRef.current && containerRef.current) {
-      // OSMD doesn't have a direct "onNoteClick" event, we use the backend's SVG/Canvas
-      // To simplify, we'll attach a click listener to the container and use OSMD's hit testing if available
-      // or just intercept clicks on SVG elements.
-      const container = containerRef.current;
-      const handleClick = (event: MouseEvent) => {
-        if (!osmdRef.current) return;
+  const onNoteClick = useCallback(
+    (handler: (note: unknown) => void) => {
+      if (isReady && osmdRef.current && containerRef.current) {
+        // OSMD doesn't have a direct "onNoteClick" event, we use the backend's SVG/Canvas
+        // To simplify, we'll attach a click listener to the container and use OSMD's hit testing if available
+        // or just intercept clicks on SVG elements.
+        const container = containerRef.current
+        const handleClick = (event: MouseEvent) => {
+          if (!osmdRef.current) return
 
-        let target = event.target as HTMLElement;
-        while (target && target !== (container as unknown as HTMLElement)) {
-          if (target.classList.contains('vf-note') || target.classList.contains('vf-stavenote')) {
-             handler({ target });
-             break;
+          let target = event.target as HTMLElement
+          while (target && target !== (container as unknown as HTMLElement)) {
+            if (target.classList.contains('vf-note') || target.classList.contains('vf-stavenote')) {
+              handler({ target })
+              break
+            }
+            target = target.parentElement as HTMLElement
           }
-          target = target.parentElement as HTMLElement;
         }
-      };
-      container.addEventListener('click', handleClick);
-      return () => container.removeEventListener('click', handleClick);
-    }
-  }, [isReady]);
+        container.addEventListener('click', handleClick)
+        return () => container.removeEventListener('click', handleClick)
+      }
+    },
+    [isReady],
+  )
 
   /**
    * Highlights the notes currently under the OSMD cursor.

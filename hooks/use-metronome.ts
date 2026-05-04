@@ -1,49 +1,52 @@
-'use client';
+'use client'
 
-import { useEffect, useRef, useMemo } from 'react';
-import { audioManager } from '@/lib/infrastructure/audio-manager';
-import { Metronome } from '@/lib/metronome';
+import { useEffect, useRef, useMemo } from 'react'
+import { audioManager } from '@/lib/infrastructure/audio-manager'
+import { Metronome } from '@/lib/metronome'
 
 export function useMetronome(onBeat?: () => void) {
-  const metronomeRef = useRef<Metronome | undefined>(undefined);
+  const metronomeRef = useRef<Metronome | undefined>(undefined)
 
   useEffect(() => {
-    const context = audioManager.getContext();
+    const context = audioManager.getContext()
     if (context && !metronomeRef.current) {
-      metronomeRef.current = new Metronome(context, onBeat);
+      metronomeRef.current = new Metronome(context, onBeat)
     }
 
     return () => {
-      metronomeRef.current?.stop();
-      metronomeRef.current = undefined;
-    };
-  }, []);
+      metronomeRef.current?.stop()
+      metronomeRef.current = undefined
+    }
+  }, [])
 
-  const api = useMemo(() => ({
-    toggle: async (bpm?: number) => {
-      if (!audioManager.isActive()) {
-        await audioManager.initialize();
-      }
-
-      const context = audioManager.getContext();
-      if (context) {
-        if (!metronomeRef.current) {
-          metronomeRef.current = new Metronome(context);
+  const api = useMemo(
+    () => ({
+      toggle: async (bpm?: number) => {
+        if (!audioManager.isActive()) {
+          await audioManager.initialize()
         }
 
-        if (metronomeRef.current.isActive()) {
-          metronomeRef.current.stop();
-        } else {
-          if (bpm) metronomeRef.current.setBpm(bpm);
-          metronomeRef.current.start();
-        }
-      }
-    },
-    setBpm: (bpm: number) => {
-      metronomeRef.current?.setBpm(bpm);
-    },
-    isActive: () => metronomeRef.current?.isActive() ?? false,
-  }), []);
+        const context = audioManager.getContext()
+        if (context) {
+          if (!metronomeRef.current) {
+            metronomeRef.current = new Metronome(context)
+          }
 
-  return api;
+          if (metronomeRef.current.isActive()) {
+            metronomeRef.current.stop()
+          } else {
+            if (bpm) metronomeRef.current.setBpm(bpm)
+            metronomeRef.current.start()
+          }
+        }
+      },
+      setBpm: (bpm: number) => {
+        metronomeRef.current?.setBpm(bpm)
+      },
+      isActive: () => metronomeRef.current?.isActive() ?? false,
+    }),
+    [],
+  )
+
+  return api
 }

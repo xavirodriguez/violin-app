@@ -9,6 +9,7 @@ Toda la respuesta debe aparecer directamente en el chat, en formato Markdown leg
 El resultado será usado por stakeholders no técnicos para tomar decisiones críticas de negocio: inversión, lanzamiento, due diligence, priorización de roadmap o handoff de equipo.
 
 Asume siempre el peor caso de documentación:
+
 - Puede no haber README.
 - Puede no haber tickets.
 - Puede no haber contexto previo.
@@ -49,6 +50,7 @@ No te limites a listar carpetas: interpreta qué rol cumple cada parte del siste
 Recorre el proyecto módulo por módulo e identifica todas las funcionalidades presentes.
 
 Considera como feature cualquier capacidad observable por:
+
 - Un usuario final.
 - Un administrador.
 - Un sistema externo.
@@ -122,21 +124,27 @@ Distingue entre deuda técnica menor y riesgo real de negocio.
 Usa exactamente esta escala:
 
 ## [0%] — PLACEHOLDER
+
 Solo existe el nombre, ruta, componente vacío, función vacía o intención declarada. No hay comportamiento real.
 
 ## [25%] — EN DESARROLLO
+
 Existe lógica parcial, pero no funciona end-to-end. Puede haber scaffolding, mocks, rutas incompletas o pantallas no conectadas.
 
 ## [50%] — FUNCIONAL BÁSICO
+
 El happy path funciona en condiciones ideales. Puede carecer de tests, persistencia robusta, validaciones, manejo de errores o edge cases.
 
 ## [75%] — PRODUCCIÓN PARCIAL
+
 Funciona con datos reales y está razonablemente integrado. Tiene manejo básico de errores. Faltan edge cases, tests suficientes, observabilidad o endurecimiento para producción.
 
 ## [90%] — CASI COMPLETO
+
 Funciona en producción o está muy cerca. Tiene tests relevantes, errores controlados y comportamiento consistente. Solo faltan detalles menores, documentación adicional o cobertura marginal.
 
 ## [100%] — COMPLETO Y VERIFICADO
+
 Implementación robusta, validada, testeada, documentada, conectada end-to-end, preparada para producción y sin gaps relevantes detectados.
 
 Sé conservador. Ante duda entre dos niveles, escoge el menor y explica por qué.
@@ -174,17 +182,19 @@ Formato:
 **Completitud global estimada:** ...%
 
 **Puntos fuertes:**
+
 1. ...
 2. ...
 3. ...
 
 **Riesgos principales:**
+
 1. ...
 2. ...
 3. ...
 
 **Acción inmediata recomendada:** ...
-````
+```
 
 ---
 
@@ -199,9 +209,9 @@ Incluye una tabla:
 
 Después añade una breve interpretación:
 
-* Qué parece ser el núcleo del producto.
-* Qué partes parecen maduras.
-* Qué partes parecen experimentales, incompletas o desconectadas.
+- Qué parece ser el núcleo del producto.
+- Qué partes parecen maduras.
+- Qué partes parecen experimentales, incompletas o desconectadas.
 
 ---
 
@@ -224,12 +234,12 @@ Para cada feature usa exactamente este formato:
 
 Reglas:
 
-* No inventes features.
-* Si una feature solo está sugerida por nombres de archivos pero no tiene implementación clara, clasifícala como 0% o 25%.
-* Si no puedes verificar producción, usa “No verificable”.
-* Cita archivos concretos siempre que sea posible.
-* Agrupa features muy pequeñas si forman parte del mismo flujo de negocio.
-* No ocultes features incompletas.
+- No inventes features.
+- Si una feature solo está sugerida por nombres de archivos pero no tiene implementación clara, clasifícala como 0% o 25%.
+- Si no puedes verificar producción, usa “No verificable”.
+- Cita archivos concretos siempre que sea posible.
+- Agrupa features muy pequeñas si forman parte del mismo flujo de negocio.
+- No ocultes features incompletas.
 
 ---
 
@@ -242,17 +252,17 @@ Incluye una tabla:
 
 Criterios para “¿Lanzable?”:
 
-* Sí: puede exponerse a usuarios reales con riesgo bajo.
-* Parcial: usable en beta, demo o entorno controlado.
-* No: no debería lanzarse todavía.
+- Sí: puede exponerse a usuarios reales con riesgo bajo.
+- Parcial: usable en beta, demo o entorno controlado.
+- No: no debería lanzarse todavía.
 
 Para esfuerzo estimado usa:
 
-* XS: horas.
-* S: 1-2 días.
-* M: 3-5 días.
-* L: 1-2 semanas.
-* XL: más de 2 semanas.
+- XS: horas.
+- S: 1-2 días.
+- M: 3-5 días.
+- L: 1-2 semanas.
+- XL: más de 2 semanas.
 
 Después de la tabla, incluye:
 
@@ -283,14 +293,14 @@ Analiza riesgos que afecten al proyecto completo, no solo a una feature.
 
 Incluye como mínimo:
 
-* Riesgo técnico.
-* Riesgo de producto.
-* Riesgo de datos.
-* Riesgo de seguridad.
-* Riesgo de escalabilidad.
-* Riesgo de mantenibilidad.
-* Riesgo de testing/QA.
-* Riesgo de documentación/handoff.
+- Riesgo técnico.
+- Riesgo de producto.
+- Riesgo de datos.
+- Riesgo de seguridad.
+- Riesgo de escalabilidad.
+- Riesgo de mantenibilidad.
+- Riesgo de testing/QA.
+- Riesgo de documentación/handoff.
 
 Formato:
 
@@ -324,18 +334,22 @@ Formato:
 
 ```md
 ## Prioridad 0 — Crítico antes de cualquier lanzamiento
+
 1. ...
 2. ...
 
 ## Prioridad 1 — Necesario para MVP sólido
+
 1. ...
 2. ...
 
 ## Prioridad 2 — Mejora de calidad o escalabilidad
+
 1. ...
 2. ...
 
 ## Prioridad 3 — Nice to have
+
 1. ...
 2. ...
 ```
@@ -348,11 +362,11 @@ Cada recomendación debe ser práctica, accionable y vinculada a una evidencia c
 
 Cierra con una conclusión clara para stakeholders no técnicos:
 
-* ¿Está listo para lanzar?
-* ¿Está listo para beta?
-* ¿Está listo para inversión o due diligence?
-* ¿Cuál es el principal riesgo?
-* ¿Cuál es la mejor siguiente acción?
+- ¿Está listo para lanzar?
+- ¿Está listo para beta?
+- ¿Está listo para inversión o due diligence?
+- ¿Cuál es el principal riesgo?
+- ¿Cuál es la mejor siguiente acción?
 
 No uses lenguaje ambiguo. Si no hay evidencia suficiente, dilo claramente.
 
@@ -360,18 +374,17 @@ No uses lenguaje ambiguo. Si no hay evidencia suficiente, dilo claramente.
 
 # REGLAS IMPORTANTES
 
-* No generes archivos.
-* No generes adjuntos.
-* No digas “he creado un documento”.
-* No digas “puedes descargar”.
-* No uses enlaces sandbox.
-* Toda la auditoría debe estar directamente escrita en la conversación.
-* Sé exhaustivo, pero no rellenes con generalidades.
-* Prioriza evidencia concreta sobre opiniones.
-* Sé conservador con los porcentajes.
-* Si algo no se puede verificar, marca “No verificable”.
-* Si el proyecto es grande y no cabe todo en una sola respuesta, prioriza:
-
+- No generes archivos.
+- No generes adjuntos.
+- No digas “he creado un documento”.
+- No digas “puedes descargar”.
+- No uses enlaces sandbox.
+- Toda la auditoría debe estar directamente escrita en la conversación.
+- Sé exhaustivo, pero no rellenes con generalidades.
+- Prioriza evidencia concreta sobre opiniones.
+- Sé conservador con los porcentajes.
+- Si algo no se puede verificar, marca “No verificable”.
+- Si el proyecto es grande y no cabe todo en una sola respuesta, prioriza:
   1. Resumen ejecutivo.
   2. Features críticas.
   3. Riesgos bloqueantes.

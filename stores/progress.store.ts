@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import { PracticeSession, CompletedPracticeSession, PersistedPracticeSession, ExerciseStats } from '@/lib/domain/practice'
+import {
+  PracticeSession,
+  CompletedPracticeSession,
+  PersistedPracticeSession,
+  ExerciseStats,
+} from '@/lib/domain/practice'
 import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
 import { createMigrator } from '@/lib/persistence/migrator'
 import { ProgressStateSchema } from '@/lib/schemas/persistence.schema'
@@ -57,7 +62,6 @@ export interface ProgressSnapshot {
   /** ID of the practice session that triggered this snapshot. */
   lastSessionId: string
 }
-
 
 /**
  * State structure for the Progress Store.
@@ -229,7 +233,9 @@ export const useProgressStore = create<ProgressState & ProgressActions>()(
  * @returns Skill score (0-100).
  * @internal
  */
-function calculateIntonationSkill(sessions: PracticeSession[] | PersistedPracticeSession[]): number {
+function calculateIntonationSkill(
+  sessions: PracticeSession[] | PersistedPracticeSession[],
+): number {
   if (sessions.length === 0) return 0
   const recentSessions = sessions.slice(0, 10)
   const totalAcc = recentSessions.reduce((sum: number, s) => sum + s.accuracy, 0)
@@ -271,7 +277,9 @@ interface RhythmMetricsAccumulator {
   totalCount: number
 }
 
-function accumulateRhythmMetrics(sessions: PracticeSession[] | PersistedPracticeSession[]): RhythmMetricsAccumulator {
+function accumulateRhythmMetrics(
+  sessions: PracticeSession[] | PersistedPracticeSession[],
+): RhythmMetricsAccumulator {
   let metrics: RhythmMetricsAccumulator = { totalError: 0, inWindowCount: 0, totalCount: 0 }
 
   for (const session of sessions) {
@@ -328,7 +336,9 @@ function calculateRhythmScore(metrics: RhythmMetricsAccumulator): number {
 }
 
 function calculateSessionRhythmError(session: PracticeSession | PersistedPracticeSession): number {
-  const noteResults = session.noteResults as Array<{ technique?: { rhythm?: { onsetErrorMs?: number } } }>
+  const noteResults = session.noteResults as Array<{
+    technique?: { rhythm?: { onsetErrorMs?: number } }
+  }>
   const totalError = noteResults.reduce((acc: number, nr) => {
     return acc + (nr.technique?.rhythm?.onsetErrorMs ?? 0)
   }, 0)
@@ -437,7 +447,10 @@ function generateSnapshotIfDue(params: {
   return [snapshot, ...snapshots].slice(0, 10)
 }
 
-function assembleSnapshot(session: PracticeSession | PersistedPracticeSession, get: () => ProgressState): ProgressSnapshot {
+function assembleSnapshot(
+  session: PracticeSession | PersistedPracticeSession,
+  get: () => ProgressState,
+): ProgressSnapshot {
   const snapshot: ProgressSnapshot = {
     userId: 'anonymous',
     window: 'all',

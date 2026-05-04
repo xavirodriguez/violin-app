@@ -21,13 +21,19 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     // Create an async generator that yields events
     async function* eventGenerator() {
       // First event is fine
-      yield { type: 'NOTE_DETECTED', payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 } } as PracticeEvent
+      yield {
+        type: 'NOTE_DETECTED',
+        payload: { pitch: 'A4', pitchHz: 440, cents: 0, timestamp: Date.now(), confidence: 1 },
+      } as PracticeEvent
 
       // Now change the token in the store
       usePracticeStore.setState({ sessionToken: 'new-token' })
 
       // This event should be ignored because the token was captured at start of consumePipelineEvents
-      yield { type: 'NOTE_DETECTED', payload: { pitch: 'B4', pitchHz: 493.88, cents: 0, timestamp: Date.now(), confidence: 1 } } as PracticeEvent
+      yield {
+        type: 'NOTE_DETECTED',
+        payload: { pitch: 'B4', pitchHz: 493.88, cents: 0, timestamp: Date.now(), confidence: 1 },
+      } as PracticeEvent
     }
 
     // Capture initial state
@@ -53,7 +59,7 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     const safeSetStale = createSafeSet({
       set: usePracticeStore.setState,
       get: usePracticeStore.getState,
-      currentToken: staleToken
+      currentToken: staleToken,
     })
 
     const initialState = usePracticeStore.getState().practiceState
@@ -69,7 +75,7 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     const safeSetCurrent = createSafeSet({
       set: usePracticeStore.setState,
       get: usePracticeStore.getState,
-      currentToken: currentToken
+      currentToken: currentToken,
     })
 
     // @ts-expect-error - testing with partial practice state

@@ -30,7 +30,7 @@ describe('PitchDebugPanel', () => {
         rms: 0.1,
         confidence: 0.95,
         timestamp: Date.now(),
-      }
+      },
     ])
 
     render(<PitchDebugPanel />)

@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export function ServiceWorkerRegistration() {
   useEffect(() => {
@@ -8,15 +8,15 @@ export function ServiceWorkerRegistration() {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(
           (registration) => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            console.log('ServiceWorker registration successful with scope: ', registration.scope)
           },
           (err) => {
-            console.log('ServiceWorker registration failed: ', err);
-          }
-        );
-      });
+            console.log('ServiceWorker registration failed: ', err)
+          },
+        )
+      })
     }
-  }, []);
+  }, [])
 
-  return null;
+  return null
 }

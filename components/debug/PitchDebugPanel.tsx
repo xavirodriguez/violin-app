@@ -30,7 +30,7 @@ export function PitchDebugPanel() {
   }, [events])
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] flex w-80 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900/95 p-3 text-[11px] font-mono text-slate-100 shadow-2xl backdrop-blur-md">
+    <div className="fixed right-4 bottom-4 z-[9999] flex w-80 flex-col gap-2 rounded-lg border border-slate-700 bg-slate-900/95 p-3 font-mono text-[11px] text-slate-100 shadow-2xl backdrop-blur-md">
       <h3 className="mb-1 border-b border-slate-700 pb-1 font-bold text-slate-400">
         PITCH DETECTION PIPELINE
       </h3>
@@ -63,7 +63,7 @@ function StageRow<T extends PitchDebugEvent>({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-tighter">
+      <div className="flex justify-between text-[10px] tracking-tighter text-slate-500 uppercase">
         <span>{title}</span>
         {event && (
           <span className="text-[9px] opacity-50">
@@ -101,7 +101,10 @@ function renderYin(event: PitchDebugEvent) {
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-bold text-orange-400">OUT RANGE</span>
         <span className="text-slate-400">
-          {event.pitchHz.toFixed(1)} Hz <span className="text-[9px]">({event.minHz}-{event.maxHz})</span>
+          {event.pitchHz.toFixed(1)} Hz{' '}
+          <span className="text-[9px]">
+            ({event.minHz}-{event.maxHz})
+          </span>
         </span>
       </div>
     )
@@ -122,8 +125,11 @@ function renderYin(event: PitchDebugEvent) {
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-bold text-green-400">DETECTED</span>
-        <span className="text-slate-300 font-bold">
-          {event.pitchHz.toFixed(1)} Hz <span className="text-[9px] font-normal text-slate-500">C:{event.confidence.toFixed(2)}</span>
+        <span className="font-bold text-slate-300">
+          {event.pitchHz.toFixed(1)} Hz{' '}
+          <span className="text-[9px] font-normal text-slate-500">
+            C:{event.confidence.toFixed(2)}
+          </span>
         </span>
       </div>
     )
@@ -137,8 +143,10 @@ function renderQuality(event: PitchDebugEvent) {
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-bold text-red-400">REJECTED</span>
-        <span className="text-red-300/80 uppercase text-[9px]">{event.reason.replace('_', ' ')}</span>
-        <span className="text-slate-500 ml-auto text-[9px]">
+        <span className="text-[9px] text-red-300/80 uppercase">
+          {event.reason.replace('_', ' ')}
+        </span>
+        <span className="ml-auto text-[9px] text-slate-500">
           R:{event.rms.toFixed(3)} C:{event.confidence.toFixed(2)}
         </span>
       </div>
@@ -149,9 +157,10 @@ function renderQuality(event: PitchDebugEvent) {
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-bold text-green-400">PASSED</span>
-        <span className="text-slate-300 font-bold">{event.noteName}</span>
+        <span className="font-bold text-slate-300">{event.noteName}</span>
         <span className={Math.abs(event.cents) > 10 ? 'text-orange-300' : 'text-green-300'}>
-          {event.cents > 0 ? '+' : ''}{event.cents.toFixed(1)}c
+          {event.cents > 0 ? '+' : ''}
+          {event.cents.toFixed(1)}c
         </span>
       </div>
     )
@@ -164,7 +173,9 @@ function renderSegmenter(event: PitchDebugEvent) {
   if (event.stage === 'segmenter_frame') {
     return (
       <div className="flex items-baseline justify-between gap-2">
-        <span className={`font-bold ${event.segmenterState === 'NOTE' ? 'text-blue-400' : 'text-slate-500'}`}>
+        <span
+          className={`font-bold ${event.segmenterState === 'NOTE' ? 'text-blue-400' : 'text-slate-500'}`}
+        >
           {event.segmenterState}
         </span>
         <div className="flex gap-2">
@@ -179,11 +190,15 @@ function renderSegmenter(event: PitchDebugEvent) {
 
 function Badge({ active, color, label }: { active: boolean; color: string; label: string }) {
   const colorMap: Record<string, string> = {
-    green: active ? 'bg-green-500/30 text-green-400 border-green-500/50' : 'bg-slate-800 text-slate-600 border-slate-700',
-    slate: active ? 'bg-slate-500/30 text-slate-200 border-slate-400' : 'bg-slate-800 text-slate-600 border-slate-700',
+    green: active
+      ? 'bg-green-500/30 text-green-400 border-green-500/50'
+      : 'bg-slate-800 text-slate-600 border-slate-700',
+    slate: active
+      ? 'bg-slate-500/30 text-slate-200 border-slate-400'
+      : 'bg-slate-800 text-slate-600 border-slate-700',
   }
   return (
-    <span className={`rounded-sm border px-1 text-[8px] font-bold leading-none ${colorMap[color]}`}>
+    <span className={`rounded-sm border px-1 text-[8px] leading-none font-bold ${colorMap[color]}`}>
       {label}
     </span>
   )
@@ -215,14 +230,25 @@ function renderMatchCheck(event: PitchDebugEvent) {
             {event.passed ? 'MATCHED' : 'FAILED'}
           </span>
           <span className="text-slate-300">
-            {event.detectedNote} vs {typeof event.targetNote === 'string' ? event.targetNote : JSON.stringify(event.targetNote)}
+            {event.detectedNote} vs{' '}
+            {typeof event.targetNote === 'string'
+              ? event.targetNote
+              : JSON.stringify(event.targetNote)}
           </span>
         </div>
         <div className="flex items-baseline justify-between text-[9px] opacity-70">
-          <span className={Math.abs(event.cents) > event.centsTolerance ? 'text-red-300' : 'text-green-300'}>
+          <span
+            className={
+              Math.abs(event.cents) > event.centsTolerance ? 'text-red-300' : 'text-green-300'
+            }
+          >
             C: {event.cents.toFixed(1)} (tol {event.centsTolerance})
           </span>
-          <span className={event.durationMs < event.requiredHoldTime ? 'text-red-300' : 'text-green-300'}>
+          <span
+            className={
+              event.durationMs < event.requiredHoldTime ? 'text-red-300' : 'text-green-300'
+            }
+          >
             D: {Math.round(event.durationMs)}ms (req {event.requiredHoldTime})
           </span>
         </div>

@@ -55,7 +55,12 @@ export interface RunnerStore {
  */
 export interface RunnerAnalytics {
   endSession: () => void
-  recordNoteAttempt: (params: { index: number; pitch: string; cents: number; inTune: boolean }) => void
+  recordNoteAttempt: (params: {
+    index: number
+    pitch: string
+    cents: number
+    inTune: boolean
+  }) => void
   recordNoteCompletion: (params: { index: number; time: number; technique?: NoteTechnique }) => void
 }
 

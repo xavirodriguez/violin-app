@@ -60,7 +60,12 @@ describe('PracticeSessionRunner', () => {
     attackRelease: { attackTimeMs: 100, pitchScoopCents: 0, releaseStability: 0 },
     resonance: { suspectedWolf: false, rmsBeatingScore: 0, pitchChaosScore: 0, lowConfRatio: 0 },
     rhythm: { onsetErrorMs: 0 },
-    transition: { transitionTimeMs: 0, glissAmountCents: 0, landingErrorCents: 0, correctionCount: 0 },
+    transition: {
+      transitionTimeMs: 0,
+      glissAmountCents: 0,
+      landingErrorCents: 0,
+      correctionCount: 0,
+    },
   }
 
   const deps: SessionRunnerDependencies = {

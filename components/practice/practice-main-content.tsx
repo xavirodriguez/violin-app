@@ -110,11 +110,7 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
   const listenImitateActive = usePracticeStore((s) => s.listenImitateActive)
   const setListenImitateActive = usePracticeStore((s) => s.setListenImitateActive)
   const dispatch = usePracticeStore.getState().dispatch
-  const {
-    isZenModeEnabled,
-    autoStartEnabled,
-    setPreviewExercise,
-  } = props
+  const { isZenModeEnabled, autoStartEnabled, setPreviewExercise } = props
   if (state.status !== 'idle') return <></>
 
   return (
@@ -122,7 +118,9 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
       {!isZenModeEnabled && (
         <PracticeSettings
           autoStartEnabled={autoStartEnabled}
-          onAutoStartChange={(enabled) => dispatch({ type: 'TOGGLE_AUTO_START', payload: { enabled } })}
+          onAutoStartChange={(enabled) =>
+            dispatch({ type: 'TOGGLE_AUTO_START', payload: { enabled } })
+          }
           listenImitateEnabled={listenImitateActive}
           onListenImitateChange={setListenImitateActive}
         />
@@ -140,10 +138,7 @@ function PracticeActiveViewContent(props: PracticeMainContentProps) {
   const derived = useDerivedPracticeState()
   const practiceState = usePracticeStore((s) => s.practiceState)
   const liveObservations = usePracticeStore((s) => s.liveObservations)
-  const {
-    isZenModeEnabled,
-    centsTolerance,
-  } = props
+  const { isZenModeEnabled, centsTolerance } = props
   const hold = practiceState?.holdDuration
   const streak = practiceState?.perfectNoteStreak
 
@@ -167,14 +162,15 @@ function PracticePostSessionContent(props: PracticeMainContentProps) {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const dispatch = usePracticeStore.getState().dispatch
   const { status } = derived
-  const { sessions, onToggleZenMode, isZenModeEnabled } =
-    props
+  const { sessions, onToggleZenMode, isZenModeEnabled } = props
   const isCompleted = status === 'completed'
   const isActive = status !== 'idle'
   const session =
     sessions[0] && sessions[0].exerciseId === practiceState?.exercise.id ? sessions[0] : undefined
 
-  const handleRestartAction = () => practiceState && dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
+  const handleRestartAction = () =>
+    practiceState &&
+    dispatch({ type: 'LOAD_EXERCISE', payload: { exercise: practiceState.exercise } })
 
   return (
     <>
@@ -203,7 +199,10 @@ function QuickActionsView({
   practiceState: PracticeState | undefined
 }) {
   const dispatch = usePracticeStore.getState().dispatch
-  const onTogglePause = () => (status === 'listening' ? dispatch({ type: 'STOP_SESSION' }) : dispatch({ type: 'START_SESSION' }))
+  const onTogglePause = () =>
+    status === 'listening'
+      ? dispatch({ type: 'STOP_SESSION' })
+      : dispatch({ type: 'START_SESSION' })
   const onToggleZen = () => onToggleZenMode()
 
   const onRepeatNote = () => {

@@ -292,7 +292,10 @@ const PRACTICE_EVENT_HANDLERS: Record<
   NOTE_MATCHED: (state, event) =>
     handleNoteMatched(state, (event as Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>).payload),
   JUMP_TO_NOTE: (state, event) =>
-    handleJumpToNote(state, (event as Extract<PracticeEvent, { type: 'JUMP_TO_NOTE' }>).payload.index),
+    handleJumpToNote(
+      state,
+      (event as Extract<PracticeEvent, { type: 'JUMP_TO_NOTE' }>).payload.index,
+    ),
 }
 
 function handleStart(state: PracticeState, event: PracticeEvent): PracticeState {
@@ -388,17 +391,18 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
         if (precision >= drillTarget.precisionGoal) {
           drillTarget = {
             ...drillTarget,
-            currentStreak: drillTarget.currentStreak + 1
+            currentStreak: drillTarget.currentStreak + 1,
           }
         } else {
           drillTarget = {
             ...drillTarget,
-            currentStreak: 0
+            currentStreak: 0,
           }
         }
       }
 
-      const reachedGoal = drillTarget && drillTarget.currentStreak >= drillTarget.consecutiveRequired
+      const reachedGoal =
+        drillTarget && drillTarget.currentStreak >= drillTarget.consecutiveRequired
 
       if (reachedGoal) {
         return {
@@ -420,8 +424,8 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
         perfectNoteStreak: streak,
         loopRegion: {
           ...state.loopRegion,
-          drillTarget
-        }
+          drillTarget,
+        },
       }
     }
   }

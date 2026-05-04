@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { NoteSegmenter, SegmenterEvent } from './note-segmenter'
-import { TechniqueFrame, PitchedFrame, TimestampMs, Hz, Cents, MusicalNoteName } from './technique-types'
+import {
+  TechniqueFrame,
+  PitchedFrame,
+  TimestampMs,
+  Hz,
+  Cents,
+  MusicalNoteName,
+} from './technique-types'
 
 describe('NoteSegmenter', () => {
   const options = {

@@ -15,7 +15,7 @@ describe('usePageVisibility', () => {
     act(() => {
       Object.defineProperty(document, 'visibilityState', {
         value: 'hidden',
-        configurable: true
+        configurable: true,
       })
       document.dispatchEvent(new Event('visibilitychange'))
     })
@@ -26,7 +26,7 @@ describe('usePageVisibility', () => {
     act(() => {
       Object.defineProperty(document, 'visibilityState', {
         value: 'visible',
-        configurable: true
+        configurable: true,
       })
       document.dispatchEvent(new Event('visibilitychange'))
     })
