@@ -343,6 +343,17 @@ async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<Pr
   yield restartEvent
 }
 
+async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
+  const { ctx, updateState } = params
+  const startIndex = ctx.loopRegion?.startNoteIndex ?? 0
+  const restartEvent: PracticeEngineEvent = {
+    type: 'JUMP_TO_INDEX',
+    payload: { index: startIndex },
+  }
+  updateState(restartEvent)
+  yield restartEvent
+}
+
 async function* iterateScoreNotes(
   params: EngineRunnerParams & {
     stream: AsyncIterable<RawPitchEvent>
