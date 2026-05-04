@@ -30,6 +30,24 @@ export interface CurriculumUnit {
   lessons: Lesson[];
   isCompleted: boolean;
   order: number;
+  level: 0 | 1 | 2 | 3;
+  prerequisites: string[];         // IDs de unidades previas
+  learningObjectives: LearningObjective[];
+  whyThisMatters: LessonContent;
+}
+
+export interface LearningObjective {
+  id: string;                       // e.g. "vibrato_basic"
+  label: string;                      // "Vibrato básico"
+  metrics: string[];               // ["vibratoRate", "vibratoDepth"]
+  masteryThreshold: number;         // 0.0 – 1.0
+}
+
+export interface LessonContent {
+  title: string;
+  description: string;
+  videoUrl?: string;
+  tips: string[];
 }
 
 /**

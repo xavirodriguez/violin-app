@@ -107,6 +107,8 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 function PracticeIdleContent(props: PracticeMainContentProps) {
   const state = usePracticeStore((s) => s.state)
   const practiceState = usePracticeStore((s) => s.practiceState)
+  const listenImitateActive = usePracticeStore((s) => s.listenImitateActive)
+  const setListenImitateActive = usePracticeStore((s) => s.setListenImitateActive)
   const dispatch = usePracticeStore.getState().dispatch
   const {
     isZenModeEnabled,
@@ -121,6 +123,8 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
         <PracticeSettings
           autoStartEnabled={autoStartEnabled}
           onAutoStartChange={(enabled) => dispatch({ type: 'TOGGLE_AUTO_START', payload: { enabled } })}
+          listenImitateEnabled={listenImitateActive}
+          onListenImitateChange={setListenImitateActive}
         />
       )}
       <ExerciseLibrary

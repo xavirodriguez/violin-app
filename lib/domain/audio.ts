@@ -28,6 +28,23 @@ export interface AudioSample {
 export type AudioReferenceMap = Record<string, AudioSample[]>;
 
 /**
+ * AudioReferenceMap — structure de datos por ejercicio
+ */
+export interface ExerciseAudioMap {
+  exerciseId: string;
+  audioUrl: string;          // CDN asset pre-cargado (versión completa)
+  noteTimestamps: NoteTimestamp[];
+}
+
+export interface NoteTimestamp {
+  noteIndex: number;           // mapea a currentIndex en PracticeState
+  startMs: number;
+  endMs: number;
+  pitch: string;              // e.g. "A4", "D5"
+  sampleUrl?: string;         // nota aislada (override)
+}
+
+/**
  * Configuration for the practice tempo.
  */
 export interface TempoConfig {

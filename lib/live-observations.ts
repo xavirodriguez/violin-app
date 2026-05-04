@@ -67,6 +67,9 @@ function createIntonationObservation(avgCents: number): Observation {
   const tip = isSharp
     ? 'Move your finger slightly down (toward scroll)'
     : 'Move your finger slightly up (toward bridge)'
+  const friendlyTranslation = isSharp
+    ? 'Tu nota suena un poco alta (aguda). Desliza tu dedo ligeramente hacia el clavijero.'
+    : 'Tu nota suena un poco baja (grave). Desliza tu dedo ligeramente hacia el puente.'
 
   return {
     type: 'intonation',
@@ -74,6 +77,7 @@ function createIntonationObservation(avgCents: number): Observation {
     confidence: 0.9 as Ratio01,
     message,
     tip,
+    friendlyTranslation,
     evidence: { avgCents },
   }
 }
@@ -97,6 +101,7 @@ function createStabilityObservation(stdDev: number): Observation {
     confidence: 0.85 as Ratio01,
     message: 'Pitch is wavering',
     tip: 'Apply steady finger pressure and keep your hand relaxed',
+    friendlyTranslation: 'La afinación está oscilando. Mantén una presión constante con el dedo y relaja la mano.',
     evidence: { stdDev },
   }
 }
@@ -121,6 +126,7 @@ function createAccuracyObservation(detected: string, target: string): Observatio
     confidence: 0.95 as Ratio01,
     message: `Playing ${detected} instead of ${target}`,
     tip: 'Check your finger position on the fingerboard',
+    friendlyTranslation: `Estás tocando ${detected} en lugar de ${target}. Revisa tu posición en el diapasón.`,
     evidence: { detectedPitch: detected, targetPitch: target },
   }
 }
@@ -144,6 +150,7 @@ function createToneObservation(avgConfidence: number): Observation {
     confidence: 0.7 as Ratio01,
     message: 'Weak or unclear tone',
     tip: 'Apply more bow pressure and check contact point',
+    friendlyTranslation: 'El sonido es débil o poco claro. Aplica un poco más de presión con el arco.',
     evidence: { avgConfidence },
   }
 }

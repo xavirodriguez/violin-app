@@ -381,6 +381,35 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   if (state.loopRegion?.isEnabled) {
     const isAtEndOfLoop = state.currentIndex >= state.loopRegion.endNoteIndex
     if (isAtEndOfLoop) {
+      let drillTarget = state.loopRegion.drillTarget
+      if (drillTarget) {
+        // Calculate precision for this attempt (simplified for now)
+        const precision = payload?.isPerfect ? 1.0 : 0.8
+        if (precision >= drillTarget.precisionGoal) {
+          drillTarget = {
+            ...drillTarget,
+            currentStreak: drillTarget.currentStreak + 1
+          }
+        } else {
+          drillTarget = {
+            ...drillTarget,
+            currentStreak: 0
+          }
+        }
+      }
+
+      const reachedGoal = drillTarget && drillTarget.currentStreak >= drillTarget.consecutiveRequired
+
+      if (reachedGoal) {
+        return {
+          ...state,
+          status: 'completed',
+          holdDuration: 0,
+          lastObservations: observations,
+          perfectNoteStreak: streak,
+        }
+      }
+
       return {
         ...state,
         currentIndex: state.loopRegion.startNoteIndex,
@@ -389,6 +418,10 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
         holdDuration: 0,
         lastObservations: observations,
         perfectNoteStreak: streak,
+        loopRegion: {
+          ...state.loopRegion,
+          drillTarget
+        }
       }
     }
   }

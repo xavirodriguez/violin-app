@@ -62,6 +62,28 @@ export class AudioReferenceService {
     };
   }
 
+  async playPassage(url: string): Promise<void> {
+    const ctx = audioManager.getContext();
+    if (!ctx) return;
+
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = await ctx.decodeAudioData(arrayBuffer);
+
+    return new Promise((resolve) => {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start();
+      this.activeSources.add(source);
+
+      source.onended = () => {
+        this.activeSources.delete(source);
+        resolve();
+      };
+    });
+  }
+
   stop(): void {
     this.activeSources.forEach(source => {
       try {
