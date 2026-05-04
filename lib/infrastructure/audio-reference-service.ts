@@ -1,6 +1,5 @@
 import { audioManager } from './audio-manager';
-import { AudioSample, AudioReferenceMap } from '@/lib/domain/audio';
-import { AppError, ERROR_CODES } from '@/lib/errors/app-error';
+import { AudioReferenceMap } from '@/lib/domain/audio';
 
 export class AudioReferenceService {
   private samples: AudioReferenceMap = {};
@@ -88,7 +87,7 @@ export class AudioReferenceService {
     this.activeSources.forEach(source => {
       try {
         source.stop();
-      } catch (e) {
+      } catch (_e) {
         // Ignore if already stopped
       }
     });

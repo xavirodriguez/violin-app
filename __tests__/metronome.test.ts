@@ -11,7 +11,12 @@ vi.mock('../lib/infrastructure/audio-manager', () => ({
 
 describe('MetronomeEngine', () => {
   let metronome: MetronomeEngine;
-  let mockContext: any;
+  let mockContext: {
+    currentTime: number;
+    createOscillator: ReturnType<typeof vi.fn>;
+    createGain: ReturnType<typeof vi.fn>;
+    destination: object;
+  };
   const onTick = vi.fn();
 
   beforeEach(() => {
@@ -32,7 +37,7 @@ describe('MetronomeEngine', () => {
       }),
       destination: {},
     };
-    (audioManager.getContext as any).mockReturnValue(mockContext);
+    vi.mocked(audioManager.getContext).mockReturnValue(mockContext as unknown as AudioContext);
     metronome = new MetronomeEngine(onTick);
   });
 

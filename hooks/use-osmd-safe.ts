@@ -8,8 +8,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
-import { audioReferenceService } from '@/lib/infrastructure/audio-reference-service'
-import { MusicalNote, assertValidNoteName } from '@/lib/practice-core'
 
 /**
  * Hook for safely managing OpenSheetMusicDisplay (OSMD) instances in a React lifecycle.

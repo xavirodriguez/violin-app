@@ -4,7 +4,7 @@ import React from 'react';
 import { useAudioStore } from '@/stores/audio-store';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 
 export function MetronomeControl() {
   const { metronomeEnabled, bpm, setBpm, toggleMetronome, initialize } = useAudioStore();
