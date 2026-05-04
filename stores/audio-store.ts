@@ -27,9 +27,9 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   initialize: () => {
     if (get().metronomeEngine) return;
 
-    const engine = new MetronomeEngine((event) => {
+    const engine = new MetronomeEngine((_event) => {
       // Visual sync event could be dispatched here
-      // console.log('Tick:', event.beat);
+      // console.log('Tick:', _event.beat);
     });
     set({ metronomeEngine: engine });
   },

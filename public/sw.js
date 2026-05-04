@@ -1,3 +1,4 @@
+/* global self, caches, fetch */
 const CACHE_NAME = 'violin-mentor-v1';
 const ASSETS_TO_CACHE = [
   '/',

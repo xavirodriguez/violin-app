@@ -4,7 +4,6 @@
  * Defines types for the educational curriculum and progression.
  */
 
-import { Exercise } from './exercise';
 
 /**
  * Represents a single lesson in the curriculum.

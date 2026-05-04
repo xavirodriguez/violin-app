@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CurriculumUnit, Lesson } from '@/lib/domain/curriculum';
+import { CurriculumUnit } from '@/lib/domain/curriculum';
 
 interface CurriculumStore {
   units: CurriculumUnit[];

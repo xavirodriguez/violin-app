@@ -40,8 +40,6 @@ export function PracticeControls(props: PracticeControlsProps) {
     isReferencePlaying,
     onToggleMetronome,
     isMetronomeActive,
-    bpm,
-    onBpmChange,
     progress,
     currentNoteIndex,
     totalNotes,
@@ -56,6 +54,10 @@ export function PracticeControls(props: PracticeControlsProps) {
           onStart={onStart}
           onStop={onStop}
           onRestart={onRestart}
+          onPlayReference={onPlayReference}
+          isReferencePlaying={isReferencePlaying}
+          onToggleMetronome={onToggleMetronome}
+          isMetronomeActive={isMetronomeActive}
         />
 
         <div className="flex items-center gap-4">
@@ -74,18 +76,6 @@ export function PracticeControls(props: PracticeControlsProps) {
       </div>
     </Card>
   )
-}
-
-interface SessionActionsProps {
-  status: PracticeStatus
-  disabled: boolean
-  onStart: () => void
-  onStop: () => void
-  onRestart: () => void
-  onPlayReference?: () => void
-  isReferencePlaying?: boolean
-  onToggleMetronome?: () => void
-  isMetronomeActive?: boolean
 }
 
 interface SessionActionsProps {
