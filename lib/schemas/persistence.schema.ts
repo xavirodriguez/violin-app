@@ -157,6 +157,7 @@ export const SessionHistoryStateSchema = z.object({
  */
 export const PreferencesStateSchema = z.object({
   schemaVersion: z.literal(1).default(1),
+  language: z.enum(['en', 'es']).default('en'),
   feedbackLevel: z.enum(['beginner', 'intermediate', 'advanced']),
   showTechnicalDetails: z.boolean(),
   enableCelebrations: z.boolean(),

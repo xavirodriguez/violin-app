@@ -50,6 +50,12 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     devices: [],
     deviceId: undefined,
     sensitivity: 50,
+    thresholds: {
+      tooLow: -35,
+      bitLow: -10,
+      bitHigh: 10,
+      tooHigh: 35,
+    },
 
     /**
      * Getter that returns the shared Web Audio AnalyserNode from the audio manager.
@@ -263,6 +269,12 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     setSensitivity: (sensitivity: number) => {
       set({ sensitivity })
       audioManager.setGain(sensitivity / 50)
+    },
+
+    setThresholds: (newThresholds) => {
+      set((state) => ({
+        thresholds: { ...state.thresholds, ...newThresholds },
+      }))
     },
   }
 })

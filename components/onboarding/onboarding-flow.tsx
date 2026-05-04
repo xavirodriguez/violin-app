@@ -1,53 +1,58 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { usePreferencesStore } from '@/stores/preferences-store'
+import { useTunerStore } from '@/stores/tuner-store'
+import { useCalibrationStore } from '@/stores/calibration-store'
+import { useTranslation, type TranslationSchema } from '@/lib/i18n'
 import type { FeedbackLevel } from '@/lib/user-preferences'
+import { audioManager } from '@/lib/infrastructure/audio-manager'
+import { PitchDetector } from '@/lib/pitch-detector'
+import { MusicalNote } from '@/lib/domain/practice'
 
 interface OnboardingStepProps {
   onNext: () => void
   onBack: () => void
+  language: 'en' | 'es'
+  t: TranslationSchema['onboarding']
 }
 
 interface OnboardingStep {
   id: string
-  title: string
-  description: string
   component: React.ComponentType<OnboardingStepProps>
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Violin Mentor!',
-    description: "Let's personalize your learning experience",
     component: WelcomeStep,
   },
   {
     id: 'skill-level',
-    title: 'What is your experience level?',
-    description: 'This will help us adjust the feedback complexity',
     component: SkillLevelStep,
   },
   {
     id: 'audio-test',
-    title: 'Audio Test',
-    description: "Let's verify that your microphone works correctly",
     component: AudioTestStep,
   },
   {
+    id: 'calibration',
+    component: CalibrationStep,
+  },
+  {
     id: 'ready',
-    title: 'All set!',
-    description: 'You are ready to start practicing',
     component: ReadyStep,
   },
 ]
 
 export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const language = usePreferencesStore((s) => s.language)
+  const setLanguage = usePreferencesStore((s) => s.setLanguage)
+  const t = useTranslation(language).onboarding
   const currentStep = ONBOARDING_STEPS[currentStepIndex]
   const StepComponent = currentStep.component
 
@@ -68,18 +73,36 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="bg-background/95 fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
       <Card className="border-primary/20 w-full max-w-2xl p-8 shadow-2xl">
-        {/* Skip button and Progress indicator */}
-        <div className="mb-8">
-          <div className="mb-4 flex justify-end">
+        {/* Language selector and Skip button */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex gap-2">
             <Button
-              variant="ghost"
+              variant={language === 'en' ? 'default' : 'outline'}
               size="sm"
-              onClick={onComplete}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setLanguage('en')}
             >
-              Skip setup
+              EN
+            </Button>
+            <Button
+              variant={language === 'es' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setLanguage('es')}
+            >
+              ES
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onComplete}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {t.skip}
+          </Button>
+        </div>
+
+        {/* Progress indicator */}
+        <div className="mb-8">
           <div className="mb-2 flex items-center justify-between">
             {ONBOARDING_STEPS.map((step, index) => (
               <div
@@ -91,7 +114,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
             ))}
           </div>
           <p className="text-muted-foreground text-center text-xs font-semibold tracking-widest uppercase">
-            Step {currentStepIndex + 1} of {ONBOARDING_STEPS.length}
+            {t.step} {currentStepIndex + 1} {t.of} {ONBOARDING_STEPS.length}
           </p>
         </div>
 
@@ -104,10 +127,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <h2 className="mb-2 text-3xl font-bold">{currentStep.title}</h2>
-            <p className="text-muted-foreground mb-8">{currentStep.description}</p>
-
-            <StepComponent onNext={handleNext} onBack={handleBack} />
+            <StepComponent onNext={handleNext} onBack={handleBack} language={language} t={t} />
           </motion.div>
         </AnimatePresence>
       </Card>
@@ -115,9 +135,12 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function WelcomeStep({ onNext }: OnboardingStepProps) {
+function WelcomeStep({ onNext, t }: OnboardingStepProps) {
   return (
     <div className="space-y-8">
+      <h2 className="mb-2 text-3xl font-bold">{t.welcome}</h2>
+      <p className="text-muted-foreground mb-8">{t.personalized}</p>
+
       <div className="flex justify-center">
         <motion.div
           initial={{ scale: 0 }}
@@ -130,23 +153,18 @@ function WelcomeStep({ onNext }: OnboardingStepProps) {
       </div>
 
       <div className="space-y-4 text-center">
-        <p className="text-lg">
-          Violin Mentor will help you improve your intonation and technique through real-time pitch
-          detection.
-        </p>
-        <p className="text-muted-foreground text-sm">
-          It will only take 2 minutes to set up your perfect experience.
-        </p>
+        <p className="text-lg">{t.description}</p>
+        <p className="text-muted-foreground text-sm">{t.timeSetup}</p>
       </div>
 
       <Button onClick={onNext} size="lg" className="h-14 w-full text-lg">
-        Get Started
+        {t.getStarted}
       </Button>
     </div>
   )
 }
 
-function SkillLevelStep({ onNext, onBack }: OnboardingStepProps) {
+function SkillLevelStep({ onNext, onBack, t }: OnboardingStepProps) {
   const { feedbackLevel, setFeedbackLevel } = usePreferencesStore()
   const [selected, setSelected] = useState<FeedbackLevel>(feedbackLevel)
 
@@ -154,25 +172,28 @@ function SkillLevelStep({ onNext, onBack }: OnboardingStepProps) {
     {
       value: 'beginner' as const,
       icon: '🌱',
-      title: 'Beginner',
-      description: "I'm just starting or have been playing for less than a year",
+      title: t.beginner,
+      description: t.beginnerDesc,
     },
     {
       value: 'intermediate' as const,
       icon: '🎯',
-      title: 'Intermediate',
-      description: "I've been playing for 1-3 years and know basic scales",
+      title: t.intermediate,
+      description: t.intermediateDesc,
     },
     {
       value: 'advanced' as const,
       icon: '🏆',
-      title: 'Advanced',
-      description: 'More than 3 years of experience and master advanced techniques',
+      title: t.advanced,
+      description: t.advancedDesc,
     },
   ]
 
   return (
     <div className="space-y-6">
+      <h2 className="mb-2 text-3xl font-bold">{t.skillTitle}</h2>
+      <p className="text-muted-foreground mb-8">{t.skillDesc}</p>
+
       <div className="grid gap-4">
         {levels.map((level) => (
           <motion.button
@@ -199,7 +220,7 @@ function SkillLevelStep({ onNext, onBack }: OnboardingStepProps) {
 
       <div className="flex gap-4 pt-4">
         <Button onClick={onBack} variant="outline" className="h-12 flex-1">
-          Back
+          {t.back}
         </Button>
         <Button
           onClick={() => {
@@ -208,54 +229,72 @@ function SkillLevelStep({ onNext, onBack }: OnboardingStepProps) {
           }}
           className="h-12 flex-1"
         >
-          Continue
+          {t.continue}
         </Button>
       </div>
     </div>
   )
 }
 
-function AudioTestStep({ onNext, onBack }: OnboardingStepProps) {
+function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
   const [isTesting, setIsTesting] = useState(false)
   const [audioLevel, setAudioLevel] = useState(0)
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
+  const { setCalibration } = useCalibrationStore()
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isTesting && micStatus === 'testing') {
-      // Audio test simulation (in production use Web Audio API)
-      interval = setInterval(() => {
-        setAudioLevel(Math.random() * 100)
-      }, 100)
+  const rafRef = useRef<number>(0)
+  const samplesRef = useRef<number[]>([])
 
-      const timer = setTimeout(() => {
+  const startTest = async () => {
+    setIsTesting(true)
+    setMicStatus('testing')
+    samplesRef.current = []
+
+    try {
+      const { analyser } = await audioManager.initialize()
+      const dataArray = new Float32Array(analyser.fftSize)
+
+      const update = () => {
+        analyser.getFloatTimeDomainData(dataArray)
+        let sum = 0
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i]
+        }
+        const rms = Math.sqrt(sum / dataArray.length)
+        setAudioLevel(Math.min(rms * 500, 100)) // Scaled for visualization
+        samplesRef.current.push(rms)
+
+        rafRef.current = requestAnimationFrame(update)
+      }
+      update()
+
+      setTimeout(() => {
+        cancelAnimationFrame(rafRef.current)
+        const avgRms =
+          samplesRef.current.reduce((a, b) => a + b, 0) / (samplesRef.current.length || 1)
+        setCalibration(avgRms)
         setMicStatus('success')
         setIsTesting(false)
       }, 3000)
-
-      return () => {
-        clearInterval(interval)
-        clearTimeout(timer)
-      }
+    } catch (err) {
+      setMicStatus('error')
+      setIsTesting(false)
     }
-  }, [isTesting, micStatus])
+  }
 
   return (
     <div className="space-y-6">
+      <h2 className="mb-2 text-3xl font-bold">{t.audioTestTitle}</h2>
+      <p className="text-muted-foreground mb-8">{t.audioTestDesc}</p>
+
       <Card className="bg-muted/30 border-2 border-dashed p-8">
         <div className="space-y-6 text-center">
           {micStatus === 'idle' && (
             <>
               <div className="text-7xl">🎤</div>
-              <p className="text-lg">We'll test your microphone to ensure accurate detection.</p>
-              <Button
-                onClick={() => {
-                  setIsTesting(true)
-                  setMicStatus('testing')
-                }}
-                size="lg"
-              >
-                Test Microphone
+              <p className="text-lg">{t.micInstruction}</p>
+              <Button onClick={startTest} size="lg">
+                {t.testMic}
               </Button>
             </>
           )}
@@ -263,7 +302,7 @@ function AudioTestStep({ onNext, onBack }: OnboardingStepProps) {
           {micStatus === 'testing' && (
             <>
               <div className="animate-pulse text-7xl">🎤</div>
-              <p className="text-lg font-medium">Play a string on your violin...</p>
+              <p className="text-lg font-medium">{t.playingInstruction}</p>
               <div className="bg-muted h-6 overflow-hidden rounded-full border">
                 <motion.div
                   className="bg-primary h-full"
@@ -279,7 +318,17 @@ function AudioTestStep({ onNext, onBack }: OnboardingStepProps) {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-7xl">
                 ✅
               </motion.div>
-              <p className="text-xl font-bold text-green-600">Microphone working correctly!</p>
+              <p className="text-xl font-bold text-green-600">{t.micSuccess}</p>
+            </>
+          )}
+
+          {micStatus === 'error' && (
+            <>
+              <div className="text-7xl">❌</div>
+              <p className="text-xl font-bold text-red-600">Error</p>
+              <Button onClick={startTest} variant="outline">
+                {t.retry}
+              </Button>
             </>
           )}
         </div>
@@ -287,19 +336,127 @@ function AudioTestStep({ onNext, onBack }: OnboardingStepProps) {
 
       <div className="flex gap-4">
         <Button onClick={onBack} variant="outline" className="h-12 flex-1">
-          Back
+          {t.back}
         </Button>
         <Button onClick={onNext} disabled={micStatus !== 'success'} className="h-12 flex-1">
-          Continue
+          {t.continue}
         </Button>
       </div>
     </div>
   )
 }
 
-function ReadyStep({ onNext }: OnboardingStepProps) {
+function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
+  const [status, setStatus] = useState<'idle' | 'calibrating' | 'success'>('idle')
+  const [progress, setProgress] = useState(0)
+  const [detectedNote, setDetectedNote] = useState<string | null>(null)
+  const rafRef = useRef<number>(0)
+
+  const startCalibration = async () => {
+    setStatus('calibrating')
+    setProgress(0)
+
+    try {
+      const { context, analyser } = await audioManager.initialize()
+      const detector = new PitchDetector(context.sampleRate)
+      const dataArray = new Float32Array(analyser.fftSize)
+      let stableFrames = 0
+      const REQUIRED_STABLE_FRAMES = 30
+
+      const update = () => {
+        analyser.getFloatTimeDomainData(dataArray)
+        const result = detector.detectPitch(dataArray)
+
+        if (result.pitchHz > 0 && result.confidence > 0.8) {
+          try {
+            const note = MusicalNote.fromFrequency(result.pitchHz)
+            setDetectedNote(note.nameWithOctave)
+
+            if (note.nameWithOctave === 'A4') {
+              stableFrames++
+              setProgress(Math.min((stableFrames / REQUIRED_STABLE_FRAMES) * 100, 100))
+            } else {
+              stableFrames = Math.max(0, stableFrames - 1)
+              setProgress((stableFrames / REQUIRED_STABLE_FRAMES) * 100)
+            }
+          } catch (e) {
+            setDetectedNote(null)
+          }
+        } else {
+          setDetectedNote(null)
+        }
+
+        if (stableFrames >= REQUIRED_STABLE_FRAMES) {
+          setStatus('success')
+          return
+        }
+
+        rafRef.current = requestAnimationFrame(update)
+      }
+      update()
+    } catch (err) {
+      setStatus('idle')
+    }
+  }
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
+  return (
+    <div className="space-y-6">
+      <h2 className="mb-2 text-3xl font-bold">{t.calibrationTitle}</h2>
+      <p className="text-muted-foreground mb-8">{t.calibrationDesc}</p>
+
+      <Card className="bg-muted/30 border-2 border-dashed p-8 text-center">
+        {status === 'idle' && (
+          <Button onClick={startCalibration} size="lg">
+            {t.startCalibration}
+          </Button>
+        )}
+
+        {status === 'calibrating' && (
+          <div className="space-y-4">
+            <div className="text-6xl font-bold">{detectedNote || '-'}</div>
+            <div className="bg-muted h-6 overflow-hidden rounded-full border">
+              <motion.div
+                className="bg-primary h-full"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.1 }}
+              />
+            </div>
+            <p className="text-sm">
+              {detectedNote === 'A4' ? t.holdNote : t.playOpenA}
+            </p>
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div className="space-y-4">
+            <div className="text-7xl">🎻✅</div>
+            <p className="text-xl font-bold text-green-600">{t.calibrationSuccess}</p>
+          </div>
+        )}
+      </Card>
+
+      <div className="flex gap-4">
+        <Button onClick={onBack} variant="outline" className="h-12 flex-1">
+          {t.back}
+        </Button>
+        <Button onClick={onNext} disabled={status !== 'success'} className="h-12 flex-1">
+          {t.continue}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function ReadyStep({ onNext, t }: OnboardingStepProps) {
   return (
     <div className="space-y-8">
+      <h2 className="mb-2 text-3xl font-bold">{t.readyTitle}</h2>
+      <p className="text-muted-foreground mb-8">{t.readyDesc}</p>
+
       <div className="flex justify-center">
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
@@ -312,11 +469,8 @@ function ReadyStep({ onNext }: OnboardingStepProps) {
       </div>
 
       <div className="space-y-4 text-center">
-        <h3 className="text-2xl font-bold">You're ready to start!</h3>
-        <p className="text-muted-foreground text-lg">
-          Remember: consistent practice is the key to progress. We recommend practicing at least 10
-          minutes daily.
-        </p>
+        <h3 className="text-2xl font-bold">{t.readyTitle}</h3>
+        <p className="text-muted-foreground text-lg">{t.readyAdvice}</p>
 
         <div className="mt-8 grid grid-cols-3 gap-4">
           <Card className="border-primary/10 p-4 text-center">
@@ -335,7 +489,7 @@ function ReadyStep({ onNext }: OnboardingStepProps) {
       </div>
 
       <Button onClick={onNext} size="lg" className="h-14 w-full text-xl font-bold">
-        Start Practicing!
+        {t.startPracticing}
       </Button>
     </div>
   )

@@ -5,6 +5,11 @@
 
 'use client'
 
+import { usePreferencesStore } from '@/stores/preferences-store'
+import { useTunerStore } from '@/stores/tuner-store'
+import { useTranslation } from '@/lib/i18n'
+import { getTunerFeedbackMessage } from '@/lib/tuner-utils'
+
 /**
  * Props for the TunerDisplay component.
  */
@@ -22,12 +27,18 @@ interface TunerDisplayProps {
  */
 export function TunerDisplay(props: TunerDisplayProps) {
   const { note, cents, confidence } = props
+  const language = usePreferencesStore((s) => s.language)
+  const thresholds = useTunerStore((s) => s.thresholds)
+  const t = useTranslation(language)
+
   const isInTune = cents !== undefined && Math.abs(cents) < 10
   const isClose = cents !== undefined && Math.abs(cents) < 25
 
+  const feedbackMessage = getTunerFeedbackMessage(cents, confidence, language, thresholds)
+
   return (
     <div className="space-y-6">
-      <ScreenReaderStatus note={note} cents={cents} isInTune={isInTune} isClose={isClose} />
+      <ScreenReaderStatus feedbackMessage={feedbackMessage} />
 
       <TunerNoteInfo
         note={note}
@@ -35,42 +46,29 @@ export function TunerDisplay(props: TunerDisplayProps) {
         confidence={confidence}
         isInTune={isInTune}
         isClose={isClose}
+        feedbackMessage={feedbackMessage}
+        language={language}
       />
 
       <TunerMeter cents={cents} />
 
-      <TunerStatusIndicators note={note} cents={cents} isInTune={isInTune} isClose={isClose} />
+      <TunerStatusIndicators
+        note={note}
+        cents={cents}
+        isInTune={isInTune}
+        isClose={isClose}
+        feedbackMessage={feedbackMessage}
+      />
     </div>
   )
 }
 
-function ScreenReaderStatus(props: {
-  note: string | undefined
-  cents: number | undefined
-  isInTune: boolean
-  isClose: boolean
-}) {
-  const { note, cents, isInTune, isClose } = props
-  const statusText = getStatusNarrative({ note, cents, isInTune, isClose })
-
+function ScreenReaderStatus(props: { feedbackMessage: string }) {
   return (
     <div role="status" className="sr-only" aria-live="polite">
-      {statusText}
+      {props.feedbackMessage}
     </div>
   )
-}
-
-function getStatusNarrative(params: {
-  note: string | undefined
-  cents: number | undefined
-  isInTune: boolean
-  isClose: boolean
-}) {
-  const { note, cents, isInTune, isClose } = params
-  if (!note || cents === undefined) return 'Play a note'
-  if (isInTune) return `${note}, In Tune`
-  if (isClose) return `${note}, ${cents > 0 ? 'A bit sharp' : 'A bit flat'}`
-  return `${note}, ${cents > 0 ? 'Too sharp' : 'Too flat'}`
 }
 
 function TunerNoteInfo(props: {
@@ -79,8 +77,11 @@ function TunerNoteInfo(props: {
   confidence: number
   isInTune: boolean
   isClose: boolean
+  feedbackMessage: string
+  language: any
 }) {
-  const { note, cents, confidence, isInTune, isClose } = props
+  const { note, cents, confidence, isInTune, isClose, feedbackMessage, language } = props
+  const t = useTranslation(language).tuner
 
   return (
     <div className="text-center">
@@ -91,9 +92,10 @@ function TunerNoteInfo(props: {
           confidence={confidence}
           isInTune={isInTune}
           isClose={isClose}
+          language={language}
         />
       ) : (
-        <IdleNoteView />
+        <IdleNoteView feedbackMessage={feedbackMessage} />
       )}
     </div>
   )
@@ -105,24 +107,26 @@ function ActiveNoteView(props: {
   confidence: number
   isInTune: boolean
   isClose: boolean
+  language: any
 }) {
-  const { note, cents, confidence, isInTune, isClose } = props
+  const { note, cents, confidence, isInTune, isClose, language } = props
+  const t = useTranslation(language).tuner
   return (
     <>
       <div className="text-foreground mb-2 text-6xl font-bold">{note}</div>
       {cents !== undefined && <CentsDisplay cents={cents} isInTune={isInTune} isClose={isClose} />}
       <div className="text-muted-foreground mt-1 text-sm">
-        Confidence: {(confidence * 100).toFixed(0)}%
+        {t.confidence}: {(confidence * 100).toFixed(0)}%
       </div>
     </>
   )
 }
 
-function IdleNoteView() {
+function IdleNoteView({ feedbackMessage }: { feedbackMessage: string }) {
   return (
     <>
       <div className="text-muted-foreground mb-2 text-6xl font-bold">-</div>
-      <div className="text-muted-foreground">Play a note</div>
+      <div className="text-muted-foreground">{feedbackMessage}</div>
     </>
   )
 }
@@ -206,29 +210,22 @@ function TunerStatusIndicators(props: {
   cents: number | undefined
   isInTune: boolean
   isClose: boolean
+  feedbackMessage: string
 }) {
-  const { note, cents, isInTune, isClose } = props
+  const { note, cents, isInTune, isClose, feedbackMessage } = props
   const shouldShow = !!note && cents !== undefined
 
   if (!shouldShow) return <></>
 
   return (
     <div className="text-center" aria-hidden="true">
-      {isInTune && <div className="text-lg font-semibold text-green-500">✓ In Tune</div>}
-      {!isInTune && <AdjustmentIndicator cents={cents!} isClose={isClose} />}
-    </div>
-  )
-}
-
-function AdjustmentIndicator({ cents, isClose }: { cents: number; isClose: boolean }) {
-  const colorClass = isClose ? 'text-yellow-500' : 'text-red-500'
-  const arrow = cents > 0 ? (isClose ? '↑' : '↑↑') : isClose ? '↓' : '↓↓'
-  const text =
-    cents > 0 ? (isClose ? 'A bit sharp' : 'Too sharp') : isClose ? 'A bit flat' : 'Too flat'
-
-  return (
-    <div className={`text-lg font-semibold ${colorClass}`}>
-      {arrow} {text}
+      <div
+        className={`text-lg font-semibold ${isInTune ? 'text-green-500' : isClose ? 'text-yellow-500' : 'text-red-500'}`}
+      >
+        {isInTune && '✓ '}
+        {!isInTune && (cents! > 0 ? (isClose ? '↑ ' : '↑↑ ') : isClose ? '↓ ' : '↓↓ ')}
+        {feedbackMessage}
+      </div>
     </div>
   )
 }

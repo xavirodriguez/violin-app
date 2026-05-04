@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { allExercises } from '@/lib/exercises'
 import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
@@ -9,6 +10,8 @@ import { PitchDebugPanel } from '@/components/debug/PitchDebugPanel'
 import { AchievementNotificationManager } from '@/components/achievement-toast'
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow'
 import { analytics } from '@/lib/analytics-tracker'
+import { useTranslation } from '@/lib/i18n'
+import { usePreferencesStore } from '@/stores/preferences-store'
 import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -24,6 +27,8 @@ export default function Home() {
   const [mode, setMode] = useState<'tuner' | 'practice' | 'dashboard'>('tuner')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const language = usePreferencesStore((s) => s.language)
+  const t = useTranslation(language)
 
   useEffect(() => {
     // Check if user has completed onboarding
@@ -37,6 +42,14 @@ export default function Home() {
   const handleOnboardingComplete = () => {
     localStorage.setItem('onboarding-completed', 'true')
     setShowOnboarding(false)
+    setMode('practice')
+    // Open A is usually at index 2 in openStringsExercises
+    const openA = allExercises.find((ex) => ex.id === 'open-a-string')
+    if (openA) {
+      import('@/stores/practice-store').then((m) => {
+        m.usePracticeStore.getState().loadExercise(openA)
+      })
+    }
     analytics.track('onboarding_completed')
   }
 
@@ -64,11 +77,11 @@ export default function Home() {
                     <TabsList>
                       <TabsTrigger value="tuner" className="gap-2">
                         <Target className="h-4 w-4" />
-                        Tuner
+                        {t.tuner.title}
                       </TabsTrigger>
                       <TabsTrigger value="practice" className="gap-2">
                         <Music className="h-4 w-4" />
-                        Practice
+                        {t.common.practice}
                       </TabsTrigger>
                       <TabsTrigger value="dashboard" className="gap-2">
                         <LayoutDashboard className="h-4 w-4" />
@@ -84,13 +97,13 @@ export default function Home() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsSettingsOpen(true)}
-                        aria-label="Audio Settings"
+                        aria-label={t.settings.title}
                       >
                         <Settings className="h-5 w-5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Audio Settings</p>
+                      <p>{t.settings.title}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

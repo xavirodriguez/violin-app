@@ -63,9 +63,10 @@ export const openStringsExercises: ExerciseData[] = [
     category: 'Open Strings',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
-    technicalGoals: [],
+    technicalGoals: ['Open A'],
     estimatedDuration: '1 min',
-    technicalTechnique: 'General',
+    technicalTechnique: 'Intonation',
+    recommended: true,
     notes: [
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },
