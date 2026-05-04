@@ -121,7 +121,7 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 function createEngineCore(ctx: PracticeEngineContext) {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
-  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex)
+  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex, ctx.loopRegion)
 
   const core = {
     getState: () => state,
@@ -174,12 +174,22 @@ async function* executeEngineStart(
   }
 }
 
-function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): EngineState {
+function getInitialEngineState(
+  exercise: Exercise,
+  initialNoteIndex = 0,
+  loopRegion?: import('@/lib/domain/practice').LoopRegion,
+): EngineState {
   const noteCount = exercise.notes.length
+  let startIndex = initialNoteIndex
+
+  if (loopRegion?.isEnabled) {
+    startIndex = Math.max(startIndex, loopRegion.startNoteIndex)
+  }
+
   const initialState: EngineState = {
     ...INITIAL_ENGINE_STATE,
     scoreLength: noteCount,
-    currentNoteIndex: initialNoteIndex,
+    currentNoteIndex: startIndex,
   }
 
   const result = initialState
@@ -192,11 +202,19 @@ function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): Engine
  */
 function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): NoteStreamOptions {
   const difficulty = calculateAdaptiveDifficulty(perfectNoteStreak)
+  const indicatedBpm = ctx.exercise.indicatedBpm ?? 60
+  const currentBpm = ctx.bpm ?? indicatedBpm
+
+  // PRD: Scale requiredHoldTime proportionally to the tempo
+  // If BPM is higher, requiredHoldTime should be lower.
+  const tempoMultiplier = currentBpm / indicatedBpm
+  const scaledHoldTime = difficulty.requiredHoldTime * (1 / tempoMultiplier)
+
   const options: NoteStreamOptions = {
     exercise: ctx.exercise,
-    bpm: 60,
+    bpm: currentBpm,
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
-    requiredHoldTime: difficulty.requiredHoldTime,
+    requiredHoldTime: scaledHoldTime,
     minRms: 0.01,
     minConfidence: 0.85,
   }
@@ -245,10 +263,39 @@ async function* executeNoteLoop(
     startTime: number
   },
 ): AsyncGenerator<PracticeEngineEvent> {
-  const { getState, signal } = params
-  while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
+  const { ctx, getState, signal } = params
+  const isLooping = ctx.loopRegion?.isEnabled
+  const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? getState().scoreLength - 1
+
+  while (!signal.aborted) {
+    const currentIndex = getState().currentNoteIndex
+
+    // Check if we reached the end of the loop or exercise
+    const isExerciseFinished = currentIndex >= getState().scoreLength
+    const isLoopFinished = isLooping && currentIndex > loopEndIndex
+
+    if (isExerciseFinished || isLoopFinished) {
+      if (isLooping) {
+        yield* handleLoopRestart(params)
+        continue
+      } else {
+        break
+      }
+    }
+
     yield* iterateScoreNotes(params)
   }
+}
+
+async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
+  const { ctx, updateState } = params
+  const startIndex = ctx.loopRegion?.startNoteIndex ?? 0
+  const restartEvent: PracticeEngineEvent = {
+    type: 'JUMP_TO_INDEX',
+    payload: { index: startIndex },
+  }
+  updateState(restartEvent)
+  yield restartEvent
 }
 
 async function* iterateScoreNotes(

@@ -165,6 +165,11 @@
   opacity: 0.7;
 }
 
+.note-loop-range path {
+  fill: oklch(0.7 0.15 70 / 0.5) !important;
+  stroke: oklch(0.7 0.15 70) !important;
+}
+
 .violin-fingerboard {
   background: linear-gradient(to bottom, #1a1a1a, #2a2a2a);
   padding: 2rem;

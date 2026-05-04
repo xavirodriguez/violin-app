@@ -47,7 +47,8 @@ export function PracticeMode() {
 
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false)
-  const [bpm, setBpm] = useState(60)
+  const bpm = usePracticeStore((s) => s.tempoConfig.bpm)
+  const setTempoConfig = usePracticeStore((s) => s.setTempoConfig)
 
   const initialize = usePracticeStore.getState().initialize
   const dispatch = usePracticeStore.getState().dispatch
@@ -153,7 +154,8 @@ export function PracticeMode() {
           visualBeat={visualBeat}
           bpm={bpm}
           onBpmChange={(newBpm) => {
-            setBpm(newBpm)
+            const indicatedBpm = practiceState?.exercise.indicatedBpm ?? 60
+            setTempoConfig({ bpm: newBpm, scale: newBpm / indicatedBpm })
             metronome.setBpm(newBpm)
           }}
         />
