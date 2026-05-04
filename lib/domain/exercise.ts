@@ -246,7 +246,14 @@ export interface TunerStore {
   }) => void
   startListening: () => void
   stopListening: () => void
+  thresholds: {
+    tooLow: number
+    bitLow: number
+    bitHigh: number
+    tooHigh: number
+  }
   loadDevices: () => Promise<void>
   setDeviceId: (deviceId: string) => Promise<void>
   setSensitivity: (sensitivity: number) => void
+  setThresholds: (thresholds: Partial<TunerStore['thresholds']>) => void
 }

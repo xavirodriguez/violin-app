@@ -72,6 +72,13 @@ interface PreferencesStore extends UserPreferences {
   toggleSoundFeedback: () => void
 
   /**
+   * Sets the interface language.
+   *
+   * @param language - 'en' or 'es'
+   */
+  setLanguage: (language: 'en' | 'es') => void
+
+  /**
    * Resets all preferences to their initial factory default values.
    */
   resetToDefaults: () => void
@@ -83,6 +90,7 @@ interface PreferencesStore extends UserPreferences {
  * @internal
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
+  language: 'en',
   feedbackLevel: 'beginner',
   showTechnicalDetails: false,
   enableCelebrations: true,
@@ -123,6 +131,10 @@ export const usePreferencesStore = create<PreferencesStore>()(
       schemaVersion: 1,
       ...DEFAULT_PREFERENCES,
 
+      setLanguage: (language) => {
+        set({ language })
+        analytics.track('language_changed', { language })
+      },
       setFeedbackLevel: (level) => {
         set({ feedbackLevel: level })
         analytics.track('feedback_level_changed', { level })

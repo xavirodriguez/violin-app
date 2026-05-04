@@ -4,7 +4,10 @@
  */
 export type FeedbackLevel = 'beginner' | 'intermediate' | 'advanced'
 
+export type Language = 'en' | 'es'
+
 export interface UserPreferences {
+  language: Language
   feedbackLevel: FeedbackLevel
   showTechnicalDetails: boolean
   enableCelebrations: boolean
