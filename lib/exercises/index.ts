@@ -8,6 +8,8 @@
 import type { Exercise, ExerciseData } from './types'
 import { generateMusicXML } from './musicxml-builder'
 import { openStringsExercises } from './categories/open-strings'
+import { rhythmExercises } from './categories/rhythm'
+import { fingeringExercises } from './categories/fingering'
 import { scalesExercises } from './categories/scales'
 import { songsExercises } from './categories/songs'
 
@@ -34,6 +36,8 @@ const createExercise = (exerciseData: ExerciseData): Exercise => {
  */
 const allExerciseData: ExerciseData[] = [
   ...openStringsExercises,
+  ...rhythmExercises,
+  ...fingeringExercises,
   ...scalesExercises,
   ...songsExercises,
 ]

@@ -22,6 +22,8 @@ import { useAudioPlayer } from '@/hooks/use-audio-player'
 import { useMetronome } from '@/hooks/use-metronome'
 import { NoteAudioService } from '@/lib/note-audio.service'
 import { SequencePlayer } from '@/lib/sequence-player'
+import { toast } from 'sonner'
+import confetti from 'canvas-confetti'
 import { useState, useEffect, useMemo } from 'react'
 import { Exercise } from '@/lib/domain/exercise'
 
@@ -77,6 +79,16 @@ export function PracticeMode() {
   const derived = useDerivedPracticeState()
 
   const sequencePlayer = useMemo(() => new SequencePlayer(player), [player])
+
+  const perfectNoteStreak = practiceState?.perfectNoteStreak ?? 0
+  useEffect(() => {
+    if (perfectNoteStreak > 0 && perfectNoteStreak % 5 === 0) {
+      toast.success('Amazing consistency!', {
+        description: `You've played ${perfectNoteStreak} notes with perfect intonation!`,
+        icon: '🎻',
+      })
+    }
+  }, [perfectNoteStreak])
 
   useEffect(() => {
     if (lastDrillResult?.success) {

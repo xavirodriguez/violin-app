@@ -13,6 +13,9 @@ import { MetricsSection } from './analytics/MetricsSection'
 import { SkillSection } from './analytics/SkillSection'
 import { PracticeTimeSection } from './analytics/PracticeTimeSection'
 import { HeatmapSection } from './analytics/HeatmapSection'
+import { SkillTrendsChart } from './analytics/SkillTrendsChart'
+import { AchievementGallery } from './analytics/AchievementGallery'
+import { PracticeHistoryList } from './analytics/PracticeHistoryList'
 import { AchievementsSection } from './analytics/AchievementsSection'
 import { IntonationHeatmap } from './analytics/IntonationHeatmap'
 import { CurriculumMap } from './curriculum/curriculum-map'
@@ -56,6 +59,8 @@ export function AnalyticsDashboard() {
 
       <NorthStarMetrics />
 
+      <SkillTrendsChart />
+
       <IntonationHeatmap exerciseStats={progress.exerciseStats} />
 
       <SkillsDashboard />
@@ -65,6 +70,10 @@ export function AnalyticsDashboard() {
       <ProgressReportsSection />
 
       <CurriculumMap />
+
+      <AchievementGallery />
+
+      <PracticeHistoryList />
 
       <AchievementsSection achievements={progress.achievements} />
     </div>
