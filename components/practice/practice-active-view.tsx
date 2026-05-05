@@ -37,7 +37,7 @@ export function PracticeActiveView({
 
   return (
     <>
-      <Card className="p-12">
+      <Card className="p-6 md:p-12">
         <PracticeFeedback
           targetNote={targetPitchName}
           detectedPitchName={lastDetectedNote?.pitch}
@@ -50,7 +50,7 @@ export function PracticeActiveView({
         />
       </Card>
       {!zenMode && (
-        <Card className="p-12">
+        <Card className="p-6 md:p-12">
           <ViolinFingerboard
             targetNote={targetPitchName}
             detectedPitchName={lastDetectedNote?.pitch}

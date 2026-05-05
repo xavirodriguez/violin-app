@@ -4,6 +4,8 @@ import { CheckCircle2, AlertTriangle, Info, HelpCircle } from 'lucide-react'
 import { Observation } from '@/lib/technique-types'
 import { translateObservation } from '@/lib/curriculum/observation-translator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Badge } from '@/components/ui/badge'
+import { Zap } from 'lucide-react'
 
 /**
  * Props for the {@link PracticeFeedback} component.
@@ -75,9 +77,18 @@ function FeedbackStatus(props: {
   isPlaying: boolean
   isCorrectNote: boolean
   isInTune: boolean
+  perfectNoteStreak?: number
 }) {
-  const { targetNote, detectedPitchName, centsOff, status, isPlaying, isCorrectNote, isInTune } =
-    props
+  const {
+    targetNote,
+    detectedPitchName,
+    centsOff,
+    status,
+    isPlaying,
+    isCorrectNote,
+    isInTune,
+    perfectNoteStreak
+  } = props
 
   if (!isPlaying) {
     return <WaitingState status={status} targetNote={targetNote} />
@@ -90,6 +101,7 @@ function FeedbackStatus(props: {
       centsOff={centsOff}
       isCorrectNote={isCorrectNote}
       isInTune={isInTune}
+      perfectNoteStreak={perfectNoteStreak}
     />
   )
 }
@@ -107,15 +119,16 @@ function ActiveFeedback(props: {
   centsOff: number | undefined
   isCorrectNote: boolean
   isInTune: boolean
+  perfectNoteStreak?: number
 }) {
-  const { targetNote, detectedPitchName, centsOff, isCorrectNote, isInTune } = props
+  const { targetNote, detectedPitchName, centsOff, isCorrectNote, isInTune, perfectNoteStreak } = props
 
   if (!isCorrectNote) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
   }
 
   if (isInTune) {
-    return <PerfectFeedback />
+    return <PerfectFeedback streak={perfectNoteStreak} />
   }
 
   return <AdjustmentFeedback centsOff={centsOff!} />
@@ -132,13 +145,25 @@ function WaitingPrompt({ targetNote }: { targetNote: string }) {
   )
 }
 
-function PerfectFeedback() {
+function PerfectFeedback({ streak = 0 }: { streak?: number }) {
   return (
-    <div className="flex min-h-[200px] items-center justify-center">
+    <div className="flex min-h-[200px] flex-col items-center justify-center">
       <div className="text-center">
         <CheckCircle2 className="mx-auto mb-4 h-32 w-32 text-green-500" />
         <div className="text-4xl font-bold text-green-500">Perfect!</div>
       </div>
+
+      {streak >= 3 && (
+        <div className="mt-4 animate-bounce text-center">
+          <Badge className="bg-amber-500 hover:bg-amber-600 gap-1.5 px-3 py-1">
+            <Zap className="h-3 w-3 fill-white" />
+            Adaptive Difficulty Active
+          </Badge>
+          <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase tracking-tighter">
+            Leveling Up!
+          </p>
+        </div>
+      )}
     </div>
   )
 }

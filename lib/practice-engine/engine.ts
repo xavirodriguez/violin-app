@@ -128,7 +128,7 @@ function createEngineCore(ctx: PracticeEngineContext) {
     updateState: (e: PracticeEngineEvent) => {
       state = reducer(state, e)
     },
-    getOptions: () => getEngineOptions(ctx, state.perfectNoteStreak),
+    getOptions: () => getEngineOptions({ ...ctx, centsTolerance: undefined }, state.perfectNoteStreak),
     isRunning: () => isRunning,
     setRunning: (val: boolean) => {
       isRunning = val
