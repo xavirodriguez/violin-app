@@ -66,6 +66,7 @@ export type PracticeEvent =
       payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
     }
   | { type: 'NO_NOTE_DETECTED' }
+  | { type: 'DRILL_ATTEMPT_COMPLETED'; payload: { success: boolean; precision: number } }
 
 /**
  * Lifetime statistics for an individual exercise.

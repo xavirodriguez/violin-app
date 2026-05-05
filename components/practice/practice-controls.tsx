@@ -46,8 +46,8 @@ export function PracticeControls(props: PracticeControlsProps) {
   } = props
 
   return (
-    <Card className="space-y-4 p-4">
-      <div className="flex items-center justify-between gap-4">
+    <Card className="sticky top-0 z-40 space-y-4 p-4 shadow-md md:relative md:shadow-none">
+      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2 md:overflow-visible md:pb-0">
         <SessionActions
           status={status}
           disabled={!hasExercise}

@@ -67,8 +67,12 @@ export function useOSMDSafe(
   advanceCursor: () => void
   /** Highlights the notes currently under the OSMD cursor. */
   highlightCurrentNote: () => void
+  /** Highlights a range of notes. */
+  highlightRange: (startIndex: number, endIndex: number) => void
+  /** Applies heatmap coloring to notes based on precision. */
+  applyHeatmap: (precisionMap: Record<number, number>) => void
   /** Safe to call anytime - no-op when !isReady */
-  onNoteClick: (handler: (note: unknown) => void) => void
+  onNoteClick: (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => void
   /** Implementation of the ScoreViewPort for decoupled visual control */
   scoreView: ScoreViewPort
 } {
@@ -158,26 +162,77 @@ export function useOSMDSafe(
   }, [isReady])
 
   const onNoteClick = useCallback(
-    (handler: (note: unknown) => void) => {
+    (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => {
       if (isReady && osmdRef.current && containerRef.current) {
-        // OSMD doesn't have a direct "onNoteClick" event, we use the backend's SVG/Canvas
-        // To simplify, we'll attach a click listener to the container and use OSMD's hit testing if available
-        // or just intercept clicks on SVG elements.
         const container = containerRef.current
         const handleClick = (event: MouseEvent) => {
           if (!osmdRef.current) return
+          const osmd = osmdRef.current
 
-          let target = event.target as HTMLElement
-          while (target && target !== (container as unknown as HTMLElement)) {
-            if (target.classList.contains('vf-note') || target.classList.contains('vf-stavenote')) {
-              handler({ target })
-              break
+          const target = event.target as SVGElement
+          const gNoteElement = target.closest('.vf-stavenote, .vf-note')
+          if (!gNoteElement) return
+
+          // Find which note this corresponds to by iterating through all graphical notes
+          let foundIndex = -1
+          let noteCounter = 0
+
+          for (const measure of osmd.GraphicSheet.MeasureList) {
+            for (const staffLines of measure) {
+              for (const staffEntry of staffLines.staffEntries) {
+                for (const gNote of staffEntry.graphicalNotes) {
+                  // @ts-ignore - getSVGGElement is available at runtime for SVG backend
+                  if (gNote.getSVGGElement() === gNoteElement) {
+                    foundIndex = noteCounter
+                    break
+                  }
+                }
+                if (foundIndex !== -1) break
+                noteCounter++
+              }
+              if (foundIndex !== -1) break
             }
-            target = target.parentElement as HTMLElement
+            if (foundIndex !== -1) break
+          }
+
+          if (foundIndex !== -1) {
+            handler({ noteIndex: foundIndex, event })
           }
         }
         container.addEventListener('click', handleClick)
         return () => container.removeEventListener('click', handleClick)
+      }
+    },
+    [isReady],
+  )
+
+  const applyHeatmap = useCallback(
+    (precisionMap: Record<number, number>) => {
+      if (!isReady || !osmdRef.current || !containerRef.current) return
+
+      const osmd = osmdRef.current
+      let noteCounter = 0
+
+      for (const measure of osmd.GraphicSheet.MeasureList) {
+        for (const staffLines of measure) {
+          for (const staffEntry of staffLines.staffEntries) {
+            const precision = precisionMap[noteCounter]
+            if (precision !== undefined) {
+              const colorClass =
+                precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
+
+              for (const gNote of staffEntry.graphicalNotes) {
+                // @ts-ignore
+                const el = gNote.getSVGGElement()
+                if (el) {
+                  el.classList.remove('heatmap-low', 'heatmap-med', 'heatmap-high')
+                  el.classList.add(colorClass)
+                }
+              }
+            }
+            noteCounter++
+          }
+        }
       }
     },
     [isReady],
@@ -207,6 +262,33 @@ export function useOSMDSafe(
       })
     }
   }, [isReady])
+
+  const highlightRange = useCallback(
+    (startIndex: number, endIndex: number) => {
+      if (!isReady || !osmdRef.current || !containerRef.current) return
+
+      const highlighted = containerRef.current.querySelectorAll('.note-loop-range')
+      highlighted.forEach((el) => el.classList.remove('note-loop-range'))
+
+      const osmd = osmdRef.current
+      let noteCounter = 0
+
+      for (const measure of osmd.GraphicSheet.MeasureList) {
+        for (const staffLines of measure) {
+          for (const staffEntry of staffLines.staffEntries) {
+            if (noteCounter >= startIndex && noteCounter <= endIndex) {
+              for (const gNote of staffEntry.graphicalNotes) {
+                // @ts-ignore
+                gNote.getSVGGElement()?.classList.add('note-loop-range')
+              }
+            }
+            noteCounter++
+          }
+        }
+      }
+    },
+    [isReady],
+  )
 
   const scoreView = useMemo<ScoreViewPort>(
     () => ({

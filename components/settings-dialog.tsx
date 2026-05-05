@@ -8,6 +8,8 @@
 import { FC, useEffect, useState } from 'react'
 import { useTunerStore } from '@/stores/tuner-store'
 import { usePreferencesStore } from '@/stores/preferences-store'
+import { useAnalyticsStore } from '@/stores/analytics-store'
+import { exportSessionsToCSV, downloadCSV } from '@/lib/export/progress-exporter'
 import { useTranslation } from '@/lib/i18n'
 import { FeedbackLevel } from '@/lib/user-preferences'
 import { Button } from '@/components/ui/button'
@@ -61,6 +63,7 @@ interface SettingsDialogProps {
 const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const { devices, deviceId, sensitivity, loadDevices, setDeviceId, setSensitivity } =
     useTunerStore()
+  const { sessions } = useAnalyticsStore()
 
   const {
     language,
@@ -195,6 +198,21 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
                 onCheckedChange={toggleSoundFeedback}
               />
             </div>
+          </div>
+
+          {/* Data Export */}
+          <div className="space-y-4">
+            <h3 className="border-b pb-2 text-sm font-semibold">Data Management</h3>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => {
+                const csv = exportSessionsToCSV(sessions)
+                downloadCSV(csv, `violin-mentor-export-${new Date().toISOString().split('T')[0]}.csv`)
+              }}
+            >
+              Export Practice History (CSV)
+            </Button>
           </div>
 
           {/* Reset Data */}

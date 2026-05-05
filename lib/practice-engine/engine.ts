@@ -121,14 +121,14 @@ export function createPracticeEngine(ctx: PracticeEngineContext): PracticeEngine
 function createEngineCore(ctx: PracticeEngineContext) {
   let isRunning = false
   const reducer = ctx.reducer ?? engineReducer
-  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex)
+  let state = getInitialEngineState(ctx.exercise, ctx.initialNoteIndex, ctx.loopRegion)
 
   const core = {
     getState: () => state,
     updateState: (e: PracticeEngineEvent) => {
       state = reducer(state, e)
     },
-    getOptions: () => getEngineOptions(ctx, state.perfectNoteStreak),
+    getOptions: () => getEngineOptions({ ...ctx, centsTolerance: undefined }, state.perfectNoteStreak),
     isRunning: () => isRunning,
     setRunning: (val: boolean) => {
       isRunning = val
@@ -174,12 +174,22 @@ async function* executeEngineStart(
   }
 }
 
-function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): EngineState {
+function getInitialEngineState(
+  exercise: Exercise,
+  initialNoteIndex = 0,
+  loopRegion?: import('@/lib/domain/practice').LoopRegion,
+): EngineState {
   const noteCount = exercise.notes.length
+  let startIndex = initialNoteIndex
+
+  if (loopRegion?.isEnabled) {
+    startIndex = Math.max(startIndex, loopRegion.startNoteIndex)
+  }
+
   const initialState: EngineState = {
     ...INITIAL_ENGINE_STATE,
     scoreLength: noteCount,
-    currentNoteIndex: initialNoteIndex,
+    currentNoteIndex: startIndex,
   }
 
   const result = initialState
@@ -192,11 +202,19 @@ function getInitialEngineState(exercise: Exercise, initialNoteIndex = 0): Engine
  */
 function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): NoteStreamOptions {
   const difficulty = calculateAdaptiveDifficulty(perfectNoteStreak)
+  const indicatedBpm = ctx.exercise.indicatedBpm ?? 60
+  const currentBpm = ctx.bpm ?? indicatedBpm
+
+  // PRD: Scale requiredHoldTime proportionally to the tempo
+  // If BPM is higher, requiredHoldTime should be lower.
+  const tempoMultiplier = currentBpm / indicatedBpm
+  const scaledHoldTime = difficulty.requiredHoldTime * (1 / tempoMultiplier)
+
   const options: NoteStreamOptions = {
     exercise: ctx.exercise,
-    bpm: 60,
+    bpm: currentBpm,
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
-    requiredHoldTime: difficulty.requiredHoldTime,
+    requiredHoldTime: scaledHoldTime,
     minRms: 0.01,
     minConfidence: 0.85,
   }
@@ -245,10 +263,84 @@ async function* executeNoteLoop(
     startTime: number
   },
 ): AsyncGenerator<PracticeEngineEvent> {
-  const { getState, signal } = params
-  while (getState().currentNoteIndex < getState().scoreLength && !signal.aborted) {
-    yield* iterateScoreNotes(params)
+  const { ctx, getState, signal } = params
+  const isLooping = ctx.loopRegion?.isEnabled
+  const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? getState().scoreLength - 1
+  let attemptResults: number[] = []
+
+  while (!signal.aborted) {
+    const currentIndex = getState().currentNoteIndex
+
+    // Check if we reached the end of the loop or exercise
+    const isExerciseFinished = currentIndex >= getState().scoreLength
+    const isLoopFinished = isLooping && currentIndex > loopEndIndex
+
+    if (isExerciseFinished || isLoopFinished) {
+      if (isLooping) {
+        // Calculate precision for this attempt
+        const precision = calculateAttemptPrecision(attemptResults)
+        const success = ctx.loopRegion?.drillTarget
+          ? precision >= ctx.loopRegion.drillTarget.precisionGoal
+          : true
+
+        yield* handleDrillAttempt(params, success, precision)
+        attemptResults = []
+
+        // If goal met N times, stop looping
+        const currentStreak = getState().drillStreak
+        const goalStreak = ctx.loopRegion?.drillTarget?.consecutiveRequired ?? 1
+
+        if (ctx.loopRegion?.drillTarget && currentStreak >= goalStreak) {
+          break
+        }
+
+        yield* handleLoopRestart(params)
+        continue
+      } else {
+        break
+      }
+    }
+
+    // Capture results for precision calculation
+    const noteIterator = iterateScoreNotes(params)
+    for await (const event of noteIterator) {
+      yield event
+      if (event.type === 'NOTE_MATCHED') {
+        attemptResults.push(event.payload.technique.pitchStability.inTuneRatio)
+      }
+    }
   }
+}
+
+function calculateAttemptPrecision(results: number[]): number {
+  if (results.length === 0) return 0
+  const sum = results.reduce((a, b) => a + b, 0)
+  return sum / results.length
+}
+
+async function* handleDrillAttempt(
+  params: EngineRunnerParams,
+  success: boolean,
+  precision: number
+): AsyncGenerator<PracticeEngineEvent> {
+  const { updateState } = params
+  const event: PracticeEngineEvent = {
+    type: 'DRILL_ATTEMPT_COMPLETED',
+    payload: { success, precision }
+  }
+  updateState(event)
+  yield event
+}
+
+async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
+  const { ctx, updateState } = params
+  const startIndex = ctx.loopRegion?.startNoteIndex ?? 0
+  const restartEvent: PracticeEngineEvent = {
+    type: 'JUMP_TO_INDEX',
+    payload: { index: startIndex },
+  }
+  updateState(restartEvent)
+  yield restartEvent
 }
 
 async function* iterateScoreNotes(

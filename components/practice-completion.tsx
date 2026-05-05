@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { PracticeSummaryChart } from './practice-summary-chart'
 import { useAnalyticsStore } from '@/stores/analytics-store'
 import { type CompletedPracticeSession } from '@/lib/domain/practice'
-import { generateAchievementImage } from '@/lib/achievement-image-generator'
+import { AchievementImageService } from '@/lib/export/achievement-image'
 import confetti from 'canvas-confetti'
 import { cn } from '@/lib/utils'
 
@@ -47,12 +47,7 @@ export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletio
     if (!sessionData) return
     setIsSharing(true)
     try {
-      const blob = await generateAchievementImage(sessionData, stars)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'achievement.png'
-      a.click()
+      await AchievementImageService.share(sessionData, stars)
     } catch (err) {
       console.error(err)
     } finally {
