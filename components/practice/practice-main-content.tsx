@@ -23,6 +23,8 @@ import { PracticeState } from '@/lib/domain/practice'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { PracticeSession } from '@/lib/domain/practice'
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
+import { useCurriculumStore } from '@/stores/curriculum-store'
+import { WhyThisMattersModal } from '../curriculum/why-this-matters-modal'
 
 interface PracticeMainContentProps {
   isZenModeEnabled: boolean
@@ -49,6 +51,10 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
   const isVisible = usePageVisibility()
   const [wasPaused, setWasPaused] = useState(false)
 
+  const { units } = useCurriculumStore()
+  const [showPedagogy, setShowPedagogy] = useState(false)
+  const [activePedagogy, setActivePedagogy] = useState<any>(null)
+
   useEffect(() => {
     if (!isVisible && state.status === 'active') {
       setWasPaused(true)
@@ -58,6 +64,17 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
     }
   }, [isVisible, state.status])
 
+  useEffect(() => {
+    if (practiceState && state.status === 'idle') {
+      // Check if this exercise belongs to a unit we should introduce
+      const unit = units.find(u => u.lessons.some(l => l.exerciseId === practiceState.exercise.id))
+      if (unit && !unit.isCompleted) {
+        setActivePedagogy(unit.whyThisMatters)
+        setShowPedagogy(true)
+      }
+    }
+  }, [practiceState?.exercise.id, state.status, units])
+
   const handleResume = () => {
     setWasPaused(false)
   }
@@ -66,6 +83,13 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 
   return (
     <>
+      {activePedagogy && (
+        <WhyThisMattersModal
+          content={activePedagogy}
+          isOpen={showPedagogy}
+          onClose={() => setShowPedagogy(false)}
+        />
+      )}
       <PracticeIdleContent {...props} />
       {status === 'idle' && <SelectionPrompt />}
       {showPausedBanner && (

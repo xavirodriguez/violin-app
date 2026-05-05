@@ -170,6 +170,18 @@
   stroke: oklch(0.7 0.15 70) !important;
 }
 
+.heatmap-low path {
+  fill: oklch(0.577 0.245 27.325 / 0.6) !important;
+}
+
+.heatmap-med path {
+  fill: oklch(0.8 0.18 85 / 0.6) !important;
+}
+
+.heatmap-high path {
+  fill: oklch(0.85 0.18 145 / 0.6) !important;
+}
+
 .violin-fingerboard {
   background: linear-gradient(to bottom, #1a1a1a, #2a2a2a);
   padding: 2rem;

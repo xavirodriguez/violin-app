@@ -14,6 +14,7 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { useProgressStore } from '@/stores/progress.store'
 import { ErrorDisplay } from './practice/error-display'
+import { AudioTroubleshooter } from './practice/AudioTroubleshooter'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
@@ -40,6 +41,7 @@ export function usePracticeViewState() {
 
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
+  const lastDrillResult = usePracticeStore((s) => s.lastDrillResult)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
   const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
   const listenIteration = usePracticeStore((s) => s.listenIteration)
@@ -63,6 +65,9 @@ export function PracticeMode() {
 
   const xml = practiceState?.exercise.musicXML ?? ''
   const osmd = useOSMDSafe(xml)
+  const setLoopRegion = usePracticeStore((s) => s.setLoopRegion)
+  const loopRegion = usePracticeStore((s) => s.loopRegion)
+
   const player = useAudioPlayer()
   const [visualBeat, setVisualBeat] = useState(false)
   const metronome = useMetronome(() => {
@@ -74,17 +79,51 @@ export function PracticeMode() {
   const sequencePlayer = useMemo(() => new SequencePlayer(player), [player])
 
   useEffect(() => {
+    if (lastDrillResult?.success) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#c8820a', '#e8a020', '#6a8f62']
+      })
+    }
+  }, [lastDrillResult])
+
+  useEffect(() => {
     if (osmd.isReady) {
-      return osmd.onNoteClick(() => {
-        // For now, we'll play the current note
-        const currentNote = practiceState?.exercise.notes[derived.currentNoteIndex]
-        if (currentNote) {
-          const freq = NoteAudioService.getFrequencyFromTargetNote(currentNote)
-          player.playNote(freq, 1500)
+      return osmd.onNoteClick(({ noteIndex, event }) => {
+        // Shift key to select loop range
+        const isShiftPressed = event.shiftKey
+
+        if (isShiftPressed && loopRegion?.isEnabled) {
+          const start = Math.min(loopRegion.startNoteIndex, noteIndex)
+          const end = Math.max(loopRegion.startNoteIndex, noteIndex)
+          setLoopRegion({ ...loopRegion, startNoteIndex: start, endNoteIndex: end })
+        } else {
+          const clickedNote = practiceState?.exercise.notes[noteIndex]
+          if (clickedNote) {
+            const freq = NoteAudioService.getFrequencyFromTargetNote(clickedNote)
+            player.playNote(freq, 1500)
+          }
+
+          // Also set as start of loop if shift not pressed
+          setLoopRegion({
+            startNoteIndex: noteIndex,
+            endNoteIndex: noteIndex,
+            isEnabled: true,
+            tempoMultiplier: 1.0,
+            history: [],
+          })
         }
       })
     }
-  }, [osmd.isReady, practiceState?.exercise, derived.currentNoteIndex, player])
+  }, [osmd.isReady, practiceState?.exercise, player, loopRegion, setLoopRegion])
+
+  useEffect(() => {
+    if (osmd.isReady && loopRegion?.isEnabled) {
+      osmd.highlightRange(loopRegion.startNoteIndex, loopRegion.endNoteIndex)
+    }
+  }, [osmd.isReady, loopRegion])
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
@@ -139,8 +178,10 @@ export function PracticeMode() {
               setIsReferencePlaying(false)
             } else if (practiceState) {
               setIsReferencePlaying(true)
-              await sequencePlayer.play(practiceState.exercise, (index) =>
-                osmd.scoreView.sync(index),
+              await sequencePlayer.play(
+                practiceState.exercise,
+                (index) => osmd.scoreView.sync(index),
+                { bpm, mode: 'expressive' },
               )
               setIsReferencePlaying(false)
             }
@@ -172,6 +213,7 @@ export function PracticeMode() {
             error: osmd.error,
             containerRef: osmd.containerRef,
             scoreView: osmd.scoreView,
+            applyHeatmap: osmd.applyHeatmap,
           }}
           sessions={sessions}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
@@ -215,14 +257,14 @@ function PracticePreviewModal(params: {
 
 function PracticeStatusHeader() {
   const state = usePracticeStore((s) => s.state)
-  const reset = usePracticeStore((s) => s.reset)
+  const start = usePracticeStore((s) => s.start)
 
   const isError = state.status === 'error'
   const isInitializing = state.status === 'initializing'
 
   if (isError) {
     const message = state.error?.message ?? 'Unknown error'
-    return <ErrorDisplay error={message} onReset={reset} />
+    return <AudioTroubleshooter error={message} onRetry={start} />
   }
 
   if (isInitializing) {

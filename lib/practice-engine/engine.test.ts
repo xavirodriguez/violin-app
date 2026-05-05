@@ -45,4 +45,26 @@ describe('Practice Engine Looping and Tempo Scaling', () => {
 
     expect(engine.getState().currentNoteIndex).toBe(1)
   })
+
+  it('should increment drillStreak and stop looping when target reached', async () => {
+    const loopRegion = {
+      startNoteIndex: 0,
+      endNoteIndex: 0,
+      isEnabled: true,
+      drillTarget: {
+        precisionGoal: 0.8,
+        consecutiveRequired: 1,
+        currentStreak: 0,
+      }
+    }
+
+    const state = { ...INITIAL_ENGINE_STATE, drillStreak: 0 }
+    const successEvent: PracticeEngineEvent = {
+      type: 'DRILL_ATTEMPT_COMPLETED',
+      payload: { success: true, precision: 0.9 }
+    }
+
+    const nextState = engineReducer(state, successEvent)
+    expect(nextState.drillStreak).toBe(1)
+  })
 })

@@ -15,6 +15,11 @@ import { PracticeTimeSection } from './analytics/PracticeTimeSection'
 import { HeatmapSection } from './analytics/HeatmapSection'
 import { AchievementsSection } from './analytics/AchievementsSection'
 import { IntonationHeatmap } from './analytics/IntonationHeatmap'
+import { CurriculumMap } from './curriculum/curriculum-map'
+import { SkillsDashboard } from './analytics/SkillsDashboard'
+import { CoachAISection } from './analytics/CoachAISection'
+import { ProgressReportsSection } from './analytics/ProgressReportsSection'
+import { NorthStarMetrics } from './analytics/NorthStarMetrics'
 
 /**
  * Lean orchestration component for the analytics dashboard.
@@ -49,7 +54,17 @@ export function AnalyticsDashboard() {
       <PracticeTimeSection data={practiceTimeData} />
       <HeatmapSection data={heatmapData} />
 
+      <NorthStarMetrics />
+
       <IntonationHeatmap exerciseStats={progress.exerciseStats} />
+
+      <SkillsDashboard />
+
+      <CoachAISection />
+
+      <ProgressReportsSection />
+
+      <CurriculumMap />
 
       <AchievementsSection achievements={progress.achievements} />
     </div>

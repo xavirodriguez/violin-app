@@ -128,7 +128,7 @@ function createEngineCore(ctx: PracticeEngineContext) {
     updateState: (e: PracticeEngineEvent) => {
       state = reducer(state, e)
     },
-    getOptions: () => getEngineOptions(ctx, state.perfectNoteStreak),
+    getOptions: () => getEngineOptions({ ...ctx, centsTolerance: undefined }, state.perfectNoteStreak),
     isRunning: () => isRunning,
     setRunning: (val: boolean) => {
       isRunning = val
@@ -266,6 +266,7 @@ async function* executeNoteLoop(
   const { ctx, getState, signal } = params
   const isLooping = ctx.loopRegion?.isEnabled
   const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? getState().scoreLength - 1
+  let attemptResults: number[] = []
 
   while (!signal.aborted) {
     const currentIndex = getState().currentNoteIndex
@@ -276,6 +277,23 @@ async function* executeNoteLoop(
 
     if (isExerciseFinished || isLoopFinished) {
       if (isLooping) {
+        // Calculate precision for this attempt
+        const precision = calculateAttemptPrecision(attemptResults)
+        const success = ctx.loopRegion?.drillTarget
+          ? precision >= ctx.loopRegion.drillTarget.precisionGoal
+          : true
+
+        yield* handleDrillAttempt(params, success, precision)
+        attemptResults = []
+
+        // If goal met N times, stop looping
+        const currentStreak = getState().drillStreak
+        const goalStreak = ctx.loopRegion?.drillTarget?.consecutiveRequired ?? 1
+
+        if (ctx.loopRegion?.drillTarget && currentStreak >= goalStreak) {
+          break
+        }
+
         yield* handleLoopRestart(params)
         continue
       } else {
@@ -283,8 +301,35 @@ async function* executeNoteLoop(
       }
     }
 
-    yield* iterateScoreNotes(params)
+    // Capture results for precision calculation
+    const noteIterator = iterateScoreNotes(params)
+    for await (const event of noteIterator) {
+      yield event
+      if (event.type === 'NOTE_MATCHED') {
+        attemptResults.push(event.payload.technique.pitchStability.inTuneRatio)
+      }
+    }
   }
+}
+
+function calculateAttemptPrecision(results: number[]): number {
+  if (results.length === 0) return 0
+  const sum = results.reduce((a, b) => a + b, 0)
+  return sum / results.length
+}
+
+async function* handleDrillAttempt(
+  params: EngineRunnerParams,
+  success: boolean,
+  precision: number
+): AsyncGenerator<PracticeEngineEvent> {
+  const { updateState } = params
+  const event: PracticeEngineEvent = {
+    type: 'DRILL_ATTEMPT_COMPLETED',
+    payload: { success, precision }
+  }
+  updateState(event)
+  yield event
 }
 
 async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {

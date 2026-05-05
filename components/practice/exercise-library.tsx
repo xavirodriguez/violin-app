@@ -122,7 +122,13 @@ function ExerciseGrid(props: ExerciseGridProps) {
   const { exercises, selectedId, recommendedId, onSelect, stats } = props
   if (exercises.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed py-12 text-center">No exercises found.</div>
+      <Card className="rounded-xl border-2 border-dashed py-12 text-center bg-muted/10">
+         <List className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-20" />
+         <p className="text-muted-foreground font-medium">No exercises found matching your filters.</p>
+         <Button variant="link" size="sm" className="mt-2" onClick={() => window.location.reload()}>
+           Clear all filters
+         </Button>
+      </Card>
     )
   }
   return (
