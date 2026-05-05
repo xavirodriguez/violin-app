@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 interface ExerciseCardProps {
   exercise: Exercise
   isRecommended?: boolean
+  recommendationReason?: string
   lastAttempt?: { accuracy: number; timestamp: number }
   onClick: () => void
   isSelected: boolean
@@ -95,13 +96,24 @@ async function renderOsmdPreview(params: {
   }
 }
 
-function RecommendedBadge({ isRecommended }: { isRecommended?: boolean }) {
+function RecommendedBadge({
+  isRecommended,
+  reason
+}: {
+  isRecommended?: boolean;
+  reason?: string
+}) {
   if (!isRecommended) return <></>
   return (
-    <div className="absolute top-2 right-2 z-10">
+    <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
       <Badge variant="default" className="border-none bg-yellow-500 text-white shadow-sm">
         Recommended
       </Badge>
+      {reason && (
+        <div className="bg-black/70 text-[8px] text-white px-2 py-0.5 rounded-sm backdrop-blur-sm max-w-[120px] text-right font-medium uppercase tracking-tighter">
+           {reason}
+        </div>
+      )}
     </div>
   )
 }

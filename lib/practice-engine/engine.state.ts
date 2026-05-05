@@ -18,6 +18,8 @@ export interface EngineState {
   lastTechnique?: NoteTechnique
   /** Number of consecutive notes that met the 'perfect' threshold. */
   perfectNoteStreak: number
+  /** Number of consecutive attempts where the loop region met the precision goal. */
+  drillStreak: number
 }
 
 /**
@@ -31,4 +33,5 @@ export const INITIAL_ENGINE_STATE: EngineState = {
   scoreLength: 0,
   liveObservations: [],
   perfectNoteStreak: 0,
+  drillStreak: 0,
 }

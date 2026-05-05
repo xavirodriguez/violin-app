@@ -59,6 +59,8 @@ export interface LivePracticeSession {
   notesCompleted: number
   accuracy: number
   averageCents: number
+  bestNote?: string
+  weakestNote?: string
 }
 
 /**
