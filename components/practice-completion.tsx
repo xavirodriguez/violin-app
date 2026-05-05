@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Star, Share2, RotateCcw } from 'lucide-react'
+import { Trophy, Star, Share2, RotateCcw, TrendingUp, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { PracticeSummaryChart } from './practice-summary-chart'
@@ -84,6 +84,28 @@ export function PracticeCompletion({ onRestart, sessionData }: PracticeCompletio
             </motion.div>
           ))}
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 mb-4">
+          <Card className="p-4 bg-green-50 border-green-100 flex items-center gap-3">
+             <div className="p-2 rounded-full bg-green-100 text-green-600">
+               <TrendingUp className="h-4 w-4" />
+             </div>
+             <div className="text-left">
+               <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Best Note</p>
+               <p className="text-lg font-black text-green-800">{sessionData.bestNote || '--'}</p>
+             </div>
+          </Card>
+
+          <Card className="p-4 bg-amber-50 border-amber-100 flex items-center gap-3">
+             <div className="p-2 rounded-full bg-amber-100 text-amber-600">
+               <AlertCircle className="h-4 w-4" />
+             </div>
+             <div className="text-left">
+               <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Focus Area</p>
+               <p className="text-lg font-black text-amber-800">{sessionData.weakestNote || '--'}</p>
+             </div>
+          </Card>
+        </div>
+
         <div className="mt-8 text-left">
           <PracticeSummaryChart
             noteAttempts={sessionData.noteResults.map((nr) => ({

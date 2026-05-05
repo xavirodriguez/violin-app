@@ -9,6 +9,7 @@ import { FC, useEffect, useState } from 'react'
 import { useTunerStore } from '@/stores/tuner-store'
 import { usePreferencesStore } from '@/stores/preferences-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'
+import { useCalibrationStore } from '@/stores/calibration-store'
 import { exportSessionsToCSV, downloadCSV } from '@/lib/export/progress-exporter'
 import { useTranslation } from '@/lib/i18n'
 import { FeedbackLevel } from '@/lib/user-preferences'
@@ -64,6 +65,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const { devices, deviceId, sensitivity, loadDevices, setDeviceId, setSensitivity } =
     useTunerStore()
   const { sessions } = useAnalyticsStore()
+  const { noiseFloor, lastCalibratedAt, reset: resetCalibration } = useCalibrationStore()
 
   const {
     language,
@@ -198,6 +200,28 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
                 onCheckedChange={toggleSoundFeedback}
               />
             </div>
+          </div>
+
+          {/* Audio Calibration */}
+          <div className="space-y-4">
+            <h3 className="border-b pb-2 text-sm font-semibold">Environment Calibration</h3>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-slate-800">Background Noise</div>
+                <div className="text-[10px] text-slate-500 uppercase">
+                  {lastCalibratedAt ? `Last: ${new Date(lastCalibratedAt).toLocaleDateString()}` : 'Never Calibrated'}
+                </div>
+              </div>
+              <div className="text-right">
+                 <div className="font-mono font-bold text-sm">{(noiseFloor * 1000).toFixed(2)} units</div>
+                 <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={resetCalibration}>
+                   Recalibrate
+                 </Button>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground px-1 italic">
+              Calibration helps the engine distinguish your violin from background noise.
+            </p>
           </div>
 
           {/* Data Export */}
