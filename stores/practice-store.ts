@@ -25,6 +25,7 @@ import {
 import { useSessionStore } from './session.store'
 import { useProgressStore } from './progress.store'
 import { useTunerStore } from './tuner-store'
+import { useCalibrationStore } from './calibration-store'
 import {
   PracticeSessionRunnerImpl,
   SessionRunnerDependencies,
@@ -421,6 +422,7 @@ function createRunnerDeps(params: {
 }): SessionRunnerDependencies {
   const { get, safeSet, storeState } = params
   const tolerance = calculateCentsTolerance()
+  const noiseFloor = useCalibrationStore.getState().noiseFloor
   const deps: SessionRunnerDependencies = {
     audioLoop: storeState.audioLoop,
     detector: storeState.detector,
@@ -432,6 +434,7 @@ function createRunnerDeps(params: {
     centsTolerance: tolerance,
     bpm: get().tempoConfig.bpm,
     loopRegion: get().loopRegion,
+    minRms: Math.max(0.01, noiseFloor * 1.5), // Apply calibration
   }
 
   return deps
