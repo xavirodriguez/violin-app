@@ -44,6 +44,16 @@ const HANDLERS: Record<
       perfectNoteStreak: nextStreak,
     }
   },
+  DRILL_ATTEMPT_COMPLETED: (state, event) => {
+    const typedEvent = event as Extract<PracticeEngineEvent, { type: 'DRILL_ATTEMPT_COMPLETED' }>
+    const { success } = typedEvent.payload
+    const nextDrillStreak = success ? state.drillStreak + 1 : 0
+
+    return {
+      ...state,
+      drillStreak: nextDrillStreak,
+    }
+  },
   SESSION_COMPLETED: (state) => {
     const completedStatus: EngineStatus = 'completed'
     const nextState = { ...state, status: completedStatus }
@@ -56,6 +66,13 @@ const HANDLERS: Record<
     const result = currentState
 
     return result
+  },
+  JUMP_TO_INDEX: (state, event) => {
+    const typedEvent = event as Extract<PracticeEngineEvent, { type: 'JUMP_TO_INDEX' }>
+    return {
+      ...state,
+      currentNoteIndex: typedEvent.payload.index,
+    }
   },
 }
 

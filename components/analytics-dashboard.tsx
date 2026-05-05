@@ -13,8 +13,16 @@ import { MetricsSection } from './analytics/MetricsSection'
 import { SkillSection } from './analytics/SkillSection'
 import { PracticeTimeSection } from './analytics/PracticeTimeSection'
 import { HeatmapSection } from './analytics/HeatmapSection'
+import { SkillTrendsChart } from './analytics/SkillTrendsChart'
+import { AchievementGallery } from './analytics/AchievementGallery'
+import { PracticeHistoryList } from './analytics/PracticeHistoryList'
 import { AchievementsSection } from './analytics/AchievementsSection'
 import { IntonationHeatmap } from './analytics/IntonationHeatmap'
+import { CurriculumMap } from './curriculum/curriculum-map'
+import { SkillsDashboard } from './analytics/SkillsDashboard'
+import { CoachAISection } from './analytics/CoachAISection'
+import { ProgressReportsSection } from './analytics/ProgressReportsSection'
+import { NorthStarMetrics } from './analytics/NorthStarMetrics'
 
 /**
  * Lean orchestration component for the analytics dashboard.
@@ -33,23 +41,54 @@ export function AnalyticsDashboard() {
   const totalCompleted = progress.exercisesCompleted?.length ?? 0
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-12">
       <DashboardHeader onExport={() => handleExport()} />
-      <MetricsSection
-        streak={streakInfo.current}
-        todayDuration={todayStats.duration}
-        totalSessions={progress.totalPracticeSessions}
-        completedExercises={totalCompleted}
-      />
-      <SkillSection
-        intonation={progress.intonationSkill}
-        rhythm={progress.rhythmSkill}
-        overall={calculateOverallProgress(progress)}
-      />
-      <PracticeTimeSection data={practiceTimeData} />
-      <HeatmapSection data={heatmapData} />
 
-      <IntonationHeatmap exerciseStats={progress.exerciseStats} />
+      {/* 1. Quick Stats & High-Level Progress */}
+      <section className="space-y-6">
+        <MetricsSection
+          streak={streakInfo.current}
+          todayDuration={todayStats.duration}
+          totalSessions={progress.totalPracticeSessions}
+          completedExercises={totalCompleted}
+        />
+        <SkillSection
+          intonation={progress.intonationSkill}
+          rhythm={progress.rhythmSkill}
+          overall={calculateOverallProgress(progress)}
+        />
+      </section>
+
+      {/* 2. Personalized Guidance (The "Mentor" experience) */}
+      <CoachAISection />
+
+      {/* 3. Deep Trends & Analysis */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <SkillTrendsChart />
+        <PracticeTimeSection data={practiceTimeData} />
+      </section>
+
+      {/* 4. Curriculum & Learning Journey */}
+      <CurriculumMap />
+
+      {/* 5. Detailed Mastery & Heatmaps */}
+      <section className="space-y-12">
+        <SkillsDashboard />
+        <IntonationHeatmap exerciseStats={progress.exerciseStats} />
+        <HeatmapSection data={heatmapData} />
+      </section>
+
+      {/* 6. Achievement Room */}
+      <AchievementGallery />
+
+      {/* 7. Engagement & Formal Reporting */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <NorthStarMetrics />
+        <ProgressReportsSection />
+      </section>
+
+      {/* 8. Raw History Logs */}
+      <PracticeHistoryList />
 
       <AchievementsSection achievements={progress.achievements} />
     </div>

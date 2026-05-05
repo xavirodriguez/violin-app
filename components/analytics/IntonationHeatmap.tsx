@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { ExerciseStats } from '@/lib/domain/practice'
+import { useTranslation } from '@/lib/i18n'
+import { usePreferencesStore } from '@/stores/preferences-store'
 
 interface IntonationHeatmapProps {
   exerciseStats: Record<string, ExerciseStats>
@@ -12,6 +14,8 @@ interface IntonationHeatmapProps {
  * Refactored to satisfy Senior Software Craftsmanship 5-15 line limits.
  */
 export function IntonationHeatmap({ exerciseStats }: IntonationHeatmapProps) {
+  const language = usePreferencesStore((s) => s.language)
+  const t = useTranslation(language).analytics
   const statsEntries = Object.entries(exerciseStats)
   const hasStats = statsEntries.length > 0
 
@@ -28,7 +32,9 @@ export function IntonationHeatmap({ exerciseStats }: IntonationHeatmapProps) {
 }
 
 function EmptyHeatmapState() {
-  const message = 'Practice more exercises to see your heatmap'
+  const language = usePreferencesStore((s) => s.language)
+  const t = useTranslation(language).analytics
+  const message = t.never // Or a more specific string
   const containerClass = 'bg-card border-border mb-6 rounded-lg border p-12 text-center'
   const textClass = 'text-muted-foreground'
 
@@ -40,7 +46,9 @@ function EmptyHeatmapState() {
 }
 
 function HeatmapHeader() {
-  const title = 'Exercise Accuracy Heatmap'
+  const language = usePreferencesStore((s) => s.language)
+  const t = useTranslation(language).analytics
+  const title = t.heatmap
   const titleClass = 'mb-4 text-xl font-bold'
 
   const result = <h2 className={titleClass}>{title}</h2>

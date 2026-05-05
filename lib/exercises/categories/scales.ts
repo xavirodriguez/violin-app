@@ -129,6 +129,7 @@ const createTetrachordExercise = (config: {
     technicalGoals: config.technicalGoals ?? [],
     estimatedDuration: config.estimatedDuration ?? '2 min',
     technicalTechnique: config.technicalTechnique ?? 'Tetrachord',
+    indicatedBpm: 60,
     learningObjectives: [
       `Establish correct finger spacing for ${config.key} major`,
       'Develop even tone production across four notes',
@@ -204,6 +205,7 @@ const createFullScaleExercise = (config: {
     technicalGoals: config.technicalGoals ?? [],
     estimatedDuration: config.estimatedDuration ?? '3 min',
     technicalTechnique: config.technicalTechnique ?? 'Scale',
+    indicatedBpm: 60,
   }
 }
 

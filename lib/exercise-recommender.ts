@@ -37,21 +37,30 @@ const DAY_MS = 86_400_000
  *
  * @public
  */
+export interface ExerciseRecommendation extends Exercise {
+  recommendationReason: string
+}
+
 export function getRecommendedExercise(params: {
   exercises: Exercise[]
   userProgress: UserProgress
   lastPlayedId?: string
   difficultyFilter?: string
-}): Exercise | undefined {
+}): ExerciseRecommendation | undefined {
   const filtered = filterExercisesByDifficulty(params)
   const hasExercises = filtered.length > 0
   if (!hasExercises) return undefined
 
   const filteredParams = { ...params, exercises: filtered }
   const recommendation = findFirstValidRecommendation(filteredParams)
-  const finalRecommendation = recommendation || filtered[0]
 
-  return finalRecommendation
+  if (recommendation) return recommendation
+
+  // Default fallback
+  return {
+    ...filtered[0],
+    recommendationReason: 'Continue your journey with the next exercise in the library.'
+  }
 }
 
 function filterExercisesByDifficulty(params: {
@@ -66,7 +75,7 @@ function filterExercisesByDifficulty(params: {
   return filtered
 }
 
-function findFirstValidRecommendation(params: RecommendationParams): Exercise | undefined {
+function findFirstValidRecommendation(params: RecommendationParams): ExerciseRecommendation | undefined {
   const recommendation =
     getPersistenceRecommendation(params) ||
     getReviewRecommendation(params) ||
@@ -83,7 +92,7 @@ interface RecommendationParams {
   difficultyFilter?: string
 }
 
-function getPersistenceRecommendation(params: RecommendationParams): Exercise | undefined {
+function getPersistenceRecommendation(params: RecommendationParams): ExerciseRecommendation | undefined {
   const { exercises, userProgress, lastPlayedId } = params
   if (!lastPlayedId) return undefined
 
@@ -91,20 +100,35 @@ function getPersistenceRecommendation(params: RecommendationParams): Exercise | 
   const isRecentFailure =
     stats && Date.now() - stats.lastPracticedMs < DAY_MS && stats.bestAccuracy < 80
 
-  return isRecentFailure ? exercises.find((ex) => ex.id === lastPlayedId) : undefined
+  const ex = isRecentFailure ? exercises.find((ex) => ex.id === lastPlayedId) : undefined
+  if (!ex) return undefined
+
+  return {
+    ...ex,
+    recommendationReason: 'Build muscle memory by repeating your last attempt.'
+  }
 }
 
-function getReviewRecommendation(params: RecommendationParams): Exercise | undefined {
+function getReviewRecommendation(params: RecommendationParams): ExerciseRecommendation | undefined {
   const { exercises, userProgress } = params
   const lowAccuracyId = findLowAccuracyExerciseId(userProgress)
   if (!lowAccuracyId) return undefined
 
   const exercise = exercises.find((ex) => ex.id === lowAccuracyId)
-  if (!exercise || exercise.difficulty === 'Beginner') {
-    return exercise
+  if (!exercise) return undefined
+
+  if (exercise.difficulty === 'Beginner') {
+    return {
+      ...exercise,
+      recommendationReason: 'Reinforce fundamentals to improve your accuracy.'
+    }
   }
 
-  return getEasierAlternative(exercises, exercise)
+  const easier = getEasierAlternative(exercises, exercise)
+  return {
+    ...easier,
+    recommendationReason: 'Focus on core techniques with a simpler exercise.'
+  }
 }
 
 function findLowAccuracyExerciseId(userProgress: UserProgress): string | undefined {
@@ -127,20 +151,28 @@ function getEasierAlternative(exercises: Exercise[], exercise: Exercise): Exerci
   return alternative || exercise
 }
 
-function getProgressionDiscoveryRecommendation(params: RecommendationParams): Exercise | undefined {
+function getProgressionDiscoveryRecommendation(params: RecommendationParams): ExerciseRecommendation | undefined {
   const { exercises, userProgress, difficultyFilter } = params
   const isSpecific = !!difficultyFilter && difficultyFilter !== 'all'
 
+  let ex: Exercise | undefined
   if (isSpecific) {
-    return findFirstUnplayedByDifficulty({ exercises, userProgress, difficulty: difficultyFilter! })
+    ex = findFirstUnplayedByDifficulty({ exercises, userProgress, difficulty: difficultyFilter! })
+  } else {
+    const targetDifficulty = determineTargetDifficulty(exercises, userProgress)
+    ex = findFirstUnplayedByDifficulty({
+      exercises,
+      userProgress,
+      difficulty: targetDifficulty,
+    })
   }
 
-  const targetDifficulty = determineTargetDifficulty(exercises, userProgress)
-  return findFirstUnplayedByDifficulty({
-    exercises,
-    userProgress,
-    difficulty: targetDifficulty,
-  })
+  if (!ex) return undefined
+
+  return {
+    ...ex,
+    recommendationReason: 'Advance your skills with a new challenge.'
+  }
 }
 
 function findFirstUnplayedByDifficulty(params: {
@@ -188,14 +220,21 @@ function isDifficultyCompleted(params: {
   return isCompleted
 }
 
-function getSpacedRepetitionRecommendation(params: RecommendationParams): Exercise | undefined {
+function getSpacedRepetitionRecommendation(params: RecommendationParams): ExerciseRecommendation | undefined {
   const { exercises, userProgress } = params
   const now = Date.now()
 
-  return exercises.find((ex) => {
+  const ex = exercises.find((ex) => {
     const stats = userProgress.exerciseStats[ex.id]
     return !stats || now - stats.lastPracticedMs > DAY_MS
   })
+
+  if (!ex) return undefined
+
+  return {
+    ...ex,
+    recommendationReason: 'Keep your technique fresh with a quick review.'
+  }
 }
 
 /**

@@ -376,7 +376,19 @@ function calculateSessionSummary(noteResults: NoteResult[]) {
   const totalCents = noteResults.reduce((sum, nr) => sum + Math.abs(nr.averageCents), 0)
   const averageCents = noteResults.length > 0 ? totalCents / noteResults.length : 0
 
-  return { accuracy, averageCents }
+  // Identify best and weakest notes
+  let bestNote: string | undefined
+  let weakestNote: string | undefined
+
+  if (noteResults.length > 0) {
+    const sortedByCents = [...noteResults].sort((a, b) =>
+      Math.abs(a.averageCents) - Math.abs(b.averageCents)
+    )
+    bestNote = sortedByCents[0].targetPitch
+    weakestNote = sortedByCents[sortedByCents.length - 1].targetPitch
+  }
+
+  return { accuracy, averageCents, bestNote, weakestNote }
 }
 
 function handleStreakMilestones(streak: number): void {

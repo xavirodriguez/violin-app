@@ -33,6 +33,7 @@ export function ExerciseLibrary(props: ExerciseLibraryProps) {
         exercises={library.filtered}
         selectedId={selectedId}
         recommendedId={library.recommended?.id}
+        recommendationReason={library.recommended?.recommendationReason}
         onSelect={onSelect}
         stats={library.exerciseStats}
       />
@@ -114,15 +115,22 @@ interface ExerciseGridProps {
   exercises: Exercise[]
   selectedId?: string
   recommendedId?: string
+  recommendationReason?: string
   onSelect: (exercise: Exercise) => void
   stats: Record<string, ExerciseStats>
 }
 
 function ExerciseGrid(props: ExerciseGridProps) {
-  const { exercises, selectedId, recommendedId, onSelect, stats } = props
+  const { exercises, selectedId, recommendedId, recommendationReason, onSelect, stats } = props
   if (exercises.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed py-12 text-center">No exercises found.</div>
+      <Card className="rounded-xl border-2 border-dashed py-12 text-center bg-muted/10">
+         <List className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-20" />
+         <p className="text-muted-foreground font-medium">No exercises found matching your filters.</p>
+         <Button variant="link" size="sm" className="mt-2" onClick={() => window.location.reload()}>
+           Clear all filters
+         </Button>
+      </Card>
     )
   }
   return (
@@ -144,11 +152,12 @@ function ExerciseGrid(props: ExerciseGridProps) {
 function LibraryCard(props: {
   exercise: Exercise
   isRecommended: boolean
+  recommendationReason?: string
   isSelected: boolean
   onSelect: (ex: Exercise) => void
   stats?: ExerciseStats
 }) {
-  const { exercise, isRecommended, isSelected, onSelect, stats } = props
+  const { exercise, isRecommended, recommendationReason, isSelected, onSelect, stats } = props
   const lastAttempt = stats
     ? { accuracy: stats.bestAccuracy, timestamp: stats.lastPracticedMs }
     : undefined
@@ -157,6 +166,7 @@ function LibraryCard(props: {
     <ExerciseCard
       exercise={exercise}
       isRecommended={isRecommended}
+      recommendationReason={recommendationReason}
       isSelected={isSelected}
       onClick={() => onSelect(exercise)}
       lastAttempt={lastAttempt}
