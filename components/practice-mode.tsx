@@ -14,6 +14,7 @@ import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { useProgressStore } from '@/stores/progress.store'
 import { ErrorDisplay } from './practice/error-display'
+import { AudioTroubleshooter } from './practice/AudioTroubleshooter'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
 import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
@@ -40,6 +41,7 @@ export function usePracticeViewState() {
 
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
+  const lastDrillResult = usePracticeStore((s) => s.lastDrillResult)
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
   const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
   const listenIteration = usePracticeStore((s) => s.listenIteration)
@@ -75,6 +77,17 @@ export function PracticeMode() {
   const derived = useDerivedPracticeState()
 
   const sequencePlayer = useMemo(() => new SequencePlayer(player), [player])
+
+  useEffect(() => {
+    if (lastDrillResult?.success) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#c8820a', '#e8a020', '#6a8f62']
+      })
+    }
+  }, [lastDrillResult])
 
   useEffect(() => {
     if (osmd.isReady) {
@@ -244,14 +257,14 @@ function PracticePreviewModal(params: {
 
 function PracticeStatusHeader() {
   const state = usePracticeStore((s) => s.state)
-  const reset = usePracticeStore((s) => s.reset)
+  const start = usePracticeStore((s) => s.start)
 
   const isError = state.status === 'error'
   const isInitializing = state.status === 'initializing'
 
   if (isError) {
     const message = state.error?.message ?? 'Unknown error'
-    return <ErrorDisplay error={message} onReset={reset} />
+    return <AudioTroubleshooter error={message} onRetry={start} />
   }
 
   if (isInitializing) {

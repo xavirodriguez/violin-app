@@ -56,6 +56,7 @@ import { derivePracticeState } from '@/lib/practice/practice-utils'
 export interface PracticeStore {
   state: PracticeStoreState
   practiceState: PracticeState | undefined
+  lastDrillResult: { success: boolean; precision: number } | null
   error: AppError | undefined
   liveObservations: Observation[]
   autoStartEnabled: boolean
@@ -184,6 +185,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     isListeningPhase: false,
     listenIteration: 0,
     countdown: null,
+    lastDrillResult: null,
     analyser: undefined,
     audioLoop: undefined,
     detector: undefined,
@@ -618,9 +620,20 @@ function updateStateFromEvent(params: {
   set((currentState) => {
     const isStale = currentState.sessionToken !== token
     if (isStale || !currentState.practiceState) return {}
+
+    // Side effect for drill results
+    let drillResultUpdate = {}
+    if (event.type === 'DRILL_ATTEMPT_COMPLETED') {
+      drillResultUpdate = { lastDrillResult: event.payload }
+    }
+
     const practiceState = updatePracticeState(currentState.practiceState, event)
     const observations = practiceState ? getUpdatedLiveObservations(practiceState) : []
-    return { practiceState, liveObservations: observations }
+    return {
+      practiceState,
+      liveObservations: observations,
+      ...drillResultUpdate
+    }
   })
 }
 
