@@ -292,6 +292,9 @@ export interface Observation {
   /** Actionable pedagogical advice. */
   readonly tip: string
 
+  /** User-friendly translation or pedagogical explanation (optional). */
+  readonly friendlyTranslation?: string
+
   /** Optional raw data supporting this observation (for debugging). */
   readonly evidence?: Record<string, unknown>
 }
