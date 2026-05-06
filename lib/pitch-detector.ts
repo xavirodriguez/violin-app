@@ -115,19 +115,22 @@ export class PitchDetector {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    const yinBuffer = this.executeYinAnalysis(buffer)
-    const tauEstimate = this.absoluteThreshold(yinBuffer)
+    const { yinBuffer, minTau } = this.executeYinAnalysis(buffer)
+    const tauEstimate = this.absoluteThreshold(yinBuffer, minTau)
 
     return this.validateAndRefineYinResult(yinBuffer, tauEstimate)
   }
 
-  private executeYinAnalysis(buffer: Float32Array): Float32Array {
+  private executeYinAnalysis(buffer: Float32Array): {
+    yinBuffer: Float32Array
+    minTau: number
+  } {
     const audioSamples = buffer
-    const searchSize = this.calculateSearchSize(audioSamples.length)
-    const yinBuffer = this.difference(audioSamples, searchSize)
+    const { minTau, maxTau } = this.calculateSearchRange(audioSamples.length)
+    const yinBuffer = this.difference(audioSamples, maxTau)
 
     this.cumulativeMeanNormalizedDifference(yinBuffer)
-    return yinBuffer
+    return { yinBuffer, minTau }
   }
 
   private validateAndRefineYinResult(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
@@ -135,6 +138,13 @@ export class PitchDetector {
     if (!hasDetectedPitch) {
       const emptyResult = { pitchHz: 0, confidence: 0 }
       return emptyResult
+    }
+
+    // Double check that the tau itself isn't out of the allowed tau range
+    // before interpolating, as YIN can sometimes jump to a minimum just outside.
+    const pitchHz = this.sampleRate / tau
+    if (!this.isFrequencyInRange(pitchHz)) {
+      return { pitchHz: 0, confidence: 0 }
     }
 
     const refinedPitch = this.refineAndValidatePitch(yinBuffer, tau)
@@ -350,13 +360,18 @@ export class PitchDetector {
     this.MIN_FREQUENCY = minHz
   }
 
-  private calculateSearchSize(bufferSize: number): number {
-    const minPeriodSamples = this.sampleRate / this.MIN_FREQUENCY
-    const maxTau = Math.floor(minPeriodSamples)
-    const halfBufferSize = Math.floor(bufferSize / 2)
-    const searchSize = Math.min(maxTau, halfBufferSize)
+  private calculateSearchRange(bufferSize: number): { minTau: number; maxTau: number } {
+    const minPeriodSamples = this.sampleRate / this.MAX_FREQUENCY
+    const maxPeriodSamples = this.sampleRate / this.MIN_FREQUENCY
 
-    return searchSize
+    const minTau = Math.max(2, Math.floor(minPeriodSamples))
+    const maxTau = Math.floor(maxPeriodSamples)
+    const halfBufferSize = Math.floor(bufferSize / 2)
+
+    return {
+      minTau: Math.min(minTau, halfBufferSize),
+      maxTau: Math.min(maxTau, halfBufferSize),
+    }
   }
 
   private refineAndValidatePitch(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
@@ -393,9 +408,9 @@ export class PitchDetector {
    * Calculates the squared difference between the signal and its delayed version for each lag (tau).
    * Effectively a measure of "un-correlation".
    */
-  private difference(buffer: Float32Array, searchSize: number): Float32Array {
-    const yinBuffer = new Float32Array(searchSize)
-    for (let tau = 1; tau < searchSize; tau++) {
+  private difference(buffer: Float32Array, maxTau: number): Float32Array {
+    const yinBuffer = new Float32Array(maxTau + 1)
+    for (let tau = 1; tau <= maxTau; tau++) {
       const squaredDiff = this.calculateSquaredDifferenceSum(buffer, tau)
       yinBuffer[tau] = squaredDiff
     }
@@ -443,8 +458,8 @@ export class PitchDetector {
    * Finds the first local minimum that falls below the `YIN_THRESHOLD`.
    * If no such minimum exists, falls back to the global minimum (less reliable).
    */
-  private absoluteThreshold(yinBuffer: Float32Array): number {
-    const thresholdTau = this.findFirstBelowThreshold(yinBuffer)
+  private absoluteThreshold(yinBuffer: Float32Array, minTau: number): number {
+    const thresholdTau = this.findFirstBelowThreshold(yinBuffer, minTau)
     const foundBelowThreshold = thresholdTau !== -1
 
     if (foundBelowThreshold) {
@@ -452,19 +467,15 @@ export class PitchDetector {
       return result
     }
 
-    const globalMinimumTau = this.findGlobalMinimum(yinBuffer)
+    // fallback to global minimum within range
+    const globalMinimumTau = this.findGlobalMinimum(yinBuffer, minTau)
     return globalMinimumTau
   }
 
-  private findFirstBelowThreshold(yinBuffer: Float32Array): number {
-    for (let tau = 2; tau < yinBuffer.length; tau++) {
-      const currentVal = yinBuffer[tau]
-      const threshold = this.YIN_THRESHOLD
-      const isBelowThreshold = currentVal < threshold
-
-      if (isBelowThreshold) {
-        const localMin = this.localMinimum(yinBuffer, tau)
-        return localMin
+  private findFirstBelowThreshold(yinBuffer: Float32Array, minTau: number): number {
+    for (let tau = minTau; tau < yinBuffer.length; tau++) {
+      if (yinBuffer[tau] < this.YIN_THRESHOLD) {
+        return this.localMinimum(yinBuffer, tau)
       }
     }
     return -1
@@ -482,18 +493,18 @@ export class PitchDetector {
     return localMinIndex
   }
 
-  private findGlobalMinimum(yinBuffer: Float32Array): number {
+  private findGlobalMinimum(yinBuffer: Float32Array, minTau: number): number {
     let minValue = 1
-    let minTau = -1
-    for (let tau = 2; tau < yinBuffer.length; tau++) {
+    let resultMinTau = -1
+    for (let tau = minTau; tau < yinBuffer.length; tau++) {
       const isSmaller = yinBuffer[tau] < minValue
       if (isSmaller) {
         minValue = yinBuffer[tau]
-        minTau = tau
+        resultMinTau = tau
       }
     }
 
-    const resultTau = minTau
+    const resultTau = resultMinTau
     return resultTau
   }
 
