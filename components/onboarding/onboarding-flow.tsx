@@ -248,7 +248,6 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
   useEffect(() => {
     return () => {
       cancelAnimationFrame(rafRef.current)
-      audioManager.cleanup()
     }
   }, [])
 
@@ -268,7 +267,7 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
           sum += dataArray[i] * dataArray[i]
         }
         const rms = Math.sqrt(sum / dataArray.length)
-        setAudioLevel(Math.min(rms * 500, 100)) // Scaled for visualization
+        setAudioLevel(Math.min(rms * 1000, 100)) // More sensitive visualization
         samplesRef.current.push(rms)
 
         rafRef.current = requestAnimationFrame(update)
@@ -280,8 +279,8 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
         const allSamples = samplesRef.current
         const maxRms = Math.max(...allSamples)
 
-        // If the user didn't play anything (max RMS is too low), consider it an error
-        if (maxRms < 0.001) {
+        // Lower threshold to be more lenient with quiet mics
+        if (maxRms < 0.0001) {
           setMicStatus('error')
         } else {
           // Use the 10th percentile as noise floor (rough estimate of background noise)
@@ -419,7 +418,6 @@ function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
   useEffect(() => {
     return () => {
       cancelAnimationFrame(rafRef.current)
-      audioManager.cleanup()
     }
   }, [])
 

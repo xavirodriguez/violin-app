@@ -303,10 +303,8 @@ async function executeAudioInit(params: {
 }) {
   const { set, get, token, deviceId } = params
   try {
-    // Strategy 1: Use flexible constraints (AGC might help quiet mics)
-    const { context } = await audioManager.initialize(deviceId ?? undefined, {
-       autoGainControl: true
-    })
+    // Strategy 1: Standard initialization without AGC to avoid Brave constraint issues
+    const { context } = await audioManager.initialize(deviceId ?? undefined)
     const isStale = isSessionStale(get().state, token)
     if (isStale) return await handleStaleSuccess()
 

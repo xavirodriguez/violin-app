@@ -364,13 +364,13 @@ export class PitchDetector {
     const minPeriodSamples = this.sampleRate / this.MAX_FREQUENCY
     const maxPeriodSamples = this.sampleRate / this.MIN_FREQUENCY
 
-    const minTau = Math.max(2, Math.floor(minPeriodSamples))
-    const maxTau = Math.floor(maxPeriodSamples)
     const halfBufferSize = Math.floor(bufferSize / 2)
+    const minTau = Math.max(2, Math.ceil(minPeriodSamples))
+    const maxTau = Math.min(Math.floor(maxPeriodSamples), halfBufferSize)
 
     return {
-      minTau: Math.min(minTau, halfBufferSize),
-      maxTau: Math.min(maxTau, halfBufferSize),
+      minTau: Math.min(minTau, maxTau),
+      maxTau,
     }
   }
 
