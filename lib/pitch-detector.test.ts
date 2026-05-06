@@ -62,4 +62,30 @@ describe('PitchDetector', () => {
     // Should reject values > 20000
     expect(() => detector.setMaxFrequency(25000)).toThrow(AppError)
   })
+
+  it('should normalize buffers correctly', () => {
+    const buffer = new Float32Array([0.1, -0.2, 0.5, -0.4])
+    const normalized = detector.normalize(buffer)
+
+    expect(normalized[2]).toBeCloseTo(1.0, 5)
+    expect(normalized[1]).toBeCloseTo(-0.4, 5)
+    expect(normalized.length).toBe(buffer.length)
+  })
+
+  it('should detect pitch in very quiet signals when adaptive is enabled', () => {
+    // Very quiet signal (RMS < 0.01)
+    const quietAmplitude = 0.0001
+    const buffer = createSineWave(440, 0.1, quietAmplitude)
+    const rms = detector.calculateRMS(buffer)
+    expect(rms).toBeLessThan(0.01)
+
+    // Without adaptive, should be 0
+    const resultNormal = detector.detectPitchWithValidation(buffer, 0.01, false)
+    expect(resultNormal.pitchHz).toBe(0)
+
+    // With adaptive, should detect 440 Hz
+    const resultAdaptive = detector.detectPitchWithValidation(buffer, 0.01, true)
+    expect(resultAdaptive.pitchHz).toBeCloseTo(440, 1)
+    expect(resultAdaptive.confidence).toBeGreaterThan(0.9)
+  })
 })

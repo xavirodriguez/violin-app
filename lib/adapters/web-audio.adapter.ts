@@ -194,4 +194,14 @@ export class PitchDetectorAdapter implements PitchDetectionPort {
   calculateRMS(frame: Float32Array): number {
     return this.detector.calculateRMS(frame)
   }
+
+  /**
+   * Normalizes an audio buffer so that its peak amplitude is 1.0.
+   *
+   * @param buffer - The raw audio data.
+   * @returns A new Float32Array with normalized samples.
+   */
+  normalize(buffer: Float32Array): Float32Array {
+    return this.detector.normalize(buffer)
+  }
 }

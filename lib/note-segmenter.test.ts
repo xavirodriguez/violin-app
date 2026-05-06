@@ -215,4 +215,28 @@ describe('NoteSegmenter', () => {
     }) as Extract<SegmenterEvent, { type: 'OFFSET' }>
     expect(offset2.segment.segmentId).toBe('seg-1')
   })
+
+  it('should detect onset even with weak normalized signal', () => {
+    const segmenter = new NoteSegmenter(options)
+
+    // Extremely quiet signal that has been normalized (marked by isNormalized: true)
+    const weakFrame: PitchedFrame = {
+      kind: 'pitched',
+      timestamp: 10 as TimestampMs,
+      rms: 1e-10,
+      confidence: 0.9,
+      noteName: 'A4' as MusicalNoteName,
+      pitchHz: 440 as Hz,
+      cents: 0 as Cents,
+      isNormalized: true,
+    }
+
+    segmenter.processFrame(weakFrame)
+
+    const onset = segmenter.processFrame({ ...weakFrame, timestamp: 60 as TimestampMs })
+    expect(onset?.type).toBe('ONSET')
+    if (onset?.type === 'ONSET') {
+      expect(onset.noteName).toBe('A4')
+    }
+  })
 })
