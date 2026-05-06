@@ -245,6 +245,13 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
   const rafRef = useRef<number>(0)
   const samplesRef = useRef<number[]>([])
 
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      audioManager.cleanup()
+    }
+  }, [])
+
   const startTest = async () => {
     setIsTesting(true)
     setMicStatus('testing')
@@ -270,10 +277,19 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
 
       setTimeout(() => {
         cancelAnimationFrame(rafRef.current)
-        const avgRms =
-          samplesRef.current.reduce((a, b) => a + b, 0) / (samplesRef.current.length || 1)
-        setCalibration(avgRms)
-        setMicStatus('success')
+        const allSamples = samplesRef.current
+        const maxRms = Math.max(...allSamples)
+
+        // If the user didn't play anything (max RMS is too low), consider it an error
+        if (maxRms < 0.001) {
+          setMicStatus('error')
+        } else {
+          // Use the 10th percentile as noise floor (rough estimate of background noise)
+          const sorted = [...allSamples].sort((a, b) => a - b)
+          const noiseFloor = sorted[Math.floor(allSamples.length * 0.1)] || 0.01
+          setCalibration(noiseFloor)
+          setMicStatus('success')
+        }
         setIsTesting(false)
       }, 3000)
     } catch (err) {
@@ -365,7 +381,8 @@ function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
 
       const update = () => {
         analyser.getFloatTimeDomainData(dataArray)
-        const result = detector.detectPitch(dataArray)
+        // Use adaptive mode to help with weak signals during calibration
+        const result = detector.detectPitchWithValidation(dataArray, 0.01, true)
 
         if (result.pitchHz > 0 && result.confidence > 0.8) {
           try {
@@ -400,7 +417,10 @@ function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
   }
 
   useEffect(() => {
-    return () => cancelAnimationFrame(rafRef.current)
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      audioManager.cleanup()
+    }
   }, [])
 
   return (

@@ -29,6 +29,10 @@ describe('PitchDetector', () => {
     expect(defaultDetector.detectPitch(lowBuffer).pitchHz).toBe(0)
 
     // 1500 Hz is above provided maxFrequency (1400)
+    // Note: If the fundamental is out of range, the detector should not
+    // find a fake pitch by picking a sub-harmonic that is in range.
+    // However, YIN is periodic and will find 750Hz if forced to search in that range.
+    // We expect 0 here because the actual signal is out of range.
     const highBuffer = createSineWave(1500, 0.1)
     expect(defaultDetector.detectPitch(highBuffer).pitchHz).toBe(0)
   })
@@ -87,5 +91,28 @@ describe('PitchDetector', () => {
     const resultAdaptive = detector.detectPitchWithValidation(buffer, 0.01, true)
     expect(resultAdaptive.pitchHz).toBeCloseTo(440, 1)
     expect(resultAdaptive.confidence).toBeGreaterThan(0.9)
+  })
+
+  it('should detect the fundamental even with strong high-frequency harmonics', () => {
+    // Fundamental A4 (440 Hz)
+    const freq1 = 440
+    // Strong harmonic at ~5280 Hz (12th harmonic)
+    // This harmonic is outside the MAX_FREQUENCY (3000 Hz)
+    const freq2 = 5280
+    const durationSec = 0.1
+    const size = Math.floor(sampleRate * durationSec)
+    const buffer = new Float32Array(size)
+
+    for (let i = 0; i < size; i++) {
+      const t = i / sampleRate
+      // Harmonic is strong but realistic (fundamental is dominant)
+      buffer[i] = 0.7 * Math.sin(2 * Math.PI * freq1 * t) + 0.3 * Math.sin(2 * Math.PI * freq2 * t)
+    }
+
+    const result = detector.detectPitch(buffer)
+
+    // Should detect the fundamental and ignore the harmonic because it's outside search range
+    expect(result.pitchHz).toBeCloseTo(440, 0)
+    expect(result.confidence).toBeGreaterThan(0.8)
   })
 })
