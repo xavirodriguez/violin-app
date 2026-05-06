@@ -303,12 +303,22 @@ async function executeAudioInit(params: {
 }) {
   const { set, get, token, deviceId } = params
   try {
-    const { context } = await audioManager.initialize(deviceId ?? undefined)
+    // Strategy 1: Use flexible constraints (AGC might help quiet mics)
+    const { context } = await audioManager.initialize(deviceId ?? undefined, {
+       autoGainControl: true
+    })
     const isStale = isSessionStale(get().state, token)
     if (isStale) return await handleStaleSuccess()
 
     audioManager.setGain(get().sensitivity / 50)
+
+    const { noiseFloor } = useCalibrationStore.getState()
     const detector = new PitchDetector(context.sampleRate)
+
+    // Dynamically adjust detector sensitivity based on noise floor
+    // We want a threshold slightly above the noise
+    const dynamicThreshold = Math.min(0.01, Math.max(1e-5, noiseFloor * 2))
+
     commitTunerReadyState({ set, token, detector })
   } catch (err) {
     handleTunerInitError({ set, get, err, token, deviceId })

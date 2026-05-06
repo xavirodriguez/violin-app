@@ -249,7 +249,17 @@ export class PitchDetector {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    const result = this.detectPitch(finalBuffer)
+    let result = this.detectPitch(finalBuffer)
+
+    // IMPROVEMENT: Use Zero-Crossing as a secondary check for high-frequency notes
+    // or as a rescue for low-confidence YIN results when the signal is clearly there.
+    if (result.confidence < 0.8 && result.pitchHz > 0) {
+      const zcHz = this.detectZeroCrossing(finalBuffer)
+      // If Zero-crossing and YIN agree within 5%, boost confidence
+      if (Math.abs(zcHz - result.pitchHz) / result.pitchHz < 0.05) {
+        result.confidence = Math.min(0.85, result.confidence + 0.1)
+      }
+    }
 
     if (result.pitchHz > 0) {
       pitchDebugBus.emit({
@@ -523,6 +533,32 @@ export class PitchDetector {
     const correction = isDivisible ? (s2 - s0) / denominator : 0
 
     return correction
+  }
+
+  /**
+   * Simple Zero-Crossing algorithm to estimate frequency.
+   *
+   * @remarks
+   * Not as robust as YIN for complex signals, but very fast and useful as a
+   * second opinion for high-confidence clean signals.
+   *
+   * @param buffer - Audio samples.
+   * @returns Frequency in Hz.
+   */
+  detectZeroCrossing(buffer: Float32Array): number {
+    let crossings = 0
+    for (let i = 1; i < buffer.length; i++) {
+      if (
+        (buffer[i - 1] < 0 && buffer[i] >= 0) ||
+        (buffer[i - 1] > 0 && buffer[i] <= 0)
+      ) {
+        crossings++
+      }
+    }
+
+    const numCycles = crossings / 2
+    const frequency = (numCycles * this.sampleRate) / buffer.length
+    return frequency
   }
 }
 

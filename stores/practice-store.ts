@@ -106,22 +106,25 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     if (get().listenImitateActive) {
       set({ isListeningPhase: true, listenIteration: 1 })
 
-      // En un entorno real, obtendríamos la URL del ExerciseAudioMap
-      // Por ahora usamos una URL placeholder
-      const mockAudioUrl = '/audio/placeholders/exercise_reference.mp3'
+      const exercise = ready.exercise
+      const bpm = get().tempoConfig.bpm
+
+      // Calculate real duration of the exercise in ms
+      const exerciseDurationMs = exercise.notes.reduce(
+        (total, note) => total + getDurationMs(note.duration, bpm),
+        0
+      )
+
+      // Add some buffer for overhead/start
+      const playbackWaitMs = exerciseDurationMs + 500
 
       try {
-        // Activar metrónomo si está configurado
-        const { tempoConfig } = get()
-        // Nota: asumiendo que audioStore.toggleMetronome o similar debería usarse aquí
-        // pero por simplicidad en este MVP de la feature:
-
         // Reproducir 2 veces (default)
         for (let i = 1; i <= 2; i++) {
           set({ listenIteration: i })
-          // await audioReferenceService.playPassage(mockAudioUrl)
-          // MOCK: simulate playback time since asset doesn't exist
-          await new Promise((r) => setTimeout(r, 2000))
+          // If we had a real reference player service, we would start it here
+          // For now, we wait the actual duration of the exercise music
+          await new Promise((r) => setTimeout(r, playbackWaitMs))
           if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
         }
 
@@ -720,7 +723,8 @@ function beginAudioInitialization(set: (fn: (s: PracticeStore) => Partial<Practi
 async function acquireAudioResources() {
   const tunerState = useTunerStore.getState()
   const deviceId = tunerState.deviceId || undefined
-  const resources = await audioManager.initialize(deviceId)
+  // Strategy 1: Enable AGC for practice mode too as it might help quiet mics
+  const resources = await audioManager.initialize(deviceId, { autoGainControl: true })
   const isOk = !!resources
 
   if (!isOk) {

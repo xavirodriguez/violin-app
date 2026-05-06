@@ -6,6 +6,7 @@ import { useTunerStore } from '@/stores/tuner-store'
 import { Badge } from '@/components/ui/badge'
 import { ArrowUp, ArrowDown, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AudioInputMeter } from '@/components/ui/audio-input-meter'
 
 /**
  * TunerDisplay
@@ -14,7 +15,7 @@ import { cn } from '@/lib/utils'
  * including a precision gauge and actionable pedagogical feedback.
  */
 export function TunerDisplay() {
-  const { state, thresholds } = useTunerStore()
+  const { state, thresholds, analyser } = useTunerStore()
 
   if (state.kind !== 'DETECTED' && state.kind !== 'LISTENING') return null
 
@@ -87,6 +88,10 @@ export function TunerDisplay() {
           feedback.color
         )}>
           {feedback.message}
+        </div>
+
+        <div className="w-full max-w-xs pt-4">
+           <AudioInputMeter analyser={analyser} label="Input Level" />
         </div>
 
         {isDetected && (
