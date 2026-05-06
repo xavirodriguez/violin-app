@@ -65,7 +65,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const { devices, deviceId, sensitivity, loadDevices, setDeviceId, setSensitivity } =
     useTunerStore()
   const { sessions } = useAnalyticsStore()
-  const { noiseFloor, lastCalibratedAt, reset: resetCalibration } = useCalibrationStore()
+  const { noiseFloor, lastCalibratedAt, calibrate, reset: resetCalibration } = useCalibrationStore()
 
   const {
     language,
@@ -81,6 +81,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   } = usePreferencesStore()
 
   const t = useTranslation(language)
+  const [isCalibrating, setIsCalibrated] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -214,13 +215,27 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
               </div>
               <div className="text-right">
                  <div className="font-mono font-bold text-sm">{(noiseFloor * 1000).toFixed(2)} units</div>
-                 <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={resetCalibration}>
-                   Recalibrate
+                 <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-[10px] disabled:opacity-50"
+                    disabled={isCalibrating}
+                    onClick={async () => {
+                      setIsCalibrated(true)
+                      try {
+                        await calibrate()
+                      } finally {
+                        setIsCalibrated(false)
+                      }
+                    }}
+                  >
+                   {isCalibrating ? 'Calibrating...' : 'Recalibrate'}
                  </Button>
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground px-1 italic">
               Calibration helps the engine distinguish your violin from background noise.
+              Make sure your room is silent before clicking Recalibrate.
             </p>
           </div>
 

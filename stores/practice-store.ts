@@ -723,7 +723,8 @@ function beginAudioInitialization(set: (fn: (s: PracticeStore) => Partial<Practi
 async function acquireAudioResources() {
   const tunerState = useTunerStore.getState()
   const deviceId = tunerState.deviceId || undefined
-  const resources = await audioManager.initialize(deviceId)
+  // Strategy 1: Enable AGC for practice mode too as it might help quiet mics
+  const resources = await audioManager.initialize(deviceId, { autoGainControl: true })
   const isOk = !!resources
 
   if (!isOk) {

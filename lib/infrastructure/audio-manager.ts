@@ -48,14 +48,18 @@ export class AudioManager {
    * Initializes the audio pipeline.
    *
    * @param deviceId - Optional ID of the microphone to use.
+   * @param options - Optional configuration for audio constraints.
    * @returns A promise that resolves to the initialized audio resources.
    * @throws AppError if microphone access is denied or hardware fails.
    */
-  async initialize(deviceId?: string): Promise<AudioResources> {
+  async initialize(
+    deviceId?: string,
+    options: { autoGainControl?: boolean } = {}
+  ): Promise<AudioResources> {
     await this.cleanup()
 
     try {
-      this.stream = await this.acquireMicStream(deviceId)
+      this.stream = await this.acquireMicStream(deviceId, options)
       this.initializeContextNodes()
       this.buildAudioGraph()
       return this.getAudioResources()
@@ -147,8 +151,47 @@ export class AudioManager {
     }
   }
 
-  private async acquireMicStream(deviceId?: string): Promise<MediaStream> {
-    const constraints = this.getAudioConstraints(deviceId)
+  /**
+   * Calibrates the noise floor by measuring average RMS over a short period.
+   *
+   * @param durationMs - Time to measure in milliseconds.
+   * @returns Average RMS value.
+   */
+  async calibrateNoiseFloor(durationMs = 1000): Promise<number> {
+    if (!this.isActive() || !this.analyser) {
+       throw new Error('AudioManager not active')
+    }
+
+    const dataArray = new Float32Array(this.analyser.fftSize)
+    let totalRms = 0
+    let count = 0
+    const startTime = Date.now()
+
+    return new Promise((resolve) => {
+      const measure = () => {
+        if (Date.now() - startTime > durationMs) {
+          resolve(totalRms / count)
+          return
+        }
+
+        this.analyser!.getFloatTimeDomainData(dataArray)
+        let sum = 0
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i]
+        }
+        totalRms += Math.sqrt(sum / dataArray.length)
+        count++
+        requestAnimationFrame(measure)
+      }
+      measure()
+    })
+  }
+
+  private async acquireMicStream(
+    deviceId?: string,
+    options: { autoGainControl?: boolean } = {}
+  ): Promise<MediaStream> {
+    const constraints = this.getAudioConstraints(deviceId, options)
     const stream = await navigator.mediaDevices.getUserMedia(constraints)
     const isValid = !!stream
     if (!isValid) {
@@ -157,11 +200,14 @@ export class AudioManager {
     return stream
   }
 
-  private getAudioConstraints(deviceId?: string): MediaStreamConstraints {
+  private getAudioConstraints(
+    deviceId?: string,
+    options: { autoGainControl?: boolean } = {}
+  ): MediaStreamConstraints {
     const config = {
       echoCancellation: false,
       noiseSuppression: false,
-      autoGainControl: false,
+      autoGainControl: options.autoGainControl ?? false,
     }
 
     return {
