@@ -189,7 +189,8 @@ export class NoteSegmenter {
    */
   processFrame(frame: TechniqueFrame): SegmenterEvent | undefined {
     const isSignalPresent = this.isSignal(frame)
-    const isSilence = frame.rms < this.options.maxRmsSilence
+    // If we have a valid signal (even if weak and normalized), it's not silence.
+    const isSilence = frame.rms < this.options.maxRmsSilence && !isSignalPresent
     const now = frame.timestamp
     const context = { frame, isSignalPresent, isSilence, now }
 
@@ -198,6 +199,7 @@ export class NoteSegmenter {
       segmenterState: this.state.kind,
       isSignal: isSignalPresent,
       isSilence,
+      isNormalized: frame.isNormalized,
       timestamp: now,
     })
 
@@ -222,7 +224,11 @@ export class NoteSegmenter {
   }
 
   private isSignal(frame: TechniqueFrame): boolean {
-    const isRmsSignal = frame.rms > this.options.minRms
+    // If signal was rescued via normalization, we are more lenient with RMS requirements
+    const isExtremelyWeak = frame.rms < 1e-6
+    const minRms = isExtremelyWeak && frame.isNormalized ? 1e-12 : this.options.minRms
+
+    const isRmsSignal = frame.rms > minRms
     const isPitched = frame.kind === 'pitched'
     const hasConfidence = frame.confidence > this.options.minConfidence
     const isPitchSignal = isPitched && hasConfidence

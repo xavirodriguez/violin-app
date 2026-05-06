@@ -101,7 +101,8 @@ export function TunerMode() {
       analyser.getFloatTimeDomainData(buffer)
 
       // Run pitch detection with domain-specific validation (e.g., confidence thresholds)
-      const result = detector.detectPitchWithValidation(buffer)
+      // Adaptive mode enabled to rescue low signals (Strategy 2)
+      const result = detector.detectPitchWithValidation(buffer, 0.01, true)
 
       // Update the store. The store handles thresholding and scientific pitch mapping.
       updatePitch(result.pitchHz, result.confidence)

@@ -52,6 +52,8 @@ export interface RawPitchEvent {
   rms: number
   /** The timestamp when the event was generated. */
   timestamp: number
+  /** Whether the frame was normalized due to weak signal. */
+  isNormalized?: boolean
 }
 
 /**
@@ -123,19 +125,40 @@ function pushFrameToQueue(params: {
   detector: PitchDetectionPort
 }): void {
   const { state, frame, detector } = params
-  const detection = detector.detect(frame)
   const rmsValue = detector.calculateRMS(frame)
   const currentTime = Date.now()
+
+  // ADAPTIVE SENSITIVITY: If signal is present but extremely weak (as seen in user logs ~1e-10),
+  // normalize the buffer before pitch detection.
+  // 0.01 is the default threshold. We rescue anything down to 1e-12.
+  let detectionFrame = frame
+  let isNormalized = false
+
+  if (rmsValue < 0.01 && rmsValue > 1e-12) {
+    if (typeof detector.normalize === 'function') {
+      detectionFrame = detector.normalize(frame)
+      isNormalized = true
+      pitchDebugBus.emit({
+        stage: 'yin_normalized',
+        originalRms: rmsValue,
+        timestamp: currentTime,
+      })
+    }
+  }
+
+  const detection = detector.detect(detectionFrame)
 
   state.queue.push({
     ...detection,
     rms: rmsValue,
     timestamp: currentTime,
+    isNormalized: isNormalized,
   })
 
   pitchDebugBus.emit({
     stage: 'raw_audio',
     rms: rmsValue,
+    isNormalized,
     timestamp: currentTime,
   })
 
@@ -538,6 +561,7 @@ function createUnpitchedFrame(raw: RawPitchEvent): TechniqueFrame {
     timestamp: raw.timestamp as TimestampMs,
     rms: raw.rms,
     confidence: raw.confidence,
+    isNormalized: raw.isNormalized,
   }
 
   const result = unpitchedFrame
@@ -563,6 +587,7 @@ function createPitchedFrame(params: {
     rms: raw.rms,
     confidence: raw.confidence,
     noteName: musicalNote,
+    isNormalized: raw.isNormalized,
   }
 
   return frame
@@ -655,7 +680,13 @@ function isDetectionHighQuality(params: {
   options: NoteStreamOptions
 }): boolean {
   const { raw, noteName, cents, options } = params
-  const hasRms = raw.rms >= options.minRms
+
+  // If signal was rescued via normalization, we are more lenient with RMS requirements
+  // but still require good confidence.
+  const isExtremelyWeak = raw.rms < 1e-6
+  const rmsThreshold = isExtremelyWeak ? 1e-12 : options.minRms
+
+  const hasRms = raw.rms >= rmsThreshold
   const hasConfidence = raw.confidence >= options.minConfidence
   const isPitched = !!noteName && Math.abs(cents) <= DETECTION_PREFILTER_CENTS_TOLERANCE
 

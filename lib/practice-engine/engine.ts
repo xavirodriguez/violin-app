@@ -216,7 +216,7 @@ function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): No
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
     requiredHoldTime: scaledHoldTime,
     minRms: 0.01,
-    minConfidence: 0.85,
+    minConfidence: 0.8, // Slightly more lenient to account for weak signals
   }
 
   return options

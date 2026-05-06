@@ -7,6 +7,8 @@ import { PracticeStatus } from '@/lib/domain/practice'
 import { MetronomeControl } from '@/components/ui/metronome-control'
 import { ReferencePlayer } from '@/components/ui/reference-player'
 import { LoopSelector } from '@/components/ui/loop-selector'
+import { AudioInputMeter } from '@/components/ui/audio-input-meter'
+import { usePracticeStore } from '@/stores/practice-store'
 
 interface PracticeControlsProps {
   status: PracticeStatus
@@ -45,6 +47,8 @@ export function PracticeControls(props: PracticeControlsProps) {
     totalNotes,
   } = props
 
+  const analyser = usePracticeStore((s) => s.analyser)
+
   return (
     <Card className="sticky top-0 z-40 space-y-4 p-4 shadow-md md:relative md:shadow-none">
       <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2 md:overflow-visible md:pb-0">
@@ -71,7 +75,12 @@ export function PracticeControls(props: PracticeControlsProps) {
         </div>
 
         {hasExercise && (
-          <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+          <div className="flex flex-col gap-2 min-w-[200px]">
+            <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+            {status === 'listening' && (
+               <AudioInputMeter analyser={analyser} label="Input Level" />
+            )}
+          </div>
         )}
       </div>
     </Card>
