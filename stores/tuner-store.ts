@@ -150,7 +150,9 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
       if (!isEligible) return
 
       const token = state.sessionToken
-      const hasSignal = confidence > 0.8 && pitch > 0
+      // Tuner mode is more lenient with confidence when signal is rescued
+      const minConfidence = 0.75
+      const hasSignal = confidence > minConfidence && pitch > 0
       const params = { pitch, confidence, token }
 
       if (hasSignal) {

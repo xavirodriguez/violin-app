@@ -33,6 +33,8 @@ interface BaseFrame {
   readonly rms: number
   /** The confidence of the pitch detection algorithm (0-1). */
   readonly confidence: number
+  /** Whether the frame was normalized due to weak signal. */
+  readonly isNormalized?: boolean
 }
 
 export interface PitchedFrame extends BaseFrame {

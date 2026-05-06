@@ -17,6 +17,8 @@ export interface PitchDetectionResult {
   pitchHz: number
   /** Confidence level from 0.0 to 1.0 */
   confidence: number
+  /** Whether the signal was normalized due to weak signal. */
+  isNormalized?: boolean
 }
 
 /**
@@ -159,6 +161,33 @@ export class PitchDetector {
   }
 
   /**
+   * Normalizes an audio buffer so that its peak amplitude is 1.0.
+   *
+   * @remarks
+   * This is useful for detecting pitch in very quiet signals that would otherwise
+   * be rejected by RMS or confidence thresholds.
+   *
+   * @param buffer - The raw audio data.
+   * @returns A new Float32Array with normalized samples, or the original if it was silent.
+   */
+  normalize(buffer: Float32Array): Float32Array {
+    let max = 0
+    for (let i = 0; i < buffer.length; i++) {
+      const abs = Math.abs(buffer[i])
+      if (abs > max) max = abs
+    }
+
+    if (max === 0 || max === 1) return buffer
+
+    const normalized = new Float32Array(buffer.length)
+    const factor = 1.0 / max
+    for (let i = 0; i < buffer.length; i++) {
+      normalized[i] = buffer[i] * factor
+    }
+    return normalized
+  }
+
+  /**
    * Utility method to detect if there's enough signal to attempt pitch detection.
    *
    * @remarks
@@ -188,15 +217,29 @@ export class PitchDetector {
    *
    * @param buffer - The audio data to analyze.
    * @param rmsThreshold - The RMS threshold to use for the signal check.
+   * @param adaptive - If true, will attempt to normalize very weak signals to rescue detection.
    * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
    * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
    */
   detectPitchWithValidation(
     buffer: Float32Array,
     rmsThreshold = this.DEFAULT_RMS_THRESHOLD,
+    adaptive = false,
   ): PitchDetectionResult {
     const rms = this.calculateRMS(buffer)
-    if (rms <= rmsThreshold) {
+    let finalBuffer = buffer
+    let isNormalized = false
+
+    // Extremely low signals (like 1e-10 in user logs) need extreme measures
+    if (adaptive && rms < rmsThreshold && rms > 1e-12) {
+      finalBuffer = this.normalize(buffer)
+      isNormalized = true
+      pitchDebugBus.emit({
+        stage: 'yin_normalized',
+        originalRms: rms,
+        timestamp: Date.now(),
+      })
+    } else if (rms <= rmsThreshold) {
       pitchDebugBus.emit({
         stage: 'yin_silent',
         rms,
@@ -206,7 +249,7 @@ export class PitchDetector {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    const result = this.detectPitch(buffer)
+    const result = this.detectPitch(finalBuffer)
 
     if (result.pitchHz > 0) {
       pitchDebugBus.emit({
@@ -214,6 +257,7 @@ export class PitchDetector {
         pitchHz: result.pitchHz,
         confidence: result.confidence,
         rms,
+        isNormalized,
         timestamp: Date.now(),
       })
     } else if (result.confidence > 0) {
@@ -221,6 +265,7 @@ export class PitchDetector {
         stage: 'yin_no_pitch',
         rms,
         confidence: result.confidence,
+        isNormalized,
         timestamp: Date.now(),
       })
     }
