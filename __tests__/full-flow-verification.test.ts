@@ -89,7 +89,7 @@ describe('Full Flow Verification Checklist', () => {
 
     // 2.2 Audio Initialization
     // Check if audioManager.initialize was called with deviceId from TunerStore
-    expect(audioManager.initialize).toHaveBeenCalledWith('test-device')
+    expect(audioManager.initialize).toHaveBeenCalledWith('test-device', { autoGainControl: true })
 
     // 2.2 Tuner Store verification (according to checklist)
     const tunerState = useTunerStore.getState()

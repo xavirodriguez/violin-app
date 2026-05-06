@@ -17,6 +17,8 @@ import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port'
 import { createPitchDetectorForDifficulty } from '@/lib/pitch-detector'
+import { SequencePlayer } from '@/lib/sequence-player'
+import { WebAudioPlayerAdapter } from '@/lib/adapters/web-audio-player.adapter'
 import {
   WebAudioFrameAdapter,
   WebAudioLoopAdapter,
@@ -73,12 +75,14 @@ export interface PracticeStore {
   listenImitateActive: boolean
   isListeningPhase: boolean
   listenIteration: number
+  listenIterations: number
   countdown: number | null
 
   loadExercise: (exercise: Exercise) => Promise<void>
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: TempoConfig) => void
   setListenImitateActive: (active: boolean) => void
+  setListenIterations: (count: number) => void
   setAutoStart: (enabled: boolean) => void
   jumpToNote: (index: number) => void
   initializeAudio: () => Promise<void>
@@ -109,34 +113,33 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
       const exercise = ready.exercise
       const bpm = get().tempoConfig.bpm
 
-      // Calculate real duration of the exercise in ms
-      const exerciseDurationMs = exercise.notes.reduce(
-        (total, note) => total + getDurationMs(note.duration, bpm),
-        0
-      )
+      const context = audioManager.getContext()
+      if (context) {
+        const player = new WebAudioPlayerAdapter(context)
+        const sequencePlayer = new SequencePlayer(player)
 
-      // Add some buffer for overhead/start
-      const playbackWaitMs = exerciseDurationMs + 500
+        try {
+          // Reproducir N veces
+          const iterations = get().listenIterations
+          for (let i = 1; i <= iterations; i++) {
+            set({ listenIteration: i })
+            await sequencePlayer.play(exercise, undefined, { bpm, mode: 'expressive' })
+            if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
+          }
 
-      try {
-        // Reproducir 2 veces (default)
-        for (let i = 1; i <= 2; i++) {
-          set({ listenIteration: i })
-          // If we had a real reference player service, we would start it here
-          // For now, we wait the actual duration of the exercise music
-          await new Promise((r) => setTimeout(r, playbackWaitMs))
-          if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
+          // Cuenta atrás
+          for (let i = 3; i >= 1; i--) {
+            set({ countdown: i })
+            await new Promise((r) => setTimeout(r, 1000))
+            if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
+          }
+        } catch (err) {
+          console.warn('[PracticeStore] Listen phase failed or cancelled', err)
+        } finally {
+          sequencePlayer.stop()
+          set({ isListeningPhase: false, countdown: null })
         }
-
-        // Cuenta atrás
-        for (let i = 3; i >= 1; i--) {
-          set({ countdown: i })
-          await new Promise((r) => setTimeout(r, 1000))
-          if (get().sessionToken !== token && get().isStarting === false) return // Cancelado
-        }
-      } catch (err) {
-        console.warn('[PracticeStore] Listen phase failed or cancelled', err)
-      } finally {
+      } else {
         set({ isListeningPhase: false, countdown: null })
       }
     }
@@ -188,6 +191,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
     listenImitateActive: false,
     isListeningPhase: false,
     listenIteration: 0,
+    listenIterations: 2,
     countdown: null,
     lastDrillResult: null,
     analyser: undefined,
@@ -234,6 +238,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => {
 
     setListenImitateActive: (active) => {
       set({ listenImitateActive: active })
+    },
+
+    setListenIterations: (count) => {
+      const iterations = Math.max(1, Math.min(4, count))
+      set({ listenIterations: iterations })
     },
 
     jumpToNote: (index) => {

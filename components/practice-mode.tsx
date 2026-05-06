@@ -116,6 +116,10 @@ export function PracticeMode() {
           if (clickedNote) {
             const freq = NoteAudioService.getFrequencyFromTargetNote(clickedNote)
             player.playNote(freq, 1500)
+            toast.info(`Listening to ${clickedNote.pitch}`, {
+              icon: '♪',
+              duration: 1500,
+            })
           }
 
           // Also set as start of loop if shift not pressed
