@@ -690,8 +690,8 @@ function isDetectionHighQuality(params: {
 
   // If signal was rescued via normalization, we are more lenient with RMS requirements
   // but still require good confidence.
-  const isExtremelyWeak = raw.rms < 1e-6
-  const rmsThreshold = isExtremelyWeak ? 1e-12 : options.minRms
+  const isRescued = !!raw.isNormalized
+  const rmsThreshold = isRescued ? 1e-12 : options.minRms
 
   const hasRms = raw.rms >= rmsThreshold
   const hasConfidence = raw.confidence >= options.minConfidence

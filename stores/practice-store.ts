@@ -446,7 +446,7 @@ function createRunnerDeps(params: {
     centsTolerance: tolerance,
     bpm: get().tempoConfig.bpm,
     loopRegion: get().loopRegion,
-    minRms: Math.max(0.01, noiseFloor * 1.5), // Apply calibration
+    minRms: Math.max(0.01, noiseFloor * 1.2), // Apply calibration
   }
 
   return deps

@@ -266,11 +266,12 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
   for await (const raw of stream) {
     if (signal.aborted) break
 
-    const currentIndex = getState().currentNoteIndex
-    const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? getState().scoreLength - 1
+    const state = getState()
+    const currentIndex = state.currentNoteIndex
+    const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? state.scoreLength - 1
 
     // Check if we reached the end of the loop or exercise
-    const isExerciseFinished = currentIndex >= getState().scoreLength
+    const isExerciseFinished = currentIndex >= state.scoreLength
     const isLoopFinished = isLooping && currentIndex > loopEndIndex
 
     if (isExerciseFinished || isLoopFinished) {
@@ -289,6 +290,7 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
         const goalStreak = ctx.loopRegion?.drillTarget?.consecutiveRequired ?? 1
 
         if (ctx.loopRegion?.drillTarget && currentStreak >= goalStreak) {
+          yield* finalizeSession(updateState)
           break
         }
 
@@ -299,14 +301,24 @@ async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<Practi
       }
     }
 
-    const targetNote = ctx.exercise.notes[getState().currentNoteIndex] as TargetNote
+    // Process current frame
+    const freshState = getState()
+    const targetNote = ctx.exercise.notes[freshState.currentNoteIndex] as TargetNote
+    if (!targetNote) {
+      yield* finalizeSession(updateState)
+      break
+    }
+
     const context = {
       targetNote,
-      currentIndex: getState().currentNoteIndex,
+      currentIndex: freshState.currentNoteIndex,
       sessionStartTime: startTime,
     }
+
     const currentOptions = resolveOptions(getOptions)
-    for (const event of processRawPitchEvent({ ...analysis, raw, context, options: currentOptions })) {
+    const pipelineEvents = processRawPitchEvent({ ...analysis, raw, context, options: currentOptions })
+
+    for (const event of pipelineEvents) {
       const engineEvent = mapPipelineEventToEngineEvent(event)
       if (engineEvent) {
         updateState(engineEvent)

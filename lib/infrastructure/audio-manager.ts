@@ -43,8 +43,7 @@ export class AudioManager {
   private analyser: AnalyserNode | undefined = undefined
   private source: MediaStreamAudioSourceNode | undefined = undefined
   private gainNode: GainNode | undefined = undefined
-  private initializationPromise: Promise<AudioResources> | undefined = undefined
-  private cleanupPromise: Promise<void> | undefined = undefined
+  private operationQueue: Promise<unknown> = Promise.resolve()
 
   /**
    * Initializes the audio pipeline.
@@ -58,45 +57,42 @@ export class AudioManager {
     deviceId?: string,
     options: { autoGainControl?: boolean } = {}
   ): Promise<AudioResources> {
-    if (this.initializationPromise) {
-      return this.initializationPromise
-    }
-
-    this.initializationPromise = (async () => {
+    const operation = (async () => {
+      await this.operationQueue.catch(() => {})
       try {
-        await this.cleanup()
+        await this.executeCleanup()
         this.stream = await this.acquireMicStream(deviceId, options)
         this.initializeContextNodes()
         this.buildAudioGraph()
         return this.getAudioResources()
       } catch (err) {
-        await this.cleanup()
+        await this.executeCleanup()
         throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
-      } finally {
-        this.initializationPromise = undefined
       }
     })()
 
-    return this.initializationPromise
+    this.operationQueue = operation
+    return operation
   }
 
   /**
    * Releases all audio resources and closes the context.
    */
   async cleanup(): Promise<void> {
-    if (this.cleanupPromise) {
-      return this.cleanupPromise
-    }
-
-    this.cleanupPromise = (async () => {
-      this.stopMediaTracks()
-      this.disconnectAudioNodes()
-      await this.closeAudioContext()
-      this.resetResourceReferences()
-      this.cleanupPromise = undefined
+    const operation = (async () => {
+      await this.operationQueue.catch(() => {})
+      await this.executeCleanup()
     })()
 
-    return this.cleanupPromise
+    this.operationQueue = operation
+    return operation
+  }
+
+  private async executeCleanup(): Promise<void> {
+    this.stopMediaTracks()
+    this.disconnectAudioNodes()
+    await this.closeAudioContext()
+    this.resetResourceReferences()
   }
 
   /**
