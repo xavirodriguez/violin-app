@@ -44,8 +44,17 @@ import { TunerDisplay } from './tuner/TunerDisplay'
  * @public
  */
 export function TunerMode() {
-  const { state, analyser, detector, initialize, retry, reset, updatePitch, startListening } =
-    useTunerStore()
+  const {
+    state,
+    analyser,
+    detector,
+    initialize,
+    retry,
+    reset,
+    updatePitch,
+    startListening,
+    detectionThreshold,
+  } = useTunerStore()
 
   // Derived state for UI logic orchestration
   const isIdle = state.kind === 'IDLE'
@@ -102,7 +111,7 @@ export function TunerMode() {
 
       // Run pitch detection with domain-specific validation (e.g., confidence thresholds)
       // Adaptive mode enabled to rescue low signals (Strategy 2)
-      const result = detector.detectPitchWithValidation(buffer, 0.01, true)
+      const result = detector.detectPitchWithValidation(buffer, detectionThreshold, true)
 
       // Update the store. The store handles thresholding and scientific pitch mapping.
       updatePitch(result.pitchHz, result.confidence)

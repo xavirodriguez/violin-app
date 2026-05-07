@@ -80,6 +80,7 @@ export interface SessionRunnerDependencies {
   centsTolerance?: number
   bpm?: number
   loopRegion?: import('@/lib/domain/practice').LoopRegion
+  minRms?: number
 }
 
 /**
@@ -201,6 +202,7 @@ export class PracticeSessionRunnerImpl implements PracticeSessionRunner {
       initialNoteIndex: storeState.practiceState?.currentIndex ?? 0,
       bpm: context.bpm,
       loopRegion: context.loopRegion,
+      minRms: context.minRms,
     })
 
     return engine
