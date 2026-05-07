@@ -91,12 +91,22 @@ function logDevelopment(params: InternalLogParams): void {
   const resetColor = '\x1b[0m'
   const timestamp = new Date().toISOString()
 
-  console[level](`${levelColor}[${level.toUpperCase()}]${resetColor} ${msg}`, {
-    Code: appError?.code || code,
+  const label = `${levelColor}[${level.toUpperCase()}]${resetColor} ${msg}`
+  const meta: Record<string, unknown> = {
     Timestamp: timestamp,
-    'Error Obj': appError,
-    Context: { ...appError?.context, ...context },
-  })
+    Code: appError?.code || code || 'NONE',
+  }
+
+  const combinedContext = { ...appError?.context, ...context }
+  if (Object.keys(combinedContext).length > 0) {
+    meta.Context = combinedContext
+  }
+
+  if (appError) {
+    console[level](label, meta, appError)
+  } else {
+    console[level](label, meta)
+  }
 }
 
 function getLevelColors(): Record<LogLevel, string> {

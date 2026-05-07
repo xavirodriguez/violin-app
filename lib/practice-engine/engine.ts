@@ -2,7 +2,9 @@ import { PracticeEngineEvent } from './engine.types'
 import { AudioLoopPort, PitchDetectorPort } from './engine.ports'
 import {
   createRawPitchStream,
-  createPracticeEventPipeline,
+  initializeAnalysisWindow,
+  processRawPitchEvent,
+  resolveOptions,
   NoteStreamOptions,
   RawPitchEvent,
 } from '../note-stream'
@@ -31,6 +33,8 @@ export interface PracticeEngineContext {
   centsTolerance?: number
   /** The index of the note to start practicing from. */
   initialNoteIndex?: number
+  /** The minimum RMS threshold for signal detection. */
+  minRms?: number
 }
 
 /**
@@ -215,7 +219,7 @@ function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): No
     bpm: currentBpm,
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
     requiredHoldTime: scaledHoldTime,
-    minRms: 0.01,
+    minRms: ctx.minRms ?? 0.01,
     minConfidence: 0.8, // Slightly more lenient to account for weak signals
   }
 
@@ -249,30 +253,25 @@ export function calculateAdaptiveDifficulty(perfectNoteStreak: number) {
  * @internal
  */
 async function* runEngineLoop(params: EngineRunnerParams): AsyncGenerator<PracticeEngineEvent> {
-  const { ctx, signal } = params
+  const { ctx, getState, updateState, getOptions, signal } = params
   const options = { audioLoop: ctx.audio, detector: ctx.pitch, signal }
   const stream = createRawPitchStream(options)
   const startTime = Date.now()
 
-  yield* executeNoteLoop({ ...params, stream, startTime })
-}
-
-async function* executeNoteLoop(
-  params: EngineRunnerParams & {
-    stream: AsyncIterable<RawPitchEvent>
-    startTime: number
-  },
-): AsyncGenerator<PracticeEngineEvent> {
-  const { ctx, getState, signal } = params
+  const analysis = initializeAnalysisWindow(getOptions)
   const isLooping = ctx.loopRegion?.isEnabled
-  const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? getState().scoreLength - 1
+
   let attemptResults: number[] = []
 
-  while (!signal.aborted) {
-    const currentIndex = getState().currentNoteIndex
+  for await (const raw of stream) {
+    if (signal.aborted) break
+
+    const state = getState()
+    const currentIndex = state.currentNoteIndex
+    const loopEndIndex = ctx.loopRegion?.endNoteIndex ?? state.scoreLength - 1
 
     // Check if we reached the end of the loop or exercise
-    const isExerciseFinished = currentIndex >= getState().scoreLength
+    const isExerciseFinished = currentIndex >= state.scoreLength
     const isLoopFinished = isLooping && currentIndex > loopEndIndex
 
     if (isExerciseFinished || isLoopFinished) {
@@ -291,22 +290,42 @@ async function* executeNoteLoop(
         const goalStreak = ctx.loopRegion?.drillTarget?.consecutiveRequired ?? 1
 
         if (ctx.loopRegion?.drillTarget && currentStreak >= goalStreak) {
+          yield* finalizeSession(updateState)
           break
         }
 
         yield* handleLoopRestart(params)
-        continue
       } else {
+        yield* finalizeSession(updateState)
         break
       }
     }
 
-    // Capture results for precision calculation
-    const noteIterator = iterateScoreNotes(params)
-    for await (const event of noteIterator) {
-      yield event
-      if (event.type === 'NOTE_MATCHED') {
-        attemptResults.push(event.payload.technique.pitchStability.inTuneRatio)
+    // Process current frame
+    const freshState = getState()
+    const targetNote = ctx.exercise.notes[freshState.currentNoteIndex] as TargetNote
+    if (!targetNote) {
+      yield* finalizeSession(updateState)
+      break
+    }
+
+    const context = {
+      targetNote,
+      currentIndex: freshState.currentNoteIndex,
+      sessionStartTime: startTime,
+    }
+
+    const currentOptions = resolveOptions(getOptions)
+    const pipelineEvents = processRawPitchEvent({ ...analysis, raw, context, options: currentOptions })
+
+    for (const event of pipelineEvents) {
+      const engineEvent = mapPipelineEventToEngineEvent(event)
+      if (engineEvent) {
+        updateState(engineEvent)
+        yield engineEvent
+        if (engineEvent.type === 'NOTE_MATCHED') {
+          attemptResults.push(engineEvent.payload.technique.pitchStability.inTuneRatio)
+        }
       }
     }
   }
@@ -343,127 +362,6 @@ async function* handleLoopRestart(params: EngineRunnerParams): AsyncGenerator<Pr
   yield restartEvent
 }
 
-async function* iterateScoreNotes(
-  params: EngineRunnerParams & {
-    stream: AsyncIterable<RawPitchEvent>
-    startTime: number
-  },
-): AsyncGenerator<PracticeEngineEvent> {
-  const pipelineParams = getPipelineParams(params)
-  const pipeline = setupPipeline(pipelineParams)
-  const { getState, updateState, signal } = params
-  const noteIndex = getState().currentNoteIndex
-
-  yield* processPipeline({ pipeline, getState, noteIndex, updateState, signal })
-}
-
-function getPipelineParams(
-  params: EngineRunnerParams & {
-    stream: AsyncIterable<RawPitchEvent>
-    startTime: number
-  },
-): SetupPipelineParams {
-  const { ctx, getState, stream, getOptions, signal, startTime } = params
-  const noteIndex = getState().currentNoteIndex
-
-  return {
-    exercise: ctx.exercise,
-    noteIndex,
-    startTime,
-    stream,
-    getOptions,
-    signal,
-  }
-}
-
-interface SetupPipelineParams {
-  exercise: Exercise
-  noteIndex: number
-  startTime: number
-  stream: AsyncIterable<RawPitchEvent>
-  getOptions: () => NoteStreamOptions
-  signal: AbortSignal
-}
-
-function setupPipeline(params: SetupPipelineParams) {
-  const { stream, getOptions, signal } = params
-  const context = getPipelineContext(params)
-
-  return createPracticeEventPipeline({
-    rawPitchStream: stream,
-    context,
-    options: getOptions,
-    signal,
-  })
-}
-
-function getPipelineContext(params: { exercise: Exercise; noteIndex: number; startTime: number }) {
-  const { exercise, noteIndex, startTime } = params
-  const targetNote = exercise.notes[noteIndex] as TargetNote
-
-  return {
-    targetNote,
-    currentIndex: noteIndex,
-    sessionStartTime: startTime,
-  }
-}
-
-/**
- * Consumes events from the pipeline and converts them to engine events.
- *
- * @param params - Pipeline execution context.
- * @returns Async generator of mapped engine events.
- * @internal
- */
-async function* processPipeline(params: PipelineParams): AsyncGenerator<PracticeEngineEvent> {
-  const { pipeline, signal } = params
-  for await (const event of pipeline) {
-    if (signal.aborted) break
-    yield* handleNoteIteration({ ...params, event })
-    if (checkIterationTermination({ ...params, event })) break
-  }
-}
-
-async function* handleNoteIteration(
-  params: PipelineParams & { event: PracticeEvent },
-): AsyncGenerator<PracticeEngineEvent> {
-  const { event, getState, noteIndex, updateState, signal } = params
-  const engineEvent = mapPipelineEventToEngineEvent(event)
-
-  if (engineEvent && !signal.aborted) {
-    const handlerParams = { event: engineEvent, getState, noteIndex, updateState }
-    yield* handleEngineEvent(handlerParams)
-  }
-}
-
-function checkIterationTermination(params: PipelineParams & { event: PracticeEvent }): boolean {
-  const { event, getState, noteIndex } = params
-  const fallback: PracticeEngineEvent = { type: 'NO_NOTE' }
-  const engineEvent = mapPipelineEventToEngineEvent(event) ?? fallback
-  const state = getState()
-
-  const shouldBreak = shouldTerminatePipeline({ event: engineEvent, state, noteIndex })
-  return shouldBreak
-}
-
-/**
- * Updates engine state and yields events to the consumer.
- *
- * @param params - Event processing context.
- * @returns Async generator yielding the processed event.
- * @internal
- */
-async function* handleEngineEvent(params: EventHandlerParams): AsyncGenerator<PracticeEngineEvent> {
-  const { event, updateState, getState } = params
-  updateState(event)
-  yield event
-
-  const state = getState()
-  const isTerminal = isTerminalEvent(event, state)
-  if (isTerminal) {
-    yield* finalizeSession(updateState)
-  }
-}
 
 /**
  * Maps a low-level practice event to a high-level engine event.

@@ -352,7 +352,10 @@ async function* processSourceEvents(params: {
   yield* processRawPitchEvent(processParams)
 }
 
-function initializeAnalysisWindow(optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions)) {
+/** @internal */
+export function initializeAnalysisWindow(
+  optionsOrGetter: NoteStreamOptions | (() => NoteStreamOptions),
+) {
   const initialOptions = resolveOptions(optionsOrGetter)
   const segmenter = createSegmenter(initialOptions)
   const agent = new TechniqueAnalysisAgent()
@@ -361,7 +364,10 @@ function initializeAnalysisWindow(optionsOrGetter: NoteStreamOptions | (() => No
   return { segmenter, agent, state }
 }
 
-function resolveOptions(options: NoteStreamOptions | (() => NoteStreamOptions)): NoteStreamOptions {
+/** @internal */
+export function resolveOptions(
+  options: NoteStreamOptions | (() => NoteStreamOptions),
+): NoteStreamOptions {
   const isFunction = typeof options === 'function'
   const resolved = isFunction ? options() : options
 
@@ -402,8 +408,9 @@ function createInitialTechnicalState(options: NoteStreamOptions): TechnicalAnaly
 
 /**
  * Processes a single raw pitch event and yields any resulting practice events.
+ * @internal
  */
-function* processRawPitchEvent(params: {
+export function* processRawPitchEvent(params: {
   raw: RawPitchEvent
   state: TechnicalAnalysisState
   segmenter: NoteSegmenter
@@ -683,8 +690,8 @@ function isDetectionHighQuality(params: {
 
   // If signal was rescued via normalization, we are more lenient with RMS requirements
   // but still require good confidence.
-  const isExtremelyWeak = raw.rms < 1e-6
-  const rmsThreshold = isExtremelyWeak ? 1e-12 : options.minRms
+  const isRescued = !!raw.isNormalized
+  const rmsThreshold = isRescued ? 1e-12 : options.minRms
 
   const hasRms = raw.rms >= rmsThreshold
   const hasConfidence = raw.confidence >= options.minConfidence

@@ -43,6 +43,7 @@ export class AudioManager {
   private analyser: AnalyserNode | undefined = undefined
   private source: MediaStreamAudioSourceNode | undefined = undefined
   private gainNode: GainNode | undefined = undefined
+  private operationQueue: Promise<unknown> = Promise.resolve()
 
   /**
    * Initializes the audio pipeline.
@@ -56,23 +57,38 @@ export class AudioManager {
     deviceId?: string,
     options: { autoGainControl?: boolean } = {}
   ): Promise<AudioResources> {
-    await this.cleanup()
+    const operation = (async () => {
+      await this.operationQueue.catch(() => {})
+      try {
+        await this.executeCleanup()
+        this.stream = await this.acquireMicStream(deviceId, options)
+        this.initializeContextNodes()
+        this.buildAudioGraph()
+        return this.getAudioResources()
+      } catch (err) {
+        await this.executeCleanup()
+        throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
+      }
+    })()
 
-    try {
-      this.stream = await this.acquireMicStream(deviceId, options)
-      this.initializeContextNodes()
-      this.buildAudioGraph()
-      return this.getAudioResources()
-    } catch (err) {
-      await this.cleanup()
-      throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
-    }
+    this.operationQueue = operation
+    return operation
   }
 
   /**
    * Releases all audio resources and closes the context.
    */
   async cleanup(): Promise<void> {
+    const operation = (async () => {
+      await this.operationQueue.catch(() => {})
+      await this.executeCleanup()
+    })()
+
+    this.operationQueue = operation
+    return operation
+  }
+
+  private async executeCleanup(): Promise<void> {
     this.stopMediaTracks()
     this.disconnectAudioNodes()
     await this.closeAudioContext()
@@ -224,11 +240,14 @@ export class AudioManager {
   }
 
   private buildAudioGraph(): void {
-    const hasContext = !!this.context && !!this.stream
+    const isContextActive = this.context && this.context.state !== 'closed'
+    const hasContext = !!isContextActive && !!this.stream
     const hasNodes = !!this.gainNode && !!this.analyser
+
     if (!hasContext || !hasNodes) {
-      throw new Error('Audio components not initialized')
+      throw new Error('Audio components not initialized or context closed')
     }
+
     this.source = this.context!.createMediaStreamSource(this.stream!)
     this.source.connect(this.gainNode!)
     this.gainNode!.connect(this.analyser!)
