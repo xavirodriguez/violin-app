@@ -229,7 +229,7 @@ export function PracticeMode() {
             error: osmd.error,
             containerRef: osmd.containerRef,
             scoreView: osmd.scoreView,
-            applyHeatmap: osmd.applyHeatmap,
+
           }}
           sessions={sessions}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
