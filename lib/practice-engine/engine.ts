@@ -31,6 +31,8 @@ export interface PracticeEngineContext {
   centsTolerance?: number
   /** The index of the note to start practicing from. */
   initialNoteIndex?: number
+  /** The minimum RMS threshold for signal detection. */
+  minRms?: number
 }
 
 /**
@@ -215,7 +217,7 @@ function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): No
     bpm: currentBpm,
     centsTolerance: ctx.centsTolerance ?? difficulty.centsTolerance,
     requiredHoldTime: scaledHoldTime,
-    minRms: 0.01,
+    minRms: ctx.minRms ?? 0.01,
     minConfidence: 0.8, // Slightly more lenient to account for weak signals
   }
 
