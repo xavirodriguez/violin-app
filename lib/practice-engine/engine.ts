@@ -35,6 +35,10 @@ export interface PracticeEngineContext {
   initialNoteIndex?: number
   /** The minimum RMS threshold for signal detection. */
   minRms?: number
+  /** The loop region if active. */
+  loopRegion?: import('@/lib/domain/practice').LoopRegion
+  /** The current BPM. */
+  bpm?: number
 }
 
 /**

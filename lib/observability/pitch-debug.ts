@@ -1,11 +1,25 @@
 import { logger } from './logger'
 
 export type PitchDebugEvent =
-  | { stage: 'raw_audio'; rms: number; timestamp: number }
+  | { stage: 'raw_audio'; rms: number; isNormalized?: boolean; timestamp: number }
+  | { stage: 'yin_normalized'; originalRms: number; timestamp: number }
   | { stage: 'yin_silent'; rms: number; threshold: number; timestamp: number }
-  | { stage: 'yin_no_pitch'; rms: number; confidence: number; timestamp: number }
+  | {
+      stage: 'yin_no_pitch'
+      rms: number
+      confidence: number
+      isNormalized?: boolean
+      timestamp: number
+    }
   | { stage: 'yin_out_of_range'; pitchHz: number; minHz: number; maxHz: number; timestamp: number }
-  | { stage: 'yin_detected'; pitchHz: number; confidence: number; rms: number; timestamp: number }
+  | {
+      stage: 'yin_detected'
+      pitchHz: number
+      confidence: number
+      rms: number
+      isNormalized?: boolean
+      timestamp: number
+    }
   | {
       stage: 'quality_rejected'
       reason: 'low_rms' | 'low_confidence' | 'unpitched'
@@ -27,6 +41,7 @@ export type PitchDebugEvent =
       segmenterState: 'SILENCE' | 'NOTE'
       isSignal: boolean
       isSilence: boolean
+      isNormalized?: boolean
       timestamp: number
     }
   | {

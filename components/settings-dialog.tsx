@@ -5,7 +5,7 @@
 
 'use client'
 
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState, useRef } from 'react'
 import { useTunerStore } from '@/stores/tuner-store'
 import { usePreferencesStore } from '@/stores/preferences-store'
 import { useAnalyticsStore } from '@/stores/analytics-store'

@@ -180,6 +180,7 @@ export function useOSMDSafe(
           for (const measure of osmd.GraphicSheet.MeasureList) {
             for (const staffLines of measure) {
               for (const staffEntry of staffLines.staffEntries) {
+                // @ts-ignore
                 for (const gNote of staffEntry.graphicalNotes) {
                   // @ts-ignore - getSVGGElement is available at runtime for SVG backend
                   if (gNote.getSVGGElement() === gNoteElement) {
@@ -221,6 +222,7 @@ export function useOSMDSafe(
               const colorClass =
                 precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
 
+              // @ts-ignore
               for (const gNote of staffEntry.graphicalNotes) {
                 // @ts-ignore
                 const el = gNote.getSVGGElement()
@@ -277,6 +279,7 @@ export function useOSMDSafe(
         for (const staffLines of measure) {
           for (const staffEntry of staffLines.staffEntries) {
             if (noteCounter >= startIndex && noteCounter <= endIndex) {
+              // @ts-ignore
               for (const gNote of staffEntry.graphicalNotes) {
                 // @ts-ignore
                 gNote.getSVGGElement()?.classList.add('note-loop-range')
@@ -355,6 +358,8 @@ export function useOSMDSafe(
     advanceCursor,
     highlightCurrentNote,
     onNoteClick,
+    highlightRange,
+    applyHeatmap,
     scoreView,
   }
 }
