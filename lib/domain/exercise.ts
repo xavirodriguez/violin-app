@@ -258,4 +258,5 @@ export interface TunerStore {
   setDeviceId: (deviceId: string) => Promise<void>
   setSensitivity: (sensitivity: number) => void
   setThresholds: (thresholds: Partial<TunerStore['thresholds']>) => void
+  detectionThreshold: number
 }
