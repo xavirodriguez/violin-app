@@ -361,17 +361,12 @@ export class PitchDetector {
   }
 
   private calculateSearchRange(bufferSize: number): { minTau: number; maxTau: number } {
-    const minPeriodSamples = this.sampleRate / this.MAX_FREQUENCY
-    const maxPeriodSamples = this.sampleRate / this.MIN_FREQUENCY
-
-    const minTau = Math.max(2, Math.floor(minPeriodSamples))
-    const maxTau = Math.floor(maxPeriodSamples)
-    const halfBufferSize = Math.floor(bufferSize / 2)
-
-    return {
-      minTau: Math.min(minTau, halfBufferSize),
-      maxTau: Math.min(maxTau, halfBufferSize),
-    }
+    const minTau = Math.ceil(this.sampleRate / this.MAX_FREQUENCY)
+    const maxTau = Math.min(
+      Math.floor(this.sampleRate / this.MIN_FREQUENCY),
+      Math.floor(bufferSize / 2),
+    )
+    return { minTau, maxTau }
   }
 
   private refineAndValidatePitch(yinBuffer: Float32Array, tau: number): PitchDetectionResult {
