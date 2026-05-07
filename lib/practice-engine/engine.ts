@@ -35,6 +35,10 @@ export interface PracticeEngineContext {
   initialNoteIndex?: number
   /** The minimum RMS threshold for signal detection. */
   minRms?: number
+  /** Optional loop region configuration. */
+  loopRegion?: import('@/lib/domain/practice').LoopRegion
+  /** Optional BPM override. */
+  bpm?: number
 }
 
 /**
@@ -204,7 +208,7 @@ function getInitialEngineState(
  * Builds the pipeline options for the engine iteration.
  * @internal
  */
-function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): NoteStreamOptions {
+export function getEngineOptions(ctx: PracticeEngineContext, perfectNoteStreak = 0): NoteStreamOptions {
   const difficulty = calculateAdaptiveDifficulty(perfectNoteStreak)
   const indicatedBpm = ctx.exercise.indicatedBpm ?? 60
   const currentBpm = ctx.bpm ?? indicatedBpm
