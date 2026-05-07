@@ -1,7 +1,7 @@
-import { type PracticeSession } from '@/stores/analytics-store';
+import { type CompletedPracticeSession } from '@/lib/domain/practice';
 interface PracticeCompletionProps {
     onRestart: () => void;
-    sessionData: PracticeSession | undefined;
+    sessionData: CompletedPracticeSession | undefined;
 }
 export declare function PracticeCompletion({ onRestart, sessionData }: PracticeCompletionProps): import("react/jsx-runtime").JSX.Element;
 export {};

@@ -28,6 +28,7 @@ export type PitchDebugEvent =
       segmenterState: 'SILENCE' | 'NOTE'
       isSignal: boolean
       isSilence: boolean
+      isNormalized?: boolean
       timestamp: number
     }
   | {

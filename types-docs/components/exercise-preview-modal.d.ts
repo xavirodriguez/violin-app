@@ -1,4 +1,4 @@
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/exercise';
 interface ExercisePreviewModalProps {
     exercise: Exercise | undefined;
     isOpen: boolean;

@@ -1,4 +1,4 @@
-import { PracticeSession } from '@/stores/analytics-store';
+import { PracticeSession } from '@/lib/domain/practice';
 export declare function formatTime(seconds: number): string;
 export declare function getLast7DaysData(sessions: PracticeSession[]): {
     day: string;
@@ -13,7 +13,7 @@ export declare function getDailyStats(params: DailyStatsParams): {
     minutes: number;
 };
 export declare function getDayName(date: Date): string;
-export declare function filterSessionsByDate(sessions: PracticeSession[], date: Date): PracticeSession[];
+export declare function filterSessionsByDate(sessions: PracticeSession[], date: Date): import("@/lib/domain/practice").CompletedPracticeSession[];
 export declare function calculateTotalMinutes(sessions: PracticeSession[]): number;
 export declare function getHeatmapData(lastSession: PracticeSession | undefined): {
     noteIndex: number;

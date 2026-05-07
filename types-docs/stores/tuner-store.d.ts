@@ -5,7 +5,7 @@
  * It manages the audio pipeline for real-time pitch detection, microphone permissions,
  * and device selection.
  */
-import type { TunerStore } from '@/lib/domain/musical-types';
+import type { TunerStore } from '@/lib/domain/exercise';
 /**
  * Zustand hook for accessing the TunerStore.
  *

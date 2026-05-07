@@ -1,7 +1,8 @@
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/exercise';
 interface ExerciseCardProps {
     exercise: Exercise;
     isRecommended?: boolean;
+    recommendationReason?: string;
     lastAttempt?: {
         accuracy: number;
         timestamp: number;

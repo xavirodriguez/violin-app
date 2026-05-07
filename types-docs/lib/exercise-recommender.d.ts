@@ -1,4 +1,4 @@
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/exercise';
 import type { AnalyticsStore } from '@/stores/analytics-store';
 /** Shorthand for user progress from the Analytics store. */
 type UserProgress = AnalyticsStore['progress'];
@@ -6,9 +6,9 @@ type UserProgress = AnalyticsStore['progress'];
  * Pedagogical exercise recommender engine.
  *
  * @remarks
- * This function implements a heuristic-based logic designed to optimize
- * the student's learning path based on historical performance. It acts as
- * an automated tutor, ensuring the student is neither bored nor overwhelmed.
+ * This function acts as an "Automated Tutor" that implements heuristic-based logic
+ * designed to optimize the student's learning path based on historical performance,
+ * ensuring the student is neither bored nor overwhelmed.
  *
  * **Recommendation Rules (in order of priority)**:
  * 1. **Persistence on Failure**: If the last exercise played had low accuracy (`< 80%`) and was attempted today, suggest trying it again to build muscle memory.
@@ -24,22 +24,22 @@ type UserProgress = AnalyticsStore['progress'];
  *
  * @example
  * ```ts
- * const rec = getRecommendedExercise(allExercises, progress, lastId);
- * if (rec) console.log(`We recommend: ${rec.name}`);
- * ```
- *
- * @example
- * ```ts
- * const nextExercise = getRecommendedExercise(allExercises, progress, "scale_c_major");
- * console.log(`Recommended: ${nextExercise.name}`);
+ * const nextExercise = getRecommendedExercise({
+ *   exercises: allExercises,
+ *   userProgress: progress,
+ *   lastPlayedId: "scale_c_major",
+ * });
  * ```
  *
  * @public
  */
+export interface ExerciseRecommendation extends Exercise {
+    recommendationReason: string;
+}
 export declare function getRecommendedExercise(params: {
     exercises: Exercise[];
     userProgress: UserProgress;
     lastPlayedId?: string;
     difficultyFilter?: string;
-}): Exercise | undefined;
+}): ExerciseRecommendation | undefined;
 export {};

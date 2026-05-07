@@ -1,10 +1,17 @@
-import { PracticeStatus } from '@/lib/practice-core';
+import { PracticeStatus } from '@/lib/domain/practice';
 interface PracticeControlsProps {
     status: PracticeStatus;
     hasExercise: boolean;
     onStart: () => void;
     onStop: () => void;
     onRestart: () => void;
+    onPlayReference?: () => void;
+    isReferencePlaying?: boolean;
+    onToggleMetronome?: () => void;
+    isMetronomeActive?: boolean;
+    visualBeat?: boolean;
+    bpm: number;
+    onBpmChange: (bpm: number) => void;
     progress: number;
     currentNoteIndex: number;
     totalNotes: number;

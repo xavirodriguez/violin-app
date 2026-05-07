@@ -1,4 +1,4 @@
-import type { TargetNote, DetectedNote } from '@/lib/practice-core';
+import type { TargetNote, DetectedNote } from '@/lib/domain/practice';
 import type { Observation } from '@/lib/technique-types';
 /**
  * View displaying real-time feedback and fingerboard visualization during practice.

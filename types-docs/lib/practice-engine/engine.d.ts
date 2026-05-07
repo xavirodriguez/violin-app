@@ -22,9 +22,26 @@ export interface PracticeEngineContext {
     centsTolerance?: number;
     /** The index of the note to start practicing from. */
     initialNoteIndex?: number;
+    /** The minimum RMS threshold for signal detection. */
+    minRms?: number;
+    /** The loop region if active. */
+    loopRegion?: import('@/lib/domain/practice').LoopRegion;
+    /** The current BPM. */
+    bpm?: number;
 }
 /**
  * Interface for the core musical practice engine.
+ *
+ * @remarks
+ * The PracticeEngine is the central orchestrator for a musical practice session.
+ * It is responsible for:
+ * 1. **Audio Integration**: Consuming raw frames from an `AudioLoopPort`.
+ * 2. **Note Progression**: Automatically advancing through the score as notes are matched.
+ * 3. **Adaptive Difficulty**: Dynamically adjusting intonation and hold thresholds.
+ * 4. **State Management**: Maintaining the reactive `EngineState` through a reducer.
+ *
+ * It operates as an asynchronous loop that yields `PracticeEngineEvent` objects,
+ * allowing the UI to react to musical milestones in real-time.
  *
  * @public
  */

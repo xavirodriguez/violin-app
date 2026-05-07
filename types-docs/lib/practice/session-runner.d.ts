@@ -1,6 +1,6 @@
-import { type PracticeState } from '@/lib/practice-core';
+import { type PracticeState, type PracticeEvent } from '@/lib/domain/practice';
 import type { AudioLoopPort, PitchDetectionPort } from '../ports/audio.port';
-import type { Exercise } from '@/lib/exercises/types';
+import type { Exercise } from '@/lib/domain/exercise';
 import { NoteTechnique, Observation } from '../technique-types';
 /**
  * Result of a completed or cancelled practice session runner execution.
@@ -40,22 +40,7 @@ export interface RunnerStore {
         practiceState: PracticeState | undefined;
         liveObservations?: Observation[];
     };
-    setState: (partial: {
-        practiceState: PracticeState | undefined;
-        liveObservations?: Observation[];
-    } | Partial<{
-        practiceState: PracticeState | undefined;
-        liveObservations?: Observation[];
-    }> | ((state: {
-        practiceState: PracticeState | undefined;
-        liveObservations?: Observation[];
-    }) => {
-        practiceState: PracticeState | undefined;
-        liveObservations?: Observation[];
-    } | Partial<{
-        practiceState: PracticeState | undefined;
-        liveObservations?: Observation[];
-    }>), replace?: boolean) => void;
+    dispatch: (event: PracticeEvent) => void;
     stop: () => Promise<void>;
 }
 /**
@@ -90,10 +75,20 @@ export interface SessionRunnerDependencies {
     analytics: RunnerAnalytics;
     updatePitch?: (pitch: number, confidence: number) => void;
     centsTolerance?: number;
+    bpm?: number;
+    loopRegion?: import('@/lib/domain/practice').LoopRegion;
+    minRms?: number;
 }
 /**
- * Implementation of {@link PracticeSessionRunner} that orchestrates the Practice Engine
- * and synchronizes with the application stores.
+ * Implementation of {@link PracticeSessionRunner} that orchestrates the Practice Engine.
+ *
+ * @remarks
+ * This class serves as the operational bridge between the high-frequency Practice Engine
+ * and the reactive UI stores. It is responsible for:
+ * 1. **Lifecycle Management**: Handling the startup, cancellation, and error states of a session.
+ * 2. **Dependency Injection**: Providing audio ports and analytics handlers to the engine.
+ * 3. **State Synchronization**: Dispatching engine events to the `PracticeStore` and `TunerStore`.
+ * 4. **Telemetry**: Logging accuracy data when specific feature flags are enabled.
  *
  * @public
  */

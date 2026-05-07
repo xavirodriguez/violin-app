@@ -6,6 +6,8 @@
  * and persistent progress tracking.
  */
 import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
+import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice';
+import { type TempoConfig } from '@/lib/domain/audio';
 import { AppError } from '@/lib/errors/app-error';
 import { AudioLoopPort, PitchDetectionPort } from '@/lib/ports/audio.port';
 import { PracticeStoreState } from '@/lib/practice/practice-states';
@@ -17,6 +19,10 @@ import { Observation } from '@/lib/technique-types';
 export interface PracticeStore {
     state: PracticeStoreState;
     practiceState: PracticeState | undefined;
+    lastDrillResult: {
+        success: boolean;
+        precision: number;
+    } | null;
     error: AppError | undefined;
     liveObservations: Observation[];
     autoStartEnabled: boolean;
@@ -27,19 +33,35 @@ export interface PracticeStore {
     isInitializing: boolean;
     sessionToken: string | undefined;
     sessionId: number;
-    loadId: number;
+    loopRegion: LoopRegion | undefined;
+    tempoConfig: TempoConfig;
+    listenImitateActive: boolean;
+    isListeningPhase: boolean;
+    listenIteration: number;
+    listenIterations: number;
+    countdown: number | null;
     loadExercise: (exercise: Exercise) => Promise<void>;
+    setLoopRegion: (region: LoopRegion | undefined) => void;
+    setTempoConfig: (config: TempoConfig) => void;
+    setListenImitateActive: (active: boolean) => void;
+    setListenIterations: (count: number) => void;
     setAutoStart: (enabled: boolean) => void;
-    setNoteIndex: (index: number) => void;
+    jumpToNote: (index: number) => void;
     initializeAudio: () => Promise<void>;
+    initialize: () => Promise<void>;
     start: () => Promise<void>;
     stop: () => Promise<void>;
     reset: () => Promise<void>;
+    dispatch: (event: PracticeUIEvent) => Promise<void>;
     consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>;
 }
 type SafeUpdate = Pick<PracticeStore, 'practiceState' | 'liveObservations' | 'error'>;
 type SafePartial = SafeUpdate | Partial<SafeUpdate> | ((s: PracticeStore) => Partial<SafeUpdate>);
 export declare const usePracticeStore: import("zustand").UseBoundStore<import("zustand").StoreApi<PracticeStore>>;
+/**
+ * Selector hook to access derived practice state.
+ */
+export declare const useDerivedPracticeState: () => import("@/lib/practice/practice-utils").DerivedPracticeState;
 /**
  * Creates a safe state update function for the practice session.
  * @internal

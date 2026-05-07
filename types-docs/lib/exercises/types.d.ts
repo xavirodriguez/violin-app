@@ -1,6 +1,6 @@
 /**
  * ExerciseTypes
- * Shared type definitions for violin exercises, covering musical properties,
- * score metadata, and exercise data structures.
+ * Shared type definitions for violin exercises.
+ * @deprecated Use \@/lib/domain/exercise instead.
  */
-export * from '@/lib/domain/musical-types';
+export * from '@/lib/domain/exercise';

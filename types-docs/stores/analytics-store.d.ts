@@ -1,32 +1,6 @@
 import { NoteTechnique } from '../lib/technique-types';
-import type { Exercise } from '@/lib/domain/musical-types';
-/**
- * Data model for a completed practice session.
- */
-export interface PracticeSession {
-    id: string;
-    startTimeMs: number;
-    endTimeMs: number;
-    durationMs: number;
-    exerciseId: string;
-    exerciseName: string;
-    mode: 'tuner' | 'practice';
-    notesAttempted: number;
-    notesCompleted: number;
-    accuracy: number;
-    averageCents: number;
-    noteResults: NoteResult[];
-}
-/** @internal */
-export interface NoteResult {
-    noteIndex: number;
-    targetPitch: string;
-    attempts: number;
-    timeToCompleteMs: number;
-    averageCents: number;
-    wasInTune: boolean;
-    technique?: NoteTechnique;
-}
+import { LivePracticeSession, PersistedPracticeSession, ExerciseStats, Achievement } from '@/lib/domain/practice';
+import type { Exercise } from '@/lib/domain/exercise';
 /**
  * Long-term progress and skill model for the user.
  */
@@ -43,25 +17,6 @@ export interface UserProgress {
     achievements: Achievement[];
     exerciseStats: Record<string, ExerciseStats>;
 }
-/** @internal */
-export interface ExerciseStats {
-    exerciseId: string;
-    timesCompleted: number;
-    bestAccuracy: number;
-    averageAccuracy: number;
-    fastestCompletionMs: number;
-    lastPracticedMs: number;
-}
-/**
- * Represents a musical achievement or milestone earned by the user.
- */
-export interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    unlockedAtMs: number;
-}
 /** Parameters for recording a note attempt. */
 export interface RecordAttemptParams {
     noteIndex: number;
@@ -72,16 +27,26 @@ export interface RecordAttemptParams {
 /** Parameters for recording a note completion. */
 export interface RecordCompletionParams {
     noteIndex: number;
-    timeToCompleteMs: number;
+    timeToCompleteMs?: number;
     technique?: NoteTechnique;
 }
 /**
  * Interface for the Analytics Store, managing long-term progress and session history.
+ *
+ * @remarks
+ * This store acts as the primary repository for user performance data.
+ * It is responsible for:
+ * 1. **Session Management**: Tracking the lifecycle of individual practice sessions.
+ * 2. **Persistence**: Versioned storage of history using `localStorage` with automated migrations.
+ * 3. **Achievement Tracking**: Evaluating performance against technical milestones.
+ * 4. **Skill Evaluation**: Calculating long-term metrics for intonation and rhythm.
+ *
+ * @public
  */
 export interface AnalyticsStore {
-    currentSession: PracticeSession | undefined;
+    currentSession: LivePracticeSession | undefined;
     cleanOldSessions: (count?: number) => void;
-    sessions: PracticeSession[];
+    sessions: PersistedPracticeSession[];
     progress: UserProgress;
     onAchievementUnlocked?: (achievement: Achievement) => void;
     currentPerfectStreak: number;
@@ -94,7 +59,7 @@ export interface AnalyticsStore {
     recordNoteAttempt: (params: RecordAttemptParams) => void;
     recordNoteCompletion: (params: RecordCompletionParams) => void;
     checkAndUnlockAchievements: () => void;
-    getSessionHistory: (days?: number) => PracticeSession[];
+    getSessionHistory: (days?: number) => PersistedPracticeSession[];
     getExerciseStats: (exerciseId: string) => ExerciseStats | undefined;
     getTodayStats: () => {
         duration: number;
@@ -113,12 +78,12 @@ export declare const useAnalyticsStore: import("zustand").UseBoundStore<Omit<imp
     setState(partial: AnalyticsStore | Partial<AnalyticsStore> | ((state: AnalyticsStore) => AnalyticsStore | Partial<AnalyticsStore>), replace?: false | undefined): unknown;
     setState(state: AnalyticsStore | ((state: AnalyticsStore) => AnalyticsStore), replace: true): unknown;
     persist: {
-        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "sessions" | "progress">, unknown>>) => void;
+        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "progress" | "sessions">, unknown>>) => void;
         clearStorage: () => void;
         rehydrate: () => Promise<void> | void;
         hasHydrated: () => boolean;
         onHydrate: (fn: (state: AnalyticsStore) => void) => () => void;
         onFinishHydration: (fn: (state: AnalyticsStore) => void) => () => void;
-        getOptions: () => Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "sessions" | "progress">, unknown>>;
+        getOptions: () => Partial<import("zustand/middleware").PersistOptions<AnalyticsStore, Pick<AnalyticsStore, "progress" | "sessions">, unknown>>;
     };
 }>;

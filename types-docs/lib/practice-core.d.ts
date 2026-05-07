@@ -4,9 +4,9 @@
  * This core is decoupled from React, Zustand, OSMD, and any browser-specific APIs.
  * Refactored for branded types and strict validation.
  */
-import { NoteTechnique, Observation } from './technique-types';
-import type { Exercise, Note as TargetNote } from '@/lib/exercises/types';
-export type { TargetNote };
+import type { Note as TargetNote } from '@/lib/domain/exercise';
+import type { DetectedNote, PracticeStatus, PracticeState, PracticeEvent, MatchHysteresis, LoopRegion } from '@/lib/domain/practice';
+export type { TargetNote, DetectedNote, PracticeStatus, PracticeState, PracticeEvent, MatchHysteresis, LoopRegion, };
 /**
  * A valid note name in scientific pitch notation.
  *
@@ -48,61 +48,6 @@ export declare class MusicalNote {
     static fromName(fullName: NoteName): MusicalNote;
     get nameWithOctave(): NoteName;
 }
-/**
- * Defines the tolerance boundaries for matching a note.
- */
-export interface MatchHysteresis {
-    enter: number;
-    exit: number;
-}
-/** Represents a note detected from the user's microphone input. */
-export interface DetectedNote {
-    pitch: string;
-    pitchHz: number;
-    cents: number;
-    timestamp: number;
-    confidence: number;
-}
-/** The status of the practice session. */
-export type PracticeStatus = 'idle' | 'listening' | 'validating' | 'correct' | 'completed';
-/** The complete, self-contained state of the practice session. */
-export interface PracticeState {
-    status: PracticeStatus;
-    exercise: Exercise;
-    currentIndex: number;
-    detectionHistory: readonly DetectedNote[];
-    holdDuration?: number;
-    lastObservations?: Observation[];
-    perfectNoteStreak: number;
-}
-/** Events that can modify the practice state. */
-export type PracticeEvent = {
-    type: 'START';
-    payload?: {
-        startIndex?: number;
-    };
-} | {
-    type: 'STOP';
-} | {
-    type: 'RESET';
-} | {
-    type: 'NOTE_DETECTED';
-    payload: DetectedNote;
-} | {
-    type: 'HOLDING_NOTE';
-    payload: {
-        duration: number;
-    };
-} | {
-    type: 'NOTE_MATCHED';
-    payload?: {
-        technique: NoteTechnique;
-        observations?: Observation[];
-        isPerfect?: boolean;
-    };
-} | {
-    type: 'NO_NOTE_DETECTED';
-};
 /**
  * Converts a `TargetNote`'s pitch into a standard, parsable note name string.
  *

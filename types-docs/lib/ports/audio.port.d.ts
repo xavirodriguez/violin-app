@@ -83,6 +83,13 @@ export interface PitchDetectionPort {
      * @returns The calculated RMS value, normalized between 0.0 (silence) and 1.0 (full scale).
      */
     calculateRMS(frame: Float32Array): number;
+    /**
+     * Normalizes an audio buffer so that its peak amplitude is 1.0.
+     *
+     * @param buffer - The raw audio data.
+     * @returns A new Float32Array with normalized samples.
+     */
+    normalize?(buffer: Float32Array): Float32Array;
 }
 /**
  * Port for managing an asynchronous audio processing loop.

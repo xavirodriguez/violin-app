@@ -1,6 +1,6 @@
-import { PracticeSession } from './session.store';
+import { PracticeSession } from '@/lib/domain/practice';
 import { ProgressState } from './progress.store';
-import { Achievement } from './achievements.store';
+import { Achievement } from '@/lib/domain/practice';
 import { NoteTechnique } from '@/lib/technique-types';
 interface AnalyticsFacadePartialState {
     progress?: Partial<ProgressState> & {
@@ -11,20 +11,24 @@ interface AnalyticsFacadePartialState {
     currentPerfectStreak?: number;
 }
 /**
- * Temporary facade to maintain backward compatibility with the legacy analytics API.
+ * Analytics facade.
  *
  * @remarks
- * This object aggregates multiple stores (Session, Progress, Achievements, History)
- * into a single interface. New code should prefer using the individual stores directly.
+ * This module exposes both hook-oriented and imperative access patterns by aggregating
+ * multiple stores (Session, Progress, Achievements, History) into a single interface.
+ *
+ * Some imperative `getState()` methods are compatibility stubs and do not execute
+ * the full analytics pipeline. When adding new consumers, prefer the hook-backed
+ * implementation unless the imperative method is explicitly documented as fully implemented.
  *
  * @deprecated Use individual stores (e.g., `useSessionStore`, `useProgressStore`) directly.
  * @public
  */
 export declare const useAnalyticsStore: (() => {
     /** The current active session, if any. */
-    currentSession: PracticeSession | undefined;
+    currentSession: import("@/lib/domain/practice").LivePracticeSession | undefined;
     /** History of completed sessions. */
-    sessions: PracticeSession[];
+    sessions: import("@/lib/domain/practice").CompletedPracticeSession[];
     /** Aggregated user progress. */
     progress: {
         achievements: Achievement[];
@@ -37,19 +41,19 @@ export declare const useAnalyticsStore: (() => {
         intonationSkill: number;
         rhythmSkill: number;
         overallSkill: number;
-        exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
+        exerciseStats: Record<string, import("@/lib/domain/practice").ExerciseStats>;
         eventBuffer: import("./progress.store").ProgressEvent[];
         snapshots: import("./progress.store").ProgressSnapshot[];
         eventCounter: number;
-        addSession: (session: PracticeSession) => void;
-        updateSkills: (sessions: PracticeSession[]) => void;
+        addSession: (session: import("@/lib/domain/practice").CompletedPracticeSession) => void;
+        updateSkills: (sessions: import("@/lib/domain/practice").CompletedPracticeSession[]) => void;
     };
     /** Current streak of perfect notes. */
     currentPerfectStreak: number;
     /** Starts a new session. */
     startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
     /** Ends the current session and updates related stores. */
-    endSession: () => PracticeSession | undefined;
+    endSession: () => import("@/lib/domain/practice").CompletedPracticeSession | undefined;
     /** Records an attempt at a note. */
     recordNoteAttempt: (params: {
         noteIndex: number;
@@ -66,10 +70,19 @@ export declare const useAnalyticsStore: (() => {
     /** Manually triggers an achievement check. */
     checkAndUnlockAchievements: () => Achievement[];
     /** Retrieves filtered session history. */
-    getSessionHistory: (days?: number) => PracticeSession[];
+    getSessionHistory: (days?: number) => import("@/lib/domain/practice").CompletedPracticeSession[];
     /** Gets stats for a specific exercise. */
-    getExerciseStats: (exerciseId: string) => import("./progress.store").ExerciseStats;
-    /** Returns summary stats for the current day. */
+    getExerciseStats: (exerciseId: string) => import("@/lib/domain/practice").ExerciseStats;
+    /**
+     * Stub implementation for the facade.
+     *
+     * @remarks
+     * Always returns zeroed stats:
+     * `{ duration: 0, accuracy: 0, sessionsCount: 0 }`.
+     *
+     * Use the hook-backed analytics facade or the concrete analytics store when
+     * real current-day statistics are required.
+     */
     getTodayStats: () => {
         duration: number;
         accuracy: number;
@@ -83,8 +96,8 @@ export declare const useAnalyticsStore: (() => {
 }) & {
     /** Imperative access to the facade's state. */
     getState: () => {
-        currentSession: PracticeSession | undefined;
-        sessions: PracticeSession[];
+        currentSession: import("@/lib/domain/practice").LivePracticeSession | undefined;
+        sessions: import("@/lib/domain/practice").CompletedPracticeSession[];
         progress: {
             achievements: Achievement[];
             schemaVersion: 1;
@@ -96,12 +109,12 @@ export declare const useAnalyticsStore: (() => {
             intonationSkill: number;
             rhythmSkill: number;
             overallSkill: number;
-            exerciseStats: Record<string, import("./progress.store").ExerciseStats>;
+            exerciseStats: Record<string, import("@/lib/domain/practice").ExerciseStats>;
             eventBuffer: import("./progress.store").ProgressEvent[];
             snapshots: import("./progress.store").ProgressSnapshot[];
             eventCounter: number;
-            addSession: (session: PracticeSession) => void;
-            updateSkills: (sessions: PracticeSession[]) => void;
+            addSession: (session: import("@/lib/domain/practice").CompletedPracticeSession) => void;
+            updateSkills: (sessions: import("@/lib/domain/practice").CompletedPracticeSession[]) => void;
         };
         currentPerfectStreak: number;
         startSession: (exerciseId: string, exerciseName: string, mode?: "tuner" | "practice") => void;
@@ -116,7 +129,15 @@ export declare const useAnalyticsStore: (() => {
             timeMs: number;
             technique?: NoteTechnique;
         }) => void;
-        endSession: () => PracticeSession | undefined;
+        endSession: () => import("@/lib/domain/practice").CompletedPracticeSession | undefined;
+        /**
+         * Stub implementation for the imperative facade.
+         *
+         * @remarks
+         * Does not perform achievement evaluation and always returns an empty array.
+         * Use the hook-backed facade or the concrete achievements store when actual
+         * unlock checks are required.
+         */
         checkAndUnlockAchievements: () => never[];
     };
     /** Imperative state update (for compatibility). */

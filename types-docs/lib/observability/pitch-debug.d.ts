@@ -1,6 +1,11 @@
 export type PitchDebugEvent = {
     stage: 'raw_audio';
     rms: number;
+    isNormalized?: boolean;
+    timestamp: number;
+} | {
+    stage: 'yin_normalized';
+    originalRms: number;
     timestamp: number;
 } | {
     stage: 'yin_silent';
@@ -11,6 +16,7 @@ export type PitchDebugEvent = {
     stage: 'yin_no_pitch';
     rms: number;
     confidence: number;
+    isNormalized?: boolean;
     timestamp: number;
 } | {
     stage: 'yin_out_of_range';
@@ -23,6 +29,7 @@ export type PitchDebugEvent = {
     pitchHz: number;
     confidence: number;
     rms: number;
+    isNormalized?: boolean;
     timestamp: number;
 } | {
     stage: 'quality_rejected';
@@ -43,6 +50,7 @@ export type PitchDebugEvent = {
     segmenterState: 'SILENCE' | 'NOTE';
     isSignal: boolean;
     isSilence: boolean;
+    isNormalized?: boolean;
     timestamp: number;
 } | {
     stage: 'segmenter_event';

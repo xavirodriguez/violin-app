@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode, SVGAttributes } from 'react';
-import type { Exercise } from '@/lib/exercises/types';
+import type { Exercise } from '@/lib/domain/exercise';
 import type { TechniqueFrame } from '@/lib/technique-types';
 /** Versión parcial de Exercise para uso en tests unitarios. */
 export type MockExercise = Pick<Exercise, 'id' | 'name' | 'notes'> & Partial<Exercise>;

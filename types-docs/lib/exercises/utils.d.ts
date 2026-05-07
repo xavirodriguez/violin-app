@@ -2,7 +2,7 @@
  * Utility functions for handling exercise data.
  */
 import type { NoteDuration, Pitch, Exercise } from './types';
-import { ExerciseStats } from '@/stores/progress.store';
+import { ExerciseStats } from '@/lib/domain/practice';
 /**
  * Calculates the duration of a note in milliseconds based on BPM.
  */

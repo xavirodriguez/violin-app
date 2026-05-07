@@ -1,9 +1,9 @@
 /**
  * Helper functions for the PracticeStore to keep the main store file clean.
  */
-import { type PracticeState, type PracticeEvent } from '@/lib/practice-core';
+import { type PracticeState, type PracticeEvent } from '@/lib/domain/practice';
 import { ReadyState, PracticeStoreState } from '@/lib/practice/practice-states';
-import type { Exercise } from '@/lib/exercises/types';
+import type { Exercise } from '@/lib/domain/exercise';
 import { Observation } from '@/lib/technique-types';
 import { PracticeStore } from './practice-store';
 /**

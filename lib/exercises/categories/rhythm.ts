@@ -17,6 +17,8 @@ export const rhythmExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     technicalGoals: ['Steady Bow'],
+    estimatedDuration: '1 min',
+    technicalTechnique: 'Rhythm',
     indicatedBpm: 60,
     notes: [
       { pitch: parsePitch('A4'), duration: 4 },
@@ -33,6 +35,8 @@ export const rhythmExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     technicalGoals: ['Bow Distribution'],
+    estimatedDuration: '1 min',
+    technicalTechnique: 'Rhythm',
     indicatedBpm: 60,
     notes: [
       { pitch: parsePitch('D4'), duration: 8 },
@@ -47,6 +51,8 @@ export const rhythmExercises: ExerciseData[] = [
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA,
     technicalGoals: ['Rhythm Switching'],
+    estimatedDuration: '1 min',
+    technicalTechnique: 'Rhythm',
     indicatedBpm: 60,
     notes: [
       { pitch: parsePitch('G3'), duration: 8 },

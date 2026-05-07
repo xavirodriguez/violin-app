@@ -1,4 +1,4 @@
-import type { Achievement } from '@/stores/analytics-store';
+import type { Achievement } from '@/lib/domain/practice';
 interface AchievementToastProps {
     achievement: Achievement;
     onDismiss: () => void;

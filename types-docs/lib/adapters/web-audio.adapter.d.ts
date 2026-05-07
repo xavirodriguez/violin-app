@@ -155,4 +155,11 @@ export declare class PitchDetectorAdapter implements PitchDetectionPort {
      * @returns Root Mean Square value (typically 0.0 to 1.0).
      */
     calculateRMS(frame: Float32Array): number;
+    /**
+     * Normalizes an audio buffer so that its peak amplitude is 1.0.
+     *
+     * @param buffer - The raw audio data.
+     * @returns A new Float32Array with normalized samples.
+     */
+    normalize(buffer: Float32Array): Float32Array;
 }

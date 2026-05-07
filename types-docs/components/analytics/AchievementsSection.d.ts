@@ -1,4 +1,4 @@
-import { Achievement } from '@/stores/analytics-store';
+import { Achievement } from '@/lib/domain/practice';
 interface AchievementsSectionProps {
     achievements: Achievement[];
 }

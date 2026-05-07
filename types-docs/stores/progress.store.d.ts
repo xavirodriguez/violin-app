@@ -1,4 +1,4 @@
-import { PracticeSession } from './session.store';
+import { CompletedPracticeSession, ExerciseStats } from '@/lib/domain/practice';
 /**
  * Event representing a completed exercise within the progress history.
  *
@@ -50,29 +50,6 @@ export interface ProgressSnapshot {
     lastSessionId: string;
 }
 /**
- * Lifetime statistics for an individual exercise.
- *
- * @remarks
- * These metrics are used by the `ExerciseRecommender` to determine mastery
- * and suggest review cycles.
- *
- * @public
- */
-export interface ExerciseStats {
-    /** ID of the exercise. */
-    exerciseId: string;
-    /** Total number of times this exercise was successfully completed. */
-    timesCompleted: number;
-    /** Highest accuracy percentage ever recorded for this exercise. */
-    bestAccuracy: number;
-    /** Rolling average of accuracy across all historical attempts. */
-    averageAccuracy: number;
-    /** Fastest completion time ever recorded (ms). */
-    fastestCompletionMs: number;
-    /** Unix timestamp of the most recent practice attempt. */
-    lastPracticedMs: number;
-}
-/**
  * State structure for the Progress Store.
  *
  * @remarks
@@ -111,6 +88,11 @@ export interface ProgressState {
 /**
  * Actions available in the Progress Store for updating user performance.
  *
+ * @remarks
+ * Encapsulates the logic for aggregating raw session results into long-term
+ * technical metrics, ensuring that the student's progress is accurately
+ * reflected in their persistent profile.
+ *
  * @public
  */
 interface ProgressActions {
@@ -132,7 +114,7 @@ interface ProgressActions {
      *
      * @param session - The completed session data to persist and analyze.
      */
-    addSession: (session: PracticeSession) => void;
+    addSession: (session: CompletedPracticeSession) => void;
     /**
      * Re-calculates domain-specific skill levels (intonation, rhythm).
      *
@@ -142,7 +124,7 @@ interface ProgressActions {
      *
      * @param sessions - Recent session history to analyze.
      */
-    updateSkills: (sessions: PracticeSession[]) => void;
+    updateSkills: (sessions: CompletedPracticeSession[]) => void;
 }
 /**
  * Zustand store for high-density, persistent progress tracking.

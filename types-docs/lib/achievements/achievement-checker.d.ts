@@ -1,5 +1,5 @@
 import { AchievementCheckStats, AchievementDefinition } from './achievement-definitions';
-import type { Achievement } from '@/stores/analytics-store';
+import { Achievement } from '@/lib/domain/practice';
 /**
  * Identifies which achievements have been newly unlocked based on current statistics.
  *

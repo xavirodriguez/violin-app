@@ -1,4 +1,4 @@
-import type { Exercise } from '@/lib/domain/musical-types';
+import type { Exercise } from '@/lib/domain/exercise';
 interface ExerciseLibraryProps {
     selectedId?: string;
     onSelect: (exercise: Exercise) => void;

@@ -13,6 +13,8 @@ export interface PitchDetectionResult {
     pitchHz: number;
     /** Confidence level from 0.0 to 1.0 */
     confidence: number;
+    /** Whether the signal was normalized due to weak signal. */
+    isNormalized?: boolean;
 }
 /**
  * Pure JavaScript pitch detector optimized for violin.
@@ -30,7 +32,7 @@ export declare class PitchDetector {
      * For violin, the lowest note is G3 at ~196 Hz, but we go a bit lower for safety.
      */
     static readonly DEFAULT_MIN_FREQUENCY = 180;
-    private readonly MIN_FREQUENCY;
+    private MIN_FREQUENCY;
     /**
      * The maximum frequency we care about (in Hz).
      * For violin, the practical upper limit is E7 at ~2637 Hz.
@@ -41,7 +43,11 @@ export declare class PitchDetector {
      * The threshold for the YIN algorithm.
      * Lower values = more strict (fewer false positives, might miss quiet notes)
      * Higher values = more lenient (more detections, but less reliable)
-     * 0.1 is a good balance for musical instruments.
+     *
+     * @remarks
+     * Practical YIN threshold heuristic. Tune with real instrument recordings if
+     * detection behavior changes. 0.1 is often a good balance for musical instruments,
+     * but is not a benchmark-proven optimum for every environment.
      */
     static readonly DEFAULT_YIN_THRESHOLD = 0.1;
     private readonly YIN_THRESHOLD;
@@ -58,14 +64,20 @@ export declare class PitchDetector {
      * @param maxFrequency - Optional maximum frequency threshold (defaults to 3000 Hz).
      * @throws Will throw an error if the sample rate is not a positive number.
      */
-    constructor(sampleRate: number, maxFrequency?: number);
+    constructor(sampleRate: number, maxFrequency?: number, minFrequency?: number);
     /**
      * Detects the pitch of an audio buffer using the full YIN algorithm.
      *
      * @remarks
      * This is the core method of the class. It processes a raw audio buffer and returns the
-     * detected frequency and a confidence level. For performance, it's recommended to use
-     * `detectPitchWithValidation` to avoid running the algorithm on silent buffers.
+     * detected frequency and a confidence level.
+     *
+     * **Algorithmic Steps**:
+     * 1. **Difference Function**: Measures how much the signal differs from itself when shifted by a lag (tau).
+     * 2. **Cumulative Mean Normalized Difference**: Normalizes the difference to prevent the algorithm
+     *    from biased towards low periods (high frequencies), reducing "octave errors".
+     * 3. **Absolute Threshold**: Finds the first lag where the normalized difference is below `YIN_THRESHOLD`.
+     * 4. **Parabolic Interpolation**: Refines the discrete lag estimate to achieve sub-sample precision.
      *
      * @param buffer - A `Float32Array` of raw audio data.
      * @returns A `PitchDetectionResult` object. If no pitch is detected, `pitchHz` and `confidence` will be 0.
@@ -80,6 +92,17 @@ export declare class PitchDetector {
      * @returns The RMS value, a non-negative number.
      */
     calculateRMS(buffer: Float32Array): number;
+    /**
+     * Normalizes an audio buffer so that its peak amplitude is 1.0.
+     *
+     * @remarks
+     * This is useful for detecting pitch in very quiet signals that would otherwise
+     * be rejected by RMS or confidence thresholds.
+     *
+     * @param buffer - The raw audio data.
+     * @returns A new Float32Array with normalized samples, or the original if it was silent.
+     */
+    normalize(buffer: Float32Array): Float32Array;
     /**
      * Utility method to detect if there's enough signal to attempt pitch detection.
      *
@@ -102,10 +125,11 @@ export declare class PitchDetector {
      *
      * @param buffer - The audio data to analyze.
      * @param rmsThreshold - The RMS threshold to use for the signal check.
+     * @param adaptive - If true, will attempt to normalize very weak signals to rescue detection.
      * @returns A `PitchDetectionResult`. If the signal is below the threshold, it returns a result indicating no pitch.
      * @defaultValue `rmsThreshold` is `this.DEFAULT_RMS_THRESHOLD`.
      */
-    detectPitchWithValidation(buffer: Float32Array, rmsThreshold?: number): PitchDetectionResult;
+    detectPitchWithValidation(buffer: Float32Array, rmsThreshold?: number, adaptive?: boolean): PitchDetectionResult;
     /**
      * Gets the sample rate the detector was configured with.
      * Refactored for range validation.
@@ -132,23 +156,62 @@ export declare class PitchDetector {
      * detector.setMaxFrequency(25000); // ❌ Throws AppError (above human hearing)
      */
     setMaxFrequency(maxHz: number): void;
-    private calculateSearchSize;
+    /**
+     * Updates the minimum frequency threshold for pitch detection.
+     *
+     * @param minHz - Minimum frequency in Hz (must be > 20 and < MAX_FREQUENCY)
+     * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
+     */
+    setMinFrequency(minHz: number): void;
+    private calculateSearchRange;
     private refineAndValidatePitch;
     private isFrequencyInRange;
-    /** Step 1: Difference function */
+    /**
+     * Step 1: Difference function.
+     *
+     * Calculates the squared difference between the signal and its delayed version for each lag (tau).
+     * Effectively a measure of "un-correlation".
+     */
     private difference;
     private calculateSquaredDifferenceSum;
-    /** Step 2: Cumulative mean normalized difference function */
+    /**
+     * Step 2: Cumulative mean normalized difference function.
+     *
+     * This is the "magic" of YIN. It divides each difference by the average of all preceding
+     * differences. This prevents the search from getting stuck in a local minimum at tau=0
+     * and helps avoid detecting harmonics as the fundamental frequency.
+     */
     private cumulativeMeanNormalizedDifference;
-    /** Step 3: Absolute threshold */
+    /**
+     * Step 3: Absolute threshold.
+     *
+     * Finds the first local minimum that falls below the `YIN_THRESHOLD`.
+     * If no such minimum exists, falls back to the global minimum (less reliable).
+     */
     private absoluteThreshold;
     private findFirstBelowThreshold;
     private localMinimum;
     private findGlobalMinimum;
-    /** Step 4: Parabolic interpolation */
+    /**
+     * Step 4: Parabolic interpolation.
+     *
+     * Refines the detected lag (tau) by fitting a parabola through the minimum and its neighbors.
+     * This allows the detector to find frequencies that don't align perfectly with the sample rate.
+     */
     private parabolicInterpolation;
     private isAtSearchEdge;
     private calculateParabolicCorrection;
+    /**
+     * Simple Zero-Crossing algorithm to estimate frequency.
+     *
+     * @remarks
+     * Not as robust as YIN for complex signals, but very fast and useful as a
+     * second opinion for high-confidence clean signals.
+     *
+     * @param buffer - Audio samples.
+     * @returns Frequency in Hz.
+     */
+    detectZeroCrossing(buffer: Float32Array): number;
 }
 /**
  * Helper function to create a PitchDetector from a Web Audio API `AudioContext`.

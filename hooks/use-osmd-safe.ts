@@ -357,6 +357,8 @@ export function useOSMDSafe(
     highlightRange,
     applyHeatmap,
     onNoteClick,
+    highlightRange,
+    applyHeatmap,
     scoreView,
   }
 }

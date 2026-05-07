@@ -3,8 +3,8 @@
  *
  * Pure utility functions for the practice mode domain.
  */
-import { PracticeState, DetectedNote, PracticeStatus } from '@/lib/practice-core';
-import { Note } from '@/lib/exercises/types';
+import { PracticeState, DetectedNote, PracticeStatus } from '@/lib/domain/practice';
+import { Note } from '@/lib/domain/exercise';
 /**
  * Derived state used by UI components to represent the current progress
  * and targets of a practice session.

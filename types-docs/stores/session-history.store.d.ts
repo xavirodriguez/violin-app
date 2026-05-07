@@ -1,10 +1,10 @@
-import { PracticeSession } from './session.store';
+import { CompletedPracticeSession } from '@/lib/domain/practice';
 /**
  * Internal state for the session history store.
  */
 interface SessionHistoryState {
     /** Array of completed practice sessions, capped at 100. */
-    sessions: PracticeSession[];
+    sessions: CompletedPracticeSession[];
 }
 /**
  * Actions for managing session history.
@@ -15,14 +15,14 @@ interface SessionHistoryActions {
      *
      * @param session - The session to add.
      */
-    addSession: (session: PracticeSession) => void;
+    addSession: (session: CompletedPracticeSession) => void;
     /**
      * Retrieves sessions filtered by age.
      *
      * @param days - Number of days to look back.
-     * @returns Filtered array of {@link PracticeSession}.
+     * @returns Filtered array of {@link CompletedPracticeSession}.
      */
-    getHistory: (days?: number) => PracticeSession[];
+    getHistory: (days?: number) => CompletedPracticeSession[];
 }
 /**
  * Zustand store for persisting and retrieving practice session history.

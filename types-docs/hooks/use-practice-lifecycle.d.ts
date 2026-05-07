@@ -3,20 +3,14 @@
  *
  * Orchestrates the lifecycle of a practice session.
  */
-import { PracticeState } from '@/lib/practice-core';
-import { useOSMDSafe } from './use-osmd-safe';
-import { Exercise } from '@/lib/exercises/types';
-import { DerivedPracticeState } from '@/lib/practice/practice-utils';
+import { ScoreViewPort } from '@/lib/ports/score-view.port';
+import { PracticeUIEvent, PracticeStatus } from '@/lib/domain/practice';
 interface LifecycleParams {
-    practiceState: PracticeState | undefined;
-    loadExercise: (exercise: Exercise) => Promise<void>;
-    start: () => Promise<void>;
-    stop: () => Promise<void>;
-    setIsZen: (enabled: boolean | ((prev: boolean) => boolean)) => void;
-    osmdHook: ReturnType<typeof useOSMDSafe>;
-    derived: DerivedPracticeState;
-    autoStartEnabled: boolean;
-    loadId: number;
+    dispatch: (event: PracticeUIEvent) => void;
+    onToggleZenMode: () => void;
+    scoreView: ScoreViewPort;
+    status: PracticeStatus;
+    currentNoteIndex: number;
 }
 export declare function usePracticeLifecycle(params: LifecycleParams): void;
 export {};

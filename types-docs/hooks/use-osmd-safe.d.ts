@@ -2,10 +2,20 @@
  * useOSMDSafe
  * A custom React hook for safely initializing and managing OpenSheetMusicDisplay (OSMD) instances.
  */
-import { OpenSheetMusicDisplay, IOSMDOptions } from 'opensheetmusicdisplay';
+import { IOSMDOptions } from 'opensheetmusicdisplay';
+import { ScoreViewPort } from '@/lib/ports/score-view.port';
 /**
- * Hook for safely managing OpenSheetMusicDisplay instances.
- * Refactored for documented lifecycle behavior and null elimination.
+ * Hook for safely managing OpenSheetMusicDisplay (OSMD) instances in a React lifecycle.
+ *
+ * @remarks
+ * This hook encapsulates the complex initialization, rendering, and cleanup logic
+ * of the OSMD library. It ensures that the renderer is properly attached to the
+ * DOM and provides high-level methods for cursor control and note highlighting.
+ *
+ * **Memory & Performance**:
+ * - Automatically clears the OSMD instance on unmount to prevent memory leaks.
+ * - Uses a `loadTokenRef` to ensure that only the latest `musicXML` load request
+ *   updates the state, preventing race conditions during rapid re-renders.
  *
  * @param musicXML - Valid MusicXML 3.1 string
  * @param options - OSMD configuration
@@ -47,8 +57,17 @@ export declare function useOSMDSafe(musicXML: string, options?: IOSMDOptions): {
     resetCursor: () => void;
     /** Safe to call anytime - no-op when !isReady */
     advanceCursor: () => void;
-    /** Highlights the note at the given index */
-    highlightCurrentNote: (noteIndex: number) => void;
-    /** Reference to the OSMD instance for advanced interactions */
-    osmd: OpenSheetMusicDisplay | undefined;
+    /** Highlights the notes currently under the OSMD cursor. */
+    highlightCurrentNote: () => void;
+    /** Highlights a range of notes. */
+    highlightRange: (startIndex: number, endIndex: number) => void;
+    /** Applies heatmap coloring to notes based on precision. */
+    applyHeatmap: (precisionMap: Record<number, number>) => void;
+    /** Safe to call anytime - no-op when !isReady */
+    onNoteClick: (handler: (data: {
+        noteIndex: number;
+        event: MouseEvent;
+    }) => void) => void;
+    /** Implementation of the ScoreViewPort for decoupled visual control */
+    scoreView: ScoreViewPort;
 };

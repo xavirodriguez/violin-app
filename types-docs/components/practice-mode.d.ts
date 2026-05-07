@@ -3,7 +3,7 @@
  *
  * The main container component for the interactive practice session.
  */
-import { Exercise } from '@/lib/exercises/types';
+import { Exercise } from '@/lib/domain/exercise';
 /**
  * Custom hook to manage the local UI state for the practice view.
  */

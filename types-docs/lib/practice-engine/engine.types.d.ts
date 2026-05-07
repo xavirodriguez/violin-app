@@ -54,6 +54,17 @@ export type PracticeEngineEvent = {
     type: 'NO_NOTE';
 } | {
     type: 'SESSION_COMPLETED';
+} | {
+    type: 'JUMP_TO_INDEX';
+    payload: {
+        index: number;
+    };
+} | {
+    type: 'DRILL_ATTEMPT_COMPLETED';
+    payload: {
+        success: boolean;
+        precision: number;
+    };
 };
 /**
  * Represents a note that has been fully processed and analyzed by the engine.
