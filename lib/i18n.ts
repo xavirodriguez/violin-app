@@ -50,6 +50,7 @@ export const translations = {
       calibrationSuccess: 'Calibration complete!',
       holdNote: 'Good! Hold the note...',
       playOpenA: 'Play the open A string',
+      retry: 'Retry',
     },
     settings: {
       title: 'Settings',
@@ -125,6 +126,7 @@ export const translations = {
       calibrationSuccess: '¡Calibración completada!',
       holdNote: '¡Bien! Mantén la nota...',
       playOpenA: 'Toca la cuerda A al aire',
+      retry: 'Reintentar',
     },
     settings: {
       title: 'Configuración',
@@ -158,5 +160,5 @@ export { type Language } from './user-preferences'
 export type TranslationSchema = typeof translations.en
 
 export function useTranslation(lang: Language): TranslationSchema {
-  return translations[lang]
+  return translations[lang] as unknown as TranslationSchema
 }

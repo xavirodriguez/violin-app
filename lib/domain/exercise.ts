@@ -84,7 +84,7 @@ export interface Note {
  *
  * @public
  */
-export type ExerciseCategory = 'Open Strings' | 'Scales' | 'Songs'
+export type ExerciseCategory = 'Open Strings' | 'Scales' | 'Songs' | 'Fingering' | 'Rhythm'
 
 /**
  * Difficulty levels used for pedagogical progression and recommendations.
