@@ -12,6 +12,7 @@ import { PitchDetector } from '@/lib/pitch-detector'
 import { toAppError, ERROR_CODES, AppError } from '@/lib/errors/app-error'
 import { logger } from '@/lib/observability/logger'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
+import { useCalibrationStore } from '@/stores/calibration-store'
 import type { TunerStore } from '@/lib/domain/exercise'
 
 /**
@@ -50,6 +51,7 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
     devices: [],
     deviceId: undefined,
     sensitivity: 50,
+    detectionThreshold: 0.01,
     thresholds: {
       tooLow: -35,
       bitLow: -10,
@@ -222,12 +224,10 @@ export const useTunerStore = create<TunerStore>()((set, get) => {
      * @returns A promise that resolves when the device list is updated.
      */
     loadDevices: async () => {
-      // To get device labels, we need microphone permission. If we haven't asked yet,
-      // we can trigger the prompt by doing a quick initialize/reset cycle.
-      if (get().permissionState === 'PROMPT' && get().state.kind === 'IDLE') {
-        await get().initialize()
-        await get().reset()
-      }
+      // To get device labels, we need microphone permission.
+      // We only trigger the prompt if the user has already granted permission in the past
+      // or if they are explicitly trying to interact with the tuner/settings.
+      // We check for existing permissions first to avoid an immediate prompt on page load.
 
       try {
         const devices = await navigator.mediaDevices.enumerateDevices()
@@ -318,6 +318,8 @@ async function executeAudioInit(params: {
     // Dynamically adjust detector sensitivity based on noise floor
     // We want a threshold slightly above the noise
     const dynamicThreshold = Math.min(0.01, Math.max(1e-5, noiseFloor * 2))
+
+    set({ detectionThreshold: dynamicThreshold })
 
     commitTunerReadyState({ set, token, detector })
   } catch (err) {

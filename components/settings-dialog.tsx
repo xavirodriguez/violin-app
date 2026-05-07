@@ -83,11 +83,22 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const t = useTranslation(language)
   const [isCalibrating, setIsCalibrated] = useState(false)
 
+  const { initialize, reset } = useTunerStore()
+  const permissionState = useTunerStore((s) => s.permissionState)
+  const tunerState = useTunerStore((s) => s.state)
+
   useEffect(() => {
-    if (isOpen) {
-      loadDevices()
+    const warmUpDevices = async () => {
+      if (isOpen) {
+        if (permissionState === 'PROMPT' && tunerState.kind === 'IDLE') {
+          await initialize()
+          await reset()
+        }
+        await loadDevices()
+      }
     }
-  }, [isOpen, loadDevices])
+    warmUpDevices()
+  }, [isOpen, loadDevices, permissionState, tunerState.kind, initialize, reset])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
