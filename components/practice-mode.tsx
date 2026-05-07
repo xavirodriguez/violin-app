@@ -147,7 +147,7 @@ export function PracticeMode() {
     status: derived.status,
     currentNoteIndex: derived.currentNoteIndex,
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
-    scoreView: osmd.scoreView,
+    scoreView: osmd.scoreView, applyHeatmap: osmd.applyHeatmap
   }
   usePracticeLifecycle(lifecycleParams)
 
@@ -228,7 +228,7 @@ export function PracticeMode() {
             isReady: osmd.isReady,
             error: osmd.error,
             containerRef: osmd.containerRef,
-            scoreView: osmd.scoreView,
+            scoreView: osmd.scoreView, applyHeatmap: osmd.applyHeatmap
 
           }}
           sessions={sessions}
