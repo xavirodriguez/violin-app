@@ -38,6 +38,7 @@ interface PracticeMainContentProps {
     error: string | undefined
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
+    applyHeatmap: (precisionMap: Record<number, number>) => void
   }
   sessions: PracticeSession[]
   onToggleZenMode: () => void

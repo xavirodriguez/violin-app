@@ -22,6 +22,8 @@ export const fingeringExercises: ExerciseData[] = [
     category: 'Fingering',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_D,
+    technicalGoals: ['Fingering'],
+    estimatedDuration: '1 min',
     technicalTechnique: 'Fingering',
     indicatedBpm: 60,
     notes: [
@@ -38,6 +40,8 @@ export const fingeringExercises: ExerciseData[] = [
     category: 'Fingering',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_D,
+    technicalGoals: ['Fingering'],
+    estimatedDuration: '1 min',
     technicalTechnique: 'Fingering',
     indicatedBpm: 60,
     notes: [
@@ -56,6 +60,8 @@ export const fingeringExercises: ExerciseData[] = [
     category: 'Fingering',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_A,
+    technicalGoals: ['Fingering'],
+    estimatedDuration: '1 min',
     technicalTechnique: 'Fingering',
     indicatedBpm: 60,
     notes: [
@@ -72,6 +78,8 @@ export const fingeringExercises: ExerciseData[] = [
     category: 'Fingering',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_D,
+    technicalGoals: ['Fingering'],
+    estimatedDuration: '1 min',
     technicalTechnique: 'Fingering',
     indicatedBpm: 60,
     notes: [
@@ -90,6 +98,8 @@ export const fingeringExercises: ExerciseData[] = [
     category: 'Fingering',
     difficulty: 'Beginner',
     scoreMetadata: SCORE_METADATA_A,
+    technicalGoals: ['Fingering'],
+    estimatedDuration: '1 min',
     technicalTechnique: 'Fingering',
     indicatedBpm: 60,
     notes: [

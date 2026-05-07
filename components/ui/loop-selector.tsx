@@ -21,6 +21,8 @@ export function LoopSelector() {
         startNoteIndex: 0,
         endNoteIndex: 3,
         isEnabled: true,
+        tempoMultiplier: 1.0,
+        history: [],
       })
     }
   }
