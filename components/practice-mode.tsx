@@ -2,6 +2,7 @@
  * PracticeMode
  *
  * The main container component for the interactive practice session.
+ * Refactored for MVP.
  */
 
 'use client'
@@ -13,7 +14,6 @@ import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { useProgressStore } from '@/stores/progress.store'
-import { ErrorDisplay } from './practice/error-display'
 import { AudioTroubleshooter } from './practice/AudioTroubleshooter'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
@@ -44,10 +44,11 @@ export function usePracticeViewState() {
 export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const lastDrillResult = usePracticeStore((s) => s.lastDrillResult)
-  const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
-  const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
-  const listenIteration = usePracticeStore((s) => s.listenIteration)
-  const countdown = usePracticeStore((s) => s.countdown)
+
+  // MVP: Remove obsolete states from UI
+  const isListeningPhase = false
+  const listenIteration = 0
+  const countdown = null
 
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false)
@@ -104,7 +105,6 @@ export function PracticeMode() {
   useEffect(() => {
     if (osmd.isReady) {
       return osmd.onNoteClick(({ noteIndex, event }) => {
-        // Shift key to select loop range
         const isShiftPressed = event.shiftKey
 
         if (isShiftPressed && loopRegion?.isEnabled) {
@@ -122,7 +122,6 @@ export function PracticeMode() {
             })
           }
 
-          // Also set as start of loop if shift not pressed
           setLoopRegion({
             startNoteIndex: noteIndex,
             endNoteIndex: noteIndex,
@@ -140,11 +139,12 @@ export function PracticeMode() {
       osmd.highlightRange(loopRegion.startNoteIndex, loopRegion.endNoteIndex)
     }
   }, [osmd.isReady, loopRegion])
+
   const cents = Math.round(35 - (intonationSkill / 100) * 25)
 
   const lifecycleParams = {
     dispatch,
-    status: derived.status,
+    status: derived.status as any,
     currentNoteIndex: derived.currentNoteIndex,
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
@@ -219,7 +219,7 @@ export function PracticeMode() {
         <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
           isZenModeEnabled={viewState.isZen}
-          autoStartEnabled={autoStartEnabled}
+          autoStartEnabled={false}
           setPreviewExercise={viewActions.setPreview}
           centsTolerance={cents}
           sheetMusicView={viewState.view}
@@ -229,7 +229,7 @@ export function PracticeMode() {
             error: osmd.error,
             containerRef: osmd.containerRef,
             scoreView: osmd.scoreView,
-
+            applyHeatmap: osmd.applyHeatmap
           }}
           sessions={sessions}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
@@ -272,18 +272,16 @@ function PracticePreviewModal(params: {
 }
 
 function PracticeStatusHeader() {
-  const state = usePracticeStore((s) => s.state)
+  const status = usePracticeStore((s) => s.status)
+  const error = usePracticeStore((s) => s.error)
   const start = usePracticeStore((s) => s.start)
 
-  const isError = state.status === 'error'
-  const isInitializing = state.status === 'initializing'
-
-  if (isError) {
-    const message = state.error?.message ?? 'Unknown error'
+  if (status === 'error') {
+    const message = error?.message ?? 'Unknown error'
     return <AudioTroubleshooter error={message} onRetry={start} />
   }
 
-  if (isInitializing) {
+  if (status === 'active' && false) { // Removed initializing state for now
     return <Card className="p-12 text-center">Initializing Audio...</Card>
   }
 
@@ -309,16 +307,14 @@ function PracticeControlsRow({
   bpm: number
   onBpmChange: (bpm: number) => void
 }) {
-  const state = usePracticeStore((s) => s.state)
+  const statusStore = usePracticeStore((s) => s.status)
   const derived = useDerivedPracticeState()
   const dispatch = usePracticeStore.getState().dispatch
   const practiceState = usePracticeStore((s) => s.practiceState)
 
   const { status, progress, currentNoteIndex, totalNotes } = derived
 
-  const isIdle = state.status === 'idle'
-  const hasExercise = !!state.exercise
-  const shouldShow = !isZen && (!isIdle || hasExercise)
+  const shouldShow = !isZen && (statusStore !== 'idle' || !!practiceState)
 
   if (!shouldShow) return <></>
 
@@ -328,7 +324,7 @@ function PracticeControlsRow({
 
   return (
     <PracticeControls
-      status={status}
+      status={status as any}
       hasExercise={!!practiceState}
       onStart={() => dispatch({ type: 'START_SESSION' })}
       onStop={() => dispatch({ type: 'STOP_SESSION' })}
