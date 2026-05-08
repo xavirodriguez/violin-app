@@ -2,11 +2,11 @@
  * PracticeMainContent
  *
  * Orchestrates the main views of the practice mode: settings, library, and active session view.
+ * Simplified for MVP.
  */
 
 'use client'
 
-import { PracticeSettings } from './practice-settings'
 import { ExerciseLibrary } from './exercise-library'
 import { SelectionPrompt } from './selection-prompt'
 import { SheetMusicContainer } from './sheet-music-container'
@@ -25,6 +25,7 @@ import { PracticeSession } from '@/lib/domain/practice'
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 import { useCurriculumStore } from '@/stores/curriculum-store'
 import { WhyThisMattersModal } from '../curriculum/why-this-matters-modal'
+import { PracticeSettings } from './practice-settings'
 
 interface PracticeMainContentProps {
   isZenModeEnabled: boolean
@@ -45,7 +46,7 @@ interface PracticeMainContentProps {
 }
 
 export function PracticeMainContent(props: PracticeMainContentProps) {
-  const state = usePracticeStore((s) => s.state)
+  const storeStatus = usePracticeStore((s) => s.status)
   const practiceState = usePracticeStore((s) => s.practiceState)
   const derived = useDerivedPracticeState()
   const { status } = derived
@@ -57,30 +58,29 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
   const [activePedagogy, setActivePedagogy] = useState<any>(null)
 
   useEffect(() => {
-    if (!isVisible && state.status === 'active') {
+    if (!isVisible && storeStatus === 'active') {
       setWasPaused(true)
     }
-    if (state.status !== 'active') {
+    if (storeStatus !== 'active') {
       setWasPaused(false)
     }
-  }, [isVisible, state.status])
+  }, [isVisible, storeStatus])
 
   useEffect(() => {
-    if (practiceState && state.status === 'idle') {
-      // Check if this exercise belongs to a unit we should introduce
+    if (practiceState && storeStatus === 'ready') {
       const unit = units.find(u => u.lessons.some(l => l.exerciseId === practiceState.exercise.id))
       if (unit && !unit.isCompleted) {
         setActivePedagogy(unit.whyThisMatters)
         setShowPedagogy(true)
       }
     }
-  }, [practiceState?.exercise.id, state.status, units])
+  }, [practiceState?.exercise.id, storeStatus, units])
 
   const handleResume = () => {
     setWasPaused(false)
   }
 
-  const showPausedBanner = wasPaused && state.status === 'active'
+  const showPausedBanner = wasPaused && storeStatus === 'active'
 
   return (
     <>
@@ -92,7 +92,7 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
         />
       )}
       <PracticeIdleContent {...props} />
-      {status === 'idle' && <SelectionPrompt />}
+      {status === 'idle' && !practiceState && <SelectionPrompt />}
       {showPausedBanner && (
         <Card className="mb-6 border-yellow-500 bg-yellow-500/10 p-4">
           <div className="flex items-center justify-between gap-3">
@@ -120,7 +120,7 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
       <SheetMusicContainer
         {...props}
         practiceState={practiceState}
-        status={status}
+        status={status as any}
         currentNoteIndex={derived.currentNoteIndex}
       />
       <PracticeActiveViewContent {...props} />
@@ -130,22 +130,22 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 }
 
 function PracticeIdleContent(props: PracticeMainContentProps) {
-  const state = usePracticeStore((s) => s.state)
+  const storeStatus = usePracticeStore((s) => s.status)
   const practiceState = usePracticeStore((s) => s.practiceState)
+  const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
   const listenImitateActive = usePracticeStore((s) => s.listenImitateActive)
   const setListenImitateActive = usePracticeStore((s) => s.setListenImitateActive)
   const dispatch = usePracticeStore.getState().dispatch
-  const { isZenModeEnabled, autoStartEnabled, setPreviewExercise } = props
-  if (state.status !== 'idle') return <></>
+  const { isZenModeEnabled, setPreviewExercise } = props
+
+  if (storeStatus !== 'ready' && storeStatus !== 'idle') return <></>
 
   return (
     <div className="space-y-6">
       {!isZenModeEnabled && (
         <PracticeSettings
           autoStartEnabled={autoStartEnabled}
-          onAutoStartChange={(enabled) =>
-            dispatch({ type: 'TOGGLE_AUTO_START', payload: { enabled } })
-          }
+          onAutoStartChange={() => {}} // No-op for MVP simplification
           listenImitateEnabled={listenImitateActive}
           onListenImitateChange={setListenImitateActive}
         />
@@ -225,7 +225,7 @@ function QuickActionsView({
 }) {
   const dispatch = usePracticeStore.getState().dispatch
   const onTogglePause = () =>
-    status === 'listening'
+    status === 'listening' || status === 'validating' || status === 'correct'
       ? dispatch({ type: 'STOP_SESSION' })
       : dispatch({ type: 'START_SESSION' })
   const onToggleZen = () => onToggleZenMode()
@@ -238,21 +238,12 @@ function QuickActionsView({
 
   const onRepeatMeasure = () => {
     if (practiceState) {
-      /**
-       * Current implementation resets to the start of the exercise (index 0).
-       * In future iterations, this will be updated to identify the start of the
-       * current measure using OSMD/domain metadata if available.
-       */
       dispatch({ type: 'JUMP_TO_NOTE', payload: { index: 0 } })
     }
   }
 
   const onContinue = () => {
     if (practiceState && status !== 'completed') {
-      /**
-       * Skip the current or next note.
-       * Always increments the index relative to the current logical position.
-       */
       const nextIndex = practiceState.currentIndex + 1
       dispatch({ type: 'JUMP_TO_NOTE', payload: { index: nextIndex } })
     }
@@ -260,7 +251,7 @@ function QuickActionsView({
 
   return (
     <PracticeQuickActions
-      status={status}
+      status={status as any}
       onRepeatNote={onRepeatNote}
       onRepeatMeasure={onRepeatMeasure}
       onContinue={onContinue}

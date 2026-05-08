@@ -50,7 +50,8 @@ export class PracticeService {
       return
     }
 
-    analyser.getFloatTimeDomainData(this.buffer)
+    // Use explicit cast to avoid SharedArrayBuffer issues in TS
+    analyser.getFloatTimeDomainData(this.buffer as any)
     const result = this.detector.detectPitchWithValidation(this.buffer)
 
     const store = usePracticeStore.getState()
