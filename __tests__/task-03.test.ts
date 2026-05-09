@@ -55,8 +55,8 @@ describe('PracticeStore loadExercise integration (TASK-03)', () => {
 
     const state = usePracticeStore.getState()
     expect(state.status).toBe('error')
-    expect(state.status).toBe('error')
     expect(state.error?.code).toBe(ERROR_CODES.INVALID_EXERCISE)
+    expect(state.error?.message).toMatch(/invalid accidental alter=2/i)
   })
 
   it('should reject exercise with no notes', () => {
@@ -71,7 +71,7 @@ describe('PracticeStore loadExercise integration (TASK-03)', () => {
 
     const state = usePracticeStore.getState()
     expect(state.status).toBe('error')
-    expect(state.status).toBe('error')
     expect(state.error?.code).toBe(ERROR_CODES.INVALID_EXERCISE)
+    expect(state.error?.message).toContain('at least one note')
   })
 })
