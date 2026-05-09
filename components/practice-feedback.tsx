@@ -44,6 +44,9 @@ export function PracticeFeedback(props: PracticeFeedbackProps) {
     status,
     centsTolerance = 10,
     liveObservations = [],
+    perfectNoteStreak,
+    holdDuration,
+    requiredHoldTime,
   } = props
 
   const isInTune = centsOff !== undefined && Math.abs(centsOff) < centsTolerance
@@ -60,6 +63,9 @@ export function PracticeFeedback(props: PracticeFeedbackProps) {
         isPlaying={isPlaying}
         isCorrectNote={isCorrectNote}
         isInTune={isInTune}
+        perfectNoteStreak={perfectNoteStreak}
+        holdDuration={holdDuration}
+        requiredHoldTime={requiredHoldTime}
       />
 
       <TechnicalDetails isPlaying={isPlaying} centsOff={centsOff} centsTolerance={centsTolerance} />
@@ -78,6 +84,8 @@ function FeedbackStatus(props: {
   isCorrectNote: boolean
   isInTune: boolean
   perfectNoteStreak?: number
+  holdDuration?: number
+  requiredHoldTime?: number
 }) {
   const {
     targetNote,
@@ -87,7 +95,9 @@ function FeedbackStatus(props: {
     isPlaying,
     isCorrectNote,
     isInTune,
-    perfectNoteStreak
+    perfectNoteStreak,
+    holdDuration,
+    requiredHoldTime,
   } = props
 
   if (!isPlaying) {
@@ -102,6 +112,8 @@ function FeedbackStatus(props: {
       isCorrectNote={isCorrectNote}
       isInTune={isInTune}
       perfectNoteStreak={perfectNoteStreak}
+      holdDuration={holdDuration}
+      requiredHoldTime={requiredHoldTime}
     />
   )
 }
@@ -120,15 +132,27 @@ function ActiveFeedback(props: {
   isCorrectNote: boolean
   isInTune: boolean
   perfectNoteStreak?: number
+  holdDuration?: number
+  requiredHoldTime?: number
 }) {
-  const { targetNote, detectedPitchName, centsOff, isCorrectNote, isInTune, perfectNoteStreak } = props
+  const {
+    targetNote,
+    detectedPitchName,
+    centsOff,
+    isCorrectNote,
+    isInTune,
+    perfectNoteStreak,
+    holdDuration = 0,
+    requiredHoldTime = 500,
+  } = props
 
   if (!isCorrectNote) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
   }
 
   if (isInTune) {
-    return <PerfectFeedback streak={perfectNoteStreak} />
+    const holdProgress = Math.min(100, (holdDuration / requiredHoldTime) * 100)
+    return <PerfectFeedback streak={perfectNoteStreak} holdProgress={holdProgress} />
   }
 
   return <AdjustmentFeedback centsOff={centsOff!} />
@@ -145,17 +169,49 @@ function WaitingPrompt({ targetNote }: { targetNote: string }) {
   )
 }
 
-function PerfectFeedback({ streak = 0 }: { streak?: number }) {
+function PerfectFeedback({
+  streak = 0,
+  holdProgress = 0,
+}: {
+  streak?: number
+  holdProgress?: number
+}) {
   return (
     <div className="flex min-h-[200px] flex-col items-center justify-center">
-      <div className="text-center">
+      <div className="relative text-center">
         <CheckCircle2 className="mx-auto mb-4 h-32 w-32 text-green-500" />
+        {holdProgress > 0 && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <svg className="h-40 w-40 -rotate-90">
+              <circle
+                cx="80"
+                cy="80"
+                r="70"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                className="text-green-500/20"
+              />
+              <circle
+                cx="80"
+                cy="80"
+                r="70"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                strokeDasharray={440}
+                strokeDashoffset={440 - (440 * holdProgress) / 100}
+                className="text-green-500 transition-all duration-200"
+              />
+            </svg>
+          </div>
+        )}
         <div className="text-4xl font-bold text-green-500">Perfect!</div>
       </div>
 
       {streak >= 3 && (
         <div className="mt-4 animate-bounce text-center">
-          <Badge className="bg-amber-500 hover:bg-amber-600 gap-1.5 px-3 py-1">
+          <Badge className="hover:bg-amber-600 bg-amber-500 gap-1.5 px-3 py-1">
             <Zap className="h-3 w-3 fill-white" />
             Adaptive Difficulty Active
           </Badge>
@@ -295,11 +351,11 @@ function ObservationItem({ observation }: { observation: Observation }) {
           <div className="text-muted-foreground text-xs mt-1 italic">{remedyTip}</div>
 
           {visualAidUrl && (
-             <div className="mt-2 overflow-hidden rounded-md border border-black/5 bg-black/5 p-1">
-               <div className="flex items-center justify-center py-4 text-[10px] text-muted-foreground uppercase tracking-widest">
-                  Visual Aid Placeholder
-               </div>
-             </div>
+            <div className="mt-2 overflow-hidden rounded-md border border-black/5 bg-black/5 p-1">
+              <div className="flex items-center justify-center py-4 text-[10px] text-muted-foreground uppercase tracking-widest">
+                Visual Aid Placeholder
+              </div>
+            </div>
           )}
         </div>
       </div>

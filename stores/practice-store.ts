@@ -16,9 +16,14 @@ import { practiceService } from '@/lib/practice/practice-service'
 import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
 import { Observation } from '@/lib/technique-types'
-import { metronomeService } from '@/lib/audio/metronome-service'
-import { audioPlayerService } from '@/lib/audio/audio-player'
 import { useProgressStore } from './progress.store'
+
+export function calculateCentsTolerance(): number {
+  const intonationSkill = useProgressStore.getState().intonationSkill
+  const base = 35
+  const skillBonus = (intonationSkill / 100) * 25
+  return Math.max(15, Math.round(base - skillBonus))
+}
 
 export interface PracticeStore {
   // Core MVP State
@@ -27,6 +32,7 @@ export interface PracticeStore {
   practiceState: PracticeState | undefined
   error: AppError | undefined
   analyser: AnalyserNode | undefined
+  sessionToken: string | undefined
 
   // UI Stubs for compatibility (to be removed once UI is updated)
   lastDrillResult: { success: boolean; precision: number } | null
@@ -50,16 +56,29 @@ export interface PracticeStore {
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
   setListenImitateActive: (active: boolean) => void
-
-  // Epic E-01 Actions
-  playNote: (sampleUrl: string) => void
-  playReference: () => Promise<void>
-  toggleMetronome: () => void
+  consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
 }
 
-export const calculateCentsTolerance = () => {
-  const { intonationSkill } = useProgressStore.getState()
-  return Math.max(15, Math.round(35 - (intonationSkill / 100) * 25))
+/**
+ * Creates a "safe" version of the Zustand `set` function that only applies
+ * updates if the session token at the time of the update matches the current token.
+ * This prevents race conditions where an old, async process updates the store
+ * after a new session has already started.
+ */
+export function createSafeSet(params: {
+  set: (partial: any) => void
+  get: () => any
+  currentToken: string | undefined
+}) {
+  const { set, get, currentToken } = params
+
+  return (partial: any) => {
+    const storeToken = get().sessionToken
+    if (currentToken !== storeToken) {
+      return
+    }
+    set(partial)
+  }
 }
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
@@ -68,6 +87,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   practiceState: undefined,
   error: undefined,
   analyser: undefined,
+  sessionToken: undefined,
 
   // Stubs
   lastDrillResult: null,
@@ -92,26 +112,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
           detectionHistory: [],
           perfectNoteStreak: 0,
           holdDuration: 0,
-          metronome: {
-            bpm: validated.indicatedBpm || 60,
-            active: false,
-            soundType: 'wood',
-            tempoMultiplier: 1.0
-          },
-          loopRegion: {
-            startNoteIndex: 0,
-            endNoteIndex: validated.notes.length - 1,
-            isEnabled: false,
-            tempoMultiplier: 1.0,
-            history: []
-          }
         },
         status: 'ready',
         error: undefined,
-        analyser: undefined
+        analyser: undefined,
       })
     } catch (err) {
-      set({ status: 'error', error: toAppError(err) })
+      set({
+        status: 'error',
+        error: toAppError(err),
+        exercise: undefined,
+        practiceState: undefined,
+      })
     }
   },
 
@@ -122,6 +134,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   start: async () => {
+    const sessionToken = Math.random().toString(36).substring(7)
     try {
       const resources = await audioManager.initialize()
       const { practiceState } = get()
@@ -132,7 +145,14 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       }
 
       practiceService.start()
-      set({ status: 'active', analyser: resources.analyser })
+      const currentState = get().practiceState
+      const newState = currentState ? reducePracticeEvent(currentState, { type: 'START' }) : undefined
+      set({
+        status: 'active',
+        analyser: resources.analyser,
+        sessionToken,
+        practiceState: newState,
+      })
     } catch (err) {
       set({ status: 'error', error: toAppError(err) })
     }
@@ -143,7 +163,18 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     metronomeService.stop()
     audioPlayerService.stopAll()
     await audioManager.cleanup()
-    set({ status: 'ready', analyser: undefined })
+    set({
+      status: 'ready',
+      analyser: undefined,
+      sessionToken: undefined,
+      practiceState: get().practiceState
+        ? {
+            ...get().practiceState!,
+            status: 'idle',
+            holdDuration: 0,
+          }
+        : undefined,
+    })
   },
 
   reset: () => {
@@ -153,7 +184,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       exercise: undefined,
       practiceState: undefined,
       error: undefined,
-      analyser: undefined
+      analyser: undefined,
+      sessionToken: undefined,
     })
   },
 
@@ -162,7 +194,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     if (!practiceState) return
 
     const nextState = reducePracticeEvent(practiceState, event)
-    set({ practiceState: nextState, loopRegion: nextState.loopRegion })
+
+
+    set({ practiceState: nextState })
   },
 
   dispatch: (event) => {
@@ -179,49 +213,60 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
       case 'JUMP_TO_NOTE':
         get().internalUpdate({ type: 'JUMP_TO_NOTE', payload: { index: event.payload.index } })
         break
-      case 'UPDATE_METRONOME':
-        get().internalUpdate({ type: 'UPDATE_METRONOME', payload: event.payload })
-        // Sync with service if active
-        if (get().status === 'active') {
-          if (event.payload.active === false) {
-             metronomeService.stop()
-          } else if (event.payload.active === true || get().practiceState?.metronome?.active) {
-             const config = { ...get().practiceState!.metronome!, ...event.payload }
-             metronomeService.start(config)
-          }
-        }
-        break
-      case 'UPDATE_LOOP_REGION':
-        get().internalUpdate({ type: 'UPDATE_LOOP_REGION', payload: event.payload })
-        break
     }
   },
 
-  setLoopRegion: (region) => {
-    if (region) {
-      get().dispatch({ type: 'UPDATE_LOOP_REGION', payload: region })
-    } else {
-      get().dispatch({ type: 'UPDATE_LOOP_REGION', payload: { isEnabled: false } })
-    }
-  },
-  setTempoConfig: (config) => {
-    get().dispatch({ type: 'UPDATE_METRONOME', payload: { bpm: config.bpm, tempoMultiplier: config.scale } })
-    set({ tempoConfig: config })
-  },
+  setLoopRegion: (region) => set({ loopRegion: region }),
+  setTempoConfig: (config) => set({ tempoConfig: config }),
   setListenImitateActive: (active) => set({ listenImitateActive: active }),
 
-  playNote: (url) => audioPlayerService.playNote(url),
-  playReference: async () => {
-    const { exercise } = get()
-    const url = exercise?.referenceAudioUrl || 'https://example.com/audio.mp3'
-    await audioPlayerService.playReference(url)
+  consumePipelineEvents: async (pipeline) => {
+    const currentToken = get().sessionToken
+    for await (const event of pipeline) {
+      if (get().sessionToken !== currentToken) break
+      get().internalUpdate(event)
+
+      // Handle live observations for MVP compatibility
+      if (event.type === 'NOTE_DETECTED') {
+        const { practiceState } = get()
+        if (practiceState && practiceState.detectionHistory.length >= 5) {
+          const recent = practiceState.detectionHistory.slice(0, 5)
+          const allSharp = recent.every((d) => d.cents > 15)
+          const allFlat = recent.every((d) => d.cents < -15)
+
+          if (allSharp) {
+            set({
+              liveObservations: [
+                {
+                  type: 'intonation',
+                  message: 'Consistent sharp pitch. Try loosening your finger pressure.',
+                  severity: 2,
+                  tip: 'Loosen finger pressure',
+                  confidence: 1.0 as any,
+                },
+              ],
+            })
+          } else if (allFlat) {
+            set({
+              liveObservations: [
+                {
+                  type: 'intonation',
+                  message: 'Consistent flat pitch. Try pressing a bit firmer or checking your string.',
+                  severity: 2,
+                  tip: 'Check string or press firmer',
+                  confidence: 1.0 as any,
+                },
+              ],
+            })
+          } else {
+            set({ liveObservations: [] })
+          }
+        }
+      } else if (event.type === 'NOTE_MATCHED') {
+        set({ liveObservations: [] })
+      }
+    }
   },
-  toggleMetronome: () => {
-    const { practiceState } = get()
-    if (!practiceState?.metronome) return
-    const active = !practiceState.metronome.active
-    get().dispatch({ type: 'UPDATE_METRONOME', payload: { active } })
-  }
 }))
 
 export const useDerivedPracticeState = () => {
