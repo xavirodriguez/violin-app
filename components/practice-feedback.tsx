@@ -143,14 +143,18 @@ function ActiveFeedback(props: {
     isInTune,
     perfectNoteStreak,
     holdDuration = 0,
-    requiredHoldTime = 500,
+    requiredHoldTime = 300,
   } = props
 
-  if (!isCorrectNote) {
+  // If we are within 100 cents (one semitone) of the target,
+  // don't show "Wrong Note", show adjustment feedback.
+  const isCloseEnoughToTarget = isCorrectNote || (centsOff !== undefined && Math.abs(centsOff) < 100)
+
+  if (!isCloseEnoughToTarget) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
   }
 
-  if (isInTune) {
+  if (isInTune && isCorrectNote) {
     const holdProgress = Math.min(100, (holdDuration / requiredHoldTime) * 100)
     return <PerfectFeedback streak={perfectNoteStreak} holdProgress={holdProgress} />
   }

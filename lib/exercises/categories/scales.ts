@@ -216,30 +216,27 @@ const createFullScaleExercise = (config: {
 export const scalesExercises: readonly ViolinExerciseData[] = [
   // Custom scale requested by user (D Major starting from G)
   {
-    id: 'd-major-from-g',
-    name: 'Escala de Re Mayor (desde Sol)',
-    description: 'Practica la escala de Re Mayor empezando desde Sol. Ideal para trabajar el Do#.',
+    id: 'sol-la-dosh-re-mi',
+    name: 'Escala Sol-La-Do#-Re-Mi (Interactiva)',
+    description: 'Practica la secuencia Sol, La, Do#, Re, Mi de forma interactiva para dominar el Do# en el violín.',
     category: 'Scales',
-    difficulty: 'Intermediate',
+    difficulty: 'Beginner',
     scoreMetadata: {
       clef: 'G',
       timeSignature: { beats: 4, beatType: 4 },
       keySignature: 2, // D Major (F#, C#)
     },
     notes: [
-      { pitch: parsePitch('G4'), duration: 4 },
-      { pitch: parsePitch('A4'), duration: 4 },
-      { pitch: parsePitch('B4'), duration: 4 },
-      { pitch: parsePitch('C#5'), duration: 4 },
-      { pitch: parsePitch('D5'), duration: 4 },
-      { pitch: parsePitch('E5'), duration: 4 },
-      { pitch: parsePitch('F#5'), duration: 4 },
-      { pitch: parsePitch('G5'), duration: 4 },
+      { pitch: parsePitch('G4'), duration: 2 },
+      { pitch: parsePitch('A4'), duration: 2 },
+      { pitch: parsePitch('C#5'), duration: 2 },
+      { pitch: parsePitch('D5'), duration: 2 },
+      { pitch: parsePitch('E5'), duration: 2 },
     ],
     indicatedBpm: 60,
-    technicalGoals: ['Intonación del Do#', 'Escala de Re Mayor'],
-    estimatedDuration: '5 min',
-    technicalTechnique: 'Scale',
+    technicalGoals: ['Dominar Do#', 'Cambio de cuerda Sol-Re'],
+    estimatedDuration: '3 min',
+    technicalTechnique: 'Scale Sequence',
   },
   // G Major Tetrachord (D and A strings)
   createTetrachordExercise({

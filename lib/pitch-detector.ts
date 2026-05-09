@@ -58,7 +58,7 @@ export class PitchDetector {
    * detection behavior changes. 0.1 is often a good balance for musical instruments,
    * but is not a benchmark-proven optimum for every environment.
    */
-  public static readonly DEFAULT_YIN_THRESHOLD = 0.1
+  public static readonly DEFAULT_YIN_THRESHOLD = 0.15
 
   private readonly YIN_THRESHOLD = PitchDetector.DEFAULT_YIN_THRESHOLD
 

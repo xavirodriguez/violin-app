@@ -15,7 +15,8 @@ export class PracticeService {
   private detector: PitchDetector | null = null
   private buffer: Float32Array = new Float32Array(2048)
   private holdStartTime: number | null = null
-  private requiredHoldTime = 500 // ms for MVP (increased for stability)
+  private consecutiveMisses = 0
+  private readonly MAX_MISSES = 3
 
   /**
    * Starts the audio processing loop.
@@ -52,17 +53,13 @@ export class PracticeService {
 
     // Use explicit cast to avoid SharedArrayBuffer issues in TS
     analyser.getFloatTimeDomainData(this.buffer as any)
-    const result = this.detector.detectPitchWithValidation(this.buffer)
+    const result = this.detector.detectPitchWithValidation(this.buffer, 0.005) // Lower RMS threshold
 
     const store = usePracticeStore.getState()
     const practiceState = store.practiceState
     const tuner = useTunerStore.getState()
 
-    // Dynamic hold time scaling
-    const tempoScale = store.tempoConfig.scale || 1.0
-    const dynamicHoldTime = this.requiredHoldTime / tempoScale
-
-    if (result.pitchHz > 0 && result.confidence > 0.8) {
+    if (result.pitchHz > 0 && result.confidence > 0.7) { // Lower confidence threshold
       // Update Tuner UI
       tuner.updatePitch(result.pitchHz, result.confidence)
 
@@ -81,29 +78,45 @@ export class PracticeService {
       const tolerance = calculateCentsTolerance()
       const target = practiceState?.exercise.notes[practiceState.currentIndex]
       if (isMatch({ target, detected, tolerance })) {
+        this.consecutiveMisses = 0
         if (!this.holdStartTime) {
           this.holdStartTime = Date.now()
-        } else if (Date.now() - this.holdStartTime > dynamicHoldTime) {
+        }
+
+        const holdDuration = Date.now() - this.holdStartTime
+        store.internalUpdate({
+          type: 'HOLDING_NOTE',
+          payload: { duration: holdDuration },
+        })
+
+        if (holdDuration > store.requiredHoldTime) {
           // Note matched successfully
           store.internalUpdate({
             type: 'NOTE_MATCHED',
             payload: {
               technique: {} as any,
-              isPerfect: Math.abs(detected.cents) < 10,
+              isPerfect: Math.abs(detected.cents) < 15,
             },
           })
           this.holdStartTime = null
         }
       } else {
-        this.holdStartTime = null
+        this.handleMiss()
       }
     } else {
       tuner.updatePitch(0, 0)
       store.internalUpdate({ type: 'NO_NOTE_DETECTED' })
-      this.holdStartTime = null
+      this.handleMiss()
     }
 
     this.rafId = requestAnimationFrame(this.loop)
+  }
+
+  private handleMiss() {
+    this.consecutiveMisses++
+    if (this.consecutiveMisses > this.MAX_MISSES) {
+      this.holdStartTime = null
+    }
   }
 }
 

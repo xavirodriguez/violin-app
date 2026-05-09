@@ -45,6 +45,7 @@ export interface PracticeStore {
   loopRegion: LoopRegion | undefined
   liveObservations: Observation[]
   listenImitateActive: boolean
+  requiredHoldTime: number
 
   // Actions
   loadExercise: (exercise: Exercise) => void
@@ -109,6 +110,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   loopRegion: undefined,
   liveObservations: [],
   listenImitateActive: false,
+  requiredHoldTime: 300, // Reduced from 500ms in service for better responsiveness
 
   loadExercise: (exercise) => {
     try {
@@ -147,13 +149,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     const sessionToken = Math.random().toString(36).substring(7)
     try {
       const resources = await audioManager.initialize()
-      const { practiceState } = get()
-
-      // Metronome sync
-      if (practiceState?.metronome?.active) {
-        await metronomeService.start(practiceState.metronome)
-      }
-
       practiceService.start()
       const currentState = get().practiceState
       const newState = currentState ? reducePracticeEvent(currentState, { type: 'START' }) : undefined
@@ -170,8 +165,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   stop: async () => {
     practiceService.stop()
-    metronomeService.stop()
-    audioPlayerService.stopAll()
     await audioManager.cleanup()
     set({
       status: 'ready',
@@ -261,19 +254,16 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 }))
 
 export const useDerivedPracticeState = () => {
-  const statusStore = usePracticeStore((s) => s.status)
   const practiceState = usePracticeStore((s) => s.practiceState)
   if (!practiceState) {
     return {
-      status: statusStore,
+      status: 'idle',
       progress: 0,
       currentNoteIndex: 0,
       totalNotes: 0,
       targetNote: undefined,
       targetPitchName: undefined,
-      lastDetectedNote: undefined,
-      metronome: undefined,
-      loopRegion: undefined
+      lastDetectedNote: undefined
     }
   }
 
@@ -287,8 +277,6 @@ export const useDerivedPracticeState = () => {
     totalNotes,
     targetNote: currentNote,
     targetPitchName: currentNote ? formatPitchName(currentNote.pitch) : undefined,
-    lastDetectedNote: practiceState.detectionHistory[0],
-    metronome: practiceState.metronome,
-    loopRegion: practiceState.loopRegion
+    lastDetectedNote: practiceState.detectionHistory[0]
   }
 }
