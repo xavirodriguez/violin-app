@@ -1,6 +1,6 @@
 import { audioManager } from '../infrastructure/audio-manager'
 import { PitchDetector } from '../pitch-detector'
-import { usePracticeStore } from '@/stores/practice-store'
+import { usePracticeStore, calculateCentsTolerance } from '@/stores/practice-store'
 import { useTunerStore } from '@/stores/tuner-store'
 import { isMatch, MusicalNote } from '../practice-core'
 
@@ -15,7 +15,7 @@ export class PracticeService {
   private detector: PitchDetector | null = null
   private buffer: Float32Array = new Float32Array(2048)
   private holdStartTime: number | null = null
-  private requiredHoldTime = 400 // ms for MVP
+  private requiredHoldTime = 500 // ms for MVP (increased for stability)
 
   /**
    * Starts the audio processing loop.
@@ -78,8 +78,9 @@ export class PracticeService {
       // Update Practice State
       store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
 
+      const tolerance = calculateCentsTolerance()
       const target = practiceState?.exercise.notes[practiceState.currentIndex]
-      if (isMatch({ target, detected, tolerance: 35 })) {
+      if (isMatch({ target, detected, tolerance })) {
         if (!this.holdStartTime) {
           this.holdStartTime = Date.now()
         } else if (Date.now() - this.holdStartTime > dynamicHoldTime) {
@@ -88,8 +89,8 @@ export class PracticeService {
             type: 'NOTE_MATCHED',
             payload: {
               technique: {} as any,
-              isPerfect: Math.abs(detected.cents) < 10
-            }
+              isPerfect: Math.abs(detected.cents) < 10,
+            },
           })
           this.holdStartTime = null
         }

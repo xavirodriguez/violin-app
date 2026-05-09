@@ -353,12 +353,10 @@ function updateDetectionHistory(
 }
 
 function getStatusAfterDetection(currentStatus: PracticeStatus): PracticeStatus {
-  const isMatchedOrValidating = currentStatus === 'validating' || currentStatus === 'correct'
-  const shouldReset = isMatchedOrValidating
-  const nextStatus = shouldReset ? 'listening' : currentStatus
-
-  const finalStatus = nextStatus as PracticeStatus
-  return finalStatus
+  if (currentStatus === 'correct') {
+    return 'listening'
+  }
+  return currentStatus
 }
 
 function handleHoldingNote(state: PracticeState, duration: number): PracticeState {
