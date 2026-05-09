@@ -242,10 +242,11 @@ export function useOSMDSafe(
       sync: (noteIndex: number) => {
         if (!isReady || !osmdRef.current) return
 
-        if (noteIndex === 0) {
-          resetCursor()
-        } else {
-          advanceCursor()
+        // Idempotent absolute sync
+        const osmd = osmdRef.current
+        osmd.cursor.reset()
+        for (let i = 0; i < noteIndex; i++) {
+          osmd.cursor.next()
         }
 
         const cursorElement = containerRef.current?.querySelector('.osmd-cursor')

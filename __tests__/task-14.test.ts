@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { usePracticeStore } from '@/stores/practice-store'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
-import type { PracticeSessionRunner } from '@/lib/practice/session-runner'
 
 // Mock dependencies
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -11,10 +10,10 @@ vi.mock('@/lib/infrastructure/audio-manager', () => ({
   },
 }))
 
-vi.mock('@/lib/adapters/web-audio.adapter', () => ({
-  PitchDetectorAdapter: vi.fn(),
-  WebAudioFrameAdapter: vi.fn(),
-  WebAudioLoopAdapter: vi.fn(),
+vi.mock('@/lib/practice/practice-service', () => ({
+  practiceService: {
+    stop: vi.fn(),
+  },
 }))
 
 const mockExercise = {
@@ -25,71 +24,42 @@ const mockExercise = {
   notes: [{ pitch: { step: 'A', octave: 4, alter: 0 }, duration: 4 }],
 }
 
-describe('TASK-14 · stop() -> abort -> cleanup chain', () => {
+describe('TASK-14 · stop() -> cleanup chain', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    usePracticeStore.setState({
-      state: { status: 'idle', exercise: undefined, error: undefined },
-      practiceState: undefined,
-      sessionToken: undefined,
-    })
+    usePracticeStore.getState().reset()
   })
 
-  it('should trigger abort, cancel and cleanup when stop() is called in active state', async () => {
-    const mockAbortController = {
-      abort: vi.fn(),
-    } as unknown as AbortController
-
-    const mockRunner = {
-      cancel: vi.fn(),
-      run: vi.fn().mockResolvedValue({ completed: false, reason: 'cancelled' }),
-    } as unknown as PracticeSessionRunner
+  it('should trigger service stop and audio cleanup when stop() is called', async () => {
+    const { practiceService } = await import('@/lib/practice/practice-service')
 
     // Manually set state to active to simulate a running session
-    // @ts-expect-error - testing with partial and mock state
     usePracticeStore.setState({
-      state: {
-        status: 'active',
-        exercise: mockExercise,
-        audioLoop: {},
-        detector: {},
-        runner: mockRunner,
-        abortController: mockAbortController,
-        practiceState: {},
-        error: undefined,
-      },
+      status: 'active',
+      exercise: mockExercise as any,
     })
 
     await usePracticeStore.getState().stop()
 
-    // 1. Verify abortController.abort() was called
-    expect(mockAbortController.abort).toHaveBeenCalled()
+    // 1. Verify practiceService.stop() was called
+    expect(practiceService.stop).toHaveBeenCalled()
 
-    // 2. Verify runner.cancel() was called
-    expect(mockRunner.cancel).toHaveBeenCalled()
-
-    // 3. Verify audioManager.cleanup() was called
+    // 2. Verify audioManager.cleanup() was called
     expect(audioManager.cleanup).toHaveBeenCalled()
 
-    // 4. Verify store state transitioned to idle
-    expect(usePracticeStore.getState().state.status).toBe('idle')
+    // 3. Verify store state transitioned to ready
+    expect(usePracticeStore.getState().status).toBe('ready')
   })
 
   it('should call cleanup even if state is not active', async () => {
-    // @ts-expect-error - testing with partial and mock state
     usePracticeStore.setState({
-      state: {
-        status: 'ready',
-        exercise: mockExercise,
-        audioLoop: {},
-        detector: {},
-        error: undefined,
-      },
+      status: 'ready',
+      exercise: mockExercise as any,
     })
 
     await usePracticeStore.getState().stop()
 
     expect(audioManager.cleanup).toHaveBeenCalled()
-    expect(usePracticeStore.getState().state.status).toBe('idle')
+    expect(usePracticeStore.getState().status).toBe('ready')
   })
 })

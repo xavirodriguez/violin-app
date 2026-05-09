@@ -214,6 +214,33 @@ const createFullScaleExercise = (config: {
  * Follows a progressive pedagogical approach starting with single-string exercises.
  */
 export const scalesExercises: readonly ViolinExerciseData[] = [
+  // Custom scale requested by user (D Major starting from G)
+  {
+    id: 'd-major-from-g',
+    name: 'Escala de Re Mayor (desde Sol)',
+    description: 'Practica la escala de Re Mayor empezando desde Sol. Ideal para trabajar el Do#.',
+    category: 'Scales',
+    difficulty: 'Intermediate',
+    scoreMetadata: {
+      clef: 'G',
+      timeSignature: { beats: 4, beatType: 4 },
+      keySignature: 2, // D Major (F#, C#)
+    },
+    notes: [
+      { pitch: parsePitch('G4'), duration: 4 },
+      { pitch: parsePitch('A4'), duration: 4 },
+      { pitch: parsePitch('B4'), duration: 4 },
+      { pitch: parsePitch('C#5'), duration: 4 },
+      { pitch: parsePitch('D5'), duration: 4 },
+      { pitch: parsePitch('E5'), duration: 4 },
+      { pitch: parsePitch('F#5'), duration: 4 },
+      { pitch: parsePitch('G5'), duration: 4 },
+    ],
+    indicatedBpm: 60,
+    technicalGoals: ['Intonación del Do#', 'Escala de Re Mayor'],
+    estimatedDuration: '5 min',
+    technicalTechnique: 'Scale',
+  },
   // G Major Tetrachord (D and A strings)
   createTetrachordExercise({
     id: 'g-major-tetrachord-lower',
