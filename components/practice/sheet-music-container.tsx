@@ -14,7 +14,7 @@ import { SheetMusicView } from './sheet-music-view'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { ViewToggleButton } from './view-toggle-button'
 import { PrecisionHeatmap } from './heatmap/precision-heatmap'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Info } from 'lucide-react'
@@ -31,14 +31,33 @@ interface SheetMusicContainerProps {
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
     applyHeatmap?: (precisionMap: Record<number, number>) => void
+    onNoteClick?: (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => any
   }
   currentNoteIndex: number
 }
 
+import { usePracticeStore } from '@/stores/practice-store'
+
 export function SheetMusicContainer(props: SheetMusicContainerProps) {
-  const { status, sheetMusicView, setSheetMusicView } = props
+  const { status, sheetMusicView, setSheetMusicView, osmd, practiceState } = props
   const [showHeatmap, setShowHeatmap] = useState(true)
   const onToggle = () => setSheetMusicView(sheetMusicView === 'focused' ? 'full' : 'focused')
+  const playNote = usePracticeStore((s) => s.playNote)
+
+  useEffect(() => {
+    if (osmd.onNoteClick && practiceState) {
+      const cleanup = osmd.onNoteClick(({ noteIndex }) => {
+        const audioMap = practiceState.exercise.audioReferenceMap
+        if (audioMap && audioMap.noteTimestamps[noteIndex]) {
+          const sampleUrl = audioMap.noteTimestamps[noteIndex].sampleUrl
+          if (sampleUrl) {
+            playNote(sampleUrl)
+          }
+        }
+      })
+      return cleanup
+    }
+  }, [osmd.onNoteClick, practiceState, playNote])
 
   return (
     <div className="relative space-y-2">

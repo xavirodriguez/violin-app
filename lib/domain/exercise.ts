@@ -1,6 +1,7 @@
 import type { CanonicalAccidental } from '@/lib/domain/musical-domain'
 import type { AppError } from '@/lib/errors/app-error'
 import type { PitchDetector } from '@/lib/pitch-detector'
+import type { ExerciseAudioMap } from './audio'
 
 /**
  * Represents the base name of a musical pitch (the white keys on a piano).
@@ -166,6 +167,8 @@ export interface ExerciseData {
   indicatedBpm?: number
   /** Optional URL for the reference audio recording. */
   referenceAudioUrl?: string
+  /** Structure mapping audio timestamps to note indices for synchronization. */
+  audioReferenceMap?: ExerciseAudioMap
 }
 
 /**

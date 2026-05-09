@@ -15,6 +15,7 @@ import type {
   PracticeEvent,
   MatchHysteresis,
   LoopRegion,
+  MetronomeConfig,
 } from '@/lib/domain/practice'
 
 export type {
@@ -296,6 +297,16 @@ const PRACTICE_EVENT_HANDLERS: Record<
       state,
       (event as Extract<PracticeEvent, { type: 'JUMP_TO_NOTE' }>).payload.index,
     ),
+  UPDATE_METRONOME: (state, event) =>
+    handleUpdateMetronome(
+      state,
+      (event as Extract<PracticeEvent, { type: 'UPDATE_METRONOME' }>).payload,
+    ),
+  UPDATE_LOOP_REGION: (state, event) =>
+    handleUpdateLoopRegion(
+      state,
+      (event as Extract<PracticeEvent, { type: 'UPDATE_LOOP_REGION' }>).payload,
+    ),
 }
 
 function handleStart(state: PracticeState, event: PracticeEvent): PracticeState {
@@ -383,32 +394,37 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
     const isAtEndOfLoop = state.currentIndex >= state.loopRegion.endNoteIndex
     if (isAtEndOfLoop) {
       let drillTarget = state.loopRegion.drillTarget
+      let isLoopCompleted = false
       if (drillTarget) {
-        // Calculate precision for this attempt (simplified for now)
-        const precision = payload?.isPerfect ? 1.0 : 0.8
-        if (precision >= drillTarget.precisionGoal) {
-          drillTarget = {
-            ...drillTarget,
-            currentStreak: drillTarget.currentStreak + 1,
-          }
-        } else {
-          drillTarget = {
-            ...drillTarget,
-            currentStreak: 0,
-          }
+        // Calculate precision for this attempt
+        // In a real scenario, we'd average the note accuracy in the session
+        const currentAttemptPrecision = payload?.isPerfect ? 1.0 : 0.8
+
+        const newStreak = currentAttemptPrecision >= drillTarget.precisionGoal
+          ? drillTarget.currentStreak + 1
+          : 0
+
+        drillTarget = {
+          ...drillTarget,
+          currentStreak: newStreak,
+        }
+
+        if (newStreak >= drillTarget.consecutiveRequired) {
+          isLoopCompleted = true
         }
       }
 
-      const reachedGoal =
-        drillTarget && drillTarget.currentStreak >= drillTarget.consecutiveRequired
-
-      if (reachedGoal) {
+      if (isLoopCompleted) {
         return {
           ...state,
           status: 'completed',
           holdDuration: 0,
           lastObservations: observations,
           perfectNoteStreak: streak,
+          loopRegion: {
+            ...state.loopRegion,
+            drillTarget,
+          }
         }
       }
 
@@ -468,5 +484,19 @@ function handleJumpToNote(state: PracticeState, index: number): PracticeState {
     status: state.status === 'completed' ? 'listening' : state.status,
     holdDuration: 0,
     detectionHistory: [],
+  }
+}
+
+function handleUpdateMetronome(state: PracticeState, payload: Partial<MetronomeConfig>): PracticeState {
+  return {
+    ...state,
+    metronome: state.metronome ? { ...state.metronome, ...payload } : undefined,
+  }
+}
+
+function handleUpdateLoopRegion(state: PracticeState, payload: Partial<LoopRegion>): PracticeState {
+  return {
+    ...state,
+    loopRegion: state.loopRegion ? { ...state.loopRegion, ...payload } : undefined,
   }
 }

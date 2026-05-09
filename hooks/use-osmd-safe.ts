@@ -145,6 +145,7 @@ export function useOSMDSafe(
         container.addEventListener('click', handleClick)
         return () => container.removeEventListener('click', handleClick)
       }
+      return () => {}
     },
     [isReady],
   )

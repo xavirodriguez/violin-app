@@ -45,6 +45,16 @@ export interface NoteTimestamp {
 }
 
 /**
+ * Configuration for the metronome.
+ */
+export interface MetronomeConfig {
+  bpm: number
+  active: boolean
+  soundType: 'wood' | 'hihat' | 'classic' | 'silent'
+  tempoMultiplier: number // 0.5 | 0.75 | 1.0 | 1.25
+}
+
+/**
  * Configuration for the practice tempo.
  */
 export interface TempoConfig {
