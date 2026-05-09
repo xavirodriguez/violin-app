@@ -42,6 +42,7 @@ export function PracticeControls(props: PracticeControlsProps) {
     isReferencePlaying,
     onToggleMetronome,
     isMetronomeActive,
+    visualBeat,
     progress,
     currentNoteIndex,
     totalNotes,
@@ -62,6 +63,7 @@ export function PracticeControls(props: PracticeControlsProps) {
           isReferencePlaying={isReferencePlaying}
           onToggleMetronome={onToggleMetronome}
           isMetronomeActive={isMetronomeActive}
+          visualBeat={visualBeat}
         />
 
         <div className="flex items-center gap-4">

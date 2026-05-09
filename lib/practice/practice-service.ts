@@ -58,6 +58,10 @@ export class PracticeService {
     const practiceState = store.practiceState
     const tuner = useTunerStore.getState()
 
+    // Dynamic hold time scaling
+    const tempoScale = store.tempoConfig.scale || 1.0
+    const dynamicHoldTime = this.requiredHoldTime / tempoScale
+
     if (result.pitchHz > 0 && result.confidence > 0.8) {
       // Update Tuner UI
       tuner.updatePitch(result.pitchHz, result.confidence)
@@ -78,7 +82,7 @@ export class PracticeService {
       if (isMatch({ target, detected, tolerance: 35 })) {
         if (!this.holdStartTime) {
           this.holdStartTime = Date.now()
-        } else if (Date.now() - this.holdStartTime > this.requiredHoldTime) {
+        } else if (Date.now() - this.holdStartTime > dynamicHoldTime) {
           // Note matched successfully
           store.internalUpdate({
             type: 'NOTE_MATCHED',

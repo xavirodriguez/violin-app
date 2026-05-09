@@ -6,13 +6,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { LessonContent } from '@/lib/domain/curriculum'
-import { Lightbulb, CheckCircle2 } from 'lucide-react'
-import { highlightTerms } from './GlossaryTooltip'
+import { Lightbulb, PlayCircle } from 'lucide-react'
 
 interface WhyThisMattersModalProps {
   content: LessonContent
@@ -22,33 +20,48 @@ interface WhyThisMattersModalProps {
 
 export function WhyThisMattersModal({ content, isOpen, onClose }: WhyThisMattersModalProps) {
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-            <Lightbulb className="h-6 w-6" />
+          <div className="flex items-center gap-2 text-amber-500 mb-1">
+            <Lightbulb className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Pedagogía Musical</span>
           </div>
-          <DialogTitle className="text-center text-2xl font-bold">{content.title}</DialogTitle>
-          <DialogDescription className="text-center text-muted-foreground pt-2 leading-relaxed">
-            {highlightTerms(content.description)}
-          </DialogDescription>
+          <DialogTitle className="text-2xl">{content.title}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Expert Tips</h4>
-          <div className="space-y-3">
-            {content.tips.map((tip, idx) => (
-              <div key={idx} className="flex items-start gap-3 rounded-lg bg-muted/50 p-3">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-500" />
-                <p className="text-sm">{tip}</p>
-              </div>
-            ))}
+        <div className="space-y-6 py-4">
+          <p className="text-muted-foreground leading-relaxed">{content.description}</p>
+
+          {content.videoUrl && (
+            <div className="aspect-video bg-muted rounded-xl flex items-center justify-center relative overflow-hidden group">
+               <img
+                 src={`https://img.youtube.com/vi/${content.videoUrl}/0.jpg`}
+                 className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 transition-all"
+                 alt="Preview"
+               />
+               <PlayCircle className="h-12 w-12 text-white relative z-10" />
+            </div>
+          )}
+
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-6 space-y-3">
+             <h4 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+               Tips de Mentores
+             </h4>
+             <ul className="space-y-2">
+               {content.tips.map((tip, idx) => (
+                 <li key={idx} className="text-sm text-amber-800 flex items-start gap-2">
+                   <span className="mt-1.5 h-1 w-1 rounded-full bg-amber-400 shrink-0" />
+                   {tip}
+                 </li>
+               ))}
+             </ul>
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose} className="w-full">
-            Understood, Let's Practice!
+          <Button onClick={onClose} className="w-full sm:w-auto px-8">
+            Entendido, ¡a practicar!
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -15,7 +15,7 @@ import { PracticeCompletion } from '@/components/practice-completion'
 import { usePageVisibility } from '@/hooks/use-page-visibility'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PauseCircle, PlayCircle } from 'lucide-react'
+import { PauseCircle, PlayCircle, Trophy, Map } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { Exercise } from '@/lib/domain/exercise'
@@ -25,6 +25,7 @@ import { PracticeSession } from '@/lib/domain/practice'
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 import { useCurriculumStore } from '@/stores/curriculum-store'
 import { WhyThisMattersModal } from '../curriculum/why-this-matters-modal'
+import { CurriculumMap } from '../curriculum/CurriculumMap'
 import { PracticeSettings } from './practice-settings'
 
 interface PracticeMainContentProps {
@@ -56,6 +57,14 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
   const { units } = useCurriculumStore()
   const [showPedagogy, setShowPedagogy] = useState(false)
   const [activePedagogy, setActivePedagogy] = useState<any>(null)
+  const [showMap, setShowMap] = useState(false)
+
+  useEffect(() => {
+    ;(window as any).VM_SHOW_MAP = setShowMap
+    return () => {
+      delete (window as any).VM_SHOW_MAP
+    }
+  }, [])
 
   useEffect(() => {
     if (!isVisible && storeStatus === 'active') {
@@ -84,6 +93,18 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 
   return (
     <>
+      {showMap && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 pb-20">
+             <div className="sticky top-0 z-10 py-6 flex justify-between items-center bg-transparent">
+                <Button variant="ghost" onClick={() => setShowMap(false)}>
+                  ← Volver a Práctica
+                </Button>
+             </div>
+             <CurriculumMap />
+          </div>
+        </div>
+      )}
       {activePedagogy && (
         <WhyThisMattersModal
           content={activePedagogy}
@@ -135,19 +156,38 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
   const autoStartEnabled = usePracticeStore((s) => s.autoStartEnabled)
   const listenImitateActive = usePracticeStore((s) => s.listenImitateActive)
   const setListenImitateActive = usePracticeStore((s) => s.setListenImitateActive)
-  const dispatch = usePracticeStore.getState().dispatch
+  const bpm = usePracticeStore((s) => s.tempoConfig.bpm)
+  const setTempoConfig = usePracticeStore((s) => s.setTempoConfig)
   const { isZenModeEnabled, setPreviewExercise } = props
 
   if (storeStatus !== 'ready' && storeStatus !== 'idle') return <></>
 
+  const setShowMap = (val: boolean) => (window as any).VM_SHOW_MAP?.(val)
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center bg-muted/10 p-3 rounded-lg border border-dashed">
+         <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <span className="text-xs font-bold uppercase tracking-tight">Tu Progreso</span>
+         </div>
+         <Button variant="outline" size="sm" className="h-8 text-xs gap-2" onClick={() => setShowMap(true)}>
+            <Map className="h-3.5 w-3.5" />
+            Ver Mapa de Aprendizaje
+         </Button>
+      </div>
       {!isZenModeEnabled && (
         <PracticeSettings
           autoStartEnabled={autoStartEnabled}
           onAutoStartChange={() => {}} // No-op for MVP simplification
           listenImitateEnabled={listenImitateActive}
           onListenImitateChange={setListenImitateActive}
+          bpm={bpm}
+          onBpmChange={(val) => {
+            const indicated = practiceState?.exercise.indicatedBpm || 60
+            setTempoConfig({ bpm: val, scale: val / indicated })
+          }}
+          indicatedBpm={practiceState?.exercise.indicatedBpm}
         />
       )}
       <ExerciseLibrary

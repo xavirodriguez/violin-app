@@ -13,26 +13,38 @@ export class AudioPlayerService {
   /**
    * Plays a full audio reference for an exercise.
    */
-  async playReference(audioUrl: string, onProgress?: (noteIndex: number) => void): Promise<void> {
+  async playReference(audioUrl: string, onProgress?: (currentTimeMs: number) => void): Promise<void> {
     this.stopAll()
 
     return new Promise((resolve, reject) => {
+      let intervalId: any = null
+
       this.activeHowl = new Howl({
         src: [audioUrl],
         html5: true,
         onload: () => {
           this.activeHowl?.play()
+          if (onProgress) {
+            intervalId = setInterval(() => {
+              if (this.activeHowl?.playing()) {
+                onProgress((this.activeHowl.seek() as number) * 1000)
+              }
+            }, 50)
+          }
         },
         onend: () => {
+          if (intervalId) clearInterval(intervalId)
           resolve()
         },
-        onloaderror: (id, err) => {
+        onloaderror: (id: number, err: any) => {
+          if (intervalId) clearInterval(intervalId)
           reject(new Error(`Failed to load audio: ${err}`))
         },
-        onplayerror: (id, err) => {
+        onplayerror: (id: number, err: any) => {
+          if (intervalId) clearInterval(intervalId)
           reject(new Error(`Failed to play audio: ${err}`))
         }
-      })
+      } as any)
     })
   }
 
