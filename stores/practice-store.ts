@@ -39,6 +39,7 @@ export interface PracticeStore {
   autoStartEnabled: boolean
   isListeningPhase: boolean
   listenIteration: number
+  listenIterationsConfig: number
   countdown: number | null
   tempoConfig: { bpm: number; scale: number }
   loopRegion: LoopRegion | undefined
@@ -57,7 +58,15 @@ export interface PracticeStore {
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
   setListenImitateActive: (active: boolean) => void
-  consumePipelineEvents: (pipeline: AsyncIterable<PracticeEvent>) => Promise<void>
+  setListeningPhase: (active: boolean) => void
+  setListenIteration: (val: number) => void
+  setListenIterationsConfig: (val: number) => void
+  setCountdown: (val: number | null) => void
+
+  // Epic E-01 Actions
+  playNote: (sampleUrl: string) => void
+  playReference: () => Promise<void>
+  toggleMetronome: () => void
 }
 
 /**
@@ -95,6 +104,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   autoStartEnabled: false,
   isListeningPhase: false,
   listenIteration: 0,
+  listenIterationsConfig: 2,
   countdown: null,
   tempoConfig: { bpm: 60, scale: 1.0 },
   loopRegion: undefined,
@@ -212,53 +222,34 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   setLoopRegion: (region) => set({ loopRegion: region }),
   setTempoConfig: (config) => set({ tempoConfig: config }),
   setListenImitateActive: (active) => set({ listenImitateActive: active }),
+  setListeningPhase: (active: boolean) => set({ isListeningPhase: active }),
+  setListenIteration: (val: number) => set({ listenIteration: val }),
+  setCountdown: (val: number | null) => set({ countdown: val }),
 
-  consumePipelineEvents: async (pipeline) => {
-    const currentToken = get().sessionToken
-    for await (const event of pipeline) {
-      if (get().sessionToken !== currentToken) break
-      get().internalUpdate(event)
+  setListenIterationsConfig: (val: number) => set({ listenIterationsConfig: val }),
 
-      // Handle live observations for MVP compatibility
-      if (event.type === 'NOTE_DETECTED') {
-        const { practiceState } = get()
-        if (practiceState && practiceState.detectionHistory.length >= 5) {
-          const recent = practiceState.detectionHistory.slice(0, 5)
-          const allSharp = recent.every((d) => d.cents > 15)
-          const allFlat = recent.every((d) => d.cents < -15)
-
-          if (allSharp) {
-            set({
-              liveObservations: [
-                {
-                  type: 'intonation',
-                  message: 'Consistent sharp pitch. Try loosening your finger pressure.',
-                  severity: 2,
-                  tip: 'Loosen finger pressure',
-                  confidence: 1.0 as any,
-                },
-              ],
-            })
-          } else if (allFlat) {
-            set({
-              liveObservations: [
-                {
-                  type: 'intonation',
-                  message: 'Consistent flat pitch. Try pressing a bit firmer or checking your string.',
-                  severity: 2,
-                  tip: 'Check string or press firmer',
-                  confidence: 1.0 as any,
-                },
-              ],
-            })
-          } else {
-            set({ liveObservations: [] })
-          }
-        }
-      } else if (event.type === 'NOTE_MATCHED') {
-        set({ liveObservations: [] })
-      }
+  playNote: (url) => {
+    if (url) {
+      audioPlayerService.playNote(url)
     }
+  },
+  playReference: async () => {
+    const { exercise } = get()
+    if (!exercise?.referenceAudioUrl) return
+
+    const audioMap = exercise.audioReferenceMap
+
+    await audioPlayerService.playReference(exercise.referenceAudioUrl, (timeMs) => {
+      if (audioMap) {
+        const note = audioMap.noteTimestamps.find(
+          (t) => timeMs >= t.startMs && timeMs < t.endMs
+        )
+        if (note !== undefined) {
+          // We can't easily get scoreView here without passing it or having it in state
+          // For now, we'll emit an internal event if needed, but the UI usually handles sync
+        }
+      }
+    })
   },
 }))
 

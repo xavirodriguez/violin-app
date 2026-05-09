@@ -1,7 +1,8 @@
 import { NoteTechnique, Observation } from '../technique-types'
 import { Exercise, Note as TargetNote } from './exercise'
+import { MetronomeConfig } from './audio'
 
-export type { TargetNote }
+export type { TargetNote, MetronomeConfig }
 export type {
   NoteResult,
   PracticeSession,
@@ -47,6 +48,7 @@ export interface PracticeState {
   lastObservations?: Observation[]
   perfectNoteStreak: number
   loopRegion?: LoopRegion
+  metronome?: MetronomeConfig
 }
 
 /**
@@ -67,6 +69,8 @@ export type PracticeEvent =
     }
   | { type: 'NO_NOTE_DETECTED' }
   | { type: 'DRILL_ATTEMPT_COMPLETED'; payload: { success: boolean; precision: number } }
+  | { type: 'UPDATE_METRONOME'; payload: Partial<MetronomeConfig> }
+  | { type: 'UPDATE_LOOP_REGION'; payload: Partial<LoopRegion> }
 
 /**
  * Lifetime statistics for an individual exercise.
@@ -133,6 +137,8 @@ export type PracticeUIEvent =
   | { type: 'TOGGLE_AUTO_START'; payload: { enabled: boolean } }
   | { type: 'JUMP_TO_NOTE'; payload: { index: number } }
   | { type: 'LOAD_EXERCISE'; payload: { exercise: Exercise } }
+  | { type: 'UPDATE_METRONOME'; payload: Partial<MetronomeConfig> }
+  | { type: 'UPDATE_LOOP_REGION'; payload: Partial<LoopRegion> }
 
 /**
  * Re-exporting pure functions from practice-core to domain for consolidation

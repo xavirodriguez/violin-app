@@ -70,6 +70,17 @@ export const openStringsExercises: ExerciseData[] = [
     technicalTechnique: 'Intonation',
     recommended: true,
     indicatedBpm: 60,
+    referenceAudioUrl: 'https://cdn.violinmentor.com/audio/open-a-string.mp3',
+    audioReferenceMap: {
+      exerciseId: 'open-a-string',
+      audioUrl: 'https://cdn.violinmentor.com/audio/open-a-string.mp3',
+      noteTimestamps: [
+        { noteIndex: 0, startMs: 0, endMs: 1000, pitch: 'A4', sampleUrl: 'https://cdn.violinmentor.com/audio/samples/a4.mp3' },
+        { noteIndex: 1, startMs: 1000, endMs: 2000, pitch: 'A4', sampleUrl: 'https://cdn.violinmentor.com/audio/samples/a4.mp3' },
+        { noteIndex: 2, startMs: 2000, endMs: 3000, pitch: 'A4', sampleUrl: 'https://cdn.violinmentor.com/audio/samples/a4.mp3' },
+        { noteIndex: 3, startMs: 3000, endMs: 4000, pitch: 'A4', sampleUrl: 'https://cdn.violinmentor.com/audio/samples/a4.mp3' },
+      ]
+    },
     notes: [
       { pitch: parsePitch('A4'), duration: 4 },
       { pitch: parsePitch('A4'), duration: 4 },

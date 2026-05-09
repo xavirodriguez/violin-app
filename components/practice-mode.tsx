@@ -22,9 +22,10 @@ import { useAudioPlayer } from '@/hooks/use-audio-player'
 import { useMetronome } from '@/hooks/use-metronome'
 import { NoteAudioService } from '@/lib/note-audio.service'
 import { SequencePlayer } from '@/lib/sequence-player'
+import { audioPlayerService } from '@/lib/audio/audio-player'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Exercise } from '@/lib/domain/exercise'
 
 /**
@@ -45,10 +46,9 @@ export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const lastDrillResult = usePracticeStore((s) => s.lastDrillResult)
 
-  // MVP: Remove obsolete states from UI
-  const isListeningPhase = false
-  const listenIteration = 0
-  const countdown = null
+  const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
+  const listenIteration = usePracticeStore((s) => s.listenIteration)
+  const countdown = usePracticeStore((s) => s.countdown)
 
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [isMetronomeActive, setIsMetronomeActive] = useState(false)
@@ -149,6 +149,78 @@ export function PracticeMode() {
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
   }
+
+  const {
+    listenImitateActive,
+    listenIterationsConfig,
+    setListeningPhase,
+    setListenIteration,
+    setCountdown,
+    start,
+    stop,
+  } = usePracticeStore()
+
+  // Use a ref to track if the current flow should be aborted
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const handleStartWithListenImitate = async () => {
+    // Abort any existing flow
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
+
+    if (listenImitateActive && practiceState?.exercise.referenceAudioUrl) {
+      const exercise = practiceState.exercise
+      const audioMap = exercise.audioReferenceMap
+
+      try {
+        setListeningPhase(true)
+        for (let i = 1; i <= listenIterationsConfig; i++) {
+          if (signal.aborted) return
+          setListenIteration(i)
+          await audioPlayerService.playReference(exercise.referenceAudioUrl as string, (timeMs) => {
+            if (signal.aborted) {
+              audioPlayerService.stopAll()
+              return
+            }
+            if (audioMap) {
+              const note = audioMap.noteTimestamps.find((t) => timeMs >= t.startMs && timeMs < t.endMs)
+              if (note) osmd.scoreView.sync(note.noteIndex)
+            }
+          })
+        }
+        setListeningPhase(false)
+
+        for (let i = 3; i > 0; i--) {
+          if (signal.aborted) return
+          setCountdown(i)
+          await new Promise((r) => setTimeout(r, 1000))
+        }
+        setCountdown(null)
+        if (signal.aborted) return
+        start()
+      } catch (e) {
+        console.error('Error in Listen->Imitate flow:', e)
+        setListeningPhase(false)
+        setCountdown(null)
+      }
+    } else {
+      start()
+    }
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      audioPlayerService.stopAll()
+    }
+  }, [])
+
   usePracticeLifecycle(lifecycleParams)
 
   return (
@@ -164,7 +236,13 @@ export function PracticeMode() {
               <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500"></div>
             </div>
             <button
-              onClick={() => usePracticeStore.getState().stop()}
+              onClick={() => {
+                abortControllerRef.current?.abort()
+                setListeningPhase(false)
+                setCountdown(null)
+                audioPlayerService.stopAll()
+                start()
+              }}
               className="mt-12 rounded-full border border-white/30 bg-white/10 px-6 py-2 transition-colors hover:bg-white/20"
             >
               Cancelar y tocar
@@ -188,17 +266,24 @@ export function PracticeMode() {
         <PracticeStatusHeader />
         <PracticeControlsRow
           isZen={viewState.isZen}
+          onStart={handleStartWithListenImitate}
           onPlayReference={async () => {
             if (isReferencePlaying) {
-              sequencePlayer.stop()
+              audioPlayerService.stopAll()
               setIsReferencePlaying(false)
-            } else if (practiceState) {
+            } else if (practiceState?.exercise.referenceAudioUrl) {
               setIsReferencePlaying(true)
-              await sequencePlayer.play(
-                practiceState.exercise,
-                (index) => osmd.scoreView.sync(index),
-                { bpm, mode: 'expressive' },
-              )
+              const audioMap = practiceState.exercise.audioReferenceMap
+              await audioPlayerService.playReference(practiceState.exercise.referenceAudioUrl as string, (timeMs) => {
+                if (audioMap) {
+                  const note = audioMap.noteTimestamps.find(
+                    (t) => timeMs >= t.startMs && timeMs < t.endMs
+                  )
+                  if (note !== undefined) {
+                    osmd.scoreView.sync(note.noteIndex)
+                  }
+                }
+              })
               setIsReferencePlaying(false)
             }
           }}
@@ -229,8 +314,9 @@ export function PracticeMode() {
             error: osmd.error,
             containerRef: osmd.containerRef,
             scoreView: osmd.scoreView,
-            applyHeatmap: osmd.applyHeatmap
-          }}
+            applyHeatmap: osmd.applyHeatmap,
+            onNoteClick: osmd.onNoteClick,
+          } as any}
           sessions={sessions}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
         />
@@ -290,6 +376,7 @@ function PracticeStatusHeader() {
 
 function PracticeControlsRow({
   isZen,
+  onStart,
   onPlayReference,
   isReferencePlaying,
   onToggleMetronome,
@@ -299,6 +386,7 @@ function PracticeControlsRow({
   onBpmChange,
 }: {
   isZen: boolean
+  onStart: () => void
   onPlayReference?: () => void
   isReferencePlaying?: boolean
   onToggleMetronome?: () => void
@@ -326,7 +414,7 @@ function PracticeControlsRow({
     <PracticeControls
       status={status as any}
       hasExercise={!!practiceState}
-      onStart={() => dispatch({ type: 'START_SESSION' })}
+      onStart={onStart}
       onStop={() => dispatch({ type: 'STOP_SESSION' })}
       onRestart={handleRestart}
       onPlayReference={onPlayReference}
