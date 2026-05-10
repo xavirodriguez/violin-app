@@ -1,6 +1,6 @@
 import { audioManager } from '../infrastructure/audio-manager'
 import { PitchDetector } from '../pitch-detector'
-import { usePracticeStore, calculateCentsTolerance } from '@/stores/practice-store'
+import { usePracticeStore } from '@/stores/practice-store'
 import { useTunerStore } from '@/stores/tuner-store'
 import { isMatch, MusicalNote } from '../practice-core'
 
@@ -75,9 +75,8 @@ export class PracticeService {
       // Update Practice State
       store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
 
-      const tolerance = calculateCentsTolerance()
       const target = practiceState?.exercise.notes[practiceState.currentIndex]
-      if (isMatch({ target, detected, tolerance })) {
+      if (isMatch({ target, detected })) {
         this.consecutiveMisses = 0
         if (!this.holdStartTime) {
           this.holdStartTime = Date.now()
@@ -94,9 +93,8 @@ export class PracticeService {
           store.internalUpdate({
             type: 'NOTE_MATCHED',
             payload: {
-              technique: {} as any,
-              isPerfect: Math.abs(detected.cents) < 15,
-            },
+              isPerfect: Math.abs(detected.cents) < 10,
+            } as any,
           })
           this.holdStartTime = null
         }

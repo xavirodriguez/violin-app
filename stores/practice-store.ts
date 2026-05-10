@@ -15,15 +15,7 @@ import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { practiceService } from '@/lib/practice/practice-service'
 import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
-import { Observation } from '@/lib/technique-types'
-import { useProgressStore } from './progress.store'
-
-export function calculateCentsTolerance(): number {
-  const intonationSkill = useProgressStore.getState().intonationSkill
-  const base = 35
-  const skillBonus = (intonationSkill / 100) * 25
-  return Math.max(15, Math.round(base - skillBonus))
-}
+import { audioPlayerService } from '@/lib/audio/audio-player'
 
 export interface PracticeStore {
   // Core MVP State
@@ -34,18 +26,19 @@ export interface PracticeStore {
   analyser: AnalyserNode | undefined
   sessionToken: string | undefined
 
-  // UI Stubs for compatibility (to be removed once UI is updated)
-  lastDrillResult: { success: boolean; precision: number } | null
-  autoStartEnabled: boolean
-  isListeningPhase: boolean
-  listenIteration: number
-  listenIterationsConfig: number
+  // UI State
   countdown: number | null
   tempoConfig: { bpm: number; scale: number }
   loopRegion: LoopRegion | undefined
-  liveObservations: Observation[]
-  listenImitateActive: boolean
   requiredHoldTime: number
+
+  // UI Stubs (deprecated)
+  lastDrillResult: any
+  isListeningPhase: boolean
+  listenIteration: number
+  listenIterationsConfig: number
+  liveObservations: any[]
+  listenImitateActive: boolean
 
   // Actions
   loadExercise: (exercise: Exercise) => void
@@ -57,14 +50,16 @@ export interface PracticeStore {
   dispatch: (event: PracticeUIEvent) => void
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
-  setListenImitateActive: (active: boolean) => void
-  setListeningPhase: (active: boolean) => void
-  setListenIteration: (val: number) => void
-  setListenIterationsConfig: (val: number) => void
   setCountdown: (val: number | null) => void
 
-  // Epic E-01 Actions
-  playNote: (sampleUrl: string) => void
+  // Stubs for actions
+  setListeningPhase: (val: boolean) => void
+  setListenIteration: (val: number) => void
+  setListenIterationsConfig: (val: number) => void
+  setListenImitateActive: (val: boolean) => void
+
+  // Playback
+  playNote: (url: string) => void
   playReference: () => Promise<void>
   toggleMetronome: () => void
 }
@@ -99,18 +94,19 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   analyser: undefined,
   sessionToken: undefined,
 
-  // Stubs
-  lastDrillResult: null,
-  autoStartEnabled: false,
-  isListeningPhase: false,
-  listenIteration: 0,
-  listenIterationsConfig: 2,
+  // UI
   countdown: null,
   tempoConfig: { bpm: 60, scale: 1.0 },
   loopRegion: undefined,
+  requiredHoldTime: 300,
+
+  // Stubs
+  lastDrillResult: null,
+  isListeningPhase: false,
+  listenIteration: 0,
+  listenIterationsConfig: 2,
   liveObservations: [],
   listenImitateActive: false,
-  requiredHoldTime: 300, // Reduced from 500ms in service for better responsiveness
 
   loadExercise: (exercise) => {
     try {
@@ -157,9 +153,12 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         analyser: resources.analyser,
         sessionToken,
         practiceState: newState,
+        error: undefined,
       })
     } catch (err) {
-      set({ status: 'error', error: toAppError(err) })
+      const appError = toAppError(err)
+      set({ status: 'error', error: appError })
+      console.error('[PracticeStore] Failed to start session:', appError)
     }
   },
 
@@ -221,36 +220,25 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   setLoopRegion: (region) => set({ loopRegion: region }),
   setTempoConfig: (config) => set({ tempoConfig: config }),
+  setCountdown: (val: number | null) => set({ countdown: val }),
+
+  // Stubs
   setListenImitateActive: (active) => set({ listenImitateActive: active }),
   setListeningPhase: (active: boolean) => set({ isListeningPhase: active }),
   setListenIteration: (val: number) => set({ listenIteration: val }),
-  setCountdown: (val: number | null) => set({ countdown: val }),
-
   setListenIterationsConfig: (val: number) => set({ listenIterationsConfig: val }),
 
   playNote: (url) => {
-    if (url) {
-      audioPlayerService.playNote(url)
-    }
+    // In MVP, we might just play a fixed frequency if URL is not ready
+    audioPlayerService.playNote(440)
   },
   playReference: async () => {
     const { exercise } = get()
     if (!exercise?.referenceAudioUrl) return
 
-    const audioMap = exercise.audioReferenceMap
-
-    await audioPlayerService.playReference(exercise.referenceAudioUrl, (timeMs) => {
-      if (audioMap) {
-        const note = audioMap.noteTimestamps.find(
-          (t) => timeMs >= t.startMs && timeMs < t.endMs
-        )
-        if (note !== undefined) {
-          // We can't easily get scoreView here without passing it or having it in state
-          // For now, we'll emit an internal event if needed, but the UI usually handles sync
-        }
-      }
-    })
+    await audioPlayerService.playReference(exercise.referenceAudioUrl)
   },
+  toggleMetronome: () => {},
 }))
 
 export const useDerivedPracticeState = () => {

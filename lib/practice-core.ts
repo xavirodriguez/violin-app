@@ -13,7 +13,6 @@ import type {
   PracticeStatus,
   PracticeState,
   PracticeEvent,
-  MatchHysteresis,
   LoopRegion,
   MetronomeConfig,
 } from '@/lib/domain/practice'
@@ -24,7 +23,6 @@ export type {
   PracticeStatus,
   PracticeState,
   PracticeEvent,
-  MatchHysteresis,
   LoopRegion,
 }
 
@@ -32,24 +30,18 @@ export type {
  * A valid note name in scientific pitch notation.
  *
  * @example "C4", "F#5", "Bb3"
- * @remarks Pattern: `^[A-G][#b]?[0-8]$`
  */
-export type NoteName = string & { readonly __brand: unique symbol }
+export type NoteName = string
 
 /**
- * Type guard to validate note name format.
- *
- * @param name - The string to validate.
- *
- * @remarks
- * Throws `AppError` with code `NOTE_PARSING_FAILED` if invalid.
+ * Validates note name format.
  */
 export function assertValidNoteName(name: string): asserts name is NoteName {
   const noteRegex = /^[A-G](?:b{1,2}|#{1,2})?[0-8]$/
   const isValid = noteRegex.test(name)
 
   if (!isValid) {
-    const message = `Invalid note name format: "${name}" (expected scientific pitch notation, e.g., "A4", "Bb3", octave 0-8)`
+    const message = `Invalid note name format: "${name}"`
     throw new AppError({
       message,
       code: ERROR_CODES.NOTE_PARSING_FAILED,
@@ -206,17 +198,12 @@ function getAlterString(canonicalAlter: number, originalAlter: number | string):
 export function isMatch(params: {
   target: TargetNote | undefined
   detected: DetectedNote | undefined
-  tolerance?: number | MatchHysteresis
-  matchStatus?: 'initial' | 'maintaining'
+  tolerance?: number
 }): boolean {
-  const { target, detected, tolerance = 25, matchStatus = 'initial' } = params
+  const { target, detected, tolerance = 15 } = params
   if (!target || !detected) return false
 
-  const hysteresis =
-    typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance
-  const actualTolerance = matchStatus === 'maintaining' ? hysteresis.exit : hysteresis.enter
-
-  return checkPitchAndTune({ target, detected, tolerance: actualTolerance })
+  return checkPitchAndTune({ target, detected, tolerance })
 }
 
 /**
@@ -243,13 +230,9 @@ function checkPitchAndTune(params: {
 export function isNewMatch(params: {
   target: TargetNote | undefined
   detected: DetectedNote | undefined
-  tolerance?: number | MatchHysteresis
+  tolerance?: number
 }): boolean {
-  const { target, detected, tolerance = 25 } = params
-  const matchStatus = 'initial'
-  const isMatched = isMatch({ target, detected, tolerance, matchStatus })
-
-  return isMatched
+  return isMatch(params)
 }
 
 /**
@@ -258,13 +241,9 @@ export function isNewMatch(params: {
 export function isStillMatched(params: {
   target: TargetNote | undefined
   detected: DetectedNote | undefined
-  tolerance?: number | MatchHysteresis
+  tolerance?: number
 }): boolean {
-  const { target, detected, tolerance = 25 } = params
-  const matchStatus = 'maintaining'
-  const isStillMatchedResult = isMatch({ target, detected, tolerance, matchStatus })
-
-  return isStillMatchedResult
+  return isMatch(params)
 }
 
 /**
