@@ -21,7 +21,6 @@ import { usePracticeLifecycle } from '@/hooks/use-practice-lifecycle'
 import { useAudioPlayer } from '@/hooks/use-audio-player'
 import { useMetronome } from '@/hooks/use-metronome'
 import { NoteAudioService } from '@/lib/note-audio.service'
-import { SequencePlayer } from '@/lib/sequence-player'
 import { audioPlayerService } from '@/lib/audio/audio-player'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
@@ -78,8 +77,6 @@ export function PracticeMode() {
     setTimeout(() => setVisualBeat(false), 100)
   })
   const derived = useDerivedPracticeState()
-
-  const sequencePlayer = useMemo(() => new SequencePlayer(player), [player])
 
   const perfectNoteStreak = practiceState?.perfectNoteStreak ?? 0
   useEffect(() => {
@@ -151,72 +148,16 @@ export function PracticeMode() {
   }
 
   const {
-    listenImitateActive,
-    listenIterationsConfig,
-    setListeningPhase,
-    setListenIteration,
-    setCountdown,
     start,
-    stop,
   } = usePracticeStore()
 
-  // Use a ref to track if the current flow should be aborted
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const handleStartWithListenImitate = async () => {
-    // Abort any existing flow
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    abortControllerRef.current = new AbortController()
-    const signal = abortControllerRef.current.signal
-
-    if (listenImitateActive && practiceState?.exercise.referenceAudioUrl) {
-      const exercise = practiceState.exercise
-      const audioMap = exercise.audioReferenceMap
-
-      try {
-        setListeningPhase(true)
-        for (let i = 1; i <= listenIterationsConfig; i++) {
-          if (signal.aborted) return
-          setListenIteration(i)
-          await audioPlayerService.playReference(exercise.referenceAudioUrl as string, (timeMs) => {
-            if (signal.aborted) {
-              audioPlayerService.stopAll()
-              return
-            }
-            if (audioMap) {
-              const note = audioMap.noteTimestamps.find((t) => timeMs >= t.startMs && timeMs < t.endMs)
-              if (note) osmd.scoreView.sync(note.noteIndex)
-            }
-          })
-        }
-        setListeningPhase(false)
-
-        for (let i = 3; i > 0; i--) {
-          if (signal.aborted) return
-          setCountdown(i)
-          await new Promise((r) => setTimeout(r, 1000))
-        }
-        setCountdown(null)
-        if (signal.aborted) return
-        start()
-      } catch (e) {
-        console.error('Error in Listen->Imitate flow:', e)
-        setListeningPhase(false)
-        setCountdown(null)
-      }
-    } else {
-      start()
-    }
+  const handleStart = () => {
+    start()
   }
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
       audioPlayerService.stopAll()
     }
   }, [])
@@ -225,32 +166,6 @@ export function PracticeMode() {
 
   return (
     <div className="relative mx-auto max-w-6xl px-4 py-8">
-      {isListeningPhase && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="text-center text-white">
-            <h2 className="mb-4 text-4xl font-bold">Escuchando referencia...</h2>
-            <p className="text-2xl">Iteración {listenIteration} / 2</p>
-            <div className="mt-8 flex justify-center space-x-2">
-              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.3s]"></div>
-              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.15s]"></div>
-              <div className="h-3 w-3 animate-bounce rounded-full bg-amber-500"></div>
-            </div>
-            <button
-              onClick={() => {
-                abortControllerRef.current?.abort()
-                setListeningPhase(false)
-                setCountdown(null)
-                audioPlayerService.stopAll()
-                start()
-              }}
-              className="mt-12 rounded-full border border-white/30 bg-white/10 px-6 py-2 transition-colors hover:bg-white/20"
-            >
-              Cancelar y tocar
-            </button>
-          </div>
-        </div>
-      )}
-
       {countdown !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
           <div className="text-center text-white">
@@ -266,7 +181,7 @@ export function PracticeMode() {
         <PracticeStatusHeader />
         <PracticeControlsRow
           isZen={viewState.isZen}
-          onStart={handleStartWithListenImitate}
+          onStart={handleStart}
           onPlayReference={async () => {
             if (isReferencePlaying) {
               audioPlayerService.stopAll()
