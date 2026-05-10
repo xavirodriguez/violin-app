@@ -1,64 +1,48 @@
 'use client'
 
+import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
+import { PracticeFeedback } from '../practice-feedback'
 import { Card } from '@/components/ui/card'
-import { PracticeFeedback } from '@/components/practice-feedback'
-import { ViolinFingerboard } from '@/components/ui/violin-fingerboard'
-import type { TargetNote, DetectedNote } from '@/lib/domain/practice'
-import type { Observation } from '@/lib/technique-types'
+import { Button } from '@/components/ui/button'
+import { allExercises } from '@/lib/exercises'
 
-const DEFAULT_CENTS_TOLERANCE = 25
+export function PracticeActiveView({ centsTolerance, osmd }: any) {
+  const practiceState = usePracticeStore((s) => s.practiceState)
+  const derived = useDerivedPracticeState()
+  const loadExercise = usePracticeStore((s) => s.loadExercise)
 
-/**
- * View displaying real-time feedback and fingerboard visualization during practice.
- */
-export function PracticeActiveView({
-  status,
-  targetNote,
-  targetPitchName,
-  lastDetectedNote,
-  liveObservations,
-  holdDuration,
-  perfectNoteStreak,
-  zenMode,
-  centsTolerance = DEFAULT_CENTS_TOLERANCE,
-}: {
-  status: string
-  targetNote: TargetNote | undefined
-  targetPitchName: string | undefined
-  lastDetectedNote: DetectedNote | undefined
-  liveObservations?: Observation[]
-  holdDuration?: number
-  perfectNoteStreak?: number
-  zenMode: boolean
-  centsTolerance?: number
-}) {
-  const isActive = status === 'listening' || status === 'validating' || status === 'correct'
-  if (!isActive || !targetNote || !targetPitchName) return <></>
+  if (!practiceState) return null
 
   return (
-    <>
-      <Card className="p-6 md:p-12">
-        <PracticeFeedback
-          targetNote={targetPitchName}
-          detectedPitchName={lastDetectedNote?.pitch}
-          centsOff={lastDetectedNote?.cents}
-          status={status}
-          liveObservations={liveObservations}
-          holdDuration={holdDuration}
-          requiredHoldTime={500}
-          perfectNoteStreak={perfectNoteStreak}
-        />
-      </Card>
-      {!zenMode && (
-        <Card className="p-6 md:p-12">
-          <ViolinFingerboard
-            targetNote={targetPitchName}
-            detectedPitchName={lastDetectedNote?.pitch}
-            centsDeviation={lastDetectedNote?.cents}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-1 space-y-6">
+        <Card className="p-6">
+          <PracticeFeedback
+            targetNote={derived.targetPitchName || '--'}
+            detectedPitchName={derived.lastDetectedNote?.pitch}
+            centsOff={derived.lastDetectedNote?.cents}
+            status={derived.status}
             centsTolerance={centsTolerance}
+            holdDuration={practiceState.holdDuration}
+            requiredHoldTime={usePracticeStore.getState().requiredHoldTime}
           />
         </Card>
-      )}
-    </>
+        <Card className="p-4">
+            <h3 className="font-bold mb-4">Ejercicios</h3>
+            <div className="space-y-2">
+                {allExercises.slice(0, 5).map(ex => (
+                    <Button key={ex.id} variant={ex.id === practiceState.exercise.id ? 'default' : 'outline'} className="w-full justify-start overflow-hidden" onClick={() => loadExercise(ex)}>
+                        {ex.name}
+                    </Button>
+                ))}
+            </div>
+        </Card>
+      </div>
+      <Card className="lg:col-span-2 p-6 flex flex-col min-h-[500px]">
+        <div className="flex-1 relative border rounded-md bg-white">
+           <div ref={osmd.containerRef} className="w-full h-full min-h-[400px]" />
+        </div>
+      </Card>
+    </div>
   )
 }
