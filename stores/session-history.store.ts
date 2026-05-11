@@ -1,0 +1,66 @@
+import { create } from 'zustand'
+import { z } from 'zod'
+import { CompletedPracticeSession } from '@/lib/domain/practice'
+import { validatedPersist } from '@/stores/persistence/validated-persist-middleware'
+import { SessionHistoryStateSchema } from '@/lib/schemas/persistence.schema'
+
+/**
+ * Internal state for the session history store.
+ */
+interface SessionHistoryState {
+  /** Array of completed practice sessions, capped at 100. */
+  sessions: CompletedPracticeSession[]
+}
+
+/**
+ * Actions for managing session history.
+ */
+interface SessionHistoryActions {
+  /**
+   * Adds a completed session to the history.
+   *
+   * @param session - The session to add.
+   */
+  addSession: (session: CompletedPracticeSession) => void
+
+  /**
+   * Retrieves sessions filtered by age.
+   *
+   * @param days - Number of days to look back.
+   * @returns Filtered array of {@link CompletedPracticeSession}.
+   */
+  getHistory: (days?: number) => CompletedPracticeSession[]
+}
+
+/**
+ * Zustand store for persisting and retrieving practice session history.
+ *
+ * @remarks
+ * This store provides a simple persistent log of recent practice activity.
+ * It uses `validatedPersist` to ensure data integrity.
+ *
+ * @public
+ */
+export const useSessionHistoryStore = create<SessionHistoryState & SessionHistoryActions>()(
+  validatedPersist<SessionHistoryState & SessionHistoryActions>(
+    SessionHistoryStateSchema as z.ZodType<SessionHistoryState>,
+    (set, get) => ({
+      sessions: [],
+
+      addSession: (session) => {
+        set((state) => ({
+          sessions: [session, ...state.sessions].slice(0, 100),
+        }))
+      },
+
+      getHistory: (days = 7) => {
+        const { sessions } = get()
+        const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000
+        return sessions.filter((s) => s.endTimeMs >= cutoffMs)
+      },
+    }),
+    {
+      name: 'violin-session-history',
+    },
+  ),
+)

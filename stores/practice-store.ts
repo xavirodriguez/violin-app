@@ -9,13 +9,13 @@
 import { create } from 'zustand'
 import { allExercises } from '@/lib/exercises'
 import { type PracticeState, type PracticeEvent, reducePracticeEvent, formatPitchName } from '@/lib/practice-core'
-import { type PracticeUIEvent } from '@/lib/domain/practice'
+import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { practiceService } from '@/lib/practice/practice-service'
 import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
-import { useAnalyticsStore } from './analytics-store'
+import { audioPlayerService } from '@/lib/audio/audio-player'
 
 export interface PracticeStore {
   // Core MVP State
@@ -25,11 +25,11 @@ export interface PracticeStore {
   error: AppError | undefined
   analyser: AnalyserNode | undefined
   sessionToken: string | undefined
-  startTime: number
-  correctNotesCount: number
 
   // UI State
+  countdown: number | null
   tempoConfig: { bpm: number; scale: number }
+  loopRegion: LoopRegion | undefined
   requiredHoldTime: number
 
   // UI Stubs (deprecated)
@@ -48,7 +48,42 @@ export interface PracticeStore {
   reset: () => void
   internalUpdate: (event: PracticeEvent) => void
   dispatch: (event: PracticeUIEvent) => void
+  setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
+  setCountdown: (val: number | null) => void
+
+  // Stubs for actions
+  setListeningPhase: (val: boolean) => void
+  setListenIteration: (val: number) => void
+  setListenIterationsConfig: (val: number) => void
+  setListenImitateActive: (val: boolean) => void
+
+  // Playback
+  playNote: (url: string) => void
+  playReference: () => Promise<void>
+  toggleMetronome: () => void
+}
+
+/**
+ * Creates a "safe" version of the Zustand `set` function that only applies
+ * updates if the session token at the time of the update matches the current token.
+ * This prevents race conditions where an old, async process updates the store
+ * after a new session has already started.
+ */
+export function createSafeSet(params: {
+  set: (partial: any) => void
+  get: () => any
+  currentToken: string | undefined
+}) {
+  const { set, get, currentToken } = params
+
+  return (partial: any) => {
+    const storeToken = get().sessionToken
+    if (currentToken !== storeToken) {
+      return
+    }
+    set(partial)
+  }
 }
 
 export const usePracticeStore = create<PracticeStore>((set, get) => ({
@@ -58,11 +93,20 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   error: undefined,
   analyser: undefined,
   sessionToken: undefined,
-  startTime: 0,
-  correctNotesCount: 0,
 
+  // UI
+  countdown: null,
   tempoConfig: { bpm: 60, scale: 1.0 },
+  loopRegion: undefined,
   requiredHoldTime: 300,
+
+  // Stubs
+  lastDrillResult: null,
+  isListeningPhase: false,
+  listenIteration: 0,
+  listenIterationsConfig: 2,
+  liveObservations: [],
+  listenImitateActive: false,
 
   loadExercise: (exercise) => {
     try {
@@ -80,7 +124,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         status: 'ready',
         error: undefined,
         analyser: undefined,
-        correctNotesCount: 0,
       })
     } catch (err) {
       set({
@@ -94,8 +137,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   initialize: () => {
     if (!get().exercise && allExercises.length > 0) {
-      const gMajor = allExercises.find(ex => ex.id === 'g-major-scale-one-octave')
-      get().loadExercise(gMajor || allExercises[0])
+      get().loadExercise(allExercises[0])
     }
   },
 
@@ -111,16 +153,8 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         analyser: resources.analyser,
         sessionToken,
         practiceState: newState,
-        startTime: Date.now(),
-        correctNotesCount: 0,
+        error: undefined,
       })
-      if (get().exercise) {
-        useAnalyticsStore.getState().startSession({
-            exerciseId: get().exercise!.id,
-            exerciseName: get().exercise!.name,
-            mode: 'practice'
-        })
-      }
     } catch (err) {
       const appError = toAppError(err)
       set({ status: 'error', error: appError })
@@ -158,24 +192,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   },
 
   internalUpdate: (event) => {
-    const { practiceState, correctNotesCount } = get()
+    const { practiceState } = get()
     if (!practiceState) return
 
     const nextState = reducePracticeEvent(practiceState, event)
 
-    let newCorrectNotesCount = correctNotesCount
-    if (event.type === 'NOTE_MATCHED') {
-        newCorrectNotesCount++
-    }
 
-    set({ practiceState: nextState, correctNotesCount: newCorrectNotesCount })
-
-    if (nextState.status === 'completed' && practiceState.status !== 'completed') {
-        const duration = Date.now() - get().startTime
-        const totalNotes = nextState.exercise.notes.length
-        const accuracy = (newCorrectNotesCount / totalNotes) * 100
-        useAnalyticsStore.getState().endSession(accuracy, duration, nextState.exercise.id)
-    }
+    set({ practiceState: nextState })
   },
 
   dispatch: (event) => {
@@ -195,7 +218,27 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     }
   },
 
+  setLoopRegion: (region) => set({ loopRegion: region }),
   setTempoConfig: (config) => set({ tempoConfig: config }),
+  setCountdown: (val: number | null) => set({ countdown: val }),
+
+  // Stubs
+  setListenImitateActive: (active) => set({ listenImitateActive: active }),
+  setListeningPhase: (active: boolean) => set({ isListeningPhase: active }),
+  setListenIteration: (val: number) => set({ listenIteration: val }),
+  setListenIterationsConfig: (val: number) => set({ listenIterationsConfig: val }),
+
+  playNote: (url) => {
+    // In MVP, we might just play a fixed frequency if URL is not ready
+    audioPlayerService.playNote(440)
+  },
+  playReference: async () => {
+    const { exercise } = get()
+    if (!exercise?.referenceAudioUrl) return
+
+    await audioPlayerService.playReference(exercise.referenceAudioUrl)
+  },
+  toggleMetronome: () => {},
 }))
 
 export const useDerivedPracticeState = () => {

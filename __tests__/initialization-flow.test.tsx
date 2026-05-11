@@ -1,42 +1,66 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import { PracticeMode } from '../components/practice-mode'
 import { usePracticeStore } from '../stores/practice-store'
+import { allExercises } from '../lib/exercises'
+import React from 'react'
+import type {
+  AnimatePresenceProps,
+  MotionCircleProps,
+  MotionDivProps,
+} from '@/lib/testing/mock-types'
 
+// Mock OSMD and hooks to avoid canvas issues in JSDOM
 vi.mock('@/hooks/use-osmd-safe', () => ({
-  useOSMDSafe: () => ({
+  useOSMDSafe: vi.fn(() => ({
     isReady: true,
     error: null,
     containerRef: { current: null },
+    resetCursor: vi.fn(),
+    advanceCursor: vi.fn(),
+    highlightCurrentNote: vi.fn(),
+    onNoteClick: vi.fn(),
+    osmd: null,
     scoreView: {
+      isReady: true,
       sync: vi.fn(),
-      highlight: vi.fn(),
+      reset: vi.fn(),
+      getCursorPosition: vi.fn(),
     },
-  }),
+  })),
 }))
 
-vi.mock('@/lib/infrastructure/audio-manager', () => ({
-  audioManager: {
-    initialize: vi.fn().mockResolvedValue({ analyser: {} }),
-    cleanup: vi.fn(),
-    getContext: vi.fn().mockReturnValue({ sampleRate: 44100 }),
-    getAnalyser: vi.fn().mockReturnValue({}),
+// Mock Framer Motion to avoid animation issues
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: MotionDivProps) => <div {...props}>{children}</div>,
+    circle: (props: MotionCircleProps) => <circle {...props} />,
   },
+  AnimatePresence: ({ children }: AnimatePresenceProps) => <>{children}</>,
 }))
 
-describe('PracticeMode Initialization Flow', () => {
-  beforeEach(() => {
-    usePracticeStore.setState({
-      status: 'idle',
-      exercise: undefined,
-      practiceState: undefined,
-      error: undefined,
-    })
+describe('Initialization Flow Verification', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    usePracticeStore.getState().reset()
   })
 
-  it('should auto-load an exercise and show start button', async () => {
+  it('should auto-load the first exercise and show Start Practice button when idle', async () => {
     render(<PracticeMode />)
-    const startButton = await screen.findByRole('button', { name: /Empezar/i })
+
+    // Verify auto-load: practiceState should be set to the first exercise
+    await waitFor(() => {
+      const state = usePracticeStore.getState().practiceState
+      expect(state).not.toBeNull()
+      expect(state?.exercise.id).toBe(allExercises[0].id)
+    })
+
+    // Verify UI visibility: PracticeControls should be visible with "Start Practice" button
+    // The button has text "Start Practice"
+    const startButton = await screen.findByRole('button', { name: /start practice/i })
     expect(startButton).toBeTruthy()
+
+    // Verify Exercise Library is also visible below
+    expect(screen.getByText(/exercise library/i)).toBeTruthy()
   })
 })
