@@ -37,8 +37,10 @@ export class PracticeService {
     analyser.getFloatTimeDomainData(this.buffer as any)
     const result = this.detector.detectPitchWithValidation(this.buffer, 0.005)
 
+    const now = Date.now()
     const store = usePracticeStore.getState()
     const tuner = useTunerStore.getState()
+    const shouldUpdateStore = now - this.lastUpdateTime > this.UPDATE_INTERVAL_MS
 
     if (result.pitchHz > 0 && result.confidence > 0.7) {
       tuner.updatePitch(result.pitchHz, result.confidence)
@@ -47,8 +49,8 @@ export class PracticeService {
         pitch: note.nameWithOctave,
         pitchHz: result.pitchHz,
         cents: note.centsDeviation,
-        timestamp: Date.now(),
-        confidence: result.confidence
+        timestamp: now,
+        confidence: result.confidence,
       }
       store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
 
@@ -60,6 +62,7 @@ export class PracticeService {
         if (holdDuration > store.requiredHoldTime) {
           store.internalUpdate({ type: 'NOTE_MATCHED', payload: { technique: {} as any, isPerfect: Math.abs(detected.cents) < 15 } })
           this.holdStartTime = null
+          this.lastUpdateTime = now // Reset throttle after transition
         }
       } else {
         this.holdStartTime = null

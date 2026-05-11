@@ -115,10 +115,9 @@ export function formatPitchName(pitch: TargetNote['pitch']): NoteName {
 export function isMatch(params: {
   target: TargetNote | undefined
   detected: DetectedNote | undefined
-  tolerance?: number | MatchHysteresis
-  matchStatus?: 'initial' | 'maintaining'
+  tolerance?: number
 }): boolean {
-  const { target, detected, tolerance = 25, matchStatus = 'initial' } = params
+  const { target, detected, tolerance = 15 } = params
   if (!target || !detected) return false
 
   const hysteresis = typeof tolerance === 'number' ? { enter: tolerance, exit: tolerance } : tolerance

@@ -32,6 +32,14 @@ export interface PracticeStore {
   tempoConfig: { bpm: number; scale: number }
   requiredHoldTime: number
 
+  // UI Stubs (deprecated)
+  lastDrillResult: any
+  isListeningPhase: boolean
+  listenIteration: number
+  listenIterationsConfig: number
+  liveObservations: any[]
+  listenImitateActive: boolean
+
   // Actions
   loadExercise: (exercise: Exercise) => void
   initialize: () => void
@@ -114,7 +122,9 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
         })
       }
     } catch (err) {
-      set({ status: 'error', error: toAppError(err) })
+      const appError = toAppError(err)
+      set({ status: 'error', error: appError })
+      console.error('[PracticeStore] Failed to start session:', appError)
     }
   },
 
