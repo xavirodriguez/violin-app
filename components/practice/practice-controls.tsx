@@ -1,37 +1,187 @@
 'use client'
 
-import { Play, Square, RotateCcw } from 'lucide-react'
+import { Play, Square, RotateCcw, Volume2, Timer } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PracticeStatus } from '@/lib/domain/practice'
+import { MetronomeControl } from '@/components/ui/metronome-control'
+import { ReferencePlayer } from '@/components/ui/reference-player'
+import { LoopSelector } from '@/components/ui/loop-selector'
+import { AudioInputMeter } from '@/components/ui/audio-input-meter'
+import { usePracticeStore } from '@/stores/practice-store'
 
-export function PracticeControls({ status, hasExercise, onStart, onStop, onRestart, progress, currentNoteIndex, totalNotes }: any) {
+interface PracticeControlsProps {
+  status: PracticeStatus
+  hasExercise: boolean
+  onStart: () => void
+  onStop: () => void
+  onRestart: () => void
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+  visualBeat?: boolean
+  bpm: number
+  onBpmChange: (bpm: number) => void
+  progress: number
+  currentNoteIndex: number
+  totalNotes: number
+}
+
+/**
+ * Control bar for starting, stopping, and monitoring practice progress.
+ */
+export function PracticeControls(props: PracticeControlsProps) {
+  const {
+    status,
+    hasExercise,
+    onStart,
+    onStop,
+    onRestart,
+    onPlayReference,
+    isReferencePlaying,
+    onToggleMetronome,
+    isMetronomeActive,
+    visualBeat,
+    progress,
+    currentNoteIndex,
+    totalNotes,
+  } = props
+
+  const analyser = usePracticeStore((s) => s.analyser)
+
   return (
-    <Card className="p-4 shadow-sm border-2">
-      <div className="flex items-center gap-8">
-        <div className="flex gap-2">
-            {['listening', 'validating', 'correct'].includes(status) ? (
-                <Button onClick={onStop} size="lg" variant="destructive" className="gap-2">
-                    <Square className="h-4 w-4" /> Detener
-                </Button>
-            ) : status === 'completed' ? (
-                <Button onClick={onRestart} size="lg" className="gap-2">
-                    <RotateCcw className="h-4 w-4" /> Repetir
-                </Button>
-            ) : (
-                <Button onClick={onStart} size="lg" className="gap-2" disabled={!hasExercise}>
-                    <Play className="h-4 w-4" /> Empezar
-                </Button>
-            )}
+    <Card className="sticky top-0 z-40 space-y-4 p-4 shadow-md md:relative md:shadow-none">
+      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2 md:overflow-visible md:pb-0">
+        <SessionActions
+          status={status}
+          disabled={!hasExercise}
+          onStart={onStart}
+          onStop={onStop}
+          onRestart={onRestart}
+          onPlayReference={onPlayReference}
+          isReferencePlaying={isReferencePlaying}
+          onToggleMetronome={onToggleMetronome}
+          isMetronomeActive={isMetronomeActive}
+          visualBeat={visualBeat}
+        />
+
+        <div className="flex items-center gap-4">
+          {hasExercise && (
+            <>
+              <ReferencePlayer />
+              <LoopSelector />
+            </>
+          )}
+          <MetronomeControl />
         </div>
+
         {hasExercise && (
-          <div className="flex flex-col items-end gap-1">
-            <div className="text-muted-foreground text-xs font-bold uppercase">Nota {currentNoteIndex + 1} de {totalNotes}</div>
-            <div className="bg-muted h-3 w-48 overflow-hidden rounded-full border">
-                <div className="bg-primary h-full transition-all" style={{ width: `${progress}%` }} />
-            </div>
+          <div className="flex flex-col gap-2 min-w-[200px]">
+            <ProgressBar index={currentNoteIndex} total={totalNotes} progress={progress} />
+            {status === 'listening' && (
+               <AudioInputMeter analyser={analyser} label="Input Level" />
+            )}
           </div>
         )}
       </div>
     </Card>
+  )
+}
+
+interface SessionActionsProps {
+  status: PracticeStatus
+  disabled: boolean
+  onStart: () => void
+  onStop: () => void
+  onRestart: () => void
+  onPlayReference?: () => void
+  isReferencePlaying?: boolean
+  onToggleMetronome?: () => void
+  isMetronomeActive?: boolean
+  visualBeat?: boolean
+}
+
+function SessionActions(props: SessionActionsProps) {
+  const {
+    status,
+    disabled,
+    onStart,
+    onStop,
+    onRestart,
+    onPlayReference,
+    isReferencePlaying,
+    onToggleMetronome,
+    isMetronomeActive,
+    visualBeat,
+  } = props
+
+  if (status === 'listening') {
+    return (
+      <Button onClick={onStop} size="lg" variant="destructive" className="gap-2">
+        <Square className="h-4 w-4" /> Stop
+      </Button>
+    )
+  }
+
+  if (status === 'completed') {
+    return (
+      <Button onClick={onRestart} size="lg" className="gap-2">
+        <RotateCcw className="h-4 w-4" /> Practice Again
+      </Button>
+    )
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Button onClick={onStart} size="lg" className="gap-2" disabled={disabled}>
+        <Play className="h-4 w-4" /> Start Practice
+      </Button>
+      <Button
+        onClick={onPlayReference}
+        size="lg"
+        variant="outline"
+        className="gap-2"
+        disabled={disabled}
+      >
+        <Volume2 className={isReferencePlaying ? 'text-primary animate-pulse' : 'h-4 w-4'} />
+        {isReferencePlaying ? 'Stop Reference' : 'Listen Reference'}
+      </Button>
+      <Button
+        onClick={onToggleMetronome}
+        size="lg"
+        variant="outline"
+        className={`gap-2 transition-colors duration-100 ${visualBeat ? 'bg-primary/20 border-primary' : ''}`}
+        disabled={disabled}
+      >
+        <Timer className={isMetronomeActive ? 'text-primary animate-spin' : 'h-4 w-4'} />
+        {isMetronomeActive ? 'Stop Metronome' : 'Metronome'}
+      </Button>
+    </div>
+  )
+}
+
+interface ProgressBarProps {
+  index: number
+  total: number
+  progress: number
+}
+
+function ProgressBar(props: ProgressBarProps) {
+  const { index, total, progress } = props
+  const noteDisplay = Math.min(index + 1, total)
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="text-muted-foreground text-sm">
+        Note {noteDisplay} of {total}
+      </div>
+      <div className="bg-muted h-2 w-32 overflow-hidden rounded-full">
+        <div
+          className="bg-primary h-full transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
   )
 }

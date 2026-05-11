@@ -15,9 +15,9 @@ export function SelectionPrompt() {
       <div className="bg-primary/10 mb-4 rounded-full p-4">
         <Maximize2 className="text-primary h-8 w-8" />
       </div>
-      <h3 className="mb-2 text-xl font-semibold">Selecciona un ejercicio para comenzar</h3>
+      <h3 className="mb-2 text-xl font-semibold">Select an exercise to begin</h3>
       <p className="text-muted-foreground max-w-sm">
-        Elige de la lista para empezar tu sesión de práctica guiada con feedback en tiempo real.
+        Choose from the library below to start your guided practice session with real-time feedback.
       </p>
     </Card>
   )
