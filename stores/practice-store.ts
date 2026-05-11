@@ -28,6 +28,7 @@ export interface PracticeStore {
 
   // UI State
   countdown: number | null
+  autoStartEnabled: boolean
   tempoConfig: { bpm: number; scale: number }
   loopRegion: LoopRegion | undefined
   requiredHoldTime: number
@@ -96,6 +97,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
 
   // UI
   countdown: null,
+  autoStartEnabled: false,
   tempoConfig: { bpm: 60, scale: 1.0 },
   loopRegion: undefined,
   requiredHoldTime: 300,
