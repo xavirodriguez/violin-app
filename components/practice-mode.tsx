@@ -8,12 +8,10 @@
 'use client'
 
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
-import { useAnalyticsStore } from '@/stores/analytics-store'
 import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
-import { useProgressStore } from '@/stores/progress.store'
 import { AudioTroubleshooter } from './practice/AudioTroubleshooter'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
@@ -61,8 +59,6 @@ export function PracticeMode() {
     initialize()
   }, [initialize])
 
-  const { sessions } = useAnalyticsStore()
-  const { intonationSkill } = useProgressStore()
   const { state: viewState, actions: viewActions } = usePracticeViewState()
 
   const xml = practiceState?.exercise.musicXML ?? ''
@@ -137,8 +133,6 @@ export function PracticeMode() {
     }
   }, [osmd.isReady, loopRegion])
 
-  const cents = Math.round(35 - (intonationSkill / 100) * 25)
-
   const lifecycleParams = {
     dispatch,
     status: derived.status as any,
@@ -161,6 +155,8 @@ export function PracticeMode() {
       audioPlayerService.stopAll()
     }
   }, [])
+
+  const centsTolerance = 20
 
   usePracticeLifecycle(lifecycleParams)
 
@@ -221,7 +217,7 @@ export function PracticeMode() {
           isZenModeEnabled={viewState.isZen}
           autoStartEnabled={false}
           setPreviewExercise={viewActions.setPreview}
-          centsTolerance={cents}
+          centsTolerance={centsTolerance}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
           osmd={{
@@ -232,7 +228,7 @@ export function PracticeMode() {
             applyHeatmap: osmd.applyHeatmap,
             onNoteClick: osmd.onNoteClick,
           } as any}
-          sessions={sessions}
+          sessions={[]}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
         />
         <KeyboardShortcutsDialog />
@@ -280,10 +276,6 @@ function PracticeStatusHeader() {
   if (status === 'error') {
     const message = error?.message ?? 'Unknown error'
     return <AudioTroubleshooter error={message} onRetry={start} />
-  }
-
-  if (status === 'active' && false) { // Removed initializing state for now
-    return <Card className="p-12 text-center">Initializing Audio...</Card>
   }
 
   return <></>

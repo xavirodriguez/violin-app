@@ -2,7 +2,7 @@ import { audioManager } from '../infrastructure/audio-manager'
 import { PitchDetector } from '../pitch-detector'
 import { usePracticeStore } from '@/stores/practice-store'
 import { useTunerStore } from '@/stores/tuner-store'
-import { isMatch, MusicalNote } from '../practice-core'
+import { MusicalNote, formatPitchName } from '../practice-core'
 
 /**
  * PracticeService
@@ -17,6 +17,12 @@ export class PracticeService {
   private holdStartTime: number | null = null
   private consecutiveMisses = 0
   private readonly MAX_MISSES = 3
+  private lastUpdateTime = 0
+  private readonly UPDATE_INTERVAL_MS = 100 // 10Hz update rate for store
+  private cachedTargetNote: any = null
+  private cachedTargetPitch: string | null = null
+  private cachedIndex: number = -1
+  private cachedExerciseId: string = ''
 
   /**
    * Starts the audio processing loop.
@@ -55,12 +61,14 @@ export class PracticeService {
     analyser.getFloatTimeDomainData(this.buffer as any)
     const result = this.detector.detectPitchWithValidation(this.buffer, 0.005) // Lower RMS threshold
 
+    const now = Date.now()
     const store = usePracticeStore.getState()
     const practiceState = store.practiceState
     const tuner = useTunerStore.getState()
+    const shouldUpdateStore = now - this.lastUpdateTime > this.UPDATE_INTERVAL_MS
 
-    if (result.pitchHz > 0 && result.confidence > 0.7) { // Lower confidence threshold
-      // Update Tuner UI
+    if (result.pitchHz > 0 && result.confidence > 0.7) {
+      // Tuner UI is updated every frame for smoothness
       tuner.updatePitch(result.pitchHz, result.confidence)
 
       const note = MusicalNote.fromFrequency(result.pitchHz)
@@ -68,28 +76,48 @@ export class PracticeService {
         pitch: note.nameWithOctave,
         pitchHz: result.pitchHz,
         cents: note.centsDeviation,
-        timestamp: Date.now(),
-        confidence: result.confidence
+        timestamp: now,
+        confidence: result.confidence,
       }
 
-      // Update Practice State
-      store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
+      // Cache target note lookup
+      if (
+        practiceState &&
+        (this.cachedIndex !== practiceState.currentIndex ||
+          this.cachedExerciseId !== practiceState.exercise.id)
+      ) {
+        this.cachedIndex = practiceState.currentIndex
+        this.cachedExerciseId = practiceState.exercise.id
+        const target = practiceState.exercise.notes[practiceState.currentIndex]
+        this.cachedTargetNote = target
+        this.cachedTargetPitch = target ? formatPitchName(target.pitch) : null
+      }
 
-      const target = practiceState?.exercise.notes[practiceState.currentIndex]
-      if (isMatch({ target, detected })) {
+      const isCorrect =
+        this.cachedTargetPitch === detected.pitch && Math.abs(detected.cents) < 20
+
+      if (shouldUpdateStore) {
+        store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
+        this.lastUpdateTime = now
+      }
+
+      if (isCorrect) {
         this.consecutiveMisses = 0
         if (!this.holdStartTime) {
-          this.holdStartTime = Date.now()
+          this.holdStartTime = now
         }
 
-        const holdDuration = Date.now() - this.holdStartTime
-        store.internalUpdate({
-          type: 'HOLDING_NOTE',
-          payload: { duration: holdDuration },
-        })
+        const holdDuration = now - this.holdStartTime
+
+        if (shouldUpdateStore) {
+          store.internalUpdate({
+            type: 'HOLDING_NOTE',
+            payload: { duration: holdDuration },
+          })
+        }
 
         if (holdDuration > store.requiredHoldTime) {
-          // Note matched successfully
+          // Note matched successfully - this should NOT be throttled
           store.internalUpdate({
             type: 'NOTE_MATCHED',
             payload: {
@@ -97,13 +125,17 @@ export class PracticeService {
             } as any,
           })
           this.holdStartTime = null
+          this.lastUpdateTime = now // Reset throttle after transition
         }
       } else {
         this.handleMiss()
       }
     } else {
       tuner.updatePitch(0, 0)
-      store.internalUpdate({ type: 'NO_NOTE_DETECTED' })
+      if (shouldUpdateStore) {
+        store.internalUpdate({ type: 'NO_NOTE_DETECTED' })
+        this.lastUpdateTime = now
+      }
       this.handleMiss()
     }
 
