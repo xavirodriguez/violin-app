@@ -6,8 +6,6 @@ import { TunerMode } from '@/components/tuner-mode'
 import { PracticeMode } from '@/components/practice-mode'
 import { AnalyticsDashboard } from '@/components/analytics-dashboard'
 import SettingsDialog from '@/components/settings-dialog'
-import { PitchDebugPanel } from '@/components/debug/PitchDebugPanel'
-import { AchievementNotificationManager } from '@/components/achievement-toast'
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow'
 import { analytics } from '@/lib/analytics-tracker'
 import { useTranslation } from '@/lib/i18n'
@@ -145,12 +143,6 @@ export default function Home() {
 
       {/* Settings Dialog */}
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-
-      {/* Achievement Notification Manager */}
-      <AchievementNotificationManager />
-
-      {/* Pitch Debug Panel */}
-      <PitchDebugPanel />
     </>
   )
 }

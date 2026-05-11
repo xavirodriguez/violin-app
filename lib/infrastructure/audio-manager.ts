@@ -67,7 +67,7 @@ export class AudioManager {
         return this.getAudioResources()
       } catch (err) {
         await this.executeCleanup()
-        throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED)
+        throw toAppError(err, ERROR_CODES.MIC_PERMISSION_DENIED, { deviceId })
       }
     })()
 
