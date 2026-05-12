@@ -8,7 +8,12 @@ export class AudioReferenceService {
   async loadSamples(sampleUrls: Record<string, string[]>): Promise<void> {
     const context = audioManager.getContext()
     if (!context) {
-      await audioManager.initialize()
+      try {
+        await audioManager.initialize()
+      } catch (err) {
+        console.error('[AudioReferenceService] Failed to initialize audio manager:', err)
+        return // Cannot load samples without audio context
+      }
     }
     const ctx = audioManager.getContext()!
 

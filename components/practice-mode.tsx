@@ -182,25 +182,36 @@ export function PracticeMode() {
               audioPlayerService.stopAll()
               setIsReferencePlaying(false)
             } else if (practiceState?.exercise.referenceAudioUrl) {
-              setIsReferencePlaying(true)
-              const audioMap = practiceState.exercise.audioReferenceMap
-              await audioPlayerService.playReference(practiceState.exercise.referenceAudioUrl as string, (timeMs) => {
-                if (audioMap) {
-                  const note = audioMap.noteTimestamps.find(
-                    (t: NoteTimestamp) => timeMs >= t.startMs && timeMs < t.endMs
-                  )
-                  if (note !== undefined) {
-                    osmd.scoreView.sync(note.noteIndex)
+              try {
+                setIsReferencePlaying(true)
+                const audioMap = practiceState.exercise.audioReferenceMap
+                await audioPlayerService.playReference(practiceState.exercise.referenceAudioUrl as string, (timeMs) => {
+                  if (audioMap) {
+                    const note = audioMap.noteTimestamps.find(
+                      (t: NoteTimestamp) => timeMs >= t.startMs && timeMs < t.endMs
+                    )
+                    if (note !== undefined) {
+                      osmd.scoreView.sync(note.noteIndex)
+                    }
                   }
-                }
-              })
-              setIsReferencePlaying(false)
+                })
+              } catch (err) {
+                console.error('[PracticeMode] Reference playback failed:', err)
+                toast.error('Could not play reference audio')
+              } finally {
+                setIsReferencePlaying(false)
+              }
             }
           }}
           isReferencePlaying={isReferencePlaying}
           onToggleMetronome={async () => {
-            await metronome.toggle(bpm)
-            setIsMetronomeActive(metronome.isActive())
+            try {
+              await metronome.toggle(bpm)
+              setIsMetronomeActive(metronome.isActive())
+            } catch (err) {
+              console.error('[PracticeMode] Metronome toggle failed:', err)
+              toast.error('Could not start metronome')
+            }
           }}
           isMetronomeActive={isMetronomeActive}
           visualBeat={visualBeat}
