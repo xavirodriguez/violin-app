@@ -20,6 +20,7 @@ import { useAudioPlayer } from '@/hooks/use-audio-player'
 import { useMetronome } from '@/hooks/use-metronome'
 import { NoteAudioService } from '@/lib/note-audio.service'
 import { audioPlayerService } from '@/lib/audio/audio-player'
+import { NoteTimestamp } from '@/lib/domain/audio'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -188,7 +189,7 @@ export function PracticeMode() {
               await audioPlayerService.playReference(practiceState.exercise.referenceAudioUrl as string, (timeMs) => {
                 if (audioMap) {
                   const note = audioMap.noteTimestamps.find(
-                    (t) => timeMs >= t.startMs && timeMs < t.endMs
+                    (t: NoteTimestamp) => timeMs >= t.startMs && timeMs < t.endMs
                   )
                   if (note !== undefined) {
                     osmd.scoreView.sync(note.noteIndex)

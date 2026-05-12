@@ -165,6 +165,10 @@ export interface ExerciseData {
   }
   /** Indicated tempo for the exercise in BPM. */
   indicatedBpm?: number
+  /** Optional URL to a reference audio recording of the full exercise. */
+  referenceAudioUrl?: string
+  /** Optional mapping of individual note timestamps within the reference audio. */
+  audioReferenceMap?: ExerciseAudioMap
 }
 
 /**
