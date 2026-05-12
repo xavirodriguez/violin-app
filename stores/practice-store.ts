@@ -248,7 +248,11 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     const { exercise } = get()
     if (!exercise?.referenceAudioUrl) return
 
-    await audioPlayerService.playReference(exercise.referenceAudioUrl)
+    try {
+      await audioPlayerService.playReference(exercise.referenceAudioUrl)
+    } catch (err) {
+      console.error('[PracticeStore] Failed to play reference:', err)
+    }
   },
   toggleMetronome: () => {},
 }))

@@ -23,7 +23,12 @@ export function useMetronome(onBeat?: () => void) {
     () => ({
       toggle: async (bpm?: number) => {
         if (!audioManager.isActive()) {
-          await audioManager.initialize()
+          try {
+            await audioManager.initialize()
+          } catch (e) {
+            console.error('[useMetronome] Failed to initialize audio:', e)
+            throw e // Re-throw so caller can handle it (e.g., show toast)
+          }
         }
 
         const context = audioManager.getContext()

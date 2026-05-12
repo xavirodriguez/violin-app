@@ -9,8 +9,13 @@ class AudioPlayerService {
 
   private async getAdapter(): Promise<WebAudioPlayerAdapter> {
     if (!this.adapter) {
-      const resources = await audioManager.initialize()
-      this.adapter = new WebAudioPlayerAdapter(resources.context)
+      try {
+        const resources = await audioManager.initialize()
+        this.adapter = new WebAudioPlayerAdapter(resources.context)
+      } catch (err) {
+        console.error('[AudioPlayerService] Failed to initialize adapter:', err)
+        throw err
+      }
     }
     return this.adapter
   }

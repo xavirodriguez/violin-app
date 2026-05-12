@@ -40,29 +40,45 @@ export function useOSMDSafe(
     const token = ++loadTokenRef.current
 
     async function initializeOSMD() {
-      if (!containerRef.current || !musicXML) return
-      if (osmdRef.current) osmdRef.current.clear()
+      if (!containerRef.current || !musicXML) {
+        setIsReady(false)
+        return
+      }
 
-      const osmd = new OpenSheetMusicDisplay(containerRef.current, {
-        autoResize: true,
-        backend: 'svg',
-        drawTitle: false,
-        followCursor: true,
-        disableCursor: false,
-        ...options,
-      })
-      osmdRef.current = osmd
+      // Always reset readiness when starting a new load
+      setIsReady(false)
 
       try {
+        const osmd = new OpenSheetMusicDisplay(containerRef.current, {
+          autoResize: true,
+          backend: 'svg',
+          drawTitle: false,
+          followCursor: true,
+          disableCursor: false,
+          ...options,
+        })
+
         await osmd.load(musicXML)
-        if (token !== loadTokenRef.current) return
+
+        // Safety check: has another load started while we were awaiting?
+        if (token !== loadTokenRef.current || !isMounted) {
+          osmd.clear()
+          return
+        }
+
         osmd.render()
 
-        if (isMounted) {
+        if (osmd.cursor) {
           osmd.cursor.show()
-          setIsReady(true)
-          setError(undefined)
         }
+
+        // Only after successful load and render, and if still current, we update the ref and state
+        if (osmdRef.current) {
+          osmdRef.current.clear()
+        }
+        osmdRef.current = osmd
+        setIsReady(true)
+        setError(undefined)
       } catch (err) {
         console.error('[OSMD] Error loading or rendering sheet music:', err)
         if (isMounted && token === loadTokenRef.current) {
@@ -87,24 +103,26 @@ export function useOSMDSafe(
   }, [])
 
   const resetCursor = useCallback(() => {
-    if (isReady && osmdRef.current) {
-      osmdRef.current.cursor?.reset()
-      osmdRef.current.cursor?.show()
+    const osmd = osmdRef.current
+    if (isReady && osmd && osmd.cursor) {
+      osmd.cursor.reset()
+      osmd.cursor.show()
     }
   }, [isReady])
 
   const advanceCursor = useCallback(() => {
-    if (isReady && osmdRef.current) {
-      osmdRef.current.cursor?.next()
+    const osmd = osmdRef.current
+    if (isReady && osmd && osmd.cursor) {
+      osmd.cursor.next()
     }
   }, [isReady])
 
   const onNoteClick = useCallback(
     (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => {
-      if (!isReady || !osmdRef.current || !containerRef.current) return undefined
+      const osmd = osmdRef.current
+      if (!isReady || !osmd || !containerRef.current) return undefined
 
       const container = containerRef.current
-      const osmd = osmdRef.current
 
       const handleClick = (event: MouseEvent) => {
         const target = event.target as SVGElement
@@ -125,9 +143,9 @@ export function useOSMDSafe(
 
   const applyHeatmap = useCallback(
     (precisionMap: Record<number, number>) => {
-      if (!isReady || !osmdRef.current || !containerRef.current) return
-
       const osmd = osmdRef.current
+      if (!isReady || !osmd || !containerRef.current) return
+
       iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
         const precision = precisionMap[noteCounter]
         if (precision !== undefined) {
@@ -146,12 +164,13 @@ export function useOSMDSafe(
   )
 
   const highlightCurrentNote = useCallback(() => {
-    if (!isReady || !osmdRef.current || !containerRef.current) return
+    const osmd = osmdRef.current
+    if (!isReady || !osmd || !osmd.cursor || !containerRef.current) return
 
     const highlighted = containerRef.current.querySelectorAll('.note-current')
     highlighted.forEach((el) => el.classList.remove('note-current'))
 
-    const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
+    const gNotes = osmd.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {
         ;(gn as { getSVGGElement?: () => SVGElement | undefined })
@@ -163,12 +182,12 @@ export function useOSMDSafe(
 
   const highlightRange = useCallback(
     (startIndex: number, endIndex: number) => {
-      if (!isReady || !osmdRef.current || !containerRef.current) return
+      const osmd = osmdRef.current
+      if (!isReady || !osmd || !containerRef.current) return
 
       const highlighted = containerRef.current.querySelectorAll('.note-loop-range')
       highlighted.forEach((el) => el.classList.remove('note-loop-range'))
 
-      const osmd = osmdRef.current
       iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
         if (noteCounter >= startIndex && noteCounter <= endIndex) {
           ;(gNote as { getSVGGElement?: () => SVGElement | undefined })
@@ -184,13 +203,20 @@ export function useOSMDSafe(
     () => ({
       isReady,
       sync: (noteIndex: number) => {
-        if (!isReady || !osmdRef.current) return
+        const osmd = osmdRef.current
+        if (!isReady || !osmd || !osmd.cursor || noteIndex < 0) return
 
         // Idempotent absolute sync
-        const osmd = osmdRef.current
-        osmd.cursor.reset()
-        for (let i = 0; i < noteIndex; i++) {
-          osmd.cursor.next()
+        try {
+          osmd.cursor.reset()
+          for (let i = 0; i < noteIndex; i++) {
+            // Safety break if cursor cannot advance or is lost
+            if (!osmd.cursor) break
+            osmd.cursor.next()
+          }
+        } catch (e) {
+          console.warn('[OSMD] Cursor sync failed:', e)
+          return
         }
 
         const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
@@ -206,7 +232,8 @@ export function useOSMDSafe(
       },
       reset: resetCursor,
       getCursorPosition: () => {
-        if (!isReady || !containerRef.current) return undefined
+        const osmd = osmdRef.current
+        if (!isReady || !osmd || !containerRef.current) return undefined
 
         const containerRect = containerRef.current.getBoundingClientRect()
         const cursorElement = containerRef.current.querySelector('.osmd-cursor')
