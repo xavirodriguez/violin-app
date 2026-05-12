@@ -4,6 +4,8 @@ import { usePracticeStore } from '@/stores/practice-store'
 import { useTunerStore } from '@/stores/tuner-store'
 import { MusicalNote, formatPitchName } from '../practice-core'
 import { Note as TargetNote } from '../domain/exercise'
+import { DetectedNote, PracticeState } from '../domain/practice'
+import { NoteTechnique } from '../technique-types'
 
 /**
  * PracticeService
@@ -59,7 +61,7 @@ export class PracticeService {
     }
 
     // Use explicit cast to avoid SharedArrayBuffer issues in TS
-    analyser.getFloatTimeDomainData(this.buffer as unknown as Float32Array)
+    analyser.getFloatTimeDomainData(this.buffer as unknown as Float32Array<ArrayBuffer>)
     const result = this.detector.detectPitchWithValidation(this.buffer, 0.005) // Lower RMS threshold
 
     this.processDetectionResult(result)
@@ -149,6 +151,7 @@ export class PracticeService {
         type: 'NOTE_MATCHED',
         payload: {
           isPerfect: Math.abs(detected.cents) < 10,
+          technique: {} as NoteTechnique,
         },
       })
       this.holdStartTime = null

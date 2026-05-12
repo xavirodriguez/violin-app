@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
 import type { Exercise } from '../lib/exercises/types'
-import { audioManager } from '../lib/infrastructure/audio-manager'
 
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
   audioManager: {
@@ -23,7 +22,7 @@ vi.mock('@/lib/pitch-detector', () => {
   }))
   return {
     PitchDetector: MockDetector,
-    createPitchDetectorForDifficulty: vi.fn().mockImplementation(() => new (MockDetector as any)()),
+    createPitchDetectorForDifficulty: vi.fn().mockImplementation(() => new (MockDetector as unknown as { new (): unknown })()),
   }
 })
 
@@ -99,7 +98,7 @@ describe('Practice Store Integration', () => {
     expect(state1?.currentIndex).toBe(0)
     expect(state1?.status).toBe('listening')
 
-    store.internalUpdate({ type: 'NOTE_MATCHED', payload: { isPerfect: true } as any })
+    store.internalUpdate({ type: 'NOTE_MATCHED', payload: { isPerfect: true, technique: {} } as unknown as Parameters<typeof store.internalUpdate>[0] extends { type: 'NOTE_MATCHED', payload: infer P } ? P : never })
 
     const state2 = usePracticeStore.getState().practiceState
     expect(state2?.currentIndex).toBe(1)
@@ -115,7 +114,7 @@ describe('Practice Store Integration', () => {
     store.internalUpdate({ type: 'JUMP_TO_NOTE', payload: { index: 1 } })
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(1)
 
-    store.internalUpdate({ type: 'NOTE_MATCHED', payload: { isPerfect: true } as any })
+    store.internalUpdate({ type: 'NOTE_MATCHED', payload: { isPerfect: true, technique: {} } as unknown as Parameters<typeof store.internalUpdate>[0] extends { type: 'NOTE_MATCHED', payload: infer P } ? P : never })
 
     expect(usePracticeStore.getState().practiceState?.status).toBe('completed')
   })

@@ -7,7 +7,7 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     usePracticeStore.setState({
       practiceState: {
         status: 'listening',
-        exercise: { id: 'test', name: 'Test', difficulty: 'Beginner', musicXML: '', notes: [{}] } as any,
+        exercise: { id: 'test', name: 'Test', difficulty: 'Beginner', musicXML: '', notes: [{}] } as unknown as never,
         currentIndex: 0,
         detectionHistory: [],
         perfectNoteStreak: 0,
@@ -34,8 +34,9 @@ describe('TASK-15 · sessionToken anti-stale', () => {
     const initialState = usePracticeStore.getState().practiceState
 
     // Try to update using safeSet with stale token
-    // @ts-expect-error - testing with partial practice state
-    safeSetStale({ practiceState: { ...initialState, currentIndex: 99 } })
+    safeSetStale({
+      practiceState: { ...(initialState as object), currentIndex: 99 } as unknown as never,
+    })
 
     // Should NOT have updated
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(0)
@@ -47,8 +48,9 @@ describe('TASK-15 · sessionToken anti-stale', () => {
       currentToken: currentToken,
     })
 
-    // @ts-expect-error - testing with partial practice state
-    safeSetCurrent({ practiceState: { ...initialState, currentIndex: 5 } })
+    safeSetCurrent({
+      practiceState: { ...(initialState as object), currentIndex: 5 } as unknown as never,
+    })
 
     // Should HAVE updated
     expect(usePracticeStore.getState().practiceState?.currentIndex).toBe(5)
@@ -62,7 +64,7 @@ describe('TASK-15 · sessionToken anti-stale', () => {
           sessionToken: token,
           practiceState: {
             status: 'listening',
-            exercise: { id: 'test', name: 'Test', difficulty: 'Beginner', musicXML: '', notes: [{}, {}, {}] } as any,
+            exercise: { id: 'test', name: 'Test', difficulty: 'Beginner', musicXML: '', notes: [{}, {}, {}] } as unknown as never,
             currentIndex: 0,
             detectionHistory: [],
             perfectNoteStreak: 0,
@@ -70,7 +72,7 @@ describe('TASK-15 · sessionToken anti-stale', () => {
           }
       });
 
-      const safeUpdate = (event: any) => {
+      const safeUpdate = (event: Parameters<typeof usePracticeStore.getState>['0']['internalUpdate'] extends (e: infer E, ...args: unknown[]) => unknown ? E : unknown) => {
           const { sessionToken } = usePracticeStore.getState();
           if (sessionToken === token) {
               usePracticeStore.getState().internalUpdate(event);

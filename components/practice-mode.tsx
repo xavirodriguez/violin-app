@@ -84,7 +84,7 @@ export function PracticeMode() {
   }, [perfectNoteStreak])
 
   useEffect(() => {
-    if (lastDrillResult?.success) {
+    if ((lastDrillResult as { success?: boolean })?.success) {
       confetti({
         particleCount: 100,
         spread: 70,

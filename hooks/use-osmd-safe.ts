@@ -88,14 +88,14 @@ export function useOSMDSafe(
 
   const resetCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
-      osmdRef.current.cursor.reset()
-      osmdRef.current.cursor.show()
+      osmdRef.current.cursor?.reset()
+      osmdRef.current.cursor?.show()
     }
   }, [isReady])
 
   const advanceCursor = useCallback(() => {
     if (isReady && osmdRef.current) {
-      osmdRef.current.cursor.next()
+      osmdRef.current.cursor?.next()
     }
   }, [isReady])
 
@@ -112,7 +112,7 @@ export function useOSMDSafe(
         if (!gNoteElement) return
 
         const foundIndex = findNoteIndexFromElement(osmd, gNoteElement)
-        if (foundIndex !== -1) {
+        if (foundIndex !== -1 && handler) {
           handler({ noteIndex: foundIndex, event })
         }
       }
@@ -279,7 +279,11 @@ function processMeasureList(
   measureList.forEach((measureList) => {
     measureList.forEach((measure) => {
       if (measure && measure.staffEntries) {
-        measure.staffEntries.forEach(callback)
+        measure.staffEntries.forEach((entry) => {
+          if (callback) {
+            callback(entry)
+          }
+        })
       }
     })
   })
@@ -296,7 +300,7 @@ function findNoteIndexFromElement(osmd: OpenSheetMusicDisplay, targetElement: El
       gNote &&
       typeof (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement ===
         'function' &&
-      (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement() ===
+      (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement?.() ===
         targetElement
     ) {
       foundIndex = noteCounter
