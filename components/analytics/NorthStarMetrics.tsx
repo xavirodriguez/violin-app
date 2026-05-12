@@ -56,7 +56,7 @@ export function NorthStarMetrics() {
 }
 
 function MetricSummary({ icon: Icon, label, value, description, color }: {
-  icon: any, label: string, value: string | number, description: string, color: string
+  icon: React.ElementType, label: string, value: string | number, description: string, color: string
 }) {
   return (
     <Card className="p-6 space-y-2">

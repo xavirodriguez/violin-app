@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { usePracticeStore } from '@/stores/practice-store'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
+import { Exercise } from '@/lib/domain/exercise'
 
 // Mock dependencies
 vi.mock('@/lib/infrastructure/audio-manager', () => ({
@@ -36,7 +37,7 @@ describe('TASK-14 · stop() -> cleanup chain', () => {
     // Manually set state to active to simulate a running session
     usePracticeStore.setState({
       status: 'active',
-      exercise: mockExercise as any,
+      exercise: mockExercise as unknown as Exercise,
     })
 
     await usePracticeStore.getState().stop()
@@ -54,7 +55,7 @@ describe('TASK-14 · stop() -> cleanup chain', () => {
   it('should call cleanup even if state is not active', async () => {
     usePracticeStore.setState({
       status: 'ready',
-      exercise: mockExercise as any,
+      exercise: mockExercise as unknown as Exercise,
     })
 
     await usePracticeStore.getState().stop()

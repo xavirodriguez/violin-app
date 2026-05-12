@@ -5,11 +5,9 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   MicOff,
-  HelpCircle,
   ShieldAlert,
   Settings,
   ExternalLink,
-  ChevronRight
 } from 'lucide-react'
 
 interface AudioTroubleshooterProps {
@@ -71,7 +69,7 @@ export function AudioTroubleshooter({ error, onRetry }: AudioTroubleshooterProps
   )
 }
 
-function SolutionItem({ icon: Icon, title, description }: { icon: any, title: string, description: string }) {
+function SolutionItem({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) {
   return (
     <div className="flex gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-amber-200">
       <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-amber-600">

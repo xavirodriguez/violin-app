@@ -4,7 +4,6 @@ import React from 'react'
 import { usePracticeStore } from '@/stores/practice-store'
 import { Button } from '@/components/ui/button'
 import { Repeat, Target, Flame } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,

@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { useCurriculumStore } from '@/stores/curriculum-store'
-import { LessonView } from './lesson-view'
 import { Lesson, CurriculumUnit } from '@/lib/domain/curriculum'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'

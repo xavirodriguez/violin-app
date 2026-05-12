@@ -24,7 +24,9 @@ export function useOSMDSafe(
   highlightCurrentNote: () => void
   highlightRange: (startIndex: number, endIndex: number) => void
   applyHeatmap: (precisionMap: Record<number, number>) => void
-  onNoteClick: (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => any
+  onNoteClick: (
+    handler: (data: { noteIndex: number; event: MouseEvent }) => void,
+  ) => (() => void) | undefined
   scoreView: ScoreViewPort
 } {
   const [isReady, setIsReady] = useState(false)
@@ -99,53 +101,24 @@ export function useOSMDSafe(
 
   const onNoteClick = useCallback(
     (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => {
-      if (isReady && osmdRef.current && containerRef.current) {
-        const container = containerRef.current
-        const handleClick = (event: MouseEvent) => {
-          if (!osmdRef.current) return
-          const osmd = osmdRef.current
+      if (!isReady || !osmdRef.current || !containerRef.current) return undefined
 
-          const target = event.target as SVGElement
-          const gNoteElement = target.closest('.vf-stavenote, .vf-note')
-          if (!gNoteElement) return
+      const container = containerRef.current
+      const osmd = osmdRef.current
 
-          let foundIndex = -1
-          let noteCounter = 0
+      const handleClick = (event: MouseEvent) => {
+        const target = event.target as SVGElement
+        const gNoteElement = target.closest('.vf-stavenote, .vf-note')
+        if (!gNoteElement) return
 
-          // Iterar por la estructura gráfica de OSMD para encontrar el índice de la nota
-          try {
-            for (const measure of (osmd as any).GraphicSheet.MeasureList) {
-              for (const staffLines of measure) {
-                if (!staffLines || !staffLines.staffEntries) continue
-                for (const staffEntry of staffLines.staffEntries) {
-                  const graphicalNotes = (staffEntry as any).graphicalNotes
-                  if (graphicalNotes) {
-                    for (const gNote of graphicalNotes) {
-                      if (gNote && typeof gNote.getSVGGElement === 'function' && gNote.getSVGGElement() === gNoteElement) {
-                        foundIndex = noteCounter
-                        break
-                      }
-                    }
-                  }
-                  if (foundIndex !== -1) break
-                  noteCounter++
-                }
-                if (foundIndex !== -1) break
-              }
-              if (foundIndex !== -1) break
-            }
-          } catch (e) {
-            console.error('[OSMD] Error finding note index:', e)
-          }
-
-          if (foundIndex !== -1) {
-            handler({ noteIndex: foundIndex, event })
-          }
+        const foundIndex = findNoteIndexFromElement(osmd, gNoteElement)
+        if (foundIndex !== -1) {
+          handler({ noteIndex: foundIndex, event })
         }
-        container.addEventListener('click', handleClick)
-        return () => container.removeEventListener('click', handleClick)
       }
-      return () => {}
+
+      container.addEventListener('click', handleClick)
+      return () => container.removeEventListener('click', handleClick)
     },
     [isReady],
   )
@@ -155,36 +128,19 @@ export function useOSMDSafe(
       if (!isReady || !osmdRef.current || !containerRef.current) return
 
       const osmd = osmdRef.current
-      let noteCounter = 0
+      iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
+        const precision = precisionMap[noteCounter]
+        if (precision !== undefined) {
+          const colorClass =
+            precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
 
-      try {
-        for (const measure of (osmd as any).GraphicSheet.MeasureList) {
-          for (const staffLines of measure) {
-            if (!staffLines || !staffLines.staffEntries) continue
-            for (const staffEntry of staffLines.staffEntries) {
-              const precision = precisionMap[noteCounter]
-              if (precision !== undefined) {
-                const colorClass =
-                  precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
-
-                const graphicalNotes = (staffEntry as any).graphicalNotes
-                if (graphicalNotes) {
-                  for (const gNote of graphicalNotes) {
-                    const el = gNote.getSVGGElement?.()
-                    if (el) {
-                      el.classList.remove('heatmap-low', 'heatmap-med', 'heatmap-high')
-                      el.classList.add(colorClass)
-                    }
-                  }
-                }
-              }
-              noteCounter++
-            }
+          const el = (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement?.()
+          if (el) {
+            el.classList.remove('heatmap-low', 'heatmap-med', 'heatmap-high')
+            el.classList.add(colorClass)
           }
         }
-      } catch (e) {
-        console.error('[OSMD] Error applying heatmap:', e)
-      }
+      })
     },
     [isReady],
   )
@@ -198,7 +154,9 @@ export function useOSMDSafe(
     const gNotes = osmdRef.current.cursor.GNotesUnderCursor()
     if (gNotes) {
       gNotes.forEach((gn) => {
-        (gn as any).getSVGGElement?.()?.classList.add('note-current')
+        ;(gn as { getSVGGElement?: () => SVGElement | undefined })
+          .getSVGGElement?.()
+          ?.classList.add('note-current')
       })
     }
   }, [isReady])
@@ -211,28 +169,13 @@ export function useOSMDSafe(
       highlighted.forEach((el) => el.classList.remove('note-loop-range'))
 
       const osmd = osmdRef.current
-      let noteCounter = 0
-
-      try {
-        for (const measure of (osmd as any).GraphicSheet.MeasureList) {
-          for (const staffLines of measure) {
-            if (!staffLines || !staffLines.staffEntries) continue
-            for (const staffEntry of staffLines.staffEntries) {
-              if (noteCounter >= startIndex && noteCounter <= endIndex) {
-                const graphicalNotes = (staffEntry as any).graphicalNotes
-                if (graphicalNotes) {
-                  for (const gNote of graphicalNotes) {
-                    gNote.getSVGGElement?.()?.classList.add('note-loop-range')
-                  }
-                }
-              }
-              noteCounter++
-            }
-          }
+      iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
+        if (noteCounter >= startIndex && noteCounter <= endIndex) {
+          ;(gNote as { getSVGGElement?: () => SVGElement | undefined })
+            .getSVGGElement?.()
+            ?.classList.add('note-loop-range')
         }
-      } catch (e) {
-        console.error('[OSMD] Error highlighting range:', e)
-      }
+      })
     },
     [isReady],
   )
@@ -277,7 +220,7 @@ export function useOSMDSafe(
         return undefined
       },
     }),
-    [isReady, resetCursor, highlightCurrentNote, advanceCursor],
+    [isReady, resetCursor, highlightCurrentNote],
   )
 
   return {
@@ -292,4 +235,72 @@ export function useOSMDSafe(
     onNoteClick,
     scoreView,
   }
+}
+
+interface StaffEntry {
+  graphicalNotes: unknown[]
+}
+interface Measure {
+  staffEntries: StaffEntry[]
+}
+interface GraphicalSheet {
+  MeasureList: Measure[][]
+}
+
+/**
+ * Iterates through all graphical notes in the OSMD instance.
+ */
+function iterateGraphicalNotes(
+  osmd: OpenSheetMusicDisplay,
+  callback: (gNote: unknown, noteCounter: number) => void,
+): void {
+  let noteCounter = 0
+  try {
+    const graphicSheet = (osmd as unknown as { GraphicSheet: GraphicalSheet }).GraphicSheet
+    if (!graphicSheet || !graphicSheet.MeasureList) return
+
+    processMeasureList(graphicSheet.MeasureList, (staffEntry) => {
+      if (staffEntry.graphicalNotes) {
+        staffEntry.graphicalNotes.forEach((gNote) => {
+          callback(gNote, noteCounter)
+        })
+      }
+      noteCounter++
+    })
+  } catch (e) {
+    console.error('[OSMD] Error iterating graphical notes:', e)
+  }
+}
+
+function processMeasureList(
+  measureList: Measure[][],
+  callback: (staffEntry: StaffEntry) => void,
+): void {
+  measureList.forEach((measureList) => {
+    measureList.forEach((measure) => {
+      if (measure && measure.staffEntries) {
+        measure.staffEntries.forEach(callback)
+      }
+    })
+  })
+}
+
+/**
+ * Finds the index of a note given its SVG element.
+ */
+function findNoteIndexFromElement(osmd: OpenSheetMusicDisplay, targetElement: Element): number {
+  let foundIndex = -1
+  iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
+    if (
+      foundIndex === -1 &&
+      gNote &&
+      typeof (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement ===
+        'function' &&
+      (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement() ===
+        targetElement
+    ) {
+      foundIndex = noteCounter
+    }
+  })
+  return foundIndex
 }

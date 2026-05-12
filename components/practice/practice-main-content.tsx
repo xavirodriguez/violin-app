@@ -24,6 +24,7 @@ import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { PracticeSession } from '@/lib/domain/practice'
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 import { useCurriculumStore } from '@/stores/curriculum-store'
+import { LessonContent } from '@/lib/domain/curriculum'
 import { WhyThisMattersModal } from '../curriculum/why-this-matters-modal'
 import { CurriculumMap } from '../curriculum/CurriculumMap'
 import { PracticeSettings } from './practice-settings'
@@ -56,13 +57,14 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
 
   const { units } = useCurriculumStore()
   const [showPedagogy, setShowPedagogy] = useState(false)
-  const [activePedagogy, setActivePedagogy] = useState<any>(null)
+  const [activePedagogy, setActivePedagogy] = useState<LessonContent | null>(null)
   const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
-    ;(window as any).VM_SHOW_MAP = setShowMap
+    const win = window as unknown as { VM_SHOW_MAP?: (val: boolean) => void }
+    win.VM_SHOW_MAP = setShowMap
     return () => {
-      delete (window as any).VM_SHOW_MAP
+      delete win.VM_SHOW_MAP
     }
   }, [])
 
@@ -141,7 +143,7 @@ export function PracticeMainContent(props: PracticeMainContentProps) {
       <SheetMusicContainer
         {...props}
         practiceState={practiceState}
-        status={status as any}
+        status={status as PracticeStatus}
         currentNoteIndex={derived.currentNoteIndex}
       />
       <PracticeActiveViewContent {...props} />
@@ -162,7 +164,8 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
 
   if (storeStatus !== 'ready' && storeStatus !== 'idle') return <></>
 
-  const setShowMap = (val: boolean) => (window as any).VM_SHOW_MAP?.(val)
+  const setShowMap = (val: boolean) =>
+    (window as unknown as { VM_SHOW_MAP?: (val: boolean) => void }).VM_SHOW_MAP?.(val)
 
   return (
     <div className="space-y-6">
@@ -291,7 +294,7 @@ function QuickActionsView({
 
   return (
     <PracticeQuickActions
-      status={status as any}
+      status={status as PracticeStatus}
       onRepeatNote={onRepeatNote}
       onRepeatMeasure={onRepeatMeasure}
       onContinue={onContinue}

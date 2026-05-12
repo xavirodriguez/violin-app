@@ -34,11 +34,11 @@ export interface PracticeStore {
   requiredHoldTime: number
 
   // UI Stubs (deprecated)
-  lastDrillResult: any
+  lastDrillResult: unknown
   isListeningPhase: boolean
   listenIteration: number
   listenIterationsConfig: number
-  liveObservations: any[]
+  liveObservations: unknown[]
   listenImitateActive: boolean
 
   // Actions
@@ -72,13 +72,13 @@ export interface PracticeStore {
  * after a new session has already started.
  */
 export function createSafeSet(params: {
-  set: (partial: any) => void
-  get: () => any
+  set: (partial: Partial<PracticeStore>) => void
+  get: () => PracticeStore
   currentToken: string | undefined
 }) {
   const { set, get, currentToken } = params
 
-  return (partial: any) => {
+  return (partial: Partial<PracticeStore>) => {
     const storeToken = get().sessionToken
     if (currentToken !== storeToken) {
       return
@@ -230,7 +230,7 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   setListenIteration: (val: number) => set({ listenIteration: val }),
   setListenIterationsConfig: (val: number) => set({ listenIterationsConfig: val }),
 
-  playNote: (url) => {
+  playNote: (_url) => {
     // In MVP, we might just play a fixed frequency if URL is not ready
     audioPlayerService.playNote(440)
   },

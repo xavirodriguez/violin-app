@@ -123,7 +123,7 @@ interface ExerciseGridProps {
 }
 
 function ExerciseGrid(props: ExerciseGridProps) {
-  const { exercises, selectedId, recommendedId, recommendationReason, onSelect, stats } = props
+  const { exercises, selectedId, recommendedId, onSelect, stats } = props
   if (exercises.length === 0) {
     return (
       <Card className="rounded-xl border-2 border-dashed py-12 text-center bg-muted/10">
@@ -159,7 +159,14 @@ function LibraryCard(props: {
   onSelect: (ex: Exercise) => void
   stats?: ExerciseStats
 }) {
-  const { exercise, isRecommended, recommendationReason, isSelected, onSelect, stats } = props
+  const {
+    exercise,
+    isRecommended,
+    recommendationReason,
+    isSelected,
+    onSelect,
+    stats,
+  } = props
   const lastAttempt = stats
     ? { accuracy: stats.bestAccuracy, timestamp: stats.lastPracticedMs }
     : undefined

@@ -7,7 +7,7 @@ import { useProgressStore } from '@/stores/progress.store'
 import { TrendingUp } from 'lucide-react'
 
 export function SkillTrendsChart() {
-  const { eventBuffer, snapshots } = useProgressStore()
+  const { eventBuffer } = useProgressStore()
 
   // Use eventBuffer to show recent granular trends if snapshots are few
   const data = eventBuffer.slice(0, 20).reverse().map((e, idx) => ({

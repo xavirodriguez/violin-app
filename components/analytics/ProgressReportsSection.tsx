@@ -157,7 +157,7 @@ function ReportPreview({ report }: { report: StudentReport }) {
   )
 }
 
-function MetricBox({ label, value, sub }: { label: string; value: any, sub: string }) {
+function MetricBox({ label, value, sub }: { label: string; value: string | number, sub: string }) {
   return (
     <div className="p-4 rounded-xl border bg-slate-50">
       <div className="text-xs text-slate-500 font-medium">{label}</div>

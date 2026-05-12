@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { usePreferencesStore } from '@/stores/preferences-store'
-import { useTunerStore } from '@/stores/tuner-store'
 import { useCalibrationStore } from '@/stores/calibration-store'
 import { useTranslation, type TranslationSchema } from '@/lib/i18n'
 import type { FeedbackLevel } from '@/lib/user-preferences'
@@ -237,7 +236,6 @@ function SkillLevelStep({ onNext, onBack, t }: OnboardingStepProps) {
 }
 
 function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
-  const [isTesting, setIsTesting] = useState(false)
   const [audioLevel, setAudioLevel] = useState(0)
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const { setCalibration } = useCalibrationStore()
@@ -290,11 +288,9 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
           setCalibration(noiseFloor)
           setMicStatus('success')
         }
-        setIsTesting(false)
       }, 3000)
-    } catch (err) {
+    } catch (_err) {
       setMicStatus('error')
-      setIsTesting(false)
     }
   }
 
@@ -396,7 +392,7 @@ function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
               stableFrames = Math.max(0, stableFrames - 1)
               setProgress((stableFrames / REQUIRED_STABLE_FRAMES) * 100)
             }
-          } catch (e) {
+          } catch (_e) {
             setDetectedNote(null)
           }
         } else {
@@ -411,7 +407,7 @@ function CalibrationStep({ onNext, onBack, t }: OnboardingStepProps) {
         rafRef.current = requestAnimationFrame(update)
       }
       update()
-    } catch (err) {
+    } catch (_err) {
       setStatus('idle')
     }
   }

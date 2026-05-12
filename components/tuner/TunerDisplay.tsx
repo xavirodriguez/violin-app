@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { Card } from '@/components/ui/card'
 import { useTunerStore } from '@/stores/tuner-store'
 import { Badge } from '@/components/ui/badge'
 import { ArrowUp, ArrowDown, CheckCircle2 } from 'lucide-react'
@@ -25,7 +24,6 @@ export function TunerDisplay() {
   const confidence = isDetected ? state.confidence : 0
 
   const feedback = getTunerFeedback(cents, isDetected, thresholds)
-  const isString = ['G3', 'D4', 'A4', 'E5'].includes(note)
 
   return (
     <div className="space-y-12">
@@ -106,7 +104,11 @@ export function TunerDisplay() {
   )
 }
 
-function getTunerFeedback(cents: number, isDetected: boolean, thresholds: any) {
+function getTunerFeedback(
+  cents: number,
+  isDetected: boolean,
+  thresholds: { tooLow: number; bitLow: number; bitHigh: number; tooHigh: number },
+) {
   if (!isDetected) {
     return { message: 'Toca una cuerda', color: 'text-slate-400' }
   }

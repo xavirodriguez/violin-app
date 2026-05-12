@@ -52,17 +52,20 @@ export function usePracticeLifecycle(params: LifecycleParams) {
       if (soundFeedbackEnabled) {
         // We can use a simple high-frequency beep if no chime is loaded
         try {
-           const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-           const osc = ctx.createOscillator()
-           const gain = ctx.createGain()
-           osc.frequency.setValueAtTime(880, ctx.currentTime) // A5
-           gain.gain.setValueAtTime(0.1, ctx.currentTime)
-           gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1)
-           osc.connect(gain)
-           gain.connect(ctx.destination)
-           osc.start()
-           osc.stop(ctx.currentTime + 0.1)
-        } catch (e) {}
+          const ctx = new (window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.frequency.setValueAtTime(880, ctx.currentTime) // A5
+          gain.gain.setValueAtTime(0.1, ctx.currentTime)
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1)
+          osc.connect(gain)
+          gain.connect(ctx.destination)
+          osc.start()
+          osc.stop(ctx.currentTime + 0.1)
+        } catch (_e) {
+          // Ignore audio errors during feedback
+        }
       }
     }
 
