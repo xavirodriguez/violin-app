@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { usePracticeStore } from '../stores/practice-store'
-import { Exercise } from '../lib/exercises/types'
+import { Exercise } from '../lib/domain/exercise'
+import { NoteTechnique } from '../lib/technique-types'
 
 const mockExercise: Exercise = {
   id: 'test-exercise',
@@ -46,7 +47,7 @@ describe('MVP Integration', () => {
     // Simulate a note match
     store.internalUpdate({
       type: 'NOTE_MATCHED',
-      payload: { technique: {} as any, isPerfect: true }
+      payload: { technique: {} as unknown as NoteTechnique, isPerfect: true }
     })
 
     const state = usePracticeStore.getState()
@@ -64,7 +65,7 @@ describe('MVP Integration', () => {
     // Match first note
     store.internalUpdate({
       type: 'NOTE_MATCHED',
-      payload: { technique: {} as any, isPerfect: true }
+      payload: { technique: {} as unknown as NoteTechnique, isPerfect: true }
     })
 
     // Simulate detection of next note to transition from 'correct' to 'listening'
@@ -76,7 +77,7 @@ describe('MVP Integration', () => {
     // Match second (last) note
     store.internalUpdate({
       type: 'NOTE_MATCHED',
-      payload: { technique: {} as any, isPerfect: true }
+      payload: { technique: {} as unknown as NoteTechnique, isPerfect: true }
     })
 
     const state = usePracticeStore.getState()

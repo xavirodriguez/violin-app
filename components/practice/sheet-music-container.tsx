@@ -31,7 +31,9 @@ interface SheetMusicContainerProps {
     containerRef: import('react').RefObject<HTMLDivElement | null>
     scoreView: ScoreViewPort
     applyHeatmap?: (precisionMap: Record<number, number>) => void
-    onNoteClick?: (handler: (data: { noteIndex: number; event: MouseEvent }) => void) => any
+    onNoteClick?: (
+      handler: (data: { noteIndex: number; event: MouseEvent }) => void,
+    ) => (() => void) | undefined | void
   }
   currentNoteIndex: number
 }

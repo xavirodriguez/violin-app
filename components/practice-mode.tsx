@@ -8,7 +8,6 @@
 'use client'
 
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
-import { Card } from '@/components/ui/card'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
 import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
@@ -23,8 +22,9 @@ import { audioPlayerService } from '@/lib/audio/audio-player'
 import { NoteTimestamp } from '@/lib/domain/audio'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Exercise } from '@/lib/domain/exercise'
+import { PracticeStatus } from '@/lib/domain/practice'
 
 /**
  * Custom hook to manage the local UI state for the practice view.
@@ -44,8 +44,6 @@ export function PracticeMode() {
   const practiceState = usePracticeStore((s) => s.practiceState)
   const lastDrillResult = usePracticeStore((s) => s.lastDrillResult)
 
-  const isListeningPhase = usePracticeStore((s) => s.isListeningPhase)
-  const listenIteration = usePracticeStore((s) => s.listenIteration)
   const countdown = usePracticeStore((s) => s.countdown)
 
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
@@ -136,7 +134,7 @@ export function PracticeMode() {
 
   const lifecycleParams = {
     dispatch,
-    status: derived.status as any,
+    status: derived.status as PracticeStatus,
     currentNoteIndex: derived.currentNoteIndex,
     onToggleZenMode: () => viewActions.setIsZen((v) => !v),
     scoreView: osmd.scoreView,
@@ -221,14 +219,16 @@ export function PracticeMode() {
           centsTolerance={centsTolerance}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
-          osmd={{
-            isReady: osmd.isReady,
-            error: osmd.error,
-            containerRef: osmd.containerRef,
-            scoreView: osmd.scoreView,
-            applyHeatmap: osmd.applyHeatmap,
-            onNoteClick: osmd.onNoteClick,
-          } as any}
+          osmd={
+            {
+              isReady: osmd.isReady,
+              error: osmd.error,
+              containerRef: osmd.containerRef,
+              scoreView: osmd.scoreView,
+              applyHeatmap: osmd.applyHeatmap,
+              onNoteClick: osmd.onNoteClick,
+            } as unknown as never
+          }
           sessions={[]}
           onToggleZenMode={() => viewActions.setIsZen((v) => !v)}
         />
@@ -320,7 +320,7 @@ function PracticeControlsRow({
 
   return (
     <PracticeControls
-      status={status as any}
+      status={status as PracticeStatus}
       hasExercise={!!practiceState}
       onStart={onStart}
       onStop={() => dispatch({ type: 'STOP_SESSION' })}

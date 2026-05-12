@@ -123,7 +123,7 @@ export interface AttemptResult {
   timestamp: number
   precision: number
   tempo: number
-  notes: any[] // Result of notes in this attempt
+  notes: unknown[] // Result of notes in this attempt
 }
 
 /**

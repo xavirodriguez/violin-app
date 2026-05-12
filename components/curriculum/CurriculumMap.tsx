@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { useCurriculumStore } from '@/stores/curriculum-store'
 import { usePracticeStore } from '@/stores/practice-store'
 import { allExercises } from '@/lib/exercises'
+import { CurriculumUnit, Lesson } from '@/lib/domain/curriculum'
 import { CheckCircle2, Lock, PlayCircle, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,9 +45,13 @@ export function CurriculumMap() {
   )
 }
 
-function UnitCard({ unit, onStartExercise }: { unit: any, onStartExercise: (id: string) => void }) {
-  const isLocked = false // Simplified for now
-
+function UnitCard({
+  unit,
+  onStartExercise,
+}: {
+  unit: CurriculumUnit
+  onStartExercise: (id: string) => void
+}) {
   return (
     <Card className={cn(
       "relative overflow-hidden border-2 transition-all duration-300",
@@ -74,7 +79,7 @@ function UnitCard({ unit, onStartExercise }: { unit: any, onStartExercise: (id: 
         <div className="space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Lecciones</h4>
           <div className="grid gap-2">
-            {unit.lessons.map((lesson: any) => (
+            {unit.lessons.map((lesson: Lesson) => (
               <button
                 key={lesson.id}
                 disabled={!lesson.isUnlocked}
@@ -112,13 +117,21 @@ function UnitCard({ unit, onStartExercise }: { unit: any, onStartExercise: (id: 
         <div className="pt-2">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-muted-foreground">Objetivos de Aprendizaje</span>
-            <span className="text-xs font-bold">{Math.round(unit.lessons.filter((l: any) => l.isCompleted).length / unit.lessons.length * 100)}%</span>
+            <span className="text-xs font-bold">
+              {Math.round(
+                (unit.lessons.filter((l: Lesson) => l.isCompleted).length / unit.lessons.length) *
+                  100,
+              )}
+              %
+            </span>
           </div>
           <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-             <div
-               className="h-full bg-primary transition-all duration-500"
-               style={{ width: `${(unit.lessons.filter((l: any) => l.isCompleted).length / unit.lessons.length * 100)}%` }}
-             />
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{
+                width: `${(unit.lessons.filter((l: Lesson) => l.isCompleted).length / unit.lessons.length) * 100}%`,
+              }}
+            />
           </div>
         </div>
       </div>

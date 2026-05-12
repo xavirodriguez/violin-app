@@ -65,7 +65,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const { devices, deviceId, sensitivity, loadDevices, setDeviceId, setSensitivity } =
     useTunerStore()
   const { sessions } = useAnalyticsStore()
-  const { noiseFloor, lastCalibratedAt, calibrate, reset: resetCalibration } = useCalibrationStore()
+  const { noiseFloor, lastCalibratedAt, calibrate, reset: _resetCalibration } = useCalibrationStore()
 
   const {
     language,
@@ -161,7 +161,7 @@ const SettingsDialog: FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
               <Label htmlFor="language-select" className="text-right">
                 {t.settings.language}
               </Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
+              <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'es')}>
                 <SelectTrigger id="language-select" className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>

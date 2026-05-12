@@ -3,6 +3,7 @@
 import React from 'react'
 import { useMasteryStore } from '@/stores/mastery-store'
 import { useCurriculumStore } from '@/stores/curriculum-store'
+import { LearningObjective } from '@/lib/domain/curriculum'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react'
@@ -39,7 +40,16 @@ export function SkillsDashboard() {
   )
 }
 
-function SkillCard({ skill }: { skill: any }) {
+function SkillCard({
+  skill,
+}: {
+  skill: LearningObjective & {
+    unitTitle: string
+    mastery: number
+    trend: 'up' | 'down' | 'stable'
+    lastPracticed: number
+  }
+}) {
   const percentage = Math.round(skill.mastery * 100)
   const lastDate = skill.lastPracticed
     ? new Date(skill.lastPracticed).toLocaleDateString()

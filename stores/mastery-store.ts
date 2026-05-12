@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useAnalyticsStore } from './analytics-store'
 import { useCurriculumStore } from './curriculum-store'
-import { LearningObjective } from '@/lib/domain/curriculum'
 
 export interface ObjectiveMastery {
   objectiveId: string

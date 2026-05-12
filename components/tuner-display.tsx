@@ -29,7 +29,6 @@ export function TunerDisplay(props: TunerDisplayProps) {
   const { note, cents, confidence } = props
   const language = usePreferencesStore((s) => s.language)
   const thresholds = useTunerStore((s) => s.thresholds)
-  const t = useTranslation(language)
 
   const isInTune = cents !== undefined && Math.abs(cents) < 10
   const isClose = cents !== undefined && Math.abs(cents) < 25
@@ -78,10 +77,9 @@ function TunerNoteInfo(props: {
   isInTune: boolean
   isClose: boolean
   feedbackMessage: string
-  language: any
+  language: 'en' | 'es'
 }) {
-  const { note, cents, confidence, isInTune, isClose, feedbackMessage, language } = props
-  const t = useTranslation(language).tuner
+  const { note, cents, confidence, isInTune, isClose, language } = props
 
   return (
     <div className="text-center">
@@ -107,7 +105,7 @@ function ActiveNoteView(props: {
   confidence: number
   isInTune: boolean
   isClose: boolean
-  language: any
+  language: 'en' | 'es'
 }) {
   const { note, cents, confidence, isInTune, isClose, language } = props
   const t = useTranslation(language).tuner

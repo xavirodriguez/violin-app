@@ -1,6 +1,14 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+interface WavMetadata {
+  sampleRate: number
+  bitsPerSample: number
+  numChannels: number
+  dataOffset: number
+  dataSize: number
+}
+
 /**
  * Robust WAV decoder for tests.
  * Supports 16-bit and 24-bit PCM mono files.
@@ -9,11 +17,25 @@ export function loadWavAsFloat32(filename: string): { samples: Float32Array; sam
   const filePath = join(process.cwd(), '__tests__/audio', filename)
   const buffer = readFileSync(filePath)
 
-  // Basic RIFF/WAVE validation
+  validateRiffHeader(buffer, filename)
+
+  const metadata = parseChunks(buffer)
+
+  if (metadata.dataOffset === 0) throw new Error('Data chunk not found')
+  if (metadata.numChannels !== 1) throw new Error('Only mono files are supported')
+
+  const samples = convertToFloat32(buffer, metadata)
+
+  return { samples, sampleRate: metadata.sampleRate }
+}
+
+function validateRiffHeader(buffer: Buffer, filename: string): void {
   if (buffer.toString('utf8', 0, 4) !== 'RIFF' || buffer.toString('utf8', 8, 12) !== 'WAVE') {
     throw new Error(`${filename} is not a valid RIFF/WAVE file`)
   }
+}
 
+function parseChunks(buffer: Buffer): WavMetadata {
   let sampleRate = 0
   let bitsPerSample = 0
   let numChannels = 0
@@ -41,9 +63,11 @@ export function loadWavAsFloat32(filename: string): { samples: Float32Array; sam
     if (chunkSize % 2 !== 0) offset++
   }
 
-  if (dataOffset === 0) throw new Error('Data chunk not found')
-  if (numChannels !== 1) throw new Error('Only mono files are supported')
+  return { sampleRate, bitsPerSample, numChannels, dataOffset, dataSize }
+}
 
+function convertToFloat32(buffer: Buffer, metadata: WavMetadata): Float32Array {
+  const { bitsPerSample, dataOffset, dataSize } = metadata
   const bytesPerSample = bitsPerSample / 8
   const numSamples = Math.floor(dataSize / bytesPerSample)
   const samples = new Float32Array(numSamples)
@@ -53,14 +77,16 @@ export function loadWavAsFloat32(filename: string): { samples: Float32Array; sam
     if (bitsPerSample === 16) {
       samples[i] = buffer.readInt16LE(sOffset) / 32768
     } else if (bitsPerSample === 24) {
-      // Read 3 bytes and handle sign (24-bit signed integer)
-      let val = buffer[sOffset] | (buffer[sOffset + 1] << 8) | (buffer[sOffset + 2] << 16)
-      if (val & 0x800000) val |= 0xff000000 // Sign extend
-      samples[i] = val / 8388608
+      samples[i] = read24BitSample(buffer, sOffset) / 8388608
     } else {
       throw new Error(`Unsupported bits per sample: ${bitsPerSample}`)
     }
   }
+  return samples
+}
 
-  return { samples, sampleRate }
+function read24BitSample(buffer: Buffer, offset: number): number {
+  let val = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16)
+  if (val & 0x800000) val |= 0xff000000 // Sign extend
+  return val
 }

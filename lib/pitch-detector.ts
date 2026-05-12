@@ -259,7 +259,7 @@ export class PitchDetector {
       return { pitchHz: 0, confidence: 0 }
     }
 
-    let result = this.detectPitch(finalBuffer)
+    const result = this.detectPitch(finalBuffer)
 
     // IMPROVEMENT: Use Zero-Crossing as a secondary check for high-frequency notes
     // or as a rescue for low-confidence YIN results when the signal is clearly there.
@@ -326,7 +326,7 @@ export class PitchDetector {
   /**
    * Updates the maximum frequency threshold for pitch detection.
    *
-   * @param maxHz - Maximum frequency in Hz (must be \> MIN_FREQUENCY and \<= 20000)
+   * @param maxHz - Maximum frequency in Hz (must be greater than MIN_FREQUENCY and less than or equal to 20000)
    * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
    *
    * @example
@@ -347,7 +347,7 @@ export class PitchDetector {
   /**
    * Updates the minimum frequency threshold for pitch detection.
    *
-   * @param minHz - Minimum frequency in Hz (must be > 20 and < MAX_FREQUENCY)
+   * @param minHz - Minimum frequency in Hz (must be greater than 20 and less than MAX_FREQUENCY)
    * @throws AppError - CODE: DATA_VALIDATION_ERROR if out of valid range
    */
   setMinFrequency(minHz: number): void {
