@@ -54,7 +54,7 @@ export function ExercisePreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden p-0">
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden p-0" aria-describedby={undefined}>
         <PreviewHeader exercise={exercise} />
         <PreviewScrollContent exercise={exercise} osmdHook={osmdHook} />
         <PreviewFooter isPlaying={isPlaying} onPlay={playReferenceAudio} onStart={onStart} />

@@ -10,6 +10,7 @@ import { create } from 'zustand'
 import { allExercises } from '@/lib/exercises'
 import { type PracticeState, type PracticeEvent, reducePracticeEvent, formatPitchName } from '@/lib/practice-core'
 import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice'
+import { Observation } from '@/lib/technique-types'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { practiceService } from '@/lib/practice/practice-service'
@@ -40,7 +41,7 @@ export interface PracticeStore {
   isListeningPhase: boolean
   listenIteration: number
   listenIterationsConfig: number
-  liveObservations: unknown[]
+  liveObservations: Observation[]
   listenImitateActive: boolean
 
   // Actions

@@ -19,7 +19,8 @@ import { PauseCircle, PlayCircle, Trophy, Map } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { PracticeQuickActions } from '@/components/practice-quick-actions'
 import { Exercise } from '@/lib/domain/exercise'
-import { PracticeState } from '@/lib/domain/practice'
+import { PracticeState, PracticeStatus } from '@/lib/domain/practice'
+import { Observation } from '@/lib/technique-types'
 import { ScoreViewPort } from '@/lib/ports/score-view.port'
 import { PracticeSession } from '@/lib/domain/practice'
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
@@ -205,7 +206,7 @@ function PracticeIdleContent(props: PracticeMainContentProps) {
 function PracticeActiveViewContent(props: PracticeMainContentProps) {
   const derived = useDerivedPracticeState()
   const practiceState = usePracticeStore((s) => s.practiceState)
-  const liveObservations = usePracticeStore((s) => s.liveObservations)
+  const liveObservations = usePracticeStore((s) => s.liveObservations) as Observation[]
   const { isZenModeEnabled, centsTolerance } = props
   const hold = practiceState?.holdDuration
   const streak = practiceState?.perfectNoteStreak

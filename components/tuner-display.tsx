@@ -29,10 +29,6 @@ export function TunerDisplay(props: TunerDisplayProps) {
   const { note, cents, confidence } = props
   const language = usePreferencesStore((s) => s.language)
   const thresholds = useTunerStore((s) => s.thresholds)
-
-  const isInTune = cents !== undefined && Math.abs(cents) < 10
-  const isClose = cents !== undefined && Math.abs(cents) < 25
-
   const feedbackMessage = getTunerFeedbackMessage(cents, confidence, language, thresholds)
 
   return (
@@ -43,8 +39,8 @@ export function TunerDisplay(props: TunerDisplayProps) {
         note={note}
         cents={cents}
         confidence={confidence}
-        isInTune={isInTune}
-        isClose={isClose}
+        isInTune={Math.abs(cents ?? 100) < 10}
+        isClose={Math.abs(cents ?? 100) < 25}
         feedbackMessage={feedbackMessage}
         language={language}
       />
@@ -54,8 +50,8 @@ export function TunerDisplay(props: TunerDisplayProps) {
       <TunerStatusIndicators
         note={note}
         cents={cents}
-        isInTune={isInTune}
-        isClose={isClose}
+        isInTune={Math.abs(cents ?? 100) < 10}
+        isClose={Math.abs(cents ?? 100) < 25}
         feedbackMessage={feedbackMessage}
       />
     </div>
@@ -79,7 +75,7 @@ function TunerNoteInfo(props: {
   feedbackMessage: string
   language: 'en' | 'es'
 }) {
-  const { note, cents, confidence, isInTune, isClose, language } = props
+  const { note, cents, confidence, isInTune, isClose, language, feedbackMessage } = props
 
   return (
     <div className="text-center">

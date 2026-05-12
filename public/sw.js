@@ -1,6 +1,17 @@
 /* global self, caches, fetch */
 const CACHE_NAME = 'violin-mentor-v1'
-const ASSETS_TO_CACHE = ['/', '/index.html', '/manifest.json', '/favicon.ico']
+const ASSETS_TO_CACHE = [
+  '/',
+  '/apple-icon.png',
+  '/icon-dark-32x32.png',
+  '/icon-light-32x32.png',
+  '/icon.svg',
+  '/placeholder-logo.png',
+  '/placeholder-logo.svg',
+  '/placeholder-user.jpg',
+  '/placeholder.jpg',
+  '/placeholder.svg',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

@@ -21,7 +21,7 @@ interface WhyThisMattersModalProps {
 export function WhyThisMattersModal({ content, isOpen, onClose }: WhyThisMattersModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-center gap-2 text-amber-500 mb-1">
             <Lightbulb className="h-4 w-4" />

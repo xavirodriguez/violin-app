@@ -251,7 +251,6 @@ function AudioTestStep({ onNext, onBack, t }: OnboardingStepProps) {
   }, [])
 
   const startTest = async () => {
-    setIsTesting(true)
     setMicStatus('testing')
     samplesRef.current = []
 

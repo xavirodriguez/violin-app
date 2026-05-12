@@ -64,6 +64,8 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   /** Muestra u oculta el botón de cierre por defecto. */
   showCloseButton?: boolean
+  /** Opcionalmente silencia la advertencia de descripción faltante. */
+  'aria-describedby'?: string | undefined
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
