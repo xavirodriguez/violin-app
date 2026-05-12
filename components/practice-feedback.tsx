@@ -146,11 +146,8 @@ function ActiveFeedback(props: {
     requiredHoldTime = 300,
   } = props
 
-  // If we are within 100 cents (one semitone) of the target,
-  // don't show "Wrong Note", show adjustment feedback.
-  const isCloseEnoughToTarget = isCorrectNote || (centsOff !== undefined && Math.abs(centsOff) < 100)
-
-  if (!isCloseEnoughToTarget) {
+  // If the note names don't match, we definitely shouldn't show "Almost!" or "Perfect!"
+  if (!isCorrectNote) {
     return <WrongNoteFeedback detectedNote={detectedPitchName!} targetNote={targetNote} />
   }
 

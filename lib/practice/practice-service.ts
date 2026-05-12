@@ -97,7 +97,7 @@ export class PracticeService {
         this.cachedTargetPitch === detected.pitch && Math.abs(detected.cents) < 20
 
       if (shouldUpdateStore) {
-        store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected })
+        store.internalUpdate({ type: 'NOTE_DETECTED', payload: detected }, this.cachedTargetPitch || undefined)
         this.lastUpdateTime = now
       }
 

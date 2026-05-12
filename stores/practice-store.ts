@@ -16,6 +16,8 @@ import { practiceService } from '@/lib/practice/practice-service'
 import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
 import { audioPlayerService } from '@/lib/audio/audio-player'
+import { useProgressStore } from './progress.store'
+import { calculateLiveObservations } from '@/lib/live-observations'
 
 export interface PracticeStore {
   // Core MVP State
@@ -47,7 +49,7 @@ export interface PracticeStore {
   start: () => Promise<void>
   stop: () => Promise<void>
   reset: () => void
-  internalUpdate: (event: PracticeEvent) => void
+  internalUpdate: (event: PracticeEvent, targetPitch?: string) => void
   dispatch: (event: PracticeUIEvent) => void
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
@@ -193,14 +195,21 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     })
   },
 
-  internalUpdate: (event) => {
+  internalUpdate: (event, targetPitch) => {
     const { practiceState } = get()
     if (!practiceState) return
 
     const nextState = reducePracticeEvent(practiceState, event)
 
+    // Update live observations for MVP feedback
+    let liveObservations = get().liveObservations
+    if (event.type === 'NOTE_DETECTED' && targetPitch) {
+      liveObservations = calculateLiveObservations(nextState.detectionHistory, targetPitch)
+    } else if (event.type === 'NOTE_MATCHED' || event.type === 'START' || event.type === 'RESET') {
+      liveObservations = []
+    }
 
-    set({ practiceState: nextState })
+    set({ practiceState: nextState, liveObservations })
   },
 
   dispatch: (event) => {
@@ -253,7 +262,7 @@ export const useDerivedPracticeState = () => {
       totalNotes: 0,
       targetNote: undefined,
       targetPitchName: undefined,
-      lastDetectedNote: undefined
+      lastDetectedNote: undefined,
     }
   }
 
@@ -267,6 +276,25 @@ export const useDerivedPracticeState = () => {
     totalNotes,
     targetNote: currentNote,
     targetPitchName: currentNote ? formatPitchName(currentNote.pitch) : undefined,
-    lastDetectedNote: practiceState.detectionHistory[0]
+    lastDetectedNote: practiceState.detectionHistory[0],
   }
+}
+
+/**
+ * Calculates the allowed cents deviation based on the user's intonation skill.
+ *
+ * @remarks
+ * Uses a linear mapping from skill (0-100) to tolerance (35-10 cents),
+ * but enforces a floor of 15 cents for the MVP.
+ */
+export function calculateCentsTolerance(): number {
+  const progress = useProgressStore.getState()
+  const skill = progress.intonationSkill ?? 0
+
+  const baseTolerance = 35
+  const maxBonus = 25 // can reach 10 cents at 100 skill
+  const floor = 15
+
+  const calculated = Math.round(baseTolerance - (skill / 100) * maxBonus)
+  return Math.max(floor, calculated)
 }
