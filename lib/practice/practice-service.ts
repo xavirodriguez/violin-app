@@ -19,7 +19,7 @@ export class PracticeService {
   private buffer: Float32Array = new Float32Array(2048)
   private holdStartTime: number | null = null
   private consecutiveMisses = 0
-  private readonly MAX_MISSES = 3
+  private readonly MAX_MISSES = 5
   private lastUpdateTime = 0
   private readonly UPDATE_INTERVAL_MS = 100 // 10Hz update rate for store
   private cachedTargetNote: TargetNote | null = null
@@ -54,17 +54,21 @@ export class PracticeService {
   }
 
   private loop = () => {
-    const analyser = audioManager.getAnalyser()
-    if (!analyser || !this.detector) {
-      this.rafId = requestAnimationFrame(this.loop)
-      return
+    try {
+      const analyser = audioManager.getAnalyser()
+      if (!analyser || !this.detector) {
+        this.rafId = requestAnimationFrame(this.loop)
+        return
+      }
+
+      // Use explicit cast to avoid SharedArrayBuffer issues in TS
+      analyser.getFloatTimeDomainData(this.buffer as unknown as Float32Array<ArrayBuffer>)
+      const result = this.detector.detectPitchWithValidation(this.buffer, 0.005) // Lower RMS threshold
+
+      this.processDetectionResult(result)
+    } catch (err) {
+      console.error('[PracticeService] Loop error:', err)
     }
-
-    // Use explicit cast to avoid SharedArrayBuffer issues in TS
-    analyser.getFloatTimeDomainData(this.buffer as unknown as Float32Array<ArrayBuffer>)
-    const result = this.detector.detectPitchWithValidation(this.buffer, 0.005) // Lower RMS threshold
-
-    this.processDetectionResult(result)
 
     this.rafId = requestAnimationFrame(this.loop)
   }
