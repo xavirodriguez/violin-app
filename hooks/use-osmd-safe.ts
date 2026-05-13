@@ -45,7 +45,6 @@ export function useOSMDSafe(
         return
       }
 
-      // Always reset readiness when starting a new load
       setIsReady(false)
 
       try {
@@ -60,31 +59,32 @@ export function useOSMDSafe(
 
         await osmd.load(musicXML)
 
-        // Safety check: has another load started while we were awaiting?
         if (token !== loadTokenRef.current || !isMounted) {
           osmd.clear()
           return
         }
 
-        osmd.render()
-
-        if (osmd.cursor) {
-          osmd.cursor.show()
-        }
-
-        // Only after successful load and render, and if still current, we update the ref and state
-        if (osmdRef.current) {
-          osmdRef.current.clear()
-        }
-        osmdRef.current = osmd
-        setIsReady(true)
-        setError(undefined)
+        finishOSMDInitialization(osmd)
       } catch (err) {
-        console.error('[OSMD] Error loading or rendering sheet music:', err)
-        if (isMounted && token === loadTokenRef.current) {
-          setError(err instanceof Error ? err.message : 'An unknown error occurred.')
-          setIsReady(false)
-        }
+        handleOSMDError(err, isMounted, token)
+      }
+    }
+
+    function finishOSMDInitialization(osmd: OpenSheetMusicDisplay) {
+      osmd.render()
+      osmd.cursor?.show()
+
+      if (osmdRef.current) osmdRef.current.clear()
+      osmdRef.current = osmd
+      setIsReady(true)
+      setError(undefined)
+    }
+
+    function handleOSMDError(err: unknown, isMounted: boolean, token: number) {
+      console.error('[OSMD] Error loading or rendering sheet music:', err)
+      if (isMounted && token === loadTokenRef.current) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.')
+        setIsReady(false)
       }
     }
 
@@ -148,15 +148,15 @@ export function useOSMDSafe(
 
       iterateGraphicalNotes(osmd, (gNote, noteCounter) => {
         const precision = precisionMap[noteCounter]
-        if (precision !== undefined) {
-          const colorClass =
-            precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
+        if (precision === undefined) return
 
-          const el = (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement?.()
-          if (el) {
-            el.classList.remove('heatmap-low', 'heatmap-med', 'heatmap-high')
-            el.classList.add(colorClass)
-          }
+        const colorClass =
+          precision < 0.7 ? 'heatmap-low' : precision < 0.85 ? 'heatmap-med' : 'heatmap-high'
+
+        const el = (gNote as { getSVGGElement?: () => SVGElement | undefined }).getSVGGElement?.()
+        if (el) {
+          el.classList.remove('heatmap-low', 'heatmap-med', 'heatmap-high')
+          el.classList.add(colorClass)
         }
       })
     },
@@ -206,11 +206,9 @@ export function useOSMDSafe(
         const osmd = osmdRef.current
         if (!isReady || !osmd || !osmd.cursor || noteIndex < 0) return
 
-        // Idempotent absolute sync
         try {
           osmd.cursor.reset()
           for (let i = 0; i < noteIndex; i++) {
-            // Safety break if cursor cannot advance or is lost
             if (!osmd.cursor) break
             osmd.cursor.next()
           }
@@ -219,14 +217,11 @@ export function useOSMDSafe(
           return
         }
 
-        const cursorElement = containerRef.current?.querySelector('.osmd-cursor')
-        if (cursorElement) {
-          cursorElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'center',
-          })
-        }
+        containerRef.current?.querySelector('.osmd-cursor')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center',
+        })
 
         highlightCurrentNote()
       },
@@ -303,15 +298,11 @@ function processMeasureList(
   measureList: Measure[][],
   callback: (staffEntry: StaffEntry) => void,
 ): void {
-  measureList.forEach((measureList) => {
-    measureList.forEach((measure) => {
-      if (measure && measure.staffEntries) {
-        measure.staffEntries.forEach((entry) => {
-          if (callback) {
-            callback(entry)
-          }
-        })
-      }
+  measureList.forEach((measures) => {
+    measures.forEach((measure) => {
+      measure?.staffEntries?.forEach((entry) => {
+        callback(entry)
+      })
     })
   })
 }

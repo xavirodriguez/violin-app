@@ -362,19 +362,30 @@ function handleNoNoteDetected(state: PracticeState): PracticeState {
 type NoteMatchedPayload = Extract<PracticeEvent, { type: 'NOTE_MATCHED' }>['payload']
 
 function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): PracticeState {
-  if (state.status !== 'listening' && state.status !== 'validating') {
+  if (!isMatchingAllowed(state)) {
     return state
   }
 
   const streak = calculateNewStreak(state, payload)
   const observations = payload?.observations ?? []
 
-  // Loop logic
   if (state.loopRegion?.isEnabled) {
-    const result = handleLoopMatched(state, payload, streak, observations)
-    if (result) return result
+    const loopResult = handleLoopMatched(state, payload, streak, observations)
+    if (loopResult) return loopResult
   }
 
+  return advanceToNextState(state, streak, observations)
+}
+
+function isMatchingAllowed(state: PracticeState): boolean {
+  return state.status === 'listening' || state.status === 'validating'
+}
+
+function advanceToNextState(
+  state: PracticeState,
+  streak: number,
+  observations: Observation[],
+): PracticeState {
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
   if (isLastNote) {
@@ -442,25 +453,7 @@ function handleLoopMatched(
   const isAtEndOfLoop = state.currentIndex >= state.loopRegion.endNoteIndex
   if (!isAtEndOfLoop) return undefined
 
-  let drillTarget = state.loopRegion.drillTarget
-  let isLoopCompleted = false
-  if (drillTarget) {
-    // Calculate precision for this attempt
-    // In a real scenario, we'd average the note accuracy in the session
-    const currentAttemptPrecision = payload?.isPerfect ? 1.0 : 0.8
-
-    const newStreak =
-      currentAttemptPrecision >= drillTarget.precisionGoal ? drillTarget.currentStreak + 1 : 0
-
-    drillTarget = {
-      ...drillTarget,
-      currentStreak: newStreak,
-    }
-
-    if (newStreak >= drillTarget.consecutiveRequired) {
-      isLoopCompleted = true
-    }
-  }
+  const { drillTarget, isLoopCompleted } = evaluateDrillTarget(state.loopRegion, payload)
 
   if (isLoopCompleted) {
     return {
