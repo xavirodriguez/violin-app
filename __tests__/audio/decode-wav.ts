@@ -36,11 +36,13 @@ function validateRiffHeader(buffer: Buffer, filename: string): void {
 }
 
 function parseChunks(buffer: Buffer): WavMetadata {
-  let sampleRate = 0
-  let bitsPerSample = 0
-  let numChannels = 0
-  let dataOffset = 0
-  let dataSize = 0
+  const metadata: WavMetadata = {
+    sampleRate: 0,
+    bitsPerSample: 0,
+    numChannels: 0,
+    dataOffset: 0,
+    dataSize: 0,
+  }
 
   let offset = 12
   while (offset < buffer.length) {
@@ -48,22 +50,36 @@ function parseChunks(buffer: Buffer): WavMetadata {
     const chunkSize = buffer.readUInt32LE(offset + 4)
 
     if (chunkId === 'fmt ') {
-      const format = buffer.readUInt16LE(offset + 8)
-      if (format !== 1) throw new Error('Only PCM format is supported')
-      numChannels = buffer.readUInt16LE(offset + 10)
-      sampleRate = buffer.readUInt32LE(offset + 12)
-      bitsPerSample = buffer.readUInt16LE(offset + 22)
+      const fmt = parseFmtChunk(buffer, offset)
+      metadata.numChannels = fmt.numChannels
+      metadata.sampleRate = fmt.sampleRate
+      metadata.bitsPerSample = fmt.bitsPerSample
     } else if (chunkId === 'data') {
-      dataOffset = offset + 8
-      dataSize = chunkSize
+      metadata.dataOffset = offset + 8
+      metadata.dataSize = chunkSize
       break
     }
 
-    offset += 8 + chunkSize
-    if (chunkSize % 2 !== 0) offset++
+    offset = nextChunkOffset(offset, chunkSize)
   }
 
-  return { sampleRate, bitsPerSample, numChannels, dataOffset, dataSize }
+  return metadata
+}
+
+function parseFmtChunk(buffer: Buffer, offset: number) {
+  const format = buffer.readUInt16LE(offset + 8)
+  if (format !== 1) throw new Error('Only PCM format is supported')
+  return {
+    numChannels: buffer.readUInt16LE(offset + 10),
+    sampleRate: buffer.readUInt32LE(offset + 12),
+    bitsPerSample: buffer.readUInt16LE(offset + 22),
+  }
+}
+
+function nextChunkOffset(currentOffset: number, chunkSize: number): number {
+  let next = currentOffset + 8 + chunkSize
+  if (chunkSize % 2 !== 0) next++
+  return next
 }
 
 function convertToFloat32(buffer: Buffer, metadata: WavMetadata): Float32Array {
