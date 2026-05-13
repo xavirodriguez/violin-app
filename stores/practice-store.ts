@@ -10,7 +10,6 @@ import { create } from 'zustand'
 import { allExercises } from '@/lib/exercises'
 import { type PracticeState, type PracticeEvent, reducePracticeEvent, formatPitchName } from '@/lib/practice-core'
 import { type PracticeUIEvent, type LoopRegion } from '@/lib/domain/practice'
-import { Observation } from '@/lib/technique-types'
 import { toAppError, AppError } from '@/lib/errors/app-error'
 import { audioManager } from '@/lib/infrastructure/audio-manager'
 import { practiceService } from '@/lib/practice/practice-service'
@@ -18,7 +17,6 @@ import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
 import { audioPlayerService } from '@/lib/audio/audio-player'
 import { useProgressStore } from './progress.store'
-import { calculateLiveObservations } from '@/lib/live-observations'
 
 export interface PracticeStore {
   // Core MVP State
@@ -36,31 +34,17 @@ export interface PracticeStore {
   loopRegion: LoopRegion | undefined
   requiredHoldTime: number
 
-  // UI Stubs (deprecated)
-  lastDrillResult: unknown
-  isListeningPhase: boolean
-  listenIteration: number
-  listenIterationsConfig: number
-  liveObservations: Observation[]
-  listenImitateActive: boolean
-
   // Actions
   loadExercise: (exercise: Exercise) => void
   initialize: () => void
   start: () => Promise<void>
   stop: () => Promise<void>
   reset: () => void
-  internalUpdate: (event: PracticeEvent, targetPitch?: string) => void
+  internalUpdate: (event: PracticeEvent) => void
   dispatch: (event: PracticeUIEvent) => void
   setLoopRegion: (region: LoopRegion | undefined) => void
   setTempoConfig: (config: { bpm: number; scale: number }) => void
   setCountdown: (val: number | null) => void
-
-  // Stubs for actions
-  setListeningPhase: (val: boolean) => void
-  setListenIteration: (val: number) => void
-  setListenIterationsConfig: (val: number) => void
-  setListenImitateActive: (val: boolean) => void
 
   // Playback
   playNote: (url: string) => void
@@ -104,14 +88,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   tempoConfig: { bpm: 60, scale: 1.0 },
   loopRegion: undefined,
   requiredHoldTime: 300,
-
-  // Stubs
-  lastDrillResult: null,
-  isListeningPhase: false,
-  listenIteration: 0,
-  listenIterationsConfig: 2,
-  liveObservations: [],
-  listenImitateActive: false,
 
   loadExercise: (exercise) => {
     try {
@@ -196,21 +172,13 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
     })
   },
 
-  internalUpdate: (event, targetPitch) => {
+  internalUpdate: (event) => {
     const { practiceState } = get()
     if (!practiceState) return
 
     const nextState = reducePracticeEvent(practiceState, event)
 
-    // Update live observations for MVP feedback
-    let liveObservations = get().liveObservations
-    if (event.type === 'NOTE_DETECTED' && targetPitch) {
-      liveObservations = calculateLiveObservations(nextState.detectionHistory, targetPitch)
-    } else if (event.type === 'NOTE_MATCHED' || event.type === 'START' || event.type === 'RESET') {
-      liveObservations = []
-    }
-
-    set({ practiceState: nextState, liveObservations })
+    set({ practiceState: nextState })
   },
 
   dispatch: (event) => {
@@ -233,12 +201,6 @@ export const usePracticeStore = create<PracticeStore>((set, get) => ({
   setLoopRegion: (region) => set({ loopRegion: region }),
   setTempoConfig: (config) => set({ tempoConfig: config }),
   setCountdown: (val: number | null) => set({ countdown: val }),
-
-  // Stubs
-  setListenImitateActive: (active) => set({ listenImitateActive: active }),
-  setListeningPhase: (active: boolean) => set({ isListeningPhase: active }),
-  setListenIteration: (val: number) => set({ listenIteration: val }),
-  setListenIterationsConfig: (val: number) => set({ listenIterationsConfig: val }),
 
   playNote: (_url) => {
     // In MVP, we might just play a fixed frequency if URL is not ready

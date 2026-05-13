@@ -89,10 +89,13 @@ export class AudioManager {
   }
 
   private async executeCleanup(): Promise<void> {
-    this.stopMediaTracks()
-    this.disconnectAudioNodes()
-    await this.closeAudioContext()
-    this.resetResourceReferences()
+    try {
+      this.disconnectAudioNodes()
+      this.stopMediaTracks()
+      await this.closeAudioContext()
+    } finally {
+      this.resetResourceReferences()
+    }
   }
 
   /**
@@ -277,13 +280,23 @@ export class AudioManager {
   }
 
   private disconnectAudioNodes(): void {
-    const sourceNode = this.source
-    const gainNode = this.gainNode
-    const analyserNode = this.analyser
+    try {
+      this.source?.disconnect()
+    } catch (e) {
+      console.warn('Error disconnecting source node:', e)
+    }
 
-    sourceNode?.disconnect()
-    gainNode?.disconnect()
-    analyserNode?.disconnect()
+    try {
+      this.gainNode?.disconnect()
+    } catch (e) {
+      console.warn('Error disconnecting gain node:', e)
+    }
+
+    try {
+      this.analyser?.disconnect()
+    } catch (e) {
+      console.warn('Error disconnecting analyser node:', e)
+    }
 
     this.source = undefined
     this.gainNode = undefined
