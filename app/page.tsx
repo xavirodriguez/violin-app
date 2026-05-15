@@ -10,10 +10,6 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow'
 import { analytics } from '@/lib/analytics-tracker'
 import { useTranslation } from '@/lib/i18n'
 import { usePreferencesStore } from '@/stores/preferences-store'
-import { useCurriculumStore } from '@/stores/curriculum-store'
-import { useMasteryStore } from '@/stores/mastery-store'
-import { useAnalyticsStore } from '@/stores/analytics-store'
-import { INITIAL_CURRICULUM } from '@/lib/curriculum/content'
 import { Music, Target, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -31,20 +27,6 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const language = usePreferencesStore((s) => s.language)
   const t = useTranslation(language)
-  const initializeCurriculum = useCurriculumStore((s) => s.initializeCurriculum)
-  const curriculumUnits = useCurriculumStore((s) => s.units)
-  const calculateMastery = useMasteryStore((s) => s.calculateMastery)
-  const totalSessions = useAnalyticsStore((s) => s.progress.totalPracticeSessions)
-
-  useEffect(() => {
-    calculateMastery()
-  }, [totalSessions, curriculumUnits, calculateMastery])
-
-  useEffect(() => {
-    if (curriculumUnits.length === 0) {
-      initializeCurriculum(INITIAL_CURRICULUM)
-    }
-  }, [initializeCurriculum, curriculumUnits.length])
 
   useEffect(() => {
     // Check if user has completed onboarding
