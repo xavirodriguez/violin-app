@@ -7,6 +7,7 @@
 
 import { normalizeAccidental } from './domain/musical-domain'
 import { AppError, ERROR_CODES } from './errors/app-error'
+import { Observation } from './technique-types'
 import type { Note as TargetNote } from '@/lib/domain/exercise'
 import type {
   DetectedNote,
@@ -297,6 +298,7 @@ function handleStart(state: PracticeState, event: PracticeEvent): PracticeState 
     currentIndex: payload?.startIndex ?? 0,
     detectionHistory: [],
     holdDuration: 0,
+    lastObservations: [],
     perfectNoteStreak: 0,
   }
 }
@@ -308,6 +310,7 @@ function handleStopReset(state: PracticeState): PracticeState {
     currentIndex: 0,
     detectionHistory: [],
     holdDuration: 0,
+    lastObservations: [],
     perfectNoteStreak: 0,
   }
 }
@@ -364,13 +367,14 @@ function handleNoteMatched(state: PracticeState, payload: NoteMatchedPayload): P
   }
 
   const streak = calculateNewStreak(state, payload)
+  const observations = payload?.observations ?? []
 
   if (state.loopRegion?.isEnabled) {
-    const loopResult = handleLoopMatched(state, payload, streak)
+    const loopResult = handleLoopMatched(state, payload, streak, observations)
     if (loopResult) return loopResult
   }
 
-  return advanceToNextState(state, streak)
+  return advanceToNextState(state, streak, observations)
 }
 
 function isMatchingAllowed(state: PracticeState): boolean {
@@ -380,6 +384,7 @@ function isMatchingAllowed(state: PracticeState): boolean {
 function advanceToNextState(
   state: PracticeState,
   streak: number,
+  observations: Observation[],
 ): PracticeState {
   const isLastNote = state.currentIndex >= state.exercise.notes.length - 1
 
@@ -388,6 +393,7 @@ function advanceToNextState(
       ...state,
       status: 'completed',
       holdDuration: 0,
+      lastObservations: observations,
       perfectNoteStreak: streak,
     }
   }
@@ -398,6 +404,7 @@ function advanceToNextState(
     status: 'correct',
     detectionHistory: [],
     holdDuration: 0,
+    lastObservations: observations,
     perfectNoteStreak: streak,
   }
 }
@@ -440,6 +447,7 @@ function handleLoopMatched(
   state: PracticeState,
   payload: NoteMatchedPayload,
   streak: number,
+  observations: Observation[],
 ): PracticeState | undefined {
   if (!state.loopRegion) return undefined
   const isAtEndOfLoop = state.currentIndex >= state.loopRegion.endNoteIndex
@@ -452,6 +460,7 @@ function handleLoopMatched(
       ...state,
       status: 'completed',
       holdDuration: 0,
+      lastObservations: observations,
       perfectNoteStreak: streak,
       loopRegion: {
         ...state.loopRegion,
@@ -466,6 +475,7 @@ function handleLoopMatched(
     status: 'correct',
     detectionHistory: [],
     holdDuration: 0,
+    lastObservations: observations,
     perfectNoteStreak: streak,
     loopRegion: {
       ...state.loopRegion,

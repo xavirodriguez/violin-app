@@ -1,3 +1,4 @@
+import { NoteTechnique, Observation } from '../technique-types'
 import { Exercise, Note as TargetNote } from './exercise'
 import { MetronomeConfig } from './audio'
 
@@ -44,6 +45,7 @@ export interface PracticeState {
   currentIndex: number
   detectionHistory: readonly DetectedNote[]
   holdDuration?: number
+  lastObservations?: Observation[]
   perfectNoteStreak: number
   loopRegion?: LoopRegion
   metronome?: MetronomeConfig
@@ -63,7 +65,7 @@ export type PracticeEvent =
   | { type: 'HOLDING_NOTE'; payload: { duration: number } }
   | {
       type: 'NOTE_MATCHED'
-      payload?: { isPerfect?: boolean }
+      payload?: { technique: NoteTechnique; observations?: Observation[]; isPerfect?: boolean }
     }
   | { type: 'NO_NOTE_DETECTED' }
   | { type: 'DRILL_ATTEMPT_COMPLETED'; payload: { success: boolean; precision: number } }
