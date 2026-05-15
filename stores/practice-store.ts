@@ -16,6 +16,7 @@ import { practiceService } from '@/lib/practice/practice-service'
 import { validateExercise } from '@/lib/exercises/validation'
 import type { Exercise } from '@/lib/exercises/types'
 import { audioPlayerService } from '@/lib/audio/audio-player'
+import { useProgressStore } from './progress.store'
 
 export interface PracticeStore {
   // Core MVP State
@@ -254,5 +255,13 @@ export const useDerivedPracticeState = () => {
  * but enforces a floor of 15 cents for the MVP.
  */
 export function calculateCentsTolerance(): number {
-  return 20 // MVP fixed tolerance
+  const progress = useProgressStore.getState()
+  const skill = progress.intonationSkill ?? 0
+
+  const baseTolerance = 35
+  const maxBonus = 25 // can reach 10 cents at 100 skill
+  const floor = 15
+
+  const calculated = Math.round(baseTolerance - (skill / 100) * maxBonus)
+  return Math.max(floor, calculated)
 }
