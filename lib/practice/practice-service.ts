@@ -5,7 +5,6 @@ import { useTunerStore } from '@/stores/tuner-store'
 import { MusicalNote, formatPitchName } from '../practice-core'
 import { Note as TargetNote } from '../domain/exercise'
 import { DetectedNote, PracticeState } from '../domain/practice'
-import { NoteTechnique } from '../technique-types'
 
 /**
  * PracticeService
@@ -155,7 +154,6 @@ export class PracticeService {
         type: 'NOTE_MATCHED',
         payload: {
           isPerfect: Math.abs(detected.cents) < 10,
-          technique: {} as NoteTechnique,
         },
       })
       this.holdStartTime = null

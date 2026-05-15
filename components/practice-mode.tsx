@@ -10,7 +10,6 @@
 import { usePracticeStore, useDerivedPracticeState } from '@/stores/practice-store'
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useOSMDSafe } from '@/hooks/use-osmd-safe'
-import { ExercisePreviewModal } from '@/components/exercise-preview-modal'
 import { AudioTroubleshooter } from './practice/AudioTroubleshooter'
 import { PracticeControls } from './practice/practice-controls'
 import { PracticeMainContent } from './practice/practice-main-content'
@@ -30,12 +29,10 @@ import { PracticeStatus } from '@/lib/domain/practice'
  * Custom hook to manage the local UI state for the practice view.
  */
 export function usePracticeViewState() {
-  const [preview, setPreview] = useState<Exercise | undefined>(undefined)
   const [view, setView] = useState<'focused' | 'full'>('focused')
-  const [isZen, setIsZen] = useState(false)
 
-  const state = { preview, view, isZen }
-  const actions = { setPreview, setView, setIsZen }
+  const state = { view }
+  const actions = { setView }
 
   return { state, actions }
 }
@@ -136,7 +133,7 @@ export function PracticeMode() {
     dispatch,
     status: derived.status as PracticeStatus,
     currentNoteIndex: derived.currentNoteIndex,
-    onToggleZenMode: () => viewActions.setIsZen((v) => !v),
+    onToggleZenMode: () => {},
     scoreView: osmd.scoreView,
   }
 
@@ -175,7 +172,7 @@ export function PracticeMode() {
       <div className="space-y-6">
         <PracticeStatusHeader />
         <PracticeControlsRow
-          isZen={viewState.isZen}
+          isZen={false}
           onStart={handleStart}
           onPlayReference={async () => {
             if (isReferencePlaying) {
@@ -222,11 +219,10 @@ export function PracticeMode() {
             metronome.setBpm(newBpm)
           }}
         />
-        <PracticePreviewModal viewState={viewState} viewActions={viewActions} />
         <PracticeMainContent
-          isZenModeEnabled={viewState.isZen}
+          isZenModeEnabled={false}
           autoStartEnabled={false}
-          setPreviewExercise={viewActions.setPreview}
+          setPreviewExercise={() => {}}
           centsTolerance={centsTolerance}
           sheetMusicView={viewState.view}
           setSheetMusicView={viewActions.setView}
@@ -246,37 +242,6 @@ export function PracticeMode() {
         <KeyboardShortcutsDialog />
       </div>
     </div>
-  )
-}
-
-function PracticePreviewModal(params: {
-  viewState: { preview: Exercise | undefined }
-  viewActions: { setPreview: (ex: Exercise | undefined) => void }
-}) {
-  const { viewState, viewActions } = params
-  const loadExercise = usePracticeStore((s) => s.loadExercise)
-  const isOpen = !!viewState.preview
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      viewActions.setPreview(undefined)
-    }
-  }
-
-  const handleStart = async () => {
-    if (viewState.preview) {
-      await loadExercise(viewState.preview)
-      viewActions.setPreview(undefined)
-    }
-  }
-
-  return (
-    <ExercisePreviewModal
-      exercise={viewState.preview}
-      isOpen={isOpen}
-      onOpenChange={handleOpenChange}
-      onStart={handleStart}
-    />
   )
 }
 
